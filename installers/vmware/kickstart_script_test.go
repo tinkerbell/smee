@@ -1,0 +1,77 @@
+package vmware
+
+import (
+	"io/ioutil"
+	"net"
+	"strings"
+	"testing"
+
+	"github.com/andreyvit/diff"
+	"github.com/packethost/tinkerbell/env"
+	"github.com/packethost/tinkerbell/job"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDetermineDisk(t *testing.T) {
+	assert := require.New(t)
+	for typ, disk := range kickstartTypes {
+		t.Log(typ)
+
+		m := job.NewMock(t, typ, facility)
+		gotDisk := determineDisk(m.Job())
+		assert.Equal(disk, gotDisk)
+	}
+
+}
+
+func TestScriptKickstart(t *testing.T) {
+	manufacturers := []string{"supermicro", "dell"}
+	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7"}
+	assert := require.New(t)
+	env.MirrorBaseIP = "http://127.0.0.1"
+	env.PublicIPv4 = net.ParseIP("127.0.0.1")
+
+	for _, man := range manufacturers {
+		for _, ver := range versions {
+			for typ, disk := range kickstartTypes {
+				t.Log(man, ver, typ)
+
+				m := job.NewMock(t, typ, facility)
+				m.SetManufacturer(man)
+				m.SetOSSlug(ver)
+				m.SetIP(net.ParseIP("127.0.0.1"))
+				m.SetPassword("password")
+				m.SetMAC("00:00:ba:dd:be:ef")
+
+				var w strings.Builder
+				genKickstart(m.Job(), &w)
+				got := w.String()
+				script := loadKickstart(disk, assert)
+				assert.Equal(script, got, diff.LineDiff(script, got))
+			}
+		}
+	}
+}
+
+func loadKickstart(disk string, assert *require.Assertions) string {
+	data, err := ioutil.ReadFile("testdata/vmware_base.txt")
+	assert.Nil(err)
+	return strings.Replace(string(data), "<DISK>", disk, 1)
+}
+
+var kickstartTypes = map[string]string{
+	"baremetal_5":                  "--firstdisk",
+	"c1.small.x86":                 "--firstdisk=vmw_ahci",
+	"c1.xlarge.x86":                "--firstdisk=lsi_mr3,vmw_ahci",
+	"c2.medium.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"g2.large.x86":                 "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"m1.xlarge.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"m1.xlarge.x86:baremetal_2_04": "--firstdisk=vmw_ahci",
+	"m2.xlarge.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"n2.xlarge.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"n2.xlarge.google":             "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"s1.large.x86":                 "--firstdisk=vmw_ahci",
+	"t1.small.x86":                 "--firstdisk=vmw_ahci",
+	"x1.small.x86":                 "--firstdisk=vmw_ahci",
+	"x2.xlarge.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+}

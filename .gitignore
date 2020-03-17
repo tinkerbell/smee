@@ -1,0 +1,6 @@
+*.iml
+*.orig
+*.test
+.idea*/**
+bin
+tinkerbell

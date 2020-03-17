@@ -1,0 +1,4 @@
+#define	CONSOLE_SYSLOG
+
+//#define	LOG_LEVEL	LOG_ALL
+
