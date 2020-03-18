@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/packethost/tinkerbell/packet"
+	"github.com/packethost/boots/packet"
 	"github.com/pkg/errors"
 )
 

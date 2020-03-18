@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/packethost/tinkerbell/env"
+	"github.com/packethost/boots/env"
 	"github.com/pkg/errors"
 )
 

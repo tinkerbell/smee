@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/job"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/job"
 	"github.com/pkg/errors"
 
 	"github.com/avast/retry-go"

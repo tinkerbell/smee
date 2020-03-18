@@ -1,8 +1,8 @@
 package rancher
 
 import (
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/job"
 )
 
 func init() {
@@ -30,5 +30,5 @@ func kernelParams(j job.Job, s *ipxe.Script) {
 		s.Args("rancher.network.interfaces.eth2.dhcp=true")
 	}
 
-	s.Args("tinkerbell=${tinkerbell}")
+	s.Args("boots=${boots}")
 }

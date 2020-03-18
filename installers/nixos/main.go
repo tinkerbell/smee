@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/job"
 	"github.com/pkg/errors"
 )
 
@@ -60,7 +60,7 @@ func bootScript(paths map[string]string, j job.Job, s *ipxe.Script) {
 	}
 
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", env.MirrorBase+"/misc/tinkerbell/nixos/"+key)
+	s.Set("base-url", env.MirrorBase+"/misc/boots/nixos/"+key)
 	s.Kernel("${base-url}/kernel")
 	kernelParams(j, s, init)
 

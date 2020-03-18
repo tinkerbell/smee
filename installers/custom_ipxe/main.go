@@ -3,8 +3,8 @@ package custom_ipxe
 import (
 	"strings"
 
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/job"
 )
 
 func init() {

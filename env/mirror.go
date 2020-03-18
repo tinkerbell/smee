@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultFacility   = "ewr1"
-	defaultMirrorPath = "/misc/tinkerbell"
+	defaultMirrorPath = "/misc/boots"
 )
 
 var (

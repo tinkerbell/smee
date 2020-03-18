@@ -18,5 +18,5 @@ func (j Job) Fatal(err error, args ...interface{}) {
 
 func (j Job) Error(err error, args ...interface{}) {
 	j.Logger.AddCallerSkip(1).Error(err, args...)
-	j.postEvent("tinkerbell.warning", "Tinkerbell Warning: "+err.Error(), true)
+	j.postEvent("boots.warning", "Tinkerbell Warning: "+err.Error(), true)
 }
