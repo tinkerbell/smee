@@ -4,10 +4,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/packethost/boots/dhcp"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/packet"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/packet"
 	"github.com/pkg/errors"
 )
 

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/packethost/tinkerbell/packet"
+	"github.com/packethost/boots/packet"
 )
 
 func TestPhoneHome(t *testing.T) {

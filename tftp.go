@@ -9,8 +9,8 @@ import (
 
 	"github.com/avast/retry-go"
 	tftp "github.com/betawaffle/tftp-go"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/job"
 	"github.com/pkg/errors"
 )
 

@@ -3,8 +3,8 @@ package osie
 import (
 	"strings"
 
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/job"
 )
 
 func init() {
@@ -55,7 +55,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
 	s.Args("modloop=${base-url}/" + modloopPath(j))
-	s.Args("tinkerbell=${tinkerbell}")
+	s.Args("boots=${boots}")
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
@@ -130,7 +130,7 @@ func isCustomOsie(j job.Job) bool {
 	return false
 }
 
-// OsieBaseUrl returns the value of Osie Custom Service Version, or tinkerbell/osie
+// OsieBaseUrl returns the value of Osie Custom Service Version, or boots/osie
 func osieBaseUrl(j job.Job) string {
 	if isCustomOsie(j) {
 		return osieURL + "/" + j.ServicesVersion().Osie

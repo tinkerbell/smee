@@ -2,7 +2,7 @@ package job
 
 import (
 	tftpgo "github.com/betawaffle/tftp-go"
-	"github.com/packethost/tinkerbell/tftp"
+	"github.com/packethost/boots/tftp"
 )
 
 func (j Job) ServeTFTP(filename, client string) (tftpgo.ReadCloser, error) {

@@ -5,23 +5,23 @@ import (
 	"net"
 	"time"
 
+	"github.com/packethost/boots/dhcp"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/httplog"
+	"github.com/packethost/boots/installers"
+	"github.com/packethost/boots/job"
+	"github.com/packethost/boots/packet"
+	"github.com/packethost/boots/syslog"
+	"github.com/packethost/boots/tftp"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/httplog"
-	"github.com/packethost/tinkerbell/installers"
-	"github.com/packethost/tinkerbell/job"
-	"github.com/packethost/tinkerbell/packet"
-	"github.com/packethost/tinkerbell/syslog"
-	"github.com/packethost/tinkerbell/tftp"
 	"github.com/pkg/errors"
 
-	_ "github.com/packethost/tinkerbell/installers/coreos"
-	_ "github.com/packethost/tinkerbell/installers/custom_ipxe"
-	_ "github.com/packethost/tinkerbell/installers/nixos"
-	_ "github.com/packethost/tinkerbell/installers/osie"
-	_ "github.com/packethost/tinkerbell/installers/rancher"
-	_ "github.com/packethost/tinkerbell/installers/vmware"
+	_ "github.com/packethost/boots/installers/coreos"
+	_ "github.com/packethost/boots/installers/custom_ipxe"
+	_ "github.com/packethost/boots/installers/nixos"
+	_ "github.com/packethost/boots/installers/osie"
+	_ "github.com/packethost/boots/installers/rancher"
+	_ "github.com/packethost/boots/installers/vmware"
 
 	"github.com/avast/retry-go"
 )
@@ -51,7 +51,7 @@ func parseCIDRs(cidrs []string) ([]*net.IPNet, error) {
 func main() {
 	flag.Parse()
 
-	l, err := log.Init("github.com/packethost/tinkerbell")
+	l, err := log.Init("github.com/packethost/boots")
 	if err != nil {
 		panic(nil)
 	}

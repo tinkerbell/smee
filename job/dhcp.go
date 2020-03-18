@@ -3,11 +3,11 @@ package job
 import (
 	"strings"
 
+	"github.com/packethost/boots/dhcp"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/packet"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/packet"
 	"github.com/pkg/errors"
 )
 

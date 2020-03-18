@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/packethost/boots/env"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/env"
 )
 
 const (

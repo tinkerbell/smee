@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"text/template"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/installers"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/installers"
+	"github.com/packethost/boots/job"
 	"github.com/pkg/errors"
 )
 

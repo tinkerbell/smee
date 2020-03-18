@@ -5,10 +5,10 @@ package coreos
 import (
 	"net"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/files/unit"
-	"github.com/packethost/tinkerbell/job"
-	"github.com/packethost/tinkerbell/packet"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/files/unit"
+	"github.com/packethost/boots/job"
+	"github.com/packethost/boots/packet"
 )
 
 const bondName = "bond0"

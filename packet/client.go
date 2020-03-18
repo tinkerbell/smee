@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/packethost/boots/httplog"
 	"github.com/packethost/cacher/client"
 	"github.com/packethost/cacher/protos/cacher"
-	"github.com/packethost/tinkerbell/httplog"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )

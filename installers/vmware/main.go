@@ -1,9 +1,9 @@
 package vmware
 
 import (
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/packethost/boots/env"
+	"github.com/packethost/boots/ipxe"
+	"github.com/packethost/boots/job"
 )
 
 func init() {
@@ -54,7 +54,7 @@ func bootScriptVmwareEsxi(j job.Job, s *ipxe.Script, basePath string) {
 }
 
 func kernelParams(j job.Job, s *ipxe.Script, kickstartPath string) {
-	s.Args("ks=${tinkerbell}" + kickstartPath)
+	s.Args("ks=${boots}" + kickstartPath)
 
 	vmnic := j.PrimaryNIC().String()
 	s.Args("netdevice=" + vmnic)
