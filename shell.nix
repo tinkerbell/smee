@@ -1,23 +1,23 @@
 let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs-channels";
-    # nixos-unstable @2019-05-30
-    rev = "a02dfde07417ead2ab9b24443f195dc8532b409c";
-    sha256 = "0g201slnc2f5w7k7xqzc0s3q1ckfg8xqb40hamhzl9a4vd1hvbwj";
-  }) { } }:
+  owner = "NixOS";
+  repo = "nixpkgs-channels";
+  #branch@date: nixpkgs-unstable@2020-02-01
+  rev = "e3a9318b6fdb2b022c0bda66d399e1e481b24b5c";
+  sha256 = "1hlblna9j0afvcm20p15f5is7cmwl96mc4vavc99ydc4yc9df62a";
+}) { } }:
 
 with pkgs;
 
 mkShell {
   buildInputs = [
-    dep
     gcc
     git-lfs
     gnumake
     go
     go-bindata
     pkgsCross.aarch64-multiplatform.buildPackages.gcc
+    protobuf
     xz
   ];
 }
