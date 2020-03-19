@@ -30,5 +30,5 @@ func kernelParams(j job.Job, s *ipxe.Script) {
 		s.Args("rancher.network.interfaces.eth2.dhcp=true")
 	}
 
-	s.Args("boots=${boots}")
+	s.Args("tinkerbell=${tinkerbell}")
 }

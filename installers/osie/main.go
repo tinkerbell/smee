@@ -55,7 +55,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
 	s.Args("modloop=${base-url}/" + modloopPath(j))
-	s.Args("boots=${boots}")
+	s.Args("tinkerbell=${boots}")
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
