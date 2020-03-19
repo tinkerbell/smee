@@ -54,7 +54,7 @@ func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name stri
 
 	s := ipxe.NewScript()
 	s.Set("iface", j.InterfaceName(0)).Or("shell")
-	s.Set("boots", "http://"+env.PublicFQDN)
+	s.Set("tinkerbell", "http://"+env.PublicFQDN)
 	s.Set("ipxe_cloud_config", "packet")
 
 	s.Echo("Packet.net Baremetal - iPXE boot")
