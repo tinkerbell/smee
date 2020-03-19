@@ -27,7 +27,7 @@ func TestScript(t *testing.T) {
 		s := ipxe.Script{}
 		s.Echo("Packet.net Baremetal - iPXE boot")
 		s.Set("iface", "eth0").Or("shell")
-		s.Set("boots", "http://127.0.0.1")
+		s.Set("tinkerbell", "http://127.0.0.1")
 		s.Set("ipxe_cloud_config", "packet")
 
 		bootScript(m.Job(), &s)
