@@ -1,4 +1,4 @@
-# Tinkerbell
+# Boots
 [![Build Status][boots_ci_status]][boots_ci]
 [![codecov](https://codecov.io/gh/packethost/boots/branch/master/graph/badge.svg?token=JH41dqSgYI)](https://codecov.io/gh/packethost/boots)
 
@@ -23,7 +23,7 @@ make all
 go test
 ```
 
-Build/Run Tinkerbell
+Build/Run Boots
 ```
 # run boots
 ./boots
