@@ -28,7 +28,7 @@ func TestScript(t *testing.T) {
 				s := ipxe.Script{}
 				s.Echo("Packet.net Baremetal - iPXE boot")
 				s.Set("iface", "eth0").Or("shell")
-				s.Set("boots", "http://127.0.0.1")
+				s.Set("tinkerbell", "http://127.0.0.1")
 				s.Set("ipxe_cloud_config", "packet")
 
 				bootScript(m.Job(), &s)
@@ -45,113 +45,113 @@ func TestScript(t *testing.T) {
 var type2Script = map[string]string{
 	"baremetal_0": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
 `,
 	"baremetal_1": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
 `,
 	"baremetal_2": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
 `,
 	"baremetal_3": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
 `,
 	"baremetal_2a": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos-arm.cpio.gz
 boot
 `,
 	"baremetal_2a2": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos-arm.cpio.gz
 boot
 `,
 	"baremetal_hua": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
-set boots http://127.0.0.1
+set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/boots
-kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${boots}/coreos/ignition.json systemd.setenv=oem_url=${boots}/coreos/oem.tgz systemd.setenv=phone_home_url=${boots}/phone-home
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos-arm.cpio.gz
 boot
 `,
