@@ -15,8 +15,6 @@ git lfs pull
 
 Running the Tests
 ```
-# ensure you have the right packages
-dep ensure
 # make the files
 make all
 # run the tests
