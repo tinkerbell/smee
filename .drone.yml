@@ -33,14 +33,19 @@ pipeline:
   publish:
     group: publish
     image: plugins/docker
+    environment:
+      DOCKER_USERNAME:
+        from_secret: public_docker_username
+      DOCKER_PASSWORD:
+        from_secret: public_docker_password
     registry: quay.io
-    repo: quay.io/tinkerbell/boots
+    repo: quay.io/tinkerbell/boots-pr
     tags:
       - ${DRONE_BRANCH/\//-}
       - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
       event: [push]
-    secrets: [docker_username, docker_password]
+    secrets: [public_docker_username, public_docker_password]
 
   publish_tag:
     group: publish
