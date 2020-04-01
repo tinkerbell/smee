@@ -33,11 +33,6 @@ pipeline:
   publish:
     group: publish
     image: plugins/docker
-    environment:
-      DOCKER_USERNAME:
-        from_secret: public_docker_username
-      DOCKER_PASSWORD:
-        from_secret: public_docker_password
     registry: quay.io
     repo: quay.io/tinkerbell/boots-pr
     tags:
@@ -46,8 +41,10 @@ pipeline:
     when:
       event: push
     secrets:
-      - public_docker_username
-      - public_docker_password
+      - source: public_docker_username
+        target: docker_username
+      - source: public_docker_password
+        target: docker_password
 
   publish_tag:
     group: publish
