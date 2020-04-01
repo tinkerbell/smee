@@ -246,7 +246,6 @@ param type provisioning.104.01
 imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-
 set base-url http://install.` + facility + `.packet.net/misc/tinkerbell/nixos/nixos_18_03/x1.small.x86
 kernel ${base-url}/kernel init=/nix/store/bd42lgd9rmz4xmq3zgs8j31rf0g7fn4q-nixos-system-install-environment-18.03.132610.49a6964a425/init initrd=initrd console=ttyS1,115200 loglevel=7
 initrd ${base-url}/initrd

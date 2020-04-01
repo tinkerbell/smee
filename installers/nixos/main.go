@@ -60,7 +60,7 @@ func bootScript(paths map[string]string, j job.Job, s *ipxe.Script) {
 	}
 
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", env.MirrorBase+"/misc/boots/nixos/"+key)
+	s.Set("base-url", env.MirrorBase+"/misc/tinkerbell/nixos/"+key)
 	s.Kernel("${base-url}/kernel")
 	kernelParams(j, s, init)
 
