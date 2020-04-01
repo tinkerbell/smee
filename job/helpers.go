@@ -1,7 +1,6 @@
 package job
 
 import (
-	"bytes"
 	"net"
 
 	"github.com/tinkerbell/boots/packet"

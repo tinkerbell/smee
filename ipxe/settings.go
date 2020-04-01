@@ -1,6 +1,6 @@
 package ipxe
 
-import "fmt"
+//import "fmt"
 
 const (
 	AssetTag      = "${asset}"        // Unfilled

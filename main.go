@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"net"
 	"time"
 
 	"github.com/tinkerbell/boots/dhcp"

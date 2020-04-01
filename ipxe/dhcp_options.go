@@ -172,7 +172,6 @@ func formatOption(info *optionInfo, b []byte) (string, string) {
 			buf = strconv.AppendUint(buf, uint64(c), 16)
 		}
 		b = buf
-		break
 	case "bool":
 		if len(b) == 1 && b[0] == 1 {
 			return info.Name, "true"

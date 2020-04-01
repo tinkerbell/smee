@@ -9,7 +9,7 @@ pipeline:
     group: ci
     image: golangci/golangci-lint:v1.23.8
     commands:
-      - golangci-lint run -v --skip-dirs cmd/packetflow
+      - golangci-lint run -v -D errcheck
 
   fmt:
     group: ci
