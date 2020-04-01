@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/packethost/boots/env"
+	"github.com/tinkerbell/boots/env"
 	dhcp4 "github.com/packethost/dhcp4-go"
 )
 

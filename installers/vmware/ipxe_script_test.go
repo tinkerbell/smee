@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
-	"github.com/packethost/boots/env"
-	"github.com/packethost/boots/ipxe"
-	"github.com/packethost/boots/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/ipxe"
+	"github.com/tinkerbell/boots/job"
 )
 
 var facility = func() string {

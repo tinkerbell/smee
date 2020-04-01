@@ -3,9 +3,9 @@ package coreos
 import (
 	"strings"
 
-	"github.com/packethost/boots/env"
-	"github.com/packethost/boots/files/ignition"
-	"github.com/packethost/boots/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/job"
 )
 
 func getInstallOpts(j job.Job, channel, facilityCode string) string {

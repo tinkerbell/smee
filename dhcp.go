@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/packethost/boots/env"
-	"github.com/packethost/boots/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/job"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
 

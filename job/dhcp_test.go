@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/packethost/boots/env"
-	"github.com/packethost/boots/packet"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/packet"
 	dhcp4 "github.com/packethost/dhcp4-go"
 )
 

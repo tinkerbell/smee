@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"net"
 
-	"github.com/packethost/boots/packet"
+	"github.com/tinkerbell/boots/packet"
 )
 
 var rescueOS = &packet.OperatingSystem{

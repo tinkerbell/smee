@@ -4,9 +4,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/packethost/boots/dhcp"
-	"github.com/packethost/boots/env"
-	"github.com/packethost/boots/packet"
+	"github.com/tinkerbell/boots/dhcp"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/packet"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 )

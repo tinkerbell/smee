@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/packethost/boots/files/ignition"
-	"github.com/packethost/boots/job"
+	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/job"
 	"github.com/stretchr/testify/require"
 )
 
