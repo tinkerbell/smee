@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/packethost/boots/packet"
+	"github.com/tinkerbell/boots/packet"
 	"github.com/packethost/pkg/log"
 	"go.uber.org/zap/zaptest"
 )

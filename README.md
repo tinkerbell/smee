@@ -1,6 +1,6 @@
 # Boots
 [![Build Status][boots_ci_status]][boots_ci]
-[![codecov](https://codecov.io/gh/packethost/boots/branch/master/graph/badge.svg?token=JH41dqSgYI)](https://codecov.io/gh/packethost/boots)
+[![codecov](https://codecov.io/gh/tinkerbell/boots/branch/master/graph/badge.svg?token=JH41dqSgYI)](https://codecov.io/gh/tinkerbell/boots)
 
 This services handles DHCP, PXE, tftp, and iPXE for provisions.
 
@@ -33,5 +33,5 @@ You can use NixOS shell, which will have the Git-LFS, Go and others
 
 Note: for mac users, you will need to comment out the line `pkgsCross.aarch64-multiplatform.buildPackages.gcc` in order for the build to work
 
-[boots_ci]: https://drone.packet.net/packethost/boots
-[boots_ci_status]: https://drone.packet.net/api/badges/packethost/boots/status.svg
+[boots_ci]: https://drone.packet.net/tinkerbell/boots
+[boots_ci_status]: https://drone.packet.net/api/badges/tinkerbell/boots/status.svg

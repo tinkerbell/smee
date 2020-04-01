@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/packethost/boots/ipxe"
+	"github.com/tinkerbell/boots/ipxe"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 )

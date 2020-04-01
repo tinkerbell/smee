@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/packethost/boots/job"
+	"github.com/tinkerbell/boots/job"
 	l "github.com/packethost/pkg/log"
 )
 
@@ -14,7 +14,7 @@ func TestMain(m *testing.M) {
 	os.Setenv("ROLLBAR_DISABLE", "1")
 	os.Setenv("ROLLBAR_TOKEN", "1")
 
-	logger, _ := l.Init("github.com/packethost/boots")
+	logger, _ := l.Init("github.com/tinkerbell/boots")
 	job.Init(logger)
 	os.Exit(m.Run())
 }

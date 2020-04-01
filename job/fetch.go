@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"github.com/golang/groupcache/singleflight"
-	"github.com/packethost/boots/packet"
+	"github.com/tinkerbell/boots/packet"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/packethost/boots
+module github.com/tinkerbell/boots
 
 go 1.13
 
