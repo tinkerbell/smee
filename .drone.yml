@@ -44,8 +44,10 @@ pipeline:
       - ${DRONE_BRANCH/\//-}
       - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
-      event: [push]
-    secrets: [public_docker_username, public_docker_password]
+      event: push
+    secrets:
+      - public_docker_username
+      - public_docker_password
 
   publish_tag:
     group: publish
