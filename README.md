@@ -6,7 +6,7 @@ This services handles PXE and DHCP for provisions
 
 ### Local Setup
 
-First, you need to make sure you have [git-lfs](https://git-lfs.github.com/) installed
+First, you need to make sure you have [git-lfs](https://git-lfs.github.com/) installed:
 
 ```
 git lfs install
