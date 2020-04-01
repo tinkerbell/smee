@@ -2,7 +2,7 @@
 [![Build Status][boots_ci_status]][boots_ci]
 [![codecov](https://codecov.io/gh/packethost/boots/branch/master/graph/badge.svg?token=JH41dqSgYI)](https://codecov.io/gh/packethost/boots)
 
-This services handles PXE and DHCP for provisions
+This services handles DHCP, PXE, tftp, and iPXE for provisions.
 
 ### Local Setup
 
