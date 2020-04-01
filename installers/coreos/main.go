@@ -45,11 +45,11 @@ func kernelParams(j job.Job, s *ipxe.Script) {
 	s.Args(distro + ".first_boot=1")
 
 	// Ignition
-	s.Args(distro + ".config.url=${boots}/" + distro + "/ignition.json")
+	s.Args(distro + ".config.url=${tinkerbell}/" + distro + "/ignition.json")
 
 	// Environment Variables
-	s.Args("systemd.setenv=oem_url=${boots}/" + distro + "/oem.tgz") // To replace the files in our included OEM.
-	s.Args("systemd.setenv=phone_home_url=${boots}/phone-home")
+	s.Args("systemd.setenv=oem_url=${tinkerbell}/" + distro + "/oem.tgz") // To replace the files in our included OEM.
+	s.Args("systemd.setenv=phone_home_url=${tinkerbell}/phone-home")
 }
 
 func kernelPath(j job.Job) string {

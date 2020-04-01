@@ -54,7 +54,7 @@ func bootScriptVmwareEsxi(j job.Job, s *ipxe.Script, basePath string) {
 }
 
 func kernelParams(j job.Job, s *ipxe.Script, kickstartPath string) {
-	s.Args("ks=${boots}" + kickstartPath)
+	s.Args("ks=${tinkerbell}" + kickstartPath)
 
 	vmnic := j.PrimaryNIC().String()
 	s.Args("netdevice=" + vmnic)

@@ -34,7 +34,7 @@ func (s *Script) PhoneHome(typ string) *Script {
 params
 param body Device connected to DHCP system
 param type `+typ+`
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 `...)
