@@ -291,22 +291,23 @@ type NetworkPorts struct {
 	IPMI Port   `json:"ipmi"`
 }
 
-func (p *NetworkPorts) addMain(port Port) {
-	var (
-		mac   = port.MAC()
-		ports = p.Main
-	)
-	n := len(ports)
-	i := sort.Search(n, func(i int) bool {
-		return bytes.Compare(mac, ports[i].MAC()) < 0
-	})
-	if i < n {
-		ports = append(append(ports[:i], port), ports[i:]...)
-	} else {
-		ports = append(ports, port)
-	}
-	p.Main = ports
-}
+// golangci-lint: unused
+//func (p *NetworkPorts) addMain(port Port) {
+//	var (
+//		mac   = port.MAC()
+//		ports = p.Main
+//	)
+//	n := len(ports)
+//	i := sort.Search(n, func(i int) bool {
+//		return bytes.Compare(mac, ports[i].MAC()) < 0
+//	})
+//	if i < n {
+//		ports = append(append(ports[:i], port), ports[i:]...)
+//	} else {
+//		ports = append(ports, port)
+//	}
+//	p.Main = ports
+//}
 
 type OperatingSystem struct {
 	Slug     string `json:"slug"`

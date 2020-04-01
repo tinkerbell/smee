@@ -11,13 +11,14 @@ const (
 	UUID          = "${uuid}"         // 00000000-0000-0000-0000-${mac}
 )
 
-type smbiosTag struct {
-	Instance byte
-	Type     byte
-	Offset   byte
-	Len      byte
-}
-
-func (t smbiosTag) String() string {
-	return fmt.Sprintf("smbios/%d.%d.%d.%d", t.Instance, t.Type, t.Offset, t.Len)
-}
+// golangci-lint: unused
+//type smbiosTag struct {
+//	Instance byte
+//	Type     byte
+//	Offset   byte
+//	Len      byte
+//}
+//
+//func (t smbiosTag) String() string {
+//	return fmt.Sprintf("smbios/%d.%d.%d.%d", t.Instance, t.Type, t.Offset, t.Len)
+//}

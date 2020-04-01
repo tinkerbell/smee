@@ -51,19 +51,21 @@ func (m MACAddr) IsOnes() bool {
 	return bytes.Compare(m[:], OnesMAC[:]) == 0
 }
 
+// golangci-lint: unused
 // withLSB sets the least significant bit to 1 if val == true or 0 if val == false.
-func (m MACAddr) withLSB(val bool) MACAddr {
-	if val {
-		m[5] |= 1 // set the last bit
-	} else {
-		m[5] &= ^byte(1) // clear the last bit
-	}
-	return m
-}
+//func (m MACAddr) withLSB(val bool) MACAddr {
+//	if val {
+//		m[5] |= 1 // set the last bit
+//	} else {
+//		m[5] &= ^byte(1) // clear the last bit
+//	}
+//	return m
+//}
 
-type ref struct {
-	HRef string `json:"href"`
-}
+// golangci-lint: unused
+//type ref struct {
+//	HRef string `json:"href"`
+//}
 
 func (r *ref) Get() (*http.Request, error) {
 	if r.HRef == "" || r.HRef[0] == '#' {

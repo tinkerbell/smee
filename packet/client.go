@@ -123,6 +123,7 @@ func (c *Client) addHeaders(req *http.Request) {
 	}
 }
 
+// golangci-lint: unused
 //func (c *Client) do(fn func() (*http.Request, error), v interface{}) error {
 //	req, err := fn()
 //	if err != nil {

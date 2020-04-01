@@ -95,9 +95,10 @@ func (j Job) MarkDeviceActive() {
 	}
 }
 
-func (j Job) markFailed(reason string) {
-	j.postFailure(reason)
-}
+// golangci-lint: unused
+//func (j Job) markFailed(reason string) {
+//	j.postFailure(reason)
+//}
 
 func (j *Job) setup(d *packet.Discovery) error {
 	mode, netConfig := d.Mode(j.mac), d.NetConfig(j.mac)

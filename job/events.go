@@ -137,24 +137,26 @@ func (j Job) postEvent(kind, body string, private bool) bool {
 	}
 	return true
 }
-func (j Job) postFailure(reason string) bool {
-	f := failure{
-		Reason: reason,
-	}
 
-	if j.InstanceID() != "" {
-		if err := f.postInstance(j.instance.ID); err != nil {
-			j.Error(errors.WithMessage(err, "posting instance failure"))
-			return false
-		}
-	} else {
-		if err := f.postHardware(j.hardware.ID); err != nil {
-			j.Error(errors.WithMessage(err, "posting hardware failure"))
-			return false
-		}
-	}
-	return true
-}
+// golangci-lint: unused
+//func (j Job) postFailure(reason string) bool {
+//	f := failure{
+//		Reason: reason,
+//	}
+//
+//	if j.InstanceID() != "" {
+//		if err := f.postInstance(j.instance.ID); err != nil {
+//			j.Error(errors.WithMessage(err, "posting instance failure"))
+//			return false
+//		}
+//	} else {
+//		if err := f.postHardware(j.hardware.ID); err != nil {
+//			j.Error(errors.WithMessage(err, "posting hardware failure"))
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 func posterFromJSON(b []byte) (poster, error) {
 	if len(b) == 0 {
