@@ -62,8 +62,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	}
 
 	installOpts := getInstallOpts(j, channel, facilityCode)
-	var lines []string
-	lines = []string{
+	lines := []string{
 		// Install to disk:
 		`/usr/bin/curl -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
 		"/usr/bin/" + distro + "-install " + installOpts,

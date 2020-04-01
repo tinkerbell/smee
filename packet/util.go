@@ -44,11 +44,11 @@ func (m *MACAddr) UnmarshalText(text []byte) error {
 }
 
 func (m MACAddr) IsZero() bool {
-	return bytes.Compare(m[:], ZeroMAC[:]) == 0
+	return bytes.Equal(m[:], ZeroMAC[:])
 }
 
 func (m MACAddr) IsOnes() bool {
-	return bytes.Compare(m[:], OnesMAC[:]) == 0
+	return bytes.Equal(m[:], OnesMAC[:])
 }
 
 // golangci-lint: unused
@@ -61,16 +61,15 @@ func (m MACAddr) IsOnes() bool {
 //	}
 //	return m
 //}
-
-// golangci-lint: unused
+//
 //type ref struct {
 //	HRef string `json:"href"`
 //}
-
-func (r *ref) Get() (*http.Request, error) {
-	if r.HRef == "" || r.HRef[0] == '#' {
-		return nil, errors.New("URL not available")
-	}
-	req, err := http.NewRequest("GET", r.HRef, nil)
-	return req, errors.Wrap(err, "fetching ref")
-}
+//
+//func (r *ref) Get() (*http.Request, error) {
+//	if r.HRef == "" || r.HRef[0] == '#' {
+//		return nil, errors.New("URL not available")
+//	}
+//	req, err := http.NewRequest("GET", r.HRef, nil)
+//	return req, errors.Wrap(err, "fetching ref")
+//}

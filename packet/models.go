@@ -1,10 +1,8 @@
 package packet
 
 import (
-	"bytes"
 	"encoding/json"
 	"net"
-	"sort"
 
 	"github.com/pkg/errors"
 )
