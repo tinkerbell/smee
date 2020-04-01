@@ -1,12 +1,12 @@
-# Tinkerbell
+# Boots
 [![Build Status][boots_ci_status]][boots_ci]
 [![codecov](https://codecov.io/gh/packethost/boots/branch/master/graph/badge.svg?token=JH41dqSgYI)](https://codecov.io/gh/packethost/boots)
 
-This services handles PXE and DHCP for provisions
+This services handles DHCP, PXE, tftp, and iPXE for provisions.
 
 ### Local Setup
 
-First, you need to make sure you have [git-lfs](https://git-lfs.github.com/) installed
+First, you need to make sure you have [git-lfs](https://git-lfs.github.com/) installed:
 
 ```
 git lfs install
@@ -15,15 +15,13 @@ git lfs pull
 
 Running the Tests
 ```
-# ensure you have the right packages
-dep ensure
 # make the files
 make all
 # run the tests
 go test
 ```
 
-Build/Run Tinkerbell
+Build/Run Boots
 ```
 # run boots
 ./boots

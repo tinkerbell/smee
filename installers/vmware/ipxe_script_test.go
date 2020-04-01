@@ -50,11 +50,11 @@ var type2pxe = map[string]string{
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 	"baremetal_1": `dhcp
@@ -62,11 +62,11 @@ boot
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 	"baremetal_2": `dhcp
@@ -74,11 +74,11 @@ boot
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 	"baremetal_3": `dhcp
@@ -86,11 +86,11 @@ boot
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 	"baremetal_s": `dhcp
@@ -98,11 +98,11 @@ boot
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 	"c2.medium.x86": `dhcp
@@ -110,11 +110,11 @@ boot
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
-imgfetch ${boots}/phone-home##params
+imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg ks=${boots}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
+kernel ${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
 }
