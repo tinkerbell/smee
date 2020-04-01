@@ -6,4 +6,3 @@ ENTRYPOINT ["/boots"]
 
 RUN apk add --update --upgrade --no-cache ca-certificates socat
 ADD boots /
-ADD deploy/check* /
