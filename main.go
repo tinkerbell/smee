@@ -36,18 +36,6 @@ var (
 	StartTime = time.Now()
 )
 
-func parseCIDRs(cidrs []string) ([]*net.IPNet, error) {
-	nets := make([]*net.IPNet, len(cidrs))
-	for i := range cidrs {
-		_, net, err := net.ParseCIDR(cidrs[i])
-		if err != nil {
-			return nil, errors.Wrap(err, "parsing CIDR string")
-		}
-		nets[i] = net
-	}
-	return nets, nil
-}
-
 func main() {
 	flag.Parse()
 
