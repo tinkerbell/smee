@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 
-	"github.com/tinkerbell/boots/env"
-	"github.com/tinkerbell/boots/job"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/job"
 
 	"github.com/avast/retry-go"
 )
@@ -71,8 +71,6 @@ func getCircuitID(req *dhcp4.Packet) (string, error) {
 		} else {
 			return circuitID, errors.New("option82 option1 out of bounds (check eightytwo[1])")
 		}
-	} else {
-		return circuitID, errors.New("option82 information not available for this mac")
 	}
 	return circuitID, nil
 }
