@@ -1,10 +1,9 @@
 package job
 
 import (
-	"bytes"
 	"net"
 
-	"github.com/packethost/tinkerbell/packet"
+	"github.com/tinkerbell/boots/packet"
 )
 
 var rescueOS = &packet.OperatingSystem{
@@ -173,9 +172,10 @@ func (j Job) PrimaryNIC() net.HardwareAddr {
 	return j.mac
 }
 
-func (j Job) isPrimaryNIC(mac net.HardwareAddr) bool {
-	return bytes.Equal(mac, j.PrimaryNIC())
-}
+// golangci-lint: unused
+//func (j Job) isPrimaryNIC(mac net.HardwareAddr) bool {
+//	return bytes.Equal(mac, j.PrimaryNIC())
+//}
 
 // HardwareState will return (enrolled burn_in preinstallable preinstalling failed_preinstall provisionable provisioning deprovisioning in_use)
 func (j Job) HardwareState() string {

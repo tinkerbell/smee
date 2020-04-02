@@ -3,8 +3,8 @@ package osie
 import (
 	"strings"
 
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/ipxe"
+	"github.com/tinkerbell/boots/job"
 )
 
 func init() {
@@ -130,7 +130,7 @@ func isCustomOsie(j job.Job) bool {
 	return false
 }
 
-// OsieBaseUrl returns the value of Osie Custom Service Version, or tinkerbell/osie
+// OsieBaseUrl returns the value of Osie Custom Service Version, or boots/osie
 func osieBaseUrl(j job.Job) string {
 	if isCustomOsie(j) {
 		return osieURL + "/" + j.ServicesVersion().Osie

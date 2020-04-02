@@ -240,7 +240,6 @@ parsePid:
 
 trimColon:
 	m.msg = bytes.TrimPrefix(b, []byte{':', ' '})
-	return
 }
 
 func (m *message) parsePriority() bool {

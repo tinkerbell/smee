@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/job"
 	"github.com/stretchr/testify/require"
 )
 

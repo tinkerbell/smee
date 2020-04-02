@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/ipxe"
+	"github.com/tinkerbell/boots/job"
 	"github.com/pkg/errors"
 )
 

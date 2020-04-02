@@ -2,7 +2,7 @@ MAKEFLAGS += --no-builtin-rules
 .PHONY: ${binary} dc gen test
 .SUFFIXES:
 
-binary := tinkerbell
+binary := boots
 all: ${binary}
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
@@ -16,8 +16,7 @@ export GOBIN
 endif
 
 ipxe/bindata.go:
-	PATH=$$GOBIN:$$PATH go install ./vendor/github.com/jteeuwen/go-bindata/go-bindata
-	PATH=$$GOBIN:$$PATH $(MAKE) -C ipxe
+	$(MAKE) -C ipxe
 
 ifeq ($(CI),drone)
 run: ${binary}
@@ -27,7 +26,7 @@ test:
 else
 run: ${binary}
 	docker-compose up -d --build cacher
-	docker-compose up --build tinkerbell
+	docker-compose up --build boots
 test:
 	docker-compose up -d --build cacher
 endif

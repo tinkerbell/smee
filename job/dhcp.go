@@ -3,11 +3,11 @@ package job
 import (
 	"strings"
 
+	"github.com/tinkerbell/boots/dhcp"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/ipxe"
+	"github.com/tinkerbell/boots/packet"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/packet"
 	"github.com/pkg/errors"
 )
 
@@ -90,7 +90,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 
 		// ignore custom_ipxe because we always do dhcp for it and we'll want to do /nonexistent filename so
 		// nics don't timeout.... but why though?
-		if j.isPXEAllowed() == false && j.instance.OS.OsSlug != "custom_ipxe" {
+		if !j.isPXEAllowed() && j.instance.OS.OsSlug != "custom_ipxe" {
 			err := errors.New("device should NOT be trying to PXE boot")
 			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.instance.OS.OsSlug).Info(err)
 			return
@@ -100,7 +100,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 
 	var filename string
 	var pxeClient bool
-	if isPacket == false {
+	if !isPacket {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "snp-hua.efi"
 		} else if isARM {
@@ -110,7 +110,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		} else {
 			filename = "undionly.kpxe"
 		}
-	} else if j.isPXEAllowed() == false {
+	} else if !j.isPXEAllowed() {
 		// Always honor allow_pxe.
 		// We set a filename because if a machine is actually trying to PXE and nothing is sent it may hang for
 		// a while waiting for any possible ProxyDHCP packets and it would delay booting to disks and phoning-home.

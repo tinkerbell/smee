@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/packethost/tinkerbell/env"
+	"github.com/tinkerbell/boots/env"
 	"github.com/pkg/errors"
 )
 

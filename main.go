@@ -2,26 +2,25 @@ package main
 
 import (
 	"flag"
-	"net"
 	"time"
 
+	"github.com/tinkerbell/boots/dhcp"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/packet"
+	"github.com/tinkerbell/boots/syslog"
+	"github.com/tinkerbell/boots/tftp"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/httplog"
-	"github.com/packethost/tinkerbell/installers"
-	"github.com/packethost/tinkerbell/job"
-	"github.com/packethost/tinkerbell/packet"
-	"github.com/packethost/tinkerbell/syslog"
-	"github.com/packethost/tinkerbell/tftp"
 	"github.com/pkg/errors"
 
-	_ "github.com/packethost/tinkerbell/installers/coreos"
-	_ "github.com/packethost/tinkerbell/installers/custom_ipxe"
-	_ "github.com/packethost/tinkerbell/installers/nixos"
-	_ "github.com/packethost/tinkerbell/installers/osie"
-	_ "github.com/packethost/tinkerbell/installers/rancher"
-	_ "github.com/packethost/tinkerbell/installers/vmware"
+	_ "github.com/tinkerbell/boots/installers/coreos"
+	_ "github.com/tinkerbell/boots/installers/custom_ipxe"
+	_ "github.com/tinkerbell/boots/installers/nixos"
+	_ "github.com/tinkerbell/boots/installers/osie"
+	_ "github.com/tinkerbell/boots/installers/rancher"
+	_ "github.com/tinkerbell/boots/installers/vmware"
 
 	"github.com/avast/retry-go"
 )
@@ -36,22 +35,10 @@ var (
 	StartTime = time.Now()
 )
 
-func parseCIDRs(cidrs []string) ([]*net.IPNet, error) {
-	nets := make([]*net.IPNet, len(cidrs))
-	for i := range cidrs {
-		_, net, err := net.ParseCIDR(cidrs[i])
-		if err != nil {
-			return nil, errors.Wrap(err, "parsing CIDR string")
-		}
-		nets[i] = net
-	}
-	return nets, nil
-}
-
 func main() {
 	flag.Parse()
 
-	l, err := log.Init("github.com/packethost/tinkerbell")
+	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
 		panic(nil)
 	}

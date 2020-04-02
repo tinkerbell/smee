@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/packet"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/tinkerbell/httplog"
-	"github.com/packethost/tinkerbell/packet"
 )
 
 func TestMain(m *testing.M) {
@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	os.Setenv("ROLLBAR_DISABLE", "1")
 	os.Setenv("ROLLBAR_TOKEN", "1")
 
-	joblog, _ = log.Init("github.com/packethost/tinkerbell")
+	joblog, _ = log.Init("github.com/tinkerbell/boots")
 	httplog.Init(joblog)
 	os.Exit(m.Run())
 }

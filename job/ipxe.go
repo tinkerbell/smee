@@ -3,8 +3,8 @@ package job
 import (
 	"net/http"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/ipxe"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/ipxe"
 	"github.com/pkg/errors"
 )
 

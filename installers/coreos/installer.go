@@ -3,9 +3,9 @@ package coreos
 import (
 	"strings"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/files/ignition"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/job"
 )
 
 func getInstallOpts(j job.Job, channel, facilityCode string) string {
@@ -62,8 +62,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	}
 
 	installOpts := getInstallOpts(j, channel, facilityCode)
-	var lines []string
-	lines = []string{
+	lines := []string{
 		// Install to disk:
 		`/usr/bin/curl -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
 		"/usr/bin/" + distro + "-install " + installOpts,

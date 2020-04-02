@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/httplog"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/job"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"

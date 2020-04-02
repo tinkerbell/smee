@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/tinkerbell/boots/env"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/env"
 )
 
 const (
@@ -172,7 +172,6 @@ func formatOption(info *optionInfo, b []byte) (string, string) {
 			buf = strconv.AppendUint(buf, uint64(c), 16)
 		}
 		b = buf
-		break
 	case "bool":
 		if len(b) == 1 && b[0] == 1 {
 			return info.Name, "true"
