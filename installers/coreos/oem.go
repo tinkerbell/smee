@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/files/tarball"
-	"github.com/packethost/tinkerbell/installers"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/files/tarball"
+	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/job"
 )
 
 func init() {

@@ -3,7 +3,7 @@ package ignition
 import (
 	"encoding/json"
 
-	"github.com/packethost/tinkerbell/files/unit"
+	"github.com/tinkerbell/boots/files/unit"
 	"github.com/pkg/errors"
 )
 

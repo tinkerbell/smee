@@ -28,7 +28,7 @@ func (s *Script) AppendString(s_script string) *Script {
 	return s
 }
 
-// PhoneHome takes a type and will post tinkerbell device connected to dhcp event
+// PhoneHome takes a type and will post boots device connected to dhcp event
 func (s *Script) PhoneHome(typ string) *Script {
 	s.buf = append(s.buf, `
 params

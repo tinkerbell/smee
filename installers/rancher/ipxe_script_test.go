@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/packethost/tinkerbell/ipxe"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/ipxe"
+	"github.com/tinkerbell/boots/job"
 )
 
 var facility = func() string {

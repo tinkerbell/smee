@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/packethost/tinkerbell/files/ignition"
-	"github.com/packethost/tinkerbell/files/unit"
-	"github.com/packethost/tinkerbell/installers"
-	"github.com/packethost/tinkerbell/job"
+	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/files/unit"
+	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/job"
 )
 
 func init() {

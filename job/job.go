@@ -4,10 +4,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/tinkerbell/boots/dhcp"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/packet"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/tinkerbell/dhcp"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/packet"
 	"github.com/pkg/errors"
 )
 
@@ -95,9 +95,10 @@ func (j Job) MarkDeviceActive() {
 	}
 }
 
-func (j Job) markFailed(reason string) {
-	j.postFailure(reason)
-}
+// golangci-lint: unused
+//func (j Job) markFailed(reason string) {
+//	j.postFailure(reason)
+//}
 
 func (j *Job) setup(d *packet.Discovery) error {
 	mode, netConfig := d.Mode(j.mac), d.NetConfig(j.mac)

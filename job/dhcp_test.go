@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/packet"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/tinkerbell/env"
-	"github.com/packethost/tinkerbell/packet"
 )
 
 func TestSetPXEFilename(t *testing.T) {
-	env.PublicFQDN = "tinkerbell-testing.packet.net"
+	env.PublicFQDN = "boots-testing.packet.net"
 
 	var setPXEFilenameTests = []struct {
 		hState   string

@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/tinkerbell/boots/httplog"
 	"github.com/packethost/cacher/client"
 	"github.com/packethost/cacher/protos/cacher"
-	"github.com/packethost/tinkerbell/httplog"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
@@ -123,13 +123,14 @@ func (c *Client) addHeaders(req *http.Request) {
 	}
 }
 
-func (c *Client) do(fn func() (*http.Request, error), v interface{}) error {
-	req, err := fn()
-	if err != nil {
-		return err
-	}
-	return c.Do(req, v)
-}
+// golangci-lint: unused
+//func (c *Client) do(fn func() (*http.Request, error), v interface{}) error {
+//	req, err := fn()
+//	if err != nil {
+//		return err
+//	}
+//	return c.Do(req, v)
+//}
 
 func unmarshalResponse(res *http.Response, result interface{}) error {
 	defer res.Body.Close()
