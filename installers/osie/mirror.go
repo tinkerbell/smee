@@ -1,7 +1,6 @@
 package osie
 
 import (
-	"log"
 	"net/url"
 	"os"
 
@@ -61,7 +60,7 @@ func buildWorkerParams() {
 func getParam(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Fatal(errors.New("invalid" + key))
+		logger.Fatal(errors.New("invalid" + key))
 	}
 	return value
 }

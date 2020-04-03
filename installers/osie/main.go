@@ -3,6 +3,7 @@ package osie
 import (
 	"strings"
 
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -11,6 +12,8 @@ func init() {
 	job.RegisterDefaultInstaller(bootScripts["install"])
 	job.RegisterDistro("alpine", bootScripts["rescue"])
 }
+
+var logger log.Logger
 
 var bootScripts = map[string]func(job.Job, *ipxe.Script){
 	"rescue": func(j job.Job, s *ipxe.Script) {
@@ -25,7 +28,7 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 			typ = "deprovisioning.304.1"
 		}
 		s.PhoneHome(typ)
-		if canWorkflow(j) {
+		if j.CanWorkflow() {
 			s.Set("action", "workflow")
 		} else {
 			s.Set("action", "install")
@@ -36,6 +39,7 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 }
 
 func bootScript(action string, j job.Job, s *ipxe.Script) {
+	logger = j.Logger
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
@@ -68,7 +72,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 		s.Args("packet_base_url=" + osieBaseUrl(j))
 	}
 
-	if canWorkflow(j) {
+	if j.CanWorkflow() {
 		buildWorkerParams()
 		s.Args("docker_registry=" + dockerRegistry)
 		s.Args("grpc_authority=" + grpcAuthority)
@@ -158,8 +162,4 @@ func osieBaseUrl(j job.Job) string {
 
 func workflowBaseURL() string {
 	return mirrorBaseURL + "/workflow"
-}
-
-func canWorkflow(j job.Job) bool {
-	return j.CanWorkflow()
 }
