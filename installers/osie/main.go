@@ -25,7 +25,11 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 			typ = "deprovisioning.304.1"
 		}
 		s.PhoneHome(typ)
-		s.Set("action", "install")
+		if canWorkflow(j) {
+			s.Set("action", "workflow")
+		} else {
+			s.Set("action", "install")
+		}
 		s.Set("state", j.HardwareState())
 		bootScript("install", j, s)
 	},
@@ -59,9 +63,23 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
+
 	if isCustomOsie(j) {
 		s.Args("packet_base_url=" + osieBaseUrl(j))
 	}
+
+	if canWorkflow(j) {
+		buildWorkerParams()
+		s.Args("docker_registry=" + dockerRegistry)
+		s.Args("grpc_authority=" + grpcAuthority)
+		s.Args("grpc_cert_url=" + grpcCertURL)
+		s.Args("registry_username=" + registryUsername)
+		s.Args("registry_password=" + registryPassword)
+		s.Args("elastic_search_url=" + elasticSearchURL)
+		s.Args("packet_base_url=" + workflowBaseURL())
+		s.Args("worker_id=" + j.HardwareID())
+	}
+
 	s.Args("packet_bootdev_mac=${bootdevmac}")
 	s.Args("facility=" + j.FacilityCode())
 
@@ -136,4 +154,12 @@ func osieBaseUrl(j job.Job) string {
 		return osieURL + "/" + j.ServicesVersion().Osie
 	}
 	return osieURL + "/current"
+}
+
+func workflowBaseURL() string {
+	return mirrorBaseURL + "/workflow"
+}
+
+func canWorkflow(j job.Job) bool {
+	return j.CanWorkflow()
 }
