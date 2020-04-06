@@ -8,6 +8,11 @@ This services handles DHCP, PXE, tftp, and iPXE for provisions.
 First, you need to make sure you have [git-lfs](https://github.com/git-lfs/git-lfs/wiki/Installation) installed:
 
 ```
+# install "git-lfs" package for your OS, i.e.:
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+apt install git-lfs
+
+# then run these two commands:
 git lfs install
 git lfs pull
 ```
