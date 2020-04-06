@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/installers"
 )
 
 const (
@@ -60,7 +61,7 @@ func buildWorkerParams() {
 func getParam(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		logger.Fatal(errors.New("invalid" + key))
+		installers.Logger("osie").Fatal(errors.New("invalid" + key))
 	}
 	return value
 }

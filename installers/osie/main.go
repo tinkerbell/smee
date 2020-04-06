@@ -3,7 +3,6 @@ package osie
 import (
 	"strings"
 
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -12,8 +11,6 @@ func init() {
 	job.RegisterDefaultInstaller(bootScripts["install"])
 	job.RegisterDistro("alpine", bootScripts["rescue"])
 }
-
-var logger log.Logger
 
 var bootScripts = map[string]func(job.Job, *ipxe.Script){
 	"rescue": func(j job.Job, s *ipxe.Script) {
@@ -39,7 +36,6 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 }
 
 func bootScript(action string, j job.Job, s *ipxe.Script) {
-	logger = j.Logger
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
