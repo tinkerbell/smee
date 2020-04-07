@@ -4,8 +4,9 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/tinkerbell/boots/env"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/installers"
 )
 
 const (
@@ -13,7 +14,12 @@ const (
 )
 
 var (
-	osieURL = mustBuildOsieURL().String()
+	osieURL                            = mustBuildOsieURL().String()
+	mirrorBaseURL                      = env.MirrorBaseUrl
+	dockerRegistry                     string
+	grpcAuthority, grpcCertURL         string
+	registryUsername, registryPassword string
+	elasticSearchURL                   string
 )
 
 func buildOsieURL() (*url.URL, error) {
@@ -41,4 +47,21 @@ func mustBuildOsieURL() *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+func buildWorkerParams() {
+	dockerRegistry = getParam("DOCKER_REGISTRY")
+	grpcAuthority = getParam("TINKERBELL_GRPC_AUTHORITY")
+	grpcCertURL = getParam("TINKERBELL_CERT_URL")
+	registryUsername = getParam("REGISTRY_USERNAME")
+	registryPassword = getParam("REGISTRY_PASSWORD")
+	elasticSearchURL = getParam("ELASTIC_SEARCH_URL")
+}
+
+func getParam(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
+	}
+	return value
 }

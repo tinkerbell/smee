@@ -249,6 +249,7 @@ type Hardware struct {
 	PrivateSubnets  []string        `json:"private_subnets,omitempty"`
 	UEFI            bool            `json:"efi_boot"`
 	AllowPXE        bool            `json:"allow_pxe"`
+	AllowWorkflow   bool            `json:"allow_workflow"`
 	ServicesVersion ServicesVersion `json:"services"`
 
 	Instance *Instance `json:"instance"`
