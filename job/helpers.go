@@ -191,3 +191,8 @@ func (j Job) ServicesVersion() packet.ServicesVersion {
 	}
 	return packet.ServicesVersion{}
 }
+
+// CanWorkflow checks if workflow is allowed
+func (j Job) CanWorkflow() bool {
+	return j.hardware.AllowWorkflow
+}
