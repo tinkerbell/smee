@@ -61,7 +61,7 @@ func buildWorkerParams() {
 func getParam(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		installers.Logger("osie").Fatal(errors.New("invalid" + key))
+		installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
 	}
 	return value
 }
