@@ -4,6 +4,8 @@ import (
 	"flag"
 	"time"
 
+	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/httplog"
@@ -12,8 +14,6 @@ import (
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/boots/tftp"
-	"github.com/packethost/pkg/log"
-	"github.com/pkg/errors"
 
 	_ "github.com/tinkerbell/boots/installers/coreos"
 	_ "github.com/tinkerbell/boots/installers/custom_ipxe"

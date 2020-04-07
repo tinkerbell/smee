@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"text/template"
 
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
-	"github.com/pkg/errors"
 )
 
 func init() {

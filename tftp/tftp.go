@@ -7,9 +7,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/tinkerbell/boots/ipxe"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/ipxe"
 )
 
 var tftpFiles = map[string][]byte{

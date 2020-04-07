@@ -3,8 +3,8 @@ package ignition
 import (
 	"encoding/json"
 
-	"github.com/tinkerbell/boots/files/unit"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/files/unit"
 )
 
 type SystemdUnit struct {
