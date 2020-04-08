@@ -4,10 +4,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
-	"github.com/pkg/errors"
 )
 
 func buildInitPaths() map[string]string {

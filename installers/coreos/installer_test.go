@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/files/ignition"
 	"github.com/tinkerbell/boots/job"
-	"github.com/stretchr/testify/require"
 )
 
 func assertLines(t *testing.T, m job.Mock, execLines []string) {

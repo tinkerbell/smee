@@ -3,9 +3,9 @@ package job
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/ipxe"
-	"github.com/pkg/errors"
 )
 
 var (

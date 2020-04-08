@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tinkerbell/boots/env"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/env"
 )
 
 var (

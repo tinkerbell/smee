@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
+	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/packet"
-	dhcp4 "github.com/packethost/dhcp4-go"
 )
 
 func TestSetPXEFilename(t *testing.T) {

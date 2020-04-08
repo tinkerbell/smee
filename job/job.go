@@ -4,11 +4,11 @@ import (
 	"net"
 	"time"
 
+	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/packet"
-	"github.com/packethost/pkg/log"
-	"github.com/pkg/errors"
 )
 
 var client *packet.Client

@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
+	"github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/job"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDetermineDisk(t *testing.T) {
