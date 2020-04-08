@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/tinkerbell/boots/packet"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/packet"
 )
 
 func (j Job) CustomPXEDone() {

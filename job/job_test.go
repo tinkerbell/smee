@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/packet"
-	"github.com/packethost/pkg/log"
 )
 
 func TestMain(m *testing.M) {

@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/tinkerbell/boots/job"
 	l "github.com/packethost/pkg/log"
+	"github.com/tinkerbell/boots/job"
 )
 
 func TestMain(m *testing.M) {
