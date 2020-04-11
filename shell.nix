@@ -16,6 +16,7 @@ mkShell {
     git-lfs
     gnumake
     go
+    go-bindata
     pkgsCross.aarch64-multiplatform.buildPackages.gcc
     xz
   ];

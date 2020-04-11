@@ -16,8 +16,7 @@ export GOBIN
 endif
 
 ipxe/bindata.go:
-	PATH=$$GOBIN:$$PATH go install ./vendor/github.com/jteeuwen/go-bindata/go-bindata
-	PATH=$$GOBIN:$$PATH $(MAKE) -C ipxe
+	$(MAKE) -C ipxe
 
 ifeq ($(CI),drone)
 run: ${binary}
