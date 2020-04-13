@@ -12,6 +12,13 @@ var rescueOS = &packet.OperatingSystem{
 	Version: "3",
 }
 
+func (j Job) Console() string {
+	if h := j.hardware; h != nil {
+		return h.Console
+	}
+	return ""
+}
+
 func (j Job) IsARM() bool {
 	return j.Arch() == "aarch64"
 }

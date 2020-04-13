@@ -108,18 +108,20 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 
 	s.Args("initrd=" + initrdPath(j))
 
-	var console string
-	if j.IsARM() {
-		console = "ttyAMA0"
-		if j.PlanSlug() == "baremetal_hua" {
-			console = "ttyS0"
-		}
-	} else {
-		s.Args("console=tty0")
-		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" {
-			console = "ttyS0"
+	console := j.Console()
+	if j.Console() == "" {
+		if j.IsARM() {
+			console = "ttyAMA0"
+			if j.PlanSlug() == "baremetal_hua" {
+				console = "ttyS0"
+			}
 		} else {
-			console = "ttyS1"
+			s.Args("console=tty0")
+			if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" {
+				console = "ttyS0"
+			} else {
+				console = "ttyS1"
+			}
 		}
 	}
 	s.Args("console=" + console + ",115200")

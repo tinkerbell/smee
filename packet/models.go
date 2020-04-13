@@ -251,6 +251,7 @@ type Hardware struct {
 	AllowPXE        bool            `json:"allow_pxe"`
 	AllowWorkflow   bool            `json:"allow_workflow"`
 	ServicesVersion ServicesVersion `json:"services"`
+	Console         string          `json:"console"`
 
 	Instance *Instance `json:"instance"`
 }
