@@ -6,6 +6,7 @@ require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/betawaffle/tftp-go v0.0.0-20160921192434-dc649c1318ff
+	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
 	github.com/golang/groupcache v0.0.0-20180513044358-24b0969c4cb7
 	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348

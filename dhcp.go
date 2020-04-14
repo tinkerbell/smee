@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"runtime"
 
 	"github.com/avast/retry-go"
+	"github.com/gammazero/workerpool"
 	dhcp4 "github.com/packethost/dhcp4-go"
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
@@ -18,9 +21,13 @@ func init() {
 
 // ServeDHCP is a useless comment
 func ServeDHCP() {
+	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
+	handler := dhcpHandler{pool: workerpool.New(poolSize)}
+	defer handler.pool.Stop()
+
 	err := retry.Do(
 		func() error {
-			return errors.Wrap(dhcp4.ListenAndServe(listenAddr, dhcpHandler{}), "serving dhcp")
+			return errors.Wrap(dhcp4.ListenAndServe(listenAddr, handler), "serving dhcp")
 		},
 	)
 	if err != nil {
@@ -29,9 +36,14 @@ func ServeDHCP() {
 }
 
 type dhcpHandler struct {
+	pool *workerpool.WorkerPool
 }
 
-func (dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
+func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
+	d.pool.Submit(func() { d.serveDHCP(w, req) })
+}
+
+func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
 	if conf.ShouldIgnoreOUI(mac.String()) {
 		mainlog.With("mac", mac).Info("mac is in ignore list")
