@@ -134,6 +134,7 @@ func (c *Client) addHeaders(req *http.Request) {
 
 func unmarshalResponse(res *http.Response, result interface{}) error {
 	defer res.Body.Close()
+	defer io.Copy(ioutil.Discard, res.Body) // ensure all of the body is read so we can quickly reuse connection
 
 	if res.StatusCode < 200 || res.StatusCode > 399 {
 		e := &httpError{
@@ -145,12 +146,10 @@ func unmarshalResponse(res *http.Response, result interface{}) error {
 
 	var err error
 	if result == nil {
-		_, err = io.Copy(ioutil.Discard, res.Body)
-		err = errors.Wrap(err, "discard errors response body")
-	} else {
-		err = errors.Wrap(json.NewDecoder(res.Body).Decode(result), "decode json body")
+		return nil
 	}
 
+	err = errors.Wrap(json.NewDecoder(res.Body).Decode(result), "decode json body")
 	if err == nil {
 		return nil
 	}
