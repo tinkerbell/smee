@@ -135,7 +135,7 @@ func (c *Client) addHeaders(req *http.Request) {
 func unmarshalResponse(res *http.Response, result interface{}) error {
 	defer res.Body.Close()
 
-	if res.StatusCode > 399 || res.StatusCode < 200 {
+	if res.StatusCode < 200 || res.StatusCode > 399 {
 		e := &httpError{
 			StatusCode: res.StatusCode,
 		}
