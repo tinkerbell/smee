@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 
 	"github.com/packethost/cacher/client"
 	"github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
 	"google.golang.org/grpc"
@@ -30,11 +32,19 @@ type Client struct {
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
-	t := &httplog.Transport{
-		RoundTripper: http.DefaultTransport,
+	t, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("unexpected type for http.DefaultTransport")
+
 	}
+
+	transport := t.Clone()
+	transport.MaxIdleConnsPerHost = env.Int("BOOTS_HTTP_HOST_CONNECTIONS", runtime.GOMAXPROCS(0)/2)
+
 	c := &http.Client{
-		Transport: t,
+		Transport: &httplog.Transport{
+			RoundTripper: transport,
+		},
 	}
 
 	facility := os.Getenv("FACILITY_CODE")
