@@ -54,7 +54,19 @@ func main() {
 	tftp.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	client, err = packet.NewClient(conf.Require("API_CONSUMER_TOKEN"), conf.Require("API_AUTH_TOKEN"), apiBaseURL)
+	consumer := env.Get("API_CONSUMER_TOKEN")
+	if consumer == "" {
+		err := errors.New("required envvar missing")
+		mainlog.With("envvar", "API_CONSUMER_TOKEN").Fatal(err)
+		panic(err)
+	}
+	auth := env.Get("API_AUTH_TOKEN")
+	if auth == "" {
+		err := errors.New("required envvar missing")
+		mainlog.With("envvar", "API_AUTH_TOKEN").Fatal(err)
+		panic(err)
+	}
+	client, err = packet.NewClient(consumer, auth, apiBaseURL)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
