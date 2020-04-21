@@ -1,7 +1,7 @@
 package coreos
 
 import (
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -17,7 +17,7 @@ func init() {
 
 func bootScript(j job.Job, s *ipxe.Script) {
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", env.MirrorURL)
+	s.Set("base-url", conf.MirrorURL)
 	s.Kernel("${base-url}/" + kernelPath(j))
 
 	kernelParams(j, s)

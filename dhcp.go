@@ -5,13 +5,13 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 
 	"github.com/avast/retry-go"
 )
 
-var listenAddr = env.BOOTPBind
+var listenAddr = conf.BOOTPBind
 
 func init() {
 	flag.StringVar(&listenAddr, "dhcp-addr", listenAddr, "IP and port to listen on for DHCP.")
@@ -34,13 +34,13 @@ type dhcpHandler struct {
 
 func (dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
-	if env.ShouldIgnoreOUI(mac.String()) {
+	if conf.ShouldIgnoreOUI(mac.String()) {
 		mainlog.With("mac", mac).Info("mac is in ignore list")
 		return
 	}
 
 	gi := req.GetGIAddr()
-	if env.ShouldIgnoreGI(gi.String()) {
+	if conf.ShouldIgnoreGI(gi.String()) {
 		mainlog.With("giaddr", gi).Info("giaddr is in ignore list")
 		return
 	}

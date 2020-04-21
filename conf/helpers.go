@@ -1,4 +1,4 @@
-package env
+package conf
 
 import (
 	"net/url"

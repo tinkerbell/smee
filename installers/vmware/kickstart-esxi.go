@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
 )
@@ -369,7 +369,7 @@ var helpers = template.FuncMap{
 	"vmnic":     vmnic,
 	"rootpw":    rootpw,
 	"disk":      determineDisk,
-	"tink_host": func() string { return env.PublicIPv4.String() },
+	"tink_host": func() string { return conf.PublicIPv4.String() },
 }
 
 func vmnic(j job.Job) string {

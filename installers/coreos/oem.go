@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/files/tarball"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
@@ -28,7 +28,7 @@ func serveOEM(w http.ResponseWriter, req *http.Request) {
 
 	args := []string{
 		"bonding.max_bonds=0",
-		"systemd.setenv=phone_home_url=http://" + env.PublicIPv4.String() + "/phone-home",
+		"systemd.setenv=phone_home_url=http://" + conf.PublicIPv4.String() + "/phone-home",
 		"coreos.autologin",
 	}
 

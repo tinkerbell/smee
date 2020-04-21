@@ -1,7 +1,7 @@
 package vmware
 
 import (
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -41,7 +41,7 @@ func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
 func bootScriptVmwareEsxi(j job.Job, s *ipxe.Script, basePath string) {
 	s.DHCP()
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", env.MirrorBaseUrl+basePath)
+	s.Set("base-url", conf.MirrorBaseUrl+basePath)
 	if j.IsUEFI() {
 		s.Kernel("${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg")
 	} else {

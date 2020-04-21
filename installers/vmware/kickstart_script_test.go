@@ -8,7 +8,7 @@ import (
 
 	"github.com/andreyvit/diff"
 	"github.com/stretchr/testify/require"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 )
 
@@ -28,8 +28,8 @@ func TestScriptKickstart(t *testing.T) {
 	manufacturers := []string{"supermicro", "dell"}
 	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7"}
 	assert := require.New(t)
-	env.MirrorBaseIP = "http://127.0.0.1"
-	env.PublicIPv4 = net.ParseIP("127.0.0.1")
+	conf.MirrorBaseIP = "http://127.0.0.1"
+	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
 
 	for _, man := range manufacturers {
 		for _, ver := range versions {

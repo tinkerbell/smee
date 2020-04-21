@@ -6,8 +6,8 @@ import (
 
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/packet"
 )
 
@@ -121,9 +121,9 @@ func (j *Job) setup(d *packet.Discovery) error {
 	j.Logger.With("mode", mode).Info("job setup configured")
 
 	j.dhcp.Setup(netConfig.Address, netConfig.Netmask, netConfig.Gateway)
-	j.dhcp.SetLeaseTime(env.DHCPLeaseTime)
-	j.dhcp.SetDHCPServer(env.PublicIPv4) // used for the unicast DHCPREQUEST
-	j.dhcp.SetDNSServers(env.DNSServers)
+	j.dhcp.SetLeaseTime(conf.DHCPLeaseTime)
+	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
+	j.dhcp.SetDNSServers(conf.DNSServers)
 
 	var hostname string
 	switch mode {

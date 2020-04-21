@@ -5,7 +5,7 @@ package coreos
 import (
 	"net"
 
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/files/unit"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/packet"
@@ -52,7 +52,7 @@ func configureNetworkUnit(j job.Job, u *unit.Unit) {
 	u.AddSection("Match", "Name="+bondName)
 	s := u.AddSection("Network")
 
-	for _, ip := range env.DNSServers {
+	for _, ip := range conf.DNSServers {
 		s.Add("DNS", ip.String())
 	}
 

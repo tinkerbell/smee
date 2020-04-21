@@ -6,8 +6,8 @@ import (
 
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
@@ -27,7 +27,7 @@ import (
 
 var (
 	client     *packet.Client
-	apiBaseURL = env.DefaultURL("API_BASE_URL", "https://api.packet.net")
+	apiBaseURL = conf.DefaultURL("API_BASE_URL", "https://api.packet.net")
 
 	mainlog log.Logger
 
@@ -45,7 +45,7 @@ func main() {
 	defer l.Close()
 	mainlog = l.Package("main")
 	dhcp.Init(l)
-	env.Init(l)
+	conf.Init(l)
 	httplog.Init(l)
 	installers.Init(l)
 	job.Init(l)
@@ -53,7 +53,7 @@ func main() {
 	tftp.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	client, err = packet.NewClient(env.Require("API_CONSUMER_TOKEN"), env.Require("API_AUTH_TOKEN"), apiBaseURL)
+	client, err = packet.NewClient(conf.Require("API_CONSUMER_TOKEN"), conf.Require("API_AUTH_TOKEN"), apiBaseURL)
 	if err != nil {
 		mainlog.Fatal(err)
 	}

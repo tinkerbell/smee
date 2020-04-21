@@ -1,4 +1,4 @@
-package env
+package conf
 
 import (
 	"net"
@@ -177,7 +177,7 @@ func parseTrustedProxies() (result []string) {
 }
 
 func mustDHCPLeaseTime() time.Duration {
-	dur, err := time.ParseDuration(Default("DHCP_LEASE_TIME", (3 * 24 * time.Hour).String()))
+	dur, err := time.ParseDuration(Default("DHCP_LEASE_TIME", (2 * 24 * time.Hour).String()))
 	if err != nil {
 		panic("failed to parse DHCP_LEASE_TIME")
 	}

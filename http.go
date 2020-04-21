@@ -15,13 +15,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/job"
 )
 
 var (
-	httpAddr = env.HTTPBind
+	httpAddr = conf.HTTPBind
 )
 
 func init() {
@@ -72,9 +72,9 @@ func ServeHTTP() {
 	http.HandleFunc("/hardware-components", serveHardware)
 
 	var h http.Handler
-	if len(env.TrustedProxies) > 0 {
+	if len(conf.TrustedProxies) > 0 {
 		xffmw, _ := xff.New(xff.Options{
-			AllowedSubnets: env.TrustedProxies,
+			AllowedSubnets: conf.TrustedProxies,
 		})
 
 		h = xffmw.Handler(&httplog.Handler{

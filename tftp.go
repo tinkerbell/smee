@@ -10,12 +10,12 @@ import (
 	"github.com/avast/retry-go"
 	tftp "github.com/betawaffle/tftp-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 )
 
 var (
-	tftpAddr = env.TFTPBind
+	tftpAddr = conf.TFTPBind
 )
 
 func init() {
