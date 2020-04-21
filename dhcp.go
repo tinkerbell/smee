@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 
+	"github.com/avast/retry-go"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
-
-	"github.com/avast/retry-go"
 )
 
 var listenAddr = conf.BOOTPBind

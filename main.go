@@ -4,6 +4,7 @@ import (
 	"flag"
 	"time"
 
+	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
@@ -27,7 +28,7 @@ import (
 
 var (
 	client     *packet.Client
-	apiBaseURL = conf.DefaultURL("API_BASE_URL", "https://api.packet.net")
+	apiBaseURL = env.URL("API_BASE_URL", "https://api.packet.net")
 
 	mainlog log.Logger
 

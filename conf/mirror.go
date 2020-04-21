@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 )
 
@@ -76,7 +77,7 @@ func buildMirrorBaseURL() (*url.URL, error) {
 }
 
 func mustFigureOutFacility() string {
-	return Default("FACILITY_CODE", defaultFacility)
+	return env.Get("FACILITY_CODE", defaultFacility)
 }
 
 func mustFindMirrorIPBase() string {

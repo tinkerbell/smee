@@ -71,8 +71,8 @@ github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3 h1:8supPKTG058
 github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3/go.mod h1:au0lPCZ2iuxtRishqG637Ir4ADTbRLyKUMimXsERIUg=
 github.com/packethost/packngo v0.1.1-0.20180510203711-dff6ec250ba6/go.mod h1:otzZQXgoO96RTzDB/Hycg0qZcXZsWJGJRSXbmEIJ+4M=
 github.com/packethost/pkg v0.0.0-20190410153520-e8e15f4ce770/go.mod h1:cbOkI4WbX7B68Nj552pbadMrjVy2oMIVazIEo7z+qWQ=
-github.com/packethost/pkg v0.0.0-20190715213007-7c3a64b4b5e3 h1:gAPNlbHt/n4y2xlTFvymOAz7MKR0dH9EGeDFuUOkk6Y=
-github.com/packethost/pkg v0.0.0-20190715213007-7c3a64b4b5e3/go.mod h1:GkI1SaiEDaO+JsKjtcMsn/eDSU4/GD8CMin2b03fQvE=
+github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1 h1:iDclrzE6G/J0AAtTYHiOsdNA5t78/KfRWM0a0k2cMpE=
+github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1/go.mod h1:GkI1SaiEDaO+JsKjtcMsn/eDSU4/GD8CMin2b03fQvE=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3 h1:QcUVLV3NdkCVv4DxQkhgkxTsRvuXn+ZuSqD93mQYouc=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3/go.mod h1:nt3WBqCaQsbnxYVBoB4pF+F584z9PjdSVm29iu4gIBg=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

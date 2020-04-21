@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +21,7 @@ var (
 
 	// Default to Google Public DNS
 	DHCPLeaseTime = mustDHCPLeaseTime()
-	DNSServers    = parseIPv4s(Default("DNS_SERVERS", "8.8.8.8,8.8.4.4"))
+	DNSServers    = parseIPv4s(env.Get("DNS_SERVERS", "8.8.8.8,8.8.4.4"))
 
 	ignoredOUIs = getIgnoredMACs()
 	ignoredGIs  = getIgnoredGIs()
@@ -29,23 +30,23 @@ var (
 )
 
 func mustPublicFQDN() string {
-	return Default("PUBLIC_FQDN", PublicIPv4.String())
+	return env.Get("PUBLIC_FQDN", PublicIPv4.String())
 }
 
 func mustSyslogBind() string {
-	return Default("SYSLOG_BIND", PublicIPv4.String()+":514")
+	return env.Get("SYSLOG_BIND", PublicIPv4.String()+":514")
 }
 
 func mustHTTPBind() string {
-	return Default("HTTP_BIND", PublicIPv4.String()+":80")
+	return env.Get("HTTP_BIND", PublicIPv4.String()+":80")
 }
 
 func mustBOOTPBind() string {
-	return Default("BOOTP_BIND", PublicIPv4.String()+":67")
+	return env.Get("BOOTP_BIND", PublicIPv4.String()+":67")
 }
 
 func mustTFTPBind() string {
-	return Default("TFTP_BIND", PublicIPv4.String()+":69")
+	return env.Get("TFTP_BIND", PublicIPv4.String()+":69")
 }
 
 func mustPublicIPv4() net.IP {
@@ -177,9 +178,5 @@ func parseTrustedProxies() (result []string) {
 }
 
 func mustDHCPLeaseTime() time.Duration {
-	dur, err := time.ParseDuration(Default("DHCP_LEASE_TIME", (2 * 24 * time.Hour).String()))
-	if err != nil {
-		panic("failed to parse DHCP_LEASE_TIME")
-	}
-	return dur
+	return env.Duration("DHCP_LEASE_TIME", (2 * 24 * time.Hour))
 }
