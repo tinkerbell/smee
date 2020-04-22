@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -21,7 +21,7 @@ var facility = func() string {
 }()
 
 func TestScriptPerType(t *testing.T) {
-	env.MirrorBaseIP = "http://install.ewr1.packet.net"
+	conf.MirrorBaseIP = "http://install.ewr1.packet.net"
 	for typ, script := range type2pxe {
 		for version, bootScript := range versions {
 			t.Log(typ + ":" + version)

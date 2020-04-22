@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/packet"
 )
 
 func TestSetPXEFilename(t *testing.T) {
-	env.PublicFQDN = "boots-testing.packet.net"
+	conf.PublicFQDN = "boots-testing.packet.net"
 
 	var setPXEFilenameTests = []struct {
 		hState   string
@@ -47,7 +47,7 @@ func TestSetPXEFilename(t *testing.T) {
 		{packet: true,
 			filename: "/nonexistent"},
 		{packet: true, id: "$instance_id", allowPXE: true,
-			filename: "http://" + env.PublicFQDN + "/auto.ipxe"},
+			filename: "http://" + conf.PublicFQDN + "/auto.ipxe"},
 	}
 
 	for i, tt := range setPXEFilenameTests {

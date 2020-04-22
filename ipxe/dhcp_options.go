@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 )
 
 const (
@@ -65,7 +65,7 @@ var encapOptions = dhcp4.OptionMap{
 
 func Setup(rep *dhcp4.Packet) {
 	rep.SetOption(EncapsulatedOptions, encapOptions)
-	rep.SetIP(dhcp4.OptionLogServer, env.PublicIPv4) // Have iPXE send syslog to me.
+	rep.SetIP(dhcp4.OptionLogServer, conf.PublicIPv4) // Have iPXE send syslog to me.
 }
 
 var packetVersion = []byte{1, 0, 255}

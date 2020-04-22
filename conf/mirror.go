@@ -1,4 +1,4 @@
-package env
+package conf
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 var (
-	FacilityCode  = mustFigureOutFacility()
+	FacilityCode  = env.Get("FACILITY_CODE", defaultFacility)
 	mirrorURL     = mustBuildMirrorURL()
 	MirrorURL     = mirrorURL.String()
 	MirrorHost    = mirrorURL.Host
@@ -73,10 +74,6 @@ func buildMirrorBaseURL() (*url.URL, error) {
 		return nil, errors.Wrapf(err, "invalid default mirror host: %s", mirror)
 	}
 	return u, nil
-}
-
-func mustFigureOutFacility() string {
-	return Default("FACILITY_CODE", defaultFacility)
 }
 
 func mustFindMirrorIPBase() string {

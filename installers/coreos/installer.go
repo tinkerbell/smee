@@ -3,7 +3,7 @@ package coreos
 import (
 	"strings"
 
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
@@ -51,7 +51,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	}
 	facilityCode = j.FacilityCode()
 	if facilityCode == "" {
-		facilityCode = env.FacilityCode
+		facilityCode = conf.FacilityCode
 	}
 
 	var console string

@@ -5,8 +5,8 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
 )
@@ -126,7 +126,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		filename = "/nonexistent"
 	} else {
 		pxeClient = true
-		filename = "http://" + env.PublicFQDN + "/auto.ipxe"
+		filename = "http://" + conf.PublicFQDN + "/auto.ipxe"
 	}
 
 	if filename == "" {
@@ -135,5 +135,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, env.PublicIPv4, pxeClient)
+	dhcp.SetFilename(rep, filename, conf.PublicIPv4, pxeClient)
 }

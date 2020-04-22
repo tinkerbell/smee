@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/installers"
 )
 
@@ -15,7 +15,7 @@ const (
 
 var (
 	osieURL                            = mustBuildOsieURL().String()
-	mirrorBaseURL                      = env.MirrorBaseUrl
+	mirrorBaseURL                      = conf.MirrorBaseUrl
 	dockerRegistry                     string
 	grpcAuthority, grpcCertURL         string
 	registryUsername, registryPassword string
@@ -23,7 +23,7 @@ var (
 )
 
 func buildOsieURL() (*url.URL, error) {
-	base, err := url.Parse(env.MirrorBaseUrl)
+	base, err := url.Parse(conf.MirrorBaseUrl)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing MirrorBaseUrl")
 	}

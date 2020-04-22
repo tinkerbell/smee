@@ -4,10 +4,11 @@ import (
 	"flag"
 	"time"
 
+	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/env"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
@@ -27,7 +28,7 @@ import (
 
 var (
 	client     *packet.Client
-	apiBaseURL = env.DefaultURL("API_BASE_URL", "https://api.packet.net")
+	apiBaseURL = env.URL("API_BASE_URL", "https://api.packet.net")
 
 	mainlog log.Logger
 
@@ -45,7 +46,7 @@ func main() {
 	defer l.Close()
 	mainlog = l.Package("main")
 	dhcp.Init(l)
-	env.Init(l)
+	conf.Init(l)
 	httplog.Init(l)
 	installers.Init(l)
 	job.Init(l)
@@ -53,7 +54,19 @@ func main() {
 	tftp.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	client, err = packet.NewClient(env.Require("API_CONSUMER_TOKEN"), env.Require("API_AUTH_TOKEN"), apiBaseURL)
+	consumer := env.Get("API_CONSUMER_TOKEN")
+	if consumer == "" {
+		err := errors.New("required envvar missing")
+		mainlog.With("envvar", "API_CONSUMER_TOKEN").Fatal(err)
+		panic(err)
+	}
+	auth := env.Get("API_AUTH_TOKEN")
+	if auth == "" {
+		err := errors.New("required envvar missing")
+		mainlog.With("envvar", "API_AUTH_TOKEN").Fatal(err)
+		panic(err)
+	}
+	client, err = packet.NewClient(consumer, auth, apiBaseURL)
 	if err != nil {
 		mainlog.Fatal(err)
 	}

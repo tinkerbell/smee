@@ -16,6 +16,10 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/gammazero/deque v0.0.0-20200227231300-1e9af0e52b46 h1:iX4+rD9Fjdx8SkmSO/O5WAIX/j79ll3kuqv5VdYt9J8=
+github.com/gammazero/deque v0.0.0-20200227231300-1e9af0e52b46/go.mod h1:D90+MBHVc9Sk1lJAbEVgws0eYEurY4mv2TDso3Nxh3w=
+github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6 h1:1Cy/haf7XO4OyrkGid0Wq5CMluIErbvDptVAt8UTy38=
+github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6/go.mod h1:/XWO2YAUUpPi3smDlFBl0vpX0JHwUomDM/oRMwRmnSs=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
@@ -71,8 +75,8 @@ github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3 h1:8supPKTG058
 github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3/go.mod h1:au0lPCZ2iuxtRishqG637Ir4ADTbRLyKUMimXsERIUg=
 github.com/packethost/packngo v0.1.1-0.20180510203711-dff6ec250ba6/go.mod h1:otzZQXgoO96RTzDB/Hycg0qZcXZsWJGJRSXbmEIJ+4M=
 github.com/packethost/pkg v0.0.0-20190410153520-e8e15f4ce770/go.mod h1:cbOkI4WbX7B68Nj552pbadMrjVy2oMIVazIEo7z+qWQ=
-github.com/packethost/pkg v0.0.0-20190715213007-7c3a64b4b5e3 h1:gAPNlbHt/n4y2xlTFvymOAz7MKR0dH9EGeDFuUOkk6Y=
-github.com/packethost/pkg v0.0.0-20190715213007-7c3a64b4b5e3/go.mod h1:GkI1SaiEDaO+JsKjtcMsn/eDSU4/GD8CMin2b03fQvE=
+github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1 h1:iDclrzE6G/J0AAtTYHiOsdNA5t78/KfRWM0a0k2cMpE=
+github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1/go.mod h1:GkI1SaiEDaO+JsKjtcMsn/eDSU4/GD8CMin2b03fQvE=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3 h1:QcUVLV3NdkCVv4DxQkhgkxTsRvuXn+ZuSqD93mQYouc=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3/go.mod h1:nt3WBqCaQsbnxYVBoB4pF+F584z9PjdSVm29iu4gIBg=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

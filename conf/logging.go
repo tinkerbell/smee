@@ -1,4 +1,4 @@
-package env
+package conf
 
 import "github.com/packethost/pkg/log"
 

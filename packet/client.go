@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 
 	"github.com/packethost/cacher/client"
 	"github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
 	"google.golang.org/grpc"
@@ -30,11 +32,19 @@ type Client struct {
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
-	t := &httplog.Transport{
-		RoundTripper: http.DefaultTransport,
+	t, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("unexpected type for http.DefaultTransport")
+
 	}
+
+	transport := t.Clone()
+	transport.MaxIdleConnsPerHost = env.Int("BOOTS_HTTP_HOST_CONNECTIONS", runtime.GOMAXPROCS(0)/2)
+
 	c := &http.Client{
-		Transport: t,
+		Transport: &httplog.Transport{
+			RoundTripper: transport,
+		},
 	}
 
 	facility := os.Getenv("FACILITY_CODE")
@@ -134,8 +144,9 @@ func (c *Client) addHeaders(req *http.Request) {
 
 func unmarshalResponse(res *http.Response, result interface{}) error {
 	defer res.Body.Close()
+	defer io.Copy(ioutil.Discard, res.Body) // ensure all of the body is read so we can quickly reuse connection
 
-	if res.StatusCode > 399 || res.StatusCode < 200 {
+	if res.StatusCode < 200 || res.StatusCode > 399 {
 		e := &httpError{
 			StatusCode: res.StatusCode,
 		}
@@ -145,12 +156,10 @@ func unmarshalResponse(res *http.Response, result interface{}) error {
 
 	var err error
 	if result == nil {
-		_, err = io.Copy(ioutil.Discard, res.Body)
-		err = errors.Wrap(err, "discard errors response body")
-	} else {
-		err = errors.Wrap(json.NewDecoder(res.Body).Decode(result), "decode json body")
+		return nil
 	}
 
+	err = errors.Wrap(json.NewDecoder(res.Body).Decode(result), "decode json body")
 	if err == nil {
 		return nil
 	}

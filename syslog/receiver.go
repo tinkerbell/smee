@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/env"
+	"github.com/tinkerbell/boots/conf"
 )
 
 var (
-	syslogAddr = env.SyslogBind
+	syslogAddr = conf.SyslogBind
 
 	loggerFuncs map[byte]func(...interface{})
 )
