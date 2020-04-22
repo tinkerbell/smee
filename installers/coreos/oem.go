@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/coreos/oem.tgz", serveOEM)
+	installers.RegisterHTTPHandler("/coreos/oem.tgz", serveOEM)
 }
 
 func serveOEM(w http.ResponseWriter, req *http.Request) {

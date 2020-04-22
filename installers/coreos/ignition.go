@@ -11,8 +11,8 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/coreos/ignition.json", serveIgnitionConfig("coreos"))
-	http.HandleFunc("/flatcar/ignition.json", serveIgnitionConfig("flatcar"))
+	installers.RegisterHTTPHandler("/coreos/ignition.json", serveIgnitionConfig("coreos"))
+	installers.RegisterHTTPHandler("/flatcar/ignition.json", serveIgnitionConfig("flatcar"))
 }
 
 func buildNetworkUnits(j job.Job) (nu ignition.NetworkUnits) {

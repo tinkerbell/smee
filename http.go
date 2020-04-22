@@ -19,6 +19,7 @@ import (
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 )
@@ -79,6 +80,7 @@ func ServeHTTP() {
 		}
 	})
 	mux.HandleFunc("/hardware-components", serveHardware)
+	installers.RegisterHTTPHandlers(mux)
 
 	var h http.Handler
 	if len(conf.TrustedProxies) > 0 {
