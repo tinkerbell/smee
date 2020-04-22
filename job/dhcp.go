@@ -20,25 +20,27 @@ func IsSpecialOS(i *packet.Instance) bool {
 }
 
 // ServeDHCP responds to DHCP packets
-func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
+func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
 
 	// setup reply
 	reply := dhcp.NewReply(w, req)
 	if reply == nil {
 		j.Error(errors.New("unable to create DHCP reply"))
-		return
+		return false
 	}
 
 	// configure DHCP
 	if !j.configureDHCP(reply.Packet(), req) {
 		j.Error(errors.New("unable to configure DHCP for yiaddr and DHCP options"))
-		return
+		return false
 	}
 
 	// send the DHCP response
 	if err := reply.Send(); err != nil {
 		j.Error(errors.WithMessage(err, "unable to send DHCP reply"))
+		return false
 	}
+	return true
 }
 
 func (j Job) configureDHCP(rep, req *dhcp4.Packet) bool {

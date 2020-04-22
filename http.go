@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/metrics"
 )
 
 var (
@@ -93,6 +95,13 @@ func ServeHTTP() {
 }
 
 func serveJobFile(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "file"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -103,6 +112,13 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveHardware(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "hardware-components"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -113,6 +129,13 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 }
 
 func servePhoneHome(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
@@ -123,6 +146,13 @@ func servePhoneHome(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveProblem(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "problem"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

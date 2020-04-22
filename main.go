@@ -12,6 +12,7 @@ import (
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/boots/tftp"
@@ -45,6 +46,7 @@ func main() {
 	}
 	defer l.Close()
 	mainlog = l.Package("main")
+	metrics.Init(l)
 	dhcp.Init(l)
 	conf.Init(l)
 	httplog.Init(l)
