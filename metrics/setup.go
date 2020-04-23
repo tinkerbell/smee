@@ -44,7 +44,7 @@ func Init(_ log.Logger) {
 
 	CacherDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "cacher_request_duration_seconds",
-		Help:    "Duration of cacher requests",
+		Help:    "Duration of cacher requests.",
 		Buckets: prometheus.LinearBuckets(.01, .05, 10),
 	}, []string{"from"})
 	CacherCacheHits = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -71,7 +71,7 @@ func Init(_ log.Logger) {
 
 	DiscoverDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "discover_duration_seconds",
-		Help:    "Duration taken to get a responce for a newly discovered request",
+		Help:    "Duration taken to get a responce for a newly discovered request.",
 		Buckets: prometheus.LinearBuckets(.01, .05, 10),
 	}, []string{"from"})
 	HardwareDiscovers = promauto.NewCounterVec(prometheus.CounterOpts{
