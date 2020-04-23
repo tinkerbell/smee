@@ -58,7 +58,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 
-	metrics.DHCPTotal.WithLabelValues(req.GetMessageType().String(), gi.String()).Inc()
+	metrics.DHCPTotal.WithLabelValues("recv", req.GetMessageType().String(), gi.String()).Inc()
 	labels := prometheus.Labels{"from": "dhcp", "op": req.GetMessageType().String()}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
@@ -80,7 +80,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	}
 	go func() {
 		if j.ServeDHCP(w, req) {
-			metrics.DHCPTotal.WithLabelValues("reply", gi.String()).Inc()
+			metrics.DHCPTotal.WithLabelValues("send", "DHCPOFFER", gi.String()).Inc()
 		}
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()

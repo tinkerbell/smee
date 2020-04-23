@@ -26,19 +26,19 @@ var (
 func Init(_ log.Logger) {
 	DHCPTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "dhcp_total",
-		Help: "Number of DHCP Requests received.",
-	}, []string{"op", "giaddr"})
+		Help: "Number of DHCP Requests handled.",
+	}, []string{"op", "type", "giaddr"})
 
 	labelValues := []prometheus.Labels{
-		{"op": "DHCPACK", "giaddr": "0.0.0.0"},
-		{"op": "DHCPDECLINE", "giaddr": "0.0.0.0"},
-		{"op": "DHCPDISCOVER", "giaddr": "0.0.0.0"},
-		{"op": "DHCPINFORM", "giaddr": "0.0.0.0"},
-		{"op": "DHCPNAK", "giaddr": "0.0.0.0"},
-		{"op": "DHCPOFFER", "giaddr": "0.0.0.0"},
-		{"op": "DHCPRELEASE", "giaddr": "0.0.0.0"},
-		{"op": "DHCPREQUEST", "giaddr": "0.0.0.0"},
-		{"op": "reply", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPACK", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPDECLINE", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPDISCOVER", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPINFORM", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPNAK", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPOFFER", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPRELEASE", "giaddr": "0.0.0.0"},
+		{"op": "recv", "type": "DHCPREQUEST", "giaddr": "0.0.0.0"},
+		{"op": "send", "type": "DHCPOFFER", "giaddr": "0.0.0.0"},
 	}
 	initCounterLabels(DHCPTotal, labelValues)
 
