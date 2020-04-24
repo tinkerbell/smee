@@ -8,16 +8,20 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/metrics"
 )
 
 var (
@@ -52,15 +56,21 @@ func serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
 
 // ServeHTTP is a useless comment
 func ServeHTTP() {
-	http.HandleFunc("/", serveJobFile)
-	http.Handle("/metrics", promhttp.Handler())
-	http.Handle("/_packet/healthcheck", http.HandlerFunc(serveHealthchecker(GitRev, StartTime)))
-	http.Handle("/healthcheck", http.HandlerFunc(serveHealthchecker(GitRev, StartTime)))
-	http.HandleFunc("/phone-home", servePhoneHome)
-	http.HandleFunc("/phone-home/key", job.ServePublicKey)
-	http.HandleFunc("/problem", serveProblem)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", serveJobFile)
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
+	mux.HandleFunc("/_packet/pprof/", pprof.Index)
+	mux.HandleFunc("/_packet/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/_packet/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/_packet/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/_packet/pprof/trace", pprof.Trace)
+	mux.HandleFunc("/healthcheck", serveHealthchecker(GitRev, StartTime))
+	mux.HandleFunc("/phone-home", servePhoneHome)
+	mux.HandleFunc("/phone-home/key", job.ServePublicKey)
+	mux.HandleFunc("/problem", serveProblem)
 	// Events endpoint used to forward customer generated custom events from a running device (instance) to packet API
-	http.HandleFunc("/events", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("/events", func(w http.ResponseWriter, req *http.Request) {
 		code, err := serveEvents(client, w, req)
 		if err == nil {
 			return
@@ -69,7 +79,8 @@ func ServeHTTP() {
 			mainlog.Error(err)
 		}
 	})
-	http.HandleFunc("/hardware-components", serveHardware)
+	mux.HandleFunc("/hardware-components", serveHardware)
+	installers.RegisterHTTPHandlers(mux)
 
 	var h http.Handler
 	if len(conf.TrustedProxies) > 0 {
@@ -78,11 +89,11 @@ func ServeHTTP() {
 		})
 
 		h = xffmw.Handler(&httplog.Handler{
-			Handler: http.DefaultServeMux,
+			Handler: mux,
 		})
 	} else {
 		h = &httplog.Handler{
-			Handler: http.DefaultServeMux,
+			Handler: mux,
 		}
 	}
 
@@ -93,6 +104,13 @@ func ServeHTTP() {
 }
 
 func serveJobFile(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "file"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -103,6 +121,13 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveHardware(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "hardware-components"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -113,6 +138,13 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 }
 
 func servePhoneHome(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
@@ -123,6 +155,13 @@ func servePhoneHome(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveProblem(w http.ResponseWriter, req *http.Request) {
+	labels := prometheus.Labels{"from": "http", "op": "problem"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	defer metrics.JobsInProgress.With(labels).Dec()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

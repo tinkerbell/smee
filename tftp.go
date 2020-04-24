@@ -10,8 +10,10 @@ import (
 	"github.com/avast/retry-go"
 	tftp "github.com/betawaffle/tftp-go"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/metrics"
 )
 
 var (
@@ -38,11 +40,19 @@ type tftpHandler struct {
 }
 
 func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, error) {
+	labels := prometheus.Labels{"from": "tftp", "op": "read"}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+	defer timer.ObserveDuration()
+	defer metrics.JobsInProgress.With(labels).Dec()
+
 	ip := tftpClientIP(c.RemoteAddr())
 	j, err := job.CreateFromIP(ip)
 	if err == nil {
 		return j.ServeTFTP(filename, ip.String())
 	}
+
 	err = errors.WithMessage(err, "retrieved job is empty")
 
 	filename = path.Base(filename)

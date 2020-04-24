@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/vmware/ks-esxi.cfg", serveKickstart)
+	installers.RegisterHTTPHandler("/vmware/ks-esxi.cfg", serveKickstart)
 }
 
 func serveKickstart(w http.ResponseWriter, req *http.Request) {

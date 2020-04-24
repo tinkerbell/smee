@@ -9,8 +9,10 @@ import (
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/metrics"
 )
 
 var listenAddr = conf.BOOTPBind
@@ -56,6 +58,12 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 
+	metrics.DHCPTotal.WithLabelValues("recv", req.GetMessageType().String(), gi.String()).Inc()
+	labels := prometheus.Labels{"from": "dhcp", "op": req.GetMessageType().String()}
+	metrics.JobsTotal.With(labels).Inc()
+	metrics.JobsInProgress.With(labels).Inc()
+	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+
 	circuitID, err := getCircuitID(req)
 	if err != nil {
 		mainlog.With("mac", mac, "err", err).Info("error parsing option82")
@@ -66,9 +74,17 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	j, err := job.CreateFromDHCP(mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
+		metrics.JobsInProgress.With(labels).Dec()
+		timer.ObserveDuration()
 		return
 	}
-	go j.ServeDHCP(w, req)
+	go func() {
+		if j.ServeDHCP(w, req) {
+			metrics.DHCPTotal.WithLabelValues("send", "DHCPOFFER", gi.String()).Inc()
+		}
+		metrics.JobsInProgress.With(labels).Dec()
+		timer.ObserveDuration()
+	}()
 }
 
 func getCircuitID(req *dhcp4.Packet) (string, error) {

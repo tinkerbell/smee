@@ -9,6 +9,8 @@ import (
 
 	"github.com/packethost/cacher/protos/cacher"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tinkerbell/boots/metrics"
 )
 
 const mimeJSON = "application/json"
@@ -32,21 +34,37 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		return nil, errors.New("missing MAC address")
 	}
 
+	labels := prometheus.Labels{"from": "dhcp"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+	metrics.CacherRequestsInProgress.With(labels).Inc()
+	metrics.CacherTotal.With(labels).Inc()
+
 	msg := &cacher.GetRequest{
 		MAC: mac.String(),
 	}
 	resp, err := c.cacher.ByMAC(context.Background(), msg)
+
+	cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Dec()
+
 	if err != nil {
 		return nil, errors.Wrap(err, "get hardware by mac from cacher")
 	}
 
 	if resp.JSON != "" {
+		metrics.CacherCacheHits.With(labels).Inc()
 		return NewDiscovery(resp.JSON)
 	}
 
 	if giaddr == nil {
 		return nil, errors.New("missing MAC address")
 	}
+
+	metrics.HardwareDiscovers.With(labels).Inc()
+	metrics.DiscoversInProgress.With(labels).Inc()
+	defer metrics.DiscoversInProgress.With(labels).Dec()
+	discoverTimer := prometheus.NewTimer(metrics.DiscoverDuration.With(labels))
+	defer discoverTimer.ObserveDuration()
 
 	req := struct {
 		MAC       string `json:"mac"`
@@ -75,6 +93,12 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 		return nil, errors.New("missing ip address")
 	}
 
+	labels := prometheus.Labels{"from": "ip"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+	defer cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Inc()
+	defer metrics.CacherRequestsInProgress.With(labels).Dec()
+
 	msg := &cacher.GetRequest{
 		IP: ip.String(),
 	}
@@ -86,6 +110,7 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	if resp.JSON == "" {
 		return nil, errors.New("empty response from cacher")
 	}
+	metrics.CacherCacheHits.With(labels).Inc()
 	return NewDiscovery(resp.JSON)
 }
 
