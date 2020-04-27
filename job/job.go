@@ -74,11 +74,11 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
-	mac := d.PrimaryDataMAC()
-	if mac.IsZero() {
+	mac := (*d).Mac()
+	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
-	j.mac = mac.HardwareAddr()
+	j.mac = mac
 
 	err = j.setup(d)
 	if err != nil {
@@ -100,55 +100,40 @@ func (j Job) MarkDeviceActive() {
 //	j.postFailure(reason)
 //}
 
-func (j *Job) setup(d *packet.Discovery) error {
-	mode, netConfig := d.Mode(j.mac), d.NetConfig(j.mac)
-	j.Logger = joblog.With("mac", j.mac, "hardware.id", d.Hardware.ID)
+func (j *Job) setup(dp *packet.Discovery) error {
+	d := *dp
+	dh := *d.Hardware()
 
-	if netConfig.Address == nil {
-		return errors.New("did not find a usable ip address in cacher data")
-	}
+	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
 
-	j.Logger = j.Logger.With("ip", netConfig.Address)
+	// mac is needed to find the hostname for DiscoveryCacher
+	d.SetMac(j.mac)
 
-	j.hardware = d.Hardware
-	j.instance = d.Instance
+	// dh.ID()
+	// is this necessary?
+	j.hardware = d.Hardware()
+
+	//how can we remove this?
+	j.instance = d.Instance()
 	if j.instance == nil {
 		j.instance = &packet.Instance{}
 	} else {
 		j.Logger = j.Logger.With("instance.id", j.InstanceID())
 	}
 
-	j.Logger.With("mode", mode).Info("job setup configured")
-
-	j.dhcp.Setup(netConfig.Address, netConfig.Netmask, netConfig.Gateway)
-	j.dhcp.SetLeaseTime(conf.DHCPLeaseTime)
-	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
-	j.dhcp.SetDNSServers(conf.DNSServers)
-
-	var hostname string
-	switch mode {
-	case "discovered", "management":
-		j.mode = modeManagement
-		hostname = d.Hardware.Name
-	case "instance":
-		i := j.instance
-
-		hostname = i.Hostname
-		j.mode = modeInstance
-		switch j.HardwareState() {
-		case "deprovisioning":
-			j.mode = modeDeprov
-			hostname = d.Hardware.Name
-		case "provisioning":
-			j.mode = modeProv
-		}
-	case "hardware":
-		j.mode = modeHardware
-		hostname = d.Hardware.Name
-	default:
-		return errors.Errorf("unknown mode: %s", mode)
+	ip := d.Ip(j.mac)
+	if ip.Address == nil {
+		return errors.New("could not find IP address")
 	}
+	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
+	j.dhcp.SetLeaseTime(d.LeaseTime())    // cacher=env.DHCPLeaseTime
+	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
+	j.dhcp.SetDNSServers(d.DnsServers())  // cacher=env.DNSServers
 
+	hostname, err := d.Hostname()
+	if err != nil {
+		return err
+	}
 	if hostname != "" {
 		j.dhcp.SetHostname(hostname)
 	}

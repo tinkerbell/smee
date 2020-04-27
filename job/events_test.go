@@ -42,14 +42,14 @@ func TestPhoneHome(t *testing.T) {
 		fmt.Println("test:", name)
 		t.Log("test:", name)
 		reqs = nil
-
+		var hardware packet.Hardware = packet.HardwareCacher{
+			ID:    "$hardware_id",
+			State: packet.HardwareState(test.state),
+		}
 		j := Job{
-			Logger: joblog.With("test", name),
-			mode:   modeInstance,
-			hardware: &packet.Hardware{
-				ID:    "$hardware_id",
-				State: packet.HardwareState(test.state),
-			},
+			Logger:   joblog.With("test", name),
+			mode:     modeInstance,
+			hardware: &hardware,
 			instance: &packet.Instance{
 				ID: test.id,
 				OS: packet.OperatingSystem{

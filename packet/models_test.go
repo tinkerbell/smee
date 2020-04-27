@@ -3,13 +3,79 @@ package packet
 import (
 	"encoding/json"
 	"net"
+	"os"
+	"reflect"
 	"testing"
+	"time"
 )
 
-func TestDiscovery(t *testing.T) {
+func TestInterfaces(t *testing.T) {
+	var _ Discovery = (*DiscoveryCacher)(nil)
+	var _ Discovery = (*DiscoveryTinkerbell)(nil)
+}
+
+func TestNewDiscoveryCacher(t *testing.T) {
+	os.Setenv("DISCOVERY_TYPE", "cacher")
+	t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+
 	for name, test := range tests {
 		t.Log(name)
-		d := Discovery{}
+		d, err := NewDiscovery(test.json)
+		if err != nil {
+			t.Fatal("NewDiscovery", err)
+		}
+		dc := (*d).(*DiscoveryCacher)
+		if dc.PrimaryDataMAC().String() != test.primaryDataMac {
+			t.Fatalf("unexpected primary data mac, want: %s, got: %s\n", test.primaryDataMac, dc.PrimaryDataMAC())
+		}
+	}
+}
+
+func TestNewDiscoveryTinkerbell(t *testing.T) {
+	os.Setenv("DISCOVERY_TYPE", "tinkerbell")
+	t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+
+	for name, test := range tinkerbellTests {
+		t.Log(name)
+		d, err := NewDiscovery(test.json)
+		if err != nil {
+			t.Fatal("NewDiscovery", err)
+		}
+		dt := (*d).(*DiscoveryTinkerbell)
+		if dt.DHCP.IP != test.ip {
+			t.Fatalf("unexpected ip, want: %s, got: %s\n", test.ip, dt.DHCP.IP)
+		}
+	}
+}
+
+func TestNewDiscoveryMismatch(t *testing.T) {
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Fatal("TestDiscoveryFail should have panicked")
+			}
+		}()
+
+		os.Setenv("DISCOVERY_TYPE", "cacher")
+		t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+
+		for name, test := range tinkerbellTests {
+			t.Log(name)
+			d, err := NewDiscovery(test.json)
+			if err != nil {
+				t.Fatal("NewDiscovery", err)
+			}
+			dt := (*d).(*DiscoveryTinkerbell)
+			t.Log(dt)
+		}
+	}()
+}
+
+func TestDiscoveryCacher(t *testing.T) {
+	for name, test := range tests {
+		t.Log(name)
+		d := DiscoveryCacher{}
+
 		if err := json.Unmarshal([]byte(test.json), &d); err != nil {
 			t.Fatal(test.mode, err)
 		}
@@ -20,23 +86,27 @@ func TestDiscovery(t *testing.T) {
 		}
 
 		// suggest we leave this here for the time being for ease of test why we're not seeing what we expect
-		t.Logf("macType: %s\n", d.macType(mac.String()))
-		t.Logf("macIsType=data: %v\n", d.macIsType(mac.String(), "data"))
+		t.Logf("MacType: %s\n", d.MacType(mac.String()))
+		t.Logf("MacIsType=data: %v\n", d.MacIsType(mac.String(), "data"))
 		t.Logf("primaryDataMac: %s\n", d.PrimaryDataMAC().HardwareAddr().String())
+		t.Logf("Mac: %v\n", d.Mac())
+		t.Logf("d.mac: %v\n", d.mac)
 		t.Logf("mac: %s\n", mac.String())
-		if d.Instance != nil {
-			t.Logf("instance: %v\n", d.Instance)
-			t.Logf("instanceId: %s\n", d.Instance.ID)
-			t.Logf("instance State: %s\n", d.Instance.State)
+		if d.Instance() != nil {
+			t.Logf("instance: %v\n", d.Instance())
+			t.Logf("instanceId: %s\n", d.Instance().ID)
+			t.Logf("instance State: %s\n", d.Instance().State)
 		}
 		t.Logf("hardware IP: %v\n", d.hardwareIP())
 		t.Log("\n")
-		for _, ip := range d.Hardware.IPs {
+		h := *d.Hardware()
+		for _, ip := range h.HardwareIPs() {
 			t.Logf("hardware IP: %v\n", ip)
 			t.Log("\n")
 		}
 
-		mode := d.Mode(mac)
+		d.SetMac(mac)
+		mode := d.Mode()
 		if mode != test.mode {
 			t.Fatalf("unexpected mode, want: %s, got: %s\n", test.mode, mode)
 		}
@@ -45,7 +115,14 @@ func TestDiscovery(t *testing.T) {
 			continue
 		}
 
-		conf := d.NetConfig(mac)
+		if d.PrimaryDataMAC().String() != test.primaryDataMac {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.primaryDataMac, d.PrimaryDataMAC().String())
+		}
+		if d.Mac().String() != test.mac {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.mac, d.Mac().String())
+		}
+
+		conf := d.Ip(mac)
 		if conf.Address.String() != test.conf.Address.String() {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Address, conf.Address)
 		}
@@ -63,21 +140,163 @@ func TestDiscovery(t *testing.T) {
 	}
 }
 
+func TestDiscoveryTinkerbell(t *testing.T) {
+	for name, test := range tinkerbellTests {
+		t.Log(name)
+		d := DiscoveryTinkerbell{}
+
+		if err := json.Unmarshal([]byte(test.json), &d); err != nil {
+			t.Fatal(test.mode, err)
+		}
+
+		mac, err := net.ParseMAC(test.mac)
+		if err != nil {
+			t.Fatal(test.mode, err)
+		}
+
+		// suggest we leave this here for the time being for ease of test why we're not seeing what we expect
+		if d.ID != test.id {
+			t.Fatalf("unexpected id, want: %s, got: %s\n", test.id, d.ID)
+		}
+
+		t.Logf("d.mac: %s\n", d.mac)
+		t.Logf("dhcp %v\n", d.DHCP)
+		t.Log("\n")
+		if d.DHCP.IP != test.ip {
+			t.Fatalf("unexpected ip, want: %s, got: %s\n", test.ip, d.DHCP.IP)
+		}
+		if d.DHCP.MAC.String() != test.mac {
+			t.Fatalf("unexpected mac, want: %s, got: %s\n", test.mac, d.DHCP.MAC)
+		}
+		if d.DHCP.Hostname != test.hostname {
+			t.Fatalf("unexpected hostname, want: %s, got: %s\n", test.hostname, d.DHCP.Hostname)
+		}
+		if d.DHCP.LeaseTime != test.leaseTime {
+			t.Fatalf("unexpected lease time, want: %s, got: %v\n", test.leaseTime, d.DHCP.LeaseTime)
+		}
+		if !reflect.DeepEqual(d.DHCP.NameServers, test.nameServers) {
+			t.Fatalf("unexpected name servers, want: %s, got: %v\n", test.nameServers, d.DHCP.NameServers)
+		}
+		if !reflect.DeepEqual(d.DHCP.TimeServers, test.timeServers) {
+			t.Fatalf("unexpected time servers, want: %s, got: %v\n", test.timeServers, d.DHCP.TimeServers)
+		}
+		if d.DHCP.Gateway.String() != test.gateway {
+			t.Fatalf("unexpected gateway, want: %s, got: %v\n", test.gateway, d.DHCP.Gateway)
+		}
+		if d.DHCP.Arch != test.arch {
+			t.Fatalf("unexpected arch, want: %s, got: %s\n", test.arch, d.DHCP.Arch)
+		}
+		if d.DHCP.UEFI != test.uefi {
+			t.Fatalf("unexpected uefi, want: %v, got: %v\n", test.uefi, d.DHCP.UEFI)
+		}
+
+		t.Logf("netboot %v\n", d.Netboot)
+		t.Logf("netboot allow_pxe %v\n", d.Netboot.AllowPXE)
+		t.Logf("netboot allow_workflow %v\n", d.Netboot.AllowWorkflow)
+		t.Logf("netboot ipxe %v\n", d.Netboot.IPXE)
+		t.Logf("netboot bootstrapper %v\n", d.Netboot.Bootstrapper)
+		t.Log("\n")
+
+		t.Logf("network %v\n", d.Network)
+		t.Log("\n")
+
+		t.Logf("metadata %v\n", d.Metadata)
+		t.Logf("metadata state %v\n", d.Metadata.State)
+		t.Logf("metadata bonding_mode %v\n", d.Metadata.BondingMode)
+		t.Logf("metadata manufacturer %v\n", d.Metadata.Manufacturer)
+		if d.Instance() != nil {
+			t.Logf("instance: %v\n", d.Instance())
+			t.Logf("instanceId: %s\n", d.Instance().ID)
+			t.Logf("instance State: %s\n", d.Instance().State)
+		}
+		t.Logf("metadata custom %v\n", d.Metadata.Custom)
+		t.Logf("metadata facility%v\n", d.Metadata.Facility)
+
+		//t.Logf("hardware IP: %v\n", d.hardwareIP())
+		t.Log("\n")
+		h := *d.Hardware()
+		for _, ip := range h.HardwareIPs() {
+			t.Logf("hardware IP: %v\n", ip)
+			t.Log("\n")
+		}
+
+		d.SetMac(mac)
+		mode := d.Mode()
+		if mode != test.mode {
+			t.Fatalf("unexpected mode, want: %s, got: %s\n", test.mode, mode)
+		}
+
+		if mode == "" {
+			continue
+		}
+
+		conf := d.Ip(mac)
+		if conf.Address.String() != test.conf.Address.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Address, conf.Address)
+		}
+		if conf.Netmask.String() != test.conf.Netmask.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Netmask, conf.Netmask)
+		}
+		if conf.Gateway.String() != test.conf.Gateway.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Gateway, conf.Gateway)
+		}
+	}
+}
+
+var tinkerbellTests = map[string]struct {
+	id            string
+	mac           string
+	ip            string
+	hostname      string
+	leaseTime     time.Duration
+	nameServers   []string
+	timeServers   []string
+	gateway       string
+	arch          string
+	uefi          bool
+	allowPXE      bool
+	allowWorklfow bool
+	ipxeURL       string
+	ipxeContents  string
+	mode          string
+	conf          IP
+	osie          string
+	json          string
+}{
+	"new_structure": {
+		id:          "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
+		mac:         "ec:0d:9a:c0:01:0c",
+		ip:          "172.16.1.35/31",
+		hostname:    "server001",
+		leaseTime:   86400,
+		nameServers: []string{},
+		timeServers: []string{},
+		gateway:     "192.168.1.1",
+		arch:        "aarch64",
+		uefi:        false,
+		mode:        "hardware",
+		json:        newJsonStruct,
+	},
+}
+
 var tests = map[string]struct {
-	mac  string
-	mode string
-	conf IP
-	osie string
-	json string
+	mac            string
+	primaryDataMac string
+	mode           string
+	conf           IP
+	osie           string
+	json           string
 }{
 	"unknown": {
-		mac:  "84:b5:9c:cf:17:ff",
-		mode: "",
-		json: discovered,
+		mac:            "84:b5:9c:cf:17:ff",
+		primaryDataMac: "00:00:00:00:00:00",
+		mode:           "",
+		json:           discovered,
 	},
 	"discovered": {
-		mac:  "84:b5:9c:cf:17:01",
-		mode: "discovered",
+		mac:            "84:b5:9c:cf:17:01",
+		primaryDataMac: "00:00:00:00:00:00",
+		mode:           "discovered",
 		conf: IP{
 			Address: net.ParseIP("10.250.142.74"),
 			Gateway: net.ParseIP("10.250.142.1"),
@@ -86,8 +305,9 @@ var tests = map[string]struct {
 		json: discovered,
 	},
 	"management no instance": {
-		mac:  "00:25:90:f6:2f:2d",
-		mode: "management",
+		mac:            "00:25:90:f6:2f:2d",
+		primaryDataMac: "00:25:90:e7:6c:78",
+		mode:           "management",
 		conf: IP{
 			Address: net.ParseIP("10.255.252.16"),
 			Gateway: net.ParseIP("10.255.252.1"),
@@ -96,8 +316,9 @@ var tests = map[string]struct {
 		json: noInstance,
 	},
 	"management with instance": {
-		mac:  "00:25:90:f6:28:5b",
-		mode: "management",
+		mac:            "00:25:90:f6:28:5b",
+		primaryDataMac: "00:25:90:e7:68:da",
+		mode:           "management",
 		conf: IP{
 			Address: net.ParseIP("10.255.252.15"),
 			Gateway: net.ParseIP("10.255.252.1"),
@@ -106,8 +327,9 @@ var tests = map[string]struct {
 		json: withInstance,
 	},
 	"instance": {
-		mac:  "00:25:90:e7:68:da",
-		mode: "instance",
+		mac:            "00:25:90:e7:68:da",
+		primaryDataMac: "00:25:90:e7:68:da",
+		mode:           "instance",
 		conf: IP{
 			Address: net.ParseIP("147.75.193.106"),
 			Gateway: net.ParseIP("147.75.193.105"),
@@ -116,8 +338,9 @@ var tests = map[string]struct {
 		json: withInstance,
 	},
 	"preinstalling": {
-		mac:  "00:25:99:e7:6c:78",
-		mode: "hardware",
+		mac:            "00:25:99:e7:6c:78",
+		primaryDataMac: "00:25:99:e7:6c:78",
+		mode:           "hardware",
 		conf: IP{
 			Address: net.ParseIP("172.16.0.16"),
 			Gateway: net.ParseIP("172.16.0.15"),
@@ -126,8 +349,9 @@ var tests = map[string]struct {
 		json: preinstalling,
 	},
 	"deprovisioning": {
-		mac:  "fc:15:b4:97:04:e5",
-		mode: "instance",
+		mac:            "fc:15:b4:97:04:e5",
+		primaryDataMac: "fc:15:b4:97:04:e5",
+		mode:           "instance",
 		conf: IP{
 			Address: net.ParseIP("172.16.0.14"),
 			Gateway: net.ParseIP("172.16.0.13"),
@@ -136,8 +360,9 @@ var tests = map[string]struct {
 		json: deprovisioning,
 	},
 	"provisioning": {
-		mac:  "fc:15:b4:97:04:f5",
-		mode: "instance",
+		mac:            "fc:15:b4:97:04:f5",
+		primaryDataMac: "fc:15:b4:97:04:f5",
+		mode:           "instance",
 		conf: IP{
 			Address: net.ParseIP("147.75.14.16"),
 			Gateway: net.ParseIP("147.75.14.15"),
@@ -146,9 +371,10 @@ var tests = map[string]struct {
 		json: provisioning,
 	},
 	"provisioning with custom service": {
-		mac:  "fc:15:b4:97:04:f5",
-		mode: "instance",
-		osie: "v19.01.01.00",
+		mac:            "fc:15:b4:97:04:f5",
+		primaryDataMac: "fc:15:b4:97:04:f5",
+		mode:           "instance",
+		osie:           "v19.01.01.00",
 		conf: IP{
 			Address: net.ParseIP("147.75.14.16"),
 			Gateway: net.ParseIP("147.75.14.15"),
@@ -159,6 +385,43 @@ var tests = map[string]struct {
 }
 
 const (
+	newJsonStruct = `
+  {
+    "id": "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
+    "dhcp": {
+      "mac": "ec:0d:9a:c0:01:0c",
+      "ip": "172.16.1.35/31",
+      "hostname": "server001",
+      "lease_time": 86400,
+      "name_servers": [],
+      "time_servers": [],
+      "gateway": "192.168.1.1",
+      "arch": "aarch64",
+      "uefi": false
+    },
+    "netboot": {
+      "allow_pxe": true,
+      "allow_workflow": true,
+      "ipxe": {
+        "url": "http://<url>/menu.ipxe",
+        "contents": "#!ipxe"
+      },
+      "bootstrapper": {
+        "kernel": "http://<url-to>/kernel",
+        "initrd": "http://<url-to>/initrd",
+        "os": "http://<url-to>/osie"
+      }
+    },
+    "network": [{
+      "dhcp": {},
+      "netboot": {}
+    }],
+    "metadata": {
+      "state" : "active"
+    }
+ }
+ `
+
 	discovered = `
 	{
 	  "id": "1a02e6c4-43e5-4be6-aa00-a8b42e4c770d",
