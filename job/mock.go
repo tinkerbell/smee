@@ -37,18 +37,19 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 	}
 
 	mockLog := log.Test(t, "job.Mock")
+	var hardware packet.Hardware = &packet.HardwareCacher{
+		ID:              uuid.New().String(),
+		PlanSlug:        slug,
+		PlanVersionSlug: planVersion,
+		FacilityCode:    facility,
+		Arch:            arch,
+		State:           "provisionable",
+		UEFI:            uefi,
+		ServicesVersion: servicesVersion,
+	}
 	return Mock{
-		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
-		hardware: &packet.Hardware{
-			ID:              uuid.New().String(),
-			PlanSlug:        slug,
-			PlanVersionSlug: planVersion,
-			FacilityCode:    facility,
-			Arch:            arch,
-			State:           "provisionable",
-			UEFI:            uefi,
-			ServicesVersion: servicesVersion,
-		},
+		Logger:   mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
+		hardware: &hardware,
 		instance: &packet.Instance{
 			State: "provisioning",
 		},
@@ -87,7 +88,9 @@ func (m *Mock) SetMAC(mac string) {
 }
 
 func (m *Mock) SetManufacturer(slug string) {
-	m.hardware.Manufacturer = packet.Manufacturer{Slug: slug}
+	hp := *m.hardware
+	h := hp.(*packet.HardwareCacher)
+	(*h).Manufacturer = packet.Manufacturer{Slug: slug}
 }
 
 func (m *Mock) SetOSDistro(distro string) {
@@ -108,18 +111,20 @@ func (m *Mock) SetPassword(password string) {
 }
 
 func (m *Mock) SetState(state string) {
-	m.hardware.State = packet.HardwareState(state)
+	hp := *m.hardware
+	h := hp.(*packet.HardwareCacher)
+	(*h).State = packet.HardwareState(state)
 }
 
-func MakeHardwareWithInstance() (*packet.Discovery, []packet.MACAddr, string) {
+func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, string) {
 	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
 	mac0 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
 	mac1 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x01})
 	mac2 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x02})
 	mac3 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x03})
 	instanceId := uuid.New().String()
-	d := &packet.Discovery{
-		Hardware: &packet.Hardware{
+	d := &packet.DiscoveryCacher{
+		HardwareCacher: &packet.HardwareCacher{
 			ID:   uuid.New().String(),
 			Name: "TestSetupInstanceHardwareName",
 			NetworkPorts: []packet.Port{

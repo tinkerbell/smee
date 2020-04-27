@@ -120,10 +120,10 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if d.Instance == nil {
+	if (*d).Instance() == nil {
 		return "", nil
 	}
-	return d.Instance.ID, nil
+	return (*d).Instance().ID, nil
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API
