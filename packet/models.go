@@ -15,10 +15,12 @@ const (
 	discoveryTypeTinkerbell = "tinkerbell"
 )
 
+// BondingMode is the hardware bonding mode
 type BondingMode int
 
+// Discovery interface is the base for cacher and tinkerbell hardware discovery
 type Discovery interface {
-	Instance() *Instance // temporary
+	Instance() *Instance
 	Mac() net.HardwareAddr
 	Mode() string
 	Ip(addr net.HardwareAddr) IP
@@ -29,11 +31,13 @@ type Discovery interface {
 	SetMac(mac net.HardwareAddr)
 }
 
+// DiscoveryCacher presents the structure for old data model
 type DiscoveryCacher struct {
 	*HardwareCacher
 	mac net.HardwareAddr
 }
 
+// DiscoveryTinkerbell presents the structure for tinkerbell's new data model
 type DiscoveryTinkerbell struct {
 	*HardwareTinkerbell
 	mac net.HardwareAddr
@@ -63,6 +67,7 @@ type OsieTinkerbell struct {
 	*Bootstrapper
 }
 
+// Hardware interface holds primary hardware methods
 type Hardware interface {
 	HardwareAllowPXE() bool
 	HardwareAllowWorkflow() bool
@@ -80,6 +85,7 @@ type Hardware interface {
 	HardwareUEFI() bool
 }
 
+// HardwareCacher represents the old hardware data model for backward compatibility
 type HardwareCacher struct {
 	ID    string        `json:"id"`
 	Name  string        `json:"name"`
@@ -103,6 +109,7 @@ type HardwareCacher struct {
 	Instance        *Instance       `json:"instance"`
 }
 
+// HardwareTinkerbell represents the new hardware data model for tinkerbell
 type HardwareTinkerbell struct {
 	ID       string    `json:"id"`
 	DHCP     DHCP      `json:"dhcp"`
@@ -111,7 +118,7 @@ type HardwareTinkerbell struct {
 	Metadata Metadata  `json:"metadata"`
 }
 
-// New instantiates a Discovery struct from the json argument
+// NewDiscovery instantiates a Discovery struct from the json argument
 func NewDiscovery(j string) (*Discovery, error) {
 	var res Discovery
 
@@ -161,6 +168,7 @@ type Device struct {
 	ID string `json:"id"`
 }
 
+// FindIP returns IP for an instance, nil otherwise
 func (i *Instance) FindIP(pred func(IP) bool) *IP {
 	for _, ip := range i.IPs {
 		if pred(ip) {
@@ -178,6 +186,7 @@ func managementPrivateIPv4IP(ip IP) bool {
 	return !ip.Public && ip.Management && ip.Family == 4
 }
 
+// InstanceState represents the state of an instance (e.g. active)
 type InstanceState string
 
 type Event struct {
@@ -196,8 +205,10 @@ type ServicesVersion struct {
 	Osie string `json:"osie"`
 }
 
+// HardwareState is the hardware state (e.g. provisioning)
 type HardwareState string
 
+// IP represents IP address for a hardware
 type IP struct {
 	Address    net.IP `json:"address"`
 	Netmask    net.IP `json:"netmask"`
@@ -207,10 +218,10 @@ type IP struct {
 	Management bool   `json:"management"`
 }
 
-type NetworkPorts struct {
-	Main []Port `json:"main"`
-	IPMI Port   `json:"ipmi"`
-}
+// type NetworkPorts struct {
+// 	Main []Port `json:"main"`
+// 	IPMI Port   `json:"ipmi"`
+// }
 
 // unused, but keeping for now
 // func (p *NetworkPorts) addMain(port Port) {
@@ -230,6 +241,7 @@ type NetworkPorts struct {
 // 	p.Main = ports
 // }
 
+// OperatingSystem holds details for the operating system
 type OperatingSystem struct {
 	Slug     string `json:"slug"`
 	Distro   string `json:"distro"`
@@ -238,6 +250,7 @@ type OperatingSystem struct {
 	OsSlug   string `json:"os_slug"`
 }
 
+// Port represents a network port
 type Port struct {
 	ID   string   `json:"id"`
 	Type PortType `json:"type"`
@@ -248,6 +261,7 @@ type Port struct {
 	} `json:"data"`
 }
 
+// MAC returns the physical hardware address, nil otherwise
 func (p *Port) MAC() net.HardwareAddr {
 	if p.Data.MAC != nil && *p.Data.MAC != ZeroMAC {
 		return p.Data.MAC.HardwareAddr()
@@ -255,13 +269,16 @@ func (p *Port) MAC() net.HardwareAddr {
 	return nil
 }
 
+// PortType is type for a network port
 type PortType string
 
+// Manufacturer holds data for hardware manufacturer
 type Manufacturer struct {
 	ID   string `json:"id"`
 	Slug string `json:"slug"`
 }
 
+// DHCP holds details for DHCP connection
 type DHCP struct {
 	MAC         *MACAddr      `json:"mac"`
 	IP          string        `json:"ip"`
@@ -275,6 +292,7 @@ type DHCP struct {
 	IfaceName   string        `json:"iface_name"`
 }
 
+// Netboot holds details for a hardware to boot over network
 type Netboot struct {
 	AllowPXE      bool `json:"allow_pxe"`
 	AllowWorkflow bool `json:"allow_workflow"`
@@ -285,17 +303,20 @@ type Netboot struct {
 	Bootstrapper Bootstrapper `json:"bootstrapper"`
 }
 
+// Bootstrapper is the bootstrapper to be used during netboot
 type Bootstrapper struct {
 	Kernel string `json:"kernel"`
 	Initrd string `json:"initrd"`
 	OS     string `json:"os"`
 }
 
+// Network holds hardware network details
 type Network struct {
 	DHCP    DHCP    `json:"dhcp,omitempty"`
 	Netboot Netboot `json:"netboot,omitempty"`
 }
 
+// Metadata holds the hardware metadata
 type Metadata struct {
 	State        HardwareState `json:"state"`
 	BondingMode  BondingMode   `json:"bonding_mode"`
@@ -308,6 +329,7 @@ type Metadata struct {
 	Facility Facility `json:"facility"`
 }
 
+// Facility represents the facilty in use
 type Facility struct {
 	PlanSlug        string `json:"plan_slug"`
 	PlanVersionSlug string `json:"plan_version_slug"`
