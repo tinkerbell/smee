@@ -40,7 +40,7 @@ func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
 }
 
 func bootScriptVmwareEsxi70(j job.Job, s *ipxe.Script) {
-        bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
+	bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
 }
 
 func bootScriptVmwareEsxi(j job.Job, s *ipxe.Script, basePath string) {
