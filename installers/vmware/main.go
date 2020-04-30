@@ -39,7 +39,7 @@ func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.7.0")
 }
 
-func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi70(j job.Job, s *ipxe.Script) {
         bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
 }
 
