@@ -11,6 +11,7 @@ func init() {
 	job.RegisterSlug("vmware_esxi_6_0", bootScriptVmwareEsxi60)
 	job.RegisterSlug("vmware_esxi_6_5", bootScriptVmwareEsxi65)
 	job.RegisterSlug("vmware_esxi_6_7", bootScriptVmwareEsxi67)
+	job.RegisterSlug("vmware_esxi_7_0", bootScriptVmwareEsxi70)
 	job.RegisterDistro("vmware", bootScriptDefault)
 }
 
@@ -36,6 +37,10 @@ func bootScriptVmwareEsxi65(j job.Job, s *ipxe.Script) {
 
 func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.7.0")
+}
+
+func bootScriptVmwareEsxi70(j job.Job, s *ipxe.Script) {
+	bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
 }
 
 func bootScriptVmwareEsxi(j job.Job, s *ipxe.Script, basePath string) {

@@ -26,7 +26,7 @@ func TestDetermineDisk(t *testing.T) {
 
 func TestScriptKickstart(t *testing.T) {
 	manufacturers := []string{"supermicro", "dell"}
-	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7"}
+	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0"}
 	assert := require.New(t)
 	conf.MirrorBaseIP = "http://127.0.0.1"
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
