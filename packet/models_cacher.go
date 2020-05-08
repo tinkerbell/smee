@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -22,19 +21,15 @@ func (d DiscoveryCacher) Instance() *Instance {
 	return d.HardwareCacher.Instance
 }
 
-func (d DiscoveryCacher) LeaseTime() time.Duration {
+func (d DiscoveryCacher) LeaseTime(mac net.HardwareAddr) time.Duration {
 	return conf.DHCPLeaseTime
 }
 
 func (d DiscoveryCacher) Mac() net.HardwareAddr {
-	fmt.Println("d.mac", d.mac)
 	if d.mac == nil {
 		mac := d.PrimaryDataMAC()
-		fmt.Println("d.PrimaryDataMAC", mac)
-		fmt.Println()
 		return mac.HardwareAddr()
 	}
-	fmt.Println()
 	return d.mac
 }
 
@@ -76,7 +71,7 @@ func (d DiscoveryCacher) Mode() string {
 }
 
 // NetConfig returns the network configuration that corresponds to the interface whose MAC address is mac.
-func (d DiscoveryCacher) Ip(mac net.HardwareAddr) IP {
+func (d DiscoveryCacher) GetIp(mac net.HardwareAddr) IP {
 	ip := d.InstanceIP(mac.String())
 	if ip != nil {
 		return *ip
@@ -94,6 +89,11 @@ func (d DiscoveryCacher) Ip(mac net.HardwareAddr) IP {
 		return *ip
 	}
 	return IP{}
+}
+
+// dummy method for tink data model transition
+func (d DiscoveryCacher) GetMac(ip net.IP) net.HardwareAddr {
+	return d.PrimaryDataMAC().HardwareAddr()
 }
 
 // InstanceIP returns the IP configuration that should be Offered to the instance if there is one; if it's prov/deprov'ing, it's the hardware IP
@@ -240,15 +240,15 @@ func (i InterfaceCacher) Name() string {
 	return i.Port.Name
 }
 
-func (h HardwareCacher) HardwareAllowPXE() bool {
+func (h HardwareCacher) HardwareAllowPXE(mac net.HardwareAddr) bool {
 	return h.AllowPXE
 }
 
-func (h HardwareCacher) HardwareAllowWorkflow() bool {
+func (h HardwareCacher) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
 	return h.AllowWorkflow
 }
 
-func (h HardwareCacher) HardwareArch() string {
+func (h HardwareCacher) HardwareArch(mac net.HardwareAddr) string {
 	return h.Arch
 }
 
@@ -284,14 +284,29 @@ func (h HardwareCacher) HardwarePlanVersionSlug() string {
 	return h.PlanVersionSlug
 }
 
-func (h HardwareCacher) HardwareServicesVersion() Osie {
-	return h.ServicesVersion
+func (h HardwareCacher) HardwareServicesVersion() string {
+	return h.ServicesVersion.Osie
 }
 
 func (h HardwareCacher) HardwareState() HardwareState {
 	return h.State
 }
 
-func (h HardwareCacher) HardwareUEFI() bool {
+func (h HardwareCacher) HardwareUEFI(mac net.HardwareAddr) bool {
 	return h.UEFI
+}
+
+// dummy method for tink data model transition
+func (h *HardwareCacher) OsieBaseURL(mac net.HardwareAddr) string {
+	return ""
+}
+
+// dummy method for tink data model transition
+func (h *HardwareCacher) KernelPath(mac net.HardwareAddr) string {
+	return ""
+}
+
+// dummy method for tink data model transition
+func (h *HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
+	return ""
 }

@@ -10,8 +10,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/packethost/cacher/client"
-	"github.com/packethost/cacher/protos/cacher"
+	"github.com/tinkerbell/tink/client"
+	tink "github.com/tinkerbell/tink/protos/hardware"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
@@ -19,8 +19,8 @@ import (
 )
 
 type hardwareGetter interface {
-	ByMAC(context.Context, *cacher.GetRequest, ...grpc.CallOption) (*cacher.Hardware, error)
-	ByIP(context.Context, *cacher.GetRequest, ...grpc.CallOption) (*cacher.Hardware, error)
+	ByMAC(context.Context, *tink.GetRequest, ...grpc.CallOption) (*tink.Hardware, error)
+	ByIP(context.Context, *tink.GetRequest, ...grpc.CallOption) (*tink.Hardware, error)
 }
 
 type Client struct {
@@ -28,7 +28,7 @@ type Client struct {
 	baseURL       *url.URL
 	consumerToken string
 	authToken     string
-	cacher        hardwareGetter
+	tink        hardwareGetter
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -52,7 +52,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		return nil, errors.New("FACILITY_CODE env must be set")
 	}
 
-	cacher, err := client.New(facility)
+	tink, err := client.NewTinkerbellClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to cacher")
 	}
@@ -62,7 +62,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		baseURL:       baseURL,
 		consumerToken: consumerToken,
 		authToken:     authToken,
-		cacher:        cacher,
+		tink:        tink,
 	}, nil
 }
 

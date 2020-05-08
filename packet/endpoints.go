@@ -7,10 +7,10 @@ import (
 	"io"
 	"net"
 
-	"github.com/packethost/cacher/protos/cacher"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
+	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 const mimeJSON = "application/json"
@@ -39,21 +39,27 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	msg := &cacher.GetRequest{
-		MAC: mac.String(),
+	msg := &hardware.GetRequest{
+		Mac: mac.String(),
 	}
-	resp, err := c.cacher.ByMAC(context.Background(), msg)
+	resp, err := c.tink.ByMAC(context.Background(), msg)
 
 	cacherTimer.ObserveDuration()
 	metrics.CacherRequestsInProgress.With(labels).Dec()
 
 	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by mac from cacher")
+		return nil, errors.Wrap(err, "get hardware by mac from tink")
 	}
 
-	if resp.JSON != "" {
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return nil, errors.New("marshalling tink hardware")
+	}
+
+	// or maybe just check for error?
+	if string(b) != "{}" {
 		metrics.CacherCacheHits.With(labels).Inc()
-		return NewDiscovery(resp.JSON)
+		return NewDiscovery(b)
 	}
 
 	if giaddr == nil {
@@ -76,7 +82,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		CIRCUITID: circuitID,
 	}
 
-	b, err := json.Marshal(&req)
+	b, err = json.Marshal(&req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshalling api discovery")
 	}
@@ -99,19 +105,24 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	defer metrics.CacherRequestsInProgress.With(labels).Dec()
 
-	msg := &cacher.GetRequest{
-		IP: ip.String(),
+	msg := &hardware.GetRequest{
+		Ip: ip.String(),
 	}
-	resp, err := c.cacher.ByIP(context.Background(), msg)
+	resp, err := c.tink.ByIP(context.Background(), msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by ip from cacher")
+		return nil, errors.Wrap(err, "get hardware by ip from tink")
 	}
 
-	if resp.JSON == "" {
-		return nil, errors.New("empty response from cacher")
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return nil, errors.New("marshalling tink hardware")
 	}
+
+	//if string(b) == "{}" {
+	//	return nil, errors.New("empty response from cacher")
+	//}
 	metrics.CacherCacheHits.With(labels).Inc()
-	return NewDiscovery(resp.JSON)
+	return NewDiscovery(b)
 }
 
 // GetDeviceIDFromIP Looks up a device (instance) in cacher via ByIP

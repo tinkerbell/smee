@@ -147,7 +147,7 @@ func TestSetupInstance(t *testing.T) {
 		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
 	}
 
-	netConfig := d.Ip(macs[1].HardwareAddr())
+	netConfig := d.GetIp(macs[1].HardwareAddr())
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
 		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
 	}

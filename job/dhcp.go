@@ -69,7 +69,7 @@ func (j Job) configureDHCP(rep, req *dhcp4.Packet) bool {
 }
 
 func (j Job) isPXEAllowed() bool {
-	if (*j.hardware).HardwareAllowPXE() {
+	if (*j.hardware).HardwareAllowPXE(j.mac) {
 		return true
 	}
 	if j.InstanceID() == "" {

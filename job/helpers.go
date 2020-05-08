@@ -18,14 +18,14 @@ func (j Job) IsARM() bool {
 
 func (j Job) IsUEFI() bool {
 	if h := j.hardware; h != nil {
-		return (*h).HardwareUEFI()
+		return (*h).HardwareUEFI(j.mac)
 	}
 	return false
 }
 
 func (j Job) Arch() string {
 	if h := j.hardware; h != nil {
-		return (*h).HardwareArch()
+		return (*h).HardwareArch(j.mac)
 	}
 	return ""
 }
@@ -177,15 +177,35 @@ func (j Job) HardwareState() string {
 	return ""
 }
 
-func (j Job) ServicesVersion() packet.ServicesVersion {
+func (j Job) ServicesVersion() string {
 	if h := j.hardware; h != nil && (*h).HardwareID() != "" {
-		sv := (*h).HardwareServicesVersion()
-		return sv.(packet.ServicesVersion) // asserting for now
+		return (*h).HardwareServicesVersion()
 	}
-	return packet.ServicesVersion{}
+	return ""
 }
 
 // CanWorkflow checks if workflow is allowed
 func (j Job) CanWorkflow() bool {
-	return (*j.hardware).HardwareAllowWorkflow()
+	return (*j.hardware).HardwareAllowWorkflow(j.mac)
+}
+
+func (j Job) OsieBaseURL() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).OsieBaseURL(j.mac)
+	}
+	return ""
+}
+
+func (j Job) KernelPath() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).KernelPath(j.mac)
+	}
+	return ""
+}
+
+func (j Job) InitrdPath() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).InitrdPath(j.mac)
+	}
+	return ""
 }

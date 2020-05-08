@@ -122,7 +122,7 @@ func TestDiscoveryCacher(t *testing.T) {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.mac, d.Mac().String())
 		}
 
-		conf := d.Ip(mac)
+		conf := d.GetIp(mac)
 		if conf.Address.String() != test.conf.Address.String() {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Address, conf.Address)
 		}

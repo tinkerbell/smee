@@ -74,7 +74,7 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
-	mac := (*d).Mac()
+	mac := (*d).GetMac(ip)
 	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
@@ -121,12 +121,12 @@ func (j *Job) setup(dp *packet.Discovery) error {
 		j.Logger = j.Logger.With("instance.id", j.InstanceID())
 	}
 
-	ip := d.Ip(j.mac)
+	ip := d.GetIp(j.mac)
 	if ip.Address == nil {
 		return errors.New("could not find IP address")
 	}
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
-	j.dhcp.SetLeaseTime(d.LeaseTime())    // cacher=env.DHCPLeaseTime
+	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))    // cacher=env.DHCPLeaseTime
 	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
 	j.dhcp.SetDNSServers(d.DnsServers())  // cacher=env.DNSServers
 
