@@ -1,4 +1,4 @@
-# Boots
+# Boots test
 [![Build Status](https://cloud.drone.io/api/badges/tinkerbell/boots/status.svg)](https://cloud.drone.io/tinkerbell/boots)
 
 This services handles DHCP, PXE, tftp, and iPXE for provisions.
