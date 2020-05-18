@@ -369,7 +369,7 @@ var helpers = template.FuncMap{
 	"vmnic":     vmnic,
 	"rootpw":    rootpw,
 	"disk":      determineDisk,
-	"tink_host": func() string { return conf.PublicIPv4.String() },
+	"tink_host": func() string { return conf.PublicFQDN },
 }
 
 func vmnic(j job.Job) string {

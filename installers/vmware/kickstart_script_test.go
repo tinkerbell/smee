@@ -30,6 +30,7 @@ func TestScriptKickstart(t *testing.T) {
 	assert := require.New(t)
 	conf.MirrorBaseIP = "http://127.0.0.1"
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
+	conf.PublicFQDN = "boots-test.example.com"
 
 	for _, man := range manufacturers {
 		for _, ver := range versions {
