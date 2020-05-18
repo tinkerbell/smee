@@ -245,11 +245,11 @@ esxcli system settings kernel set -s tty2Port -v com2
 chmod +x /tmp/customize.sh
 sh /tmp/customize.sh > /var/log/firstboot-customize.log
 # Phone home to Packet for device activation
-echo "Tinkerbell: 127.0.0.1" > /tmp/firstboot-packet.log
+echo "Tinkerbell: boots-test.example.com" > /tmp/firstboot-packet.log
 echo "UUID: $uuid" >> /tmp/firstboot-packet.log
 BODY='{"instance_id":"$uuid"}'
 BODY_LEN=$( echo -n ${BODY} | wc -c )
-echo -ne "POST /phone-home HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 127.0.0.1 80 > /tmp/firstboot-phone-home.log
+echo -ne "POST /phone-home HTTP/1.0\r\nHost: boots-test.example.com\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 boots-test.example.com 80 > /tmp/firstboot-phone-home.log
 reboot
 
 %post --interpreter=busybox
@@ -312,10 +312,10 @@ echo "nameserver 147.75.207.207" > /etc/resolv.conf
 chmod +x /tmp/customize-pi.sh
 sh /tmp/customize-pi.sh > /tmp/customize-pi.log
 sleep 60
-echo "Tinkerbell: 127.0.0.1" > /tmp/post-packet.log
+echo "Tinkerbell: boots-test.example.com" > /tmp/post-packet.log
 BODY='{"type":"provisioning.109"}'
 BODY_LEN=$( echo -n ${BODY} | wc -c )
-echo -ne "POST /phone-home HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 127.0.0.1 80 > /tmp/post-phone-home.log
+echo -ne "POST /phone-home HTTP/1.0\r\nHost: boots-test.example.com\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 boots-test.example.com 80 > /tmp/post-phone-home.log
 
 %post --ignorefailure=true
 echo "Packet installation postinstall executed" > /packet-pi-ks.log
