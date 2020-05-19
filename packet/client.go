@@ -19,16 +19,44 @@ import (
 )
 
 type hardwareGetter interface {
-	ByMAC(context.Context, *tink.GetRequest, ...grpc.CallOption) (*tink.Hardware, error)
-	ByIP(context.Context, *tink.GetRequest, ...grpc.CallOption) (*tink.Hardware, error)
+	ByMAC(context.Context, getRequest, ...grpc.CallOption) (hardware, error)
+	ByIP(context.Context, getRequest, ...grpc.CallOption) (hardware, error)
 }
+
+type getRequest interface {
+}
+
+type hardware interface {
+}
+
+type hardwareGetterTink struct {
+	client tink.HardwareServiceClient
+}
+
+func (hg hardwareGetterTink) ByMAC(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
+	h, err := hg.client.ByMAC(ctx, in.(*tink.GetRequest), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
+func (hg hardwareGetterTink) ByIP(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
+
+	h, err := hg.client.ByIP(ctx, in.(*tink.GetRequest), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
 
 type Client struct {
 	http          *http.Client
 	baseURL       *url.URL
 	consumerToken string
 	authToken     string
-	tink        hardwareGetter
+	client        hardwareGetter
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -52,17 +80,19 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		return nil, errors.New("FACILITY_CODE env must be set")
 	}
 
-	tink, err := client.NewTinkerbellClient()
+	var tink hardwareGetterTink
+	tinkClient, err := client.NewTinkerbellClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to cacher")
 	}
+	tink.client = tinkClient
 
 	return &Client{
 		http:          c,
 		baseURL:       baseURL,
 		consumerToken: consumerToken,
 		authToken:     authToken,
-		tink:        tink,
+		client:        tink,
 	}, nil
 }
 

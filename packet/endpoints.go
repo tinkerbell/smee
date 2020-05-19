@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	tink "github.com/tinkerbell/tink/protos/hardware"
+	cacher "github.com/packethost/cacher/protos/cacher"
 	"io"
 	"net"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
-	"github.com/tinkerbell/tink/protos/hardware"
+	//"github.com/tinkerbell/tink/protos/hardware"
 )
 
 const mimeJSON = "application/json"
@@ -39,10 +42,25 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	msg := &hardware.GetRequest{
-		Mac: mac.String(),
+	var msg getRequest
+	discoveryType := os.Getenv("DISCOVERY_TYPE")
+	switch discoveryType {
+	case discoveryTypeCacher:
+		msg = &cacher.GetRequest{
+			MAC: mac.String(),
+		}
+	case discoveryTypeTinkerbell:
+		msg = &tink.GetRequest{
+			Mac: mac.String(),
+		}
+	default:
+		return nil, errors.New("invalid discovery type")
 	}
-	resp, err := c.tink.ByMAC(context.Background(), msg)
+
+	//msg := &hardware.GetRequest{
+	//	Mac: mac.String(),
+	//}
+	resp, err := c.client.ByMAC(context.Background(), msg)
 
 	cacherTimer.ObserveDuration()
 	metrics.CacherRequestsInProgress.With(labels).Dec()
@@ -105,10 +123,25 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	defer metrics.CacherRequestsInProgress.With(labels).Dec()
 
-	msg := &hardware.GetRequest{
-		Ip: ip.String(),
+	var msg getRequest
+	discoveryType := os.Getenv("DISCOVERY_TYPE")
+	switch discoveryType {
+	case discoveryTypeCacher:
+		msg = &cacher.GetRequest{
+			IP: ip.String(),
+		}
+	case discoveryTypeTinkerbell:
+		msg = &tink.GetRequest{
+			Ip: ip.String(),
+		}
+	default:
+		return nil, errors.New("invalid discovery type")
 	}
-	resp, err := c.tink.ByIP(context.Background(), msg)
+
+	//msg := &hardware.GetRequest{
+	//	Ip: ip.String(),
+	//}
+	resp, err := c.client.ByIP(context.Background(), msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "get hardware by ip from tink")
 	}
