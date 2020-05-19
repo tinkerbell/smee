@@ -27,6 +27,9 @@ var (
 	ignoredGIs  = getIgnoredGIs()
 
 	TrustedProxies = parseTrustedProxies()
+
+	// Eclypsium registration token, passed into osie
+	EclypsiumToken = env.Get("ECLYPSIUM_TOKEN")
 )
 
 func mustPublicIPv4() net.IP {
