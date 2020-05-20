@@ -2,6 +2,7 @@ package packet
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"time"
@@ -133,6 +134,7 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshal json for discovery")
 	}
+	fmt.Println("hellllllllo after unmarshal hw in discovery ", res)
 	return &res, err
 }
 

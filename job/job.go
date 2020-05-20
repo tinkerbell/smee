@@ -1,6 +1,7 @@
 package job
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -74,6 +75,7 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
+	fmt.Println("ip in create from ip ", ip)
 	mac := (*d).GetMac(ip)
 	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))

@@ -10,7 +10,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/tinkerbell/tink/client"
+	cacherClient "github.com/packethost/cacher/client"
+	"github.com/packethost/cacher/protos/cacher"
+	tinkClient "github.com/tinkerbell/tink/client"
 	tink "github.com/tinkerbell/tink/protos/hardware"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
@@ -33,6 +35,10 @@ type hardwareGetterTink struct {
 	client tink.HardwareServiceClient
 }
 
+type hardwareGetterCacher struct {
+	client cacher.CacherClient
+}
+
 func (hg hardwareGetterTink) ByMAC(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
 	h, err := hg.client.ByMAC(ctx, in.(*tink.GetRequest), opts...)
 	if err != nil {
@@ -50,6 +56,22 @@ func (hg hardwareGetterTink) ByIP(ctx context.Context, in getRequest, opts ...gr
 	return h, nil
 }
 
+func (hg hardwareGetterCacher) ByMAC(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
+	h, err := hg.client.ByMAC(ctx, in.(*cacher.GetRequest), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
+func (hg hardwareGetterCacher) ByIP(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
+
+	h, err := hg.client.ByIP(ctx, in.(*cacher.GetRequest), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
 
 type Client struct {
 	http          *http.Client
@@ -75,24 +97,49 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		},
 	}
 
-	facility := os.Getenv("FACILITY_CODE")
-	if facility == "" {
-		return nil, errors.New("FACILITY_CODE env must be set")
+	var hg hardwareGetter
+	discoveryType := os.Getenv("DISCOVERY_TYPE")
+	switch discoveryType {
+	case discoveryTypeCacher:
+		facility := os.Getenv("FACILITY_CODE")
+		if facility == "" {
+			return nil, errors.New("FACILITY_CODE env must be set")
+		}
+
+		cc, err := cacherClient.New(facility)
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to cacher")
+		}
+		hg = hardwareGetterCacher{client: cc}
+	case discoveryTypeTinkerbell:
+		//var tink hardwareGetterTink
+		tc, err := tinkClient.NewTinkerbellClient()
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to tink")
+		}
+		hg = hardwareGetterTink{client: tc}
+	default:
+		return nil, errors.New("invalid discovery type")
 	}
 
-	var tink hardwareGetterTink
-	tinkClient, err := client.NewTinkerbellClient()
-	if err != nil {
-		return nil, errors.Wrap(err, "connect to cacher")
-	}
-	tink.client = tinkClient
+	//facility := os.Getenv("FACILITY_CODE")
+	//if facility == "" {
+	//	return nil, errors.New("FACILITY_CODE env must be set")
+	//}
+
+	//var tink hardwareGetterTink
+	//tinkClient, err := tinkClient.NewTinkerbellClient()
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "connect to tink")
+	//}
+	//tink.client = tinkClient
 
 	return &Client{
 		http:          c,
 		baseURL:       baseURL,
 		consumerToken: consumerToken,
 		authToken:     authToken,
-		client:        tink,
+		client:        hg,
 	}, nil
 }
 

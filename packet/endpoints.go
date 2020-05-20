@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	tink "github.com/tinkerbell/tink/protos/hardware"
-	cacher "github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/cacher/protos/cacher"
 	"io"
 	"net"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
-	//"github.com/tinkerbell/tink/protos/hardware"
 )
 
 const mimeJSON = "application/json"
@@ -49,9 +49,45 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		msg = &cacher.GetRequest{
 			MAC: mac.String(),
 		}
+
+		resp, err := c.client.ByMAC(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from cacher")
+		}
+
+		b := []byte(resp.(*cacher.Hardware).JSON)
+		if string(b) != "" {
+			metrics.CacherCacheHits.With(labels).Inc()
+			return NewDiscovery(b)
+		}
 	case discoveryTypeTinkerbell:
 		msg = &tink.GetRequest{
 			Mac: mac.String(),
+		}
+
+		resp, err := c.client.ByMAC(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from tink")
+		}
+
+		b, err := json.Marshal(resp)
+		if err != nil {
+			return nil, errors.New("marshalling tink hardware")
+		}
+
+		fmt.Println("helllllllo hardware ", string(b))
+		// or maybe just check for error?
+		if string(b) != "{}" {
+			metrics.CacherCacheHits.With(labels).Inc()
+			return NewDiscovery(b)
 		}
 	default:
 		return nil, errors.New("invalid discovery type")
@@ -60,25 +96,26 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	//msg := &hardware.GetRequest{
 	//	Mac: mac.String(),
 	//}
-	resp, err := c.client.ByMAC(context.Background(), msg)
+	//resp, err := c.client.ByMAC(context.Background(), msg)
 
-	cacherTimer.ObserveDuration()
-	metrics.CacherRequestsInProgress.With(labels).Dec()
-
-	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by mac from tink")
-	}
-
-	b, err := json.Marshal(resp)
-	if err != nil {
-		return nil, errors.New("marshalling tink hardware")
-	}
-
-	// or maybe just check for error?
-	if string(b) != "{}" {
-		metrics.CacherCacheHits.With(labels).Inc()
-		return NewDiscovery(b)
-	}
+	//cacherTimer.ObserveDuration()
+	//metrics.CacherRequestsInProgress.With(labels).Dec()
+	//
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "get hardware by mac from tink")
+	//}
+	//
+	//b, err := json.Marshal(resp)
+	//if err != nil {
+	//	return nil, errors.New("marshalling tink hardware")
+	//}
+	//
+	//fmt.Println("helllllllo hardware ", string(b))
+	//// or maybe just check for error?
+	//if string(b) != "{}" {
+	//	metrics.CacherCacheHits.With(labels).Inc()
+	//	return NewDiscovery(b)
+	//}
 
 	if giaddr == nil {
 		return nil, errors.New("missing MAC address")
@@ -100,7 +137,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		CIRCUITID: circuitID,
 	}
 
-	b, err = json.Marshal(&req)
+	b, err := json.Marshal(&req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshalling api discovery")
 	}
@@ -124,37 +161,73 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	defer metrics.CacherRequestsInProgress.With(labels).Dec()
 
 	var msg getRequest
+	var b []byte
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
 	case discoveryTypeCacher:
 		msg = &cacher.GetRequest{
 			IP: ip.String(),
 		}
+
+		resp, err := c.client.ByIP(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by ip from cacher")
+		}
+
+		b = []byte(resp.(*cacher.Hardware).JSON)
+		//if string(b) != "" {
+		//	metrics.CacherCacheHits.With(labels).Inc()
+		//	return NewDiscovery(b)
+		//}
 	case discoveryTypeTinkerbell:
 		msg = &tink.GetRequest{
 			Ip: ip.String(),
 		}
+
+		resp, err := c.client.ByIP(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by ip from tink")
+		}
+
+		b, err = json.Marshal(resp)
+		if err != nil {
+			return nil, errors.New("marshalling tink hardware")
+		}
+
+		// or maybe just check for error?
+		//if string(b) != "{}" {
+		//	metrics.CacherCacheHits.With(labels).Inc()
+		//	return NewDiscovery(b)
+		//}
 	default:
 		return nil, errors.New("invalid discovery type")
 	}
 
-	//msg := &hardware.GetRequest{
-	//	Ip: ip.String(),
+	////msg := &hardware.GetRequest{
+	////	Ip: ip.String(),
+	////}
+	//resp, err := c.client.ByIP(context.Background(), msg)
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "get hardware by ip from tink")
 	//}
-	resp, err := c.client.ByIP(context.Background(), msg)
-	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by ip from tink")
-	}
-
-	b, err := json.Marshal(resp)
-	if err != nil {
-		return nil, errors.New("marshalling tink hardware")
-	}
-
-	//if string(b) == "{}" {
-	//	return nil, errors.New("empty response from cacher")
+	//
+	//b, err := json.Marshal(resp)
+	//if err != nil {
+	//	return nil, errors.New("marshalling tink hardware")
 	//}
-	metrics.CacherCacheHits.With(labels).Inc()
+	//
+	////if string(b) == "{}" {
+	////	return nil, errors.New("empty response from cacher")
+	////}
+	//metrics.CacherCacheHits.With(labels).Inc()
 	return NewDiscovery(b)
 }
 
