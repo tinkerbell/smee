@@ -1,75 +1,82 @@
 ---
+quay_settings: &quay_settings
+  registry: quay.io
+  repo: quay.io/tinkerbell/boots
+  username:
+    from_secret: docker_username
+  password:
+    from_secret: docker_password
 
-workspace:
-  base: /go
-  path: src/github.com/tinkerbell/boots
+publish_tmpl: &publish_tmpl
+  image: plugins/docker
+  depends_on:
+    - build
+    - fmt
+    - lint
+    - test
 
-pipeline:
-  lint:
-    group: ci
-    image: golangci/golangci-lint:v1.23.8
+quay_settings_pr: &quay_settings_pr
+  registry: quay.io
+  repo: quay.io/tinkerbell/boots-pr
+  username:
+    from_secret: public_docker_username
+  password:
+    from_secret: public_docker_password
+
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: lint
+    image: golangci/golangci-lint:v1.24.0
     commands:
       - golangci-lint run -v -D errcheck
 
-  fmt:
-    group: ci
+  - name: fmt
     image: golang:1.13-alpine
     commands:
+      - set -o pipefail
       - apk add --update --upgrade --no-cache git
       - go get golang.org/x/tools/cmd/goimports
       - goimports -d . | (! grep .)
 
-  test:
-    group: ci
+  - name: test
     image: golang:1.13-alpine
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
-  build:
-    group: ci
+  - name: build
     image: golang:1.13-alpine
     commands:
       - CGO_ENABLED=0 go build
 
-  publish_pr:
-    group: publish
-    image: plugins/docker
-    registry: quay.io
-    repo: quay.io/tinkerbell/boots-pr
-    tags:
-      - ${DRONE_PULL_REQUEST}
-      - ${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  - name: publish pr
+    <<: *publish_tmpl
+    settings:
+      <<: *quay_settings_pr
+      tags:
+        - pr${DRONE_PULL_REQUEST}
+        - pr${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
       event: pull_request
-    secrets:
-      - source: public_docker_username
-        target: docker_username
-      - source: public_docker_password
-        target: docker_password
 
-  publish_master:
-    group: publish
-    image: plugins/docker
-    registry: quay.io
-    repo: quay.io/tinkerbell/boots
-    tags:
-      - latest
-      - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  - name: publish master
+    <<: *publish_tmpl
+    settings:
+      <<: *quay_settings
+      tags:
+        - latest
+        - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
       event: push
       branch: master
-    secrets:
-      - docker_username
-      - docker_password
 
-  publish_tag:
-    group: publish
-    image: plugins/docker
-    registry: quay.io
-    repo: quay.io/tinkerbell/boots
-    tags: ${DRONE_TAG}
+  - name: publish tag
+    <<: *publish_tmpl
+    settings:
+      <<: *quay_settings
+      tags:
+        - ${DRONE_TAG}
     when:
       event: tag
-    secrets:
-      - docker_username
-      - docker_password
