@@ -3,6 +3,7 @@ package osie
 import (
 	"strings"
 
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -63,6 +64,11 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
+
+	// Don't bother including eclypsium_token if none is provided
+	if conf.EclypsiumToken != "" {
+		s.Args("eclypsium_token=" + conf.EclypsiumToken)
+	}
 
 	if isCustomOsie(j) {
 		s.Args("packet_base_url=" + osieBaseUrl(j))
