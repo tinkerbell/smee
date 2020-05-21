@@ -66,7 +66,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("packet_state=${state}")
 
 	// Don't bother including eclypsium_token if none is provided
-	if conf.EclypsiumToken != "" {
+	if conf.EclypsiumToken != "" && j.HardwareState() == "deprovisioning" {
 		s.Args("eclypsium_token=" + conf.EclypsiumToken)
 	}
 
