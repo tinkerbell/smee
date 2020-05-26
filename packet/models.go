@@ -2,7 +2,6 @@ package packet
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"os"
 	"time"
@@ -105,9 +104,9 @@ type HardwareCacher struct {
 
 // HardwareTinkerbell represents the new hardware data model for tinkerbell
 type HardwareTinkerbell struct {
-	ID       string    `json:"id"`
-	Network  Network `json:"network"`
-	Metadata Metadata  `json:"metadata"`
+	ID       string   `json:"id"`
+	Network  Network  `json:"network"`
+	Metadata Metadata `json:"metadata"`
 }
 
 // NewDiscovery instantiates a Discovery struct from the json argument
@@ -128,13 +127,10 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 		return nil, errors.New("invalid discovery type")
 	}
 
-	// check to see if res is empty
-
 	err := json.Unmarshal(b, &res)
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshal json for discovery")
 	}
-	fmt.Println("hellllllllo after unmarshal hw in discovery ", res)
 	return &res, err
 }
 
@@ -286,7 +282,7 @@ type NetworkInterface struct {
 // DHCP holds details for DHCP connection
 type DHCP struct {
 	MAC         *MACAddr      `json:"mac"`
-	IP          IP        `json:"ip"`
+	IP          IP            `json:"ip"`
 	Hostname    string        `json:"hostname"`
 	LeaseTime   time.Duration `json:"lease_time"`
 	NameServers []string      `json:"name_servers"`
@@ -298,7 +294,7 @@ type DHCP struct {
 
 // Netboot holds details for a hardware to boot over network
 type Netboot struct {
-	AllowPXE      bool `json:"allow_pxe"` // to be removed?
+	AllowPXE      bool `json:"allow_pxe"`      // to be removed?
 	AllowWorkflow bool `json:"allow_workflow"` // to be removed?
 	IPXE          struct {
 		URL      string `json:"url"`
@@ -309,15 +305,15 @@ type Netboot struct {
 
 // Bootstrapper is the bootstrapper to be used during netboot
 type Osie struct {
-	BaseURL     string `json:"base_url"`
-	Kernel string `json:"kernel"`
-	Initrd string `json:"initrd"`
+	BaseURL string `json:"base_url"`
+	Kernel  string `json:"kernel"`
+	Initrd  string `json:"initrd"`
 }
 
 // Network holds hardware network details
 type Network struct {
 	Interfaces []NetworkInterface `json:"interfaces,omitempty"`
-	Default NetworkInterface `json:"default,omitempty"`
+	Default    NetworkInterface   `json:"default,omitempty"`
 }
 
 // Metadata holds the hardware metadata

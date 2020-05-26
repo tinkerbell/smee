@@ -297,16 +297,16 @@ func (h HardwareCacher) HardwareUEFI(mac net.HardwareAddr) bool {
 }
 
 // dummy method for tink data model transition
-func (h *HardwareCacher) OsieBaseURL(mac net.HardwareAddr) string {
+func (h HardwareCacher) OsieBaseURL(mac net.HardwareAddr) string {
 	return ""
 }
 
 // dummy method for tink data model transition
-func (h *HardwareCacher) KernelPath(mac net.HardwareAddr) string {
+func (h HardwareCacher) KernelPath(mac net.HardwareAddr) string {
 	return ""
 }
 
 // dummy method for tink data model transition
-func (h *HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
+func (h HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
 	return ""
 }

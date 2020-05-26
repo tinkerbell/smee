@@ -1,7 +1,6 @@
 package job
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -75,7 +74,6 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
-	fmt.Println("ip in create from ip ", ip)
 	mac := (*d).GetMac(ip)
 	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
@@ -128,9 +126,9 @@ func (j *Job) setup(dp *packet.Discovery) error {
 		return errors.New("could not find IP address")
 	}
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
-	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))    // cacher=env.DHCPLeaseTime
-	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
-	j.dhcp.SetDNSServers(d.DnsServers())  // cacher=env.DNSServers
+	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac)) // cacher=env.DHCPLeaseTime
+	j.dhcp.SetDHCPServer(conf.PublicIPv4)   // used for the unicast DHCPREQUEST
+	j.dhcp.SetDNSServers(d.DnsServers())    // cacher=env.DNSServers
 
 	hostname, err := d.Hostname()
 	if err != nil {

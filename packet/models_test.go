@@ -20,7 +20,7 @@ func TestNewDiscoveryCacher(t *testing.T) {
 
 	for name, test := range tests {
 		t.Log(name)
-		d, err := NewDiscovery(test.json)
+		d, err := NewDiscovery([]byte(test.json))
 		if err != nil {
 			t.Fatal("NewDiscovery", err)
 		}
@@ -37,13 +37,19 @@ func TestNewDiscoveryTinkerbell(t *testing.T) {
 
 	for name, test := range tinkerbellTests {
 		t.Log(name)
-		d, err := NewDiscovery(test.json)
+		d, err := NewDiscovery([]byte(test.json))
 		if err != nil {
 			t.Fatal("NewDiscovery", err)
 		}
 		dt := (*d).(*DiscoveryTinkerbell)
-		if dt.DHCP.IP != test.ip {
-			t.Fatalf("unexpected ip, want: %s, got: %s\n", test.ip, dt.DHCP.IP)
+
+		mac, err := net.ParseMAC(test.mac)
+		if err != nil {
+			t.Fatal("parse test mac", err)
+		}
+
+		if dt.Network.InterfaceByMac(mac).DHCP.IP.Address.String() != test.ip.Address.String() {
+			t.Fatalf("unexpected ip, want: %v, got: %v\n", test.ip, dt.Network.InterfaceByMac([]byte(test.mac)).DHCP.IP.Address)
 		}
 	}
 }
@@ -61,7 +67,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 
 		for name, test := range tinkerbellTests {
 			t.Log(name)
-			d, err := NewDiscovery(test.json)
+			d, err := NewDiscovery([]byte(test.json))
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
@@ -151,7 +157,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 
 		mac, err := net.ParseMAC(test.mac)
 		if err != nil {
-			t.Fatal(test.mode, err)
+			t.Fatal("parse test mac", err)
 		}
 
 		// suggest we leave this here for the time being for ease of test why we're not seeing what we expect
@@ -160,44 +166,42 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 		}
 
 		t.Logf("d.mac: %s\n", d.mac)
-		t.Logf("dhcp %v\n", d.DHCP)
+		t.Logf("dhcp %v\n", d.Network.InterfaceByMac(mac).DHCP)
 		t.Log("\n")
-		if d.DHCP.IP != test.ip {
-			t.Fatalf("unexpected ip, want: %s, got: %s\n", test.ip, d.DHCP.IP)
+		if d.Network.InterfaceByMac(mac).DHCP.IP.Address.String() != test.ip.Address.String() {
+			t.Fatalf("unexpected ip, want: %v, got: %v\n", test.ip, d.Network.InterfaceByMac(mac).DHCP.IP)
 		}
-		if d.DHCP.MAC.String() != test.mac {
-			t.Fatalf("unexpected mac, want: %s, got: %s\n", test.mac, d.DHCP.MAC)
+		if d.Network.InterfaceByIp(test.ip.Address).DHCP.MAC.String() != mac.String() {
+			t.Fatalf("unexpected mac, want: %s, got: %s\n", mac, d.Network.InterfaceByIp(test.ip.Address).DHCP.MAC)
 		}
-		if d.DHCP.Hostname != test.hostname {
-			t.Fatalf("unexpected hostname, want: %s, got: %s\n", test.hostname, d.DHCP.Hostname)
+		if d.Network.InterfaceByMac(mac).DHCP.Hostname != test.hostname {
+			t.Fatalf("unexpected hostname, want: %s, got: %s\n", test.hostname, d.Network.InterfaceByMac(mac).DHCP.Hostname)
 		}
-		if d.DHCP.LeaseTime != test.leaseTime {
-			t.Fatalf("unexpected lease time, want: %s, got: %v\n", test.leaseTime, d.DHCP.LeaseTime)
+		if d.Network.InterfaceByMac(mac).DHCP.LeaseTime != test.leaseTime {
+			t.Fatalf("unexpected lease time, want: %s, got: %v\n", test.leaseTime, d.Network.InterfaceByMac(mac).DHCP.LeaseTime)
 		}
-		if !reflect.DeepEqual(d.DHCP.NameServers, test.nameServers) {
-			t.Fatalf("unexpected name servers, want: %s, got: %v\n", test.nameServers, d.DHCP.NameServers)
+		// note the difference between []string(nil) and []string{}; use cmp.Diff to check
+		if !reflect.DeepEqual(d.Network.InterfaceByMac(mac).DHCP.NameServers, test.nameServers) {
+			t.Fatalf("unexpected name servers, want: %v, got: %v\n", test.nameServers, d.Network.InterfaceByMac(mac).DHCP.NameServers)
 		}
-		if !reflect.DeepEqual(d.DHCP.TimeServers, test.timeServers) {
-			t.Fatalf("unexpected time servers, want: %s, got: %v\n", test.timeServers, d.DHCP.TimeServers)
+		if !reflect.DeepEqual(d.Network.InterfaceByMac(mac).DHCP.TimeServers, test.timeServers) {
+			t.Fatalf("unexpected time servers, want: %v, got: %v\n", test.timeServers, d.Network.InterfaceByMac(mac).DHCP.TimeServers)
 		}
-		if d.DHCP.Gateway.String() != test.gateway {
-			t.Fatalf("unexpected gateway, want: %s, got: %v\n", test.gateway, d.DHCP.Gateway)
+		if d.Network.InterfaceByMac(mac).DHCP.IP.Gateway.String() != test.ip.Gateway.String() {
+			t.Fatalf("unexpected gateway, want: %s, got: %v\n", test.ip.Gateway, d.Network.InterfaceByMac(mac).DHCP.IP.Gateway)
 		}
-		if d.DHCP.Arch != test.arch {
-			t.Fatalf("unexpected arch, want: %s, got: %s\n", test.arch, d.DHCP.Arch)
+		if d.Network.InterfaceByMac(mac).DHCP.Arch != test.arch {
+			t.Fatalf("unexpected arch, want: %s, got: %s\n", test.arch, d.Network.InterfaceByMac(mac).DHCP.Arch)
 		}
-		if d.DHCP.UEFI != test.uefi {
-			t.Fatalf("unexpected uefi, want: %v, got: %v\n", test.uefi, d.DHCP.UEFI)
+		if d.Network.InterfaceByMac(mac).DHCP.UEFI != test.uefi {
+			t.Fatalf("unexpected uefi, want: %v, got: %v\n", test.uefi, d.Network.InterfaceByMac(mac).DHCP.UEFI)
 		}
 
-		t.Logf("netboot %v\n", d.Netboot)
-		t.Logf("netboot allow_pxe %v\n", d.Netboot.AllowPXE)
-		t.Logf("netboot allow_workflow %v\n", d.Netboot.AllowWorkflow)
-		t.Logf("netboot ipxe %v\n", d.Netboot.IPXE)
-		t.Logf("netboot bootstrapper %v\n", d.Netboot.Bootstrapper)
-		t.Log("\n")
-
-		t.Logf("network %v\n", d.Network)
+		t.Logf("netboot %v\n", d.Network.InterfaceByMac(mac).Netboot)
+		t.Logf("netboot allow_pxe %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowPXE)
+		t.Logf("netboot allow_workflow %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
+		t.Logf("netboot ipxe %v\n", d.Network.InterfaceByMac(mac).Netboot.IPXE)
+		t.Logf("netboot osie %v\n", d.Network.InterfaceByMac(mac).Netboot.Osie)
 		t.Log("\n")
 
 		t.Logf("metadata %v\n", d.Metadata)
@@ -230,15 +234,15 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			continue
 		}
 
-		conf := d.Ip(mac)
-		if conf.Address.String() != test.conf.Address.String() {
-			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Address, conf.Address)
+		conf := d.GetIp(mac)
+		if conf.Address.String() != test.ip.Address.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.ip.Address, conf.Address)
 		}
-		if conf.Netmask.String() != test.conf.Netmask.String() {
-			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Netmask, conf.Netmask)
+		if conf.Netmask.String() != test.ip.Netmask.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.ip.Netmask, conf.Netmask)
 		}
-		if conf.Gateway.String() != test.conf.Gateway.String() {
-			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Gateway, conf.Gateway)
+		if conf.Gateway.String() != test.ip.Gateway.String() {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.ip.Gateway, conf.Gateway)
 		}
 	}
 }
@@ -246,33 +250,34 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 var tinkerbellTests = map[string]struct {
 	id            string
 	mac           string
-	ip            string
+	ip            IP
 	hostname      string
 	leaseTime     time.Duration
 	nameServers   []string
 	timeServers   []string
-	gateway       string
 	arch          string
 	uefi          bool
 	allowPXE      bool
-	allowWorklfow bool
+	allowWorkflow bool
 	ipxeURL       string
 	ipxeContents  string
 	mode          string
-	conf          IP
 	osie          string
 	json          string
 }{
 	"new_structure": {
-		id:          "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
-		mac:         "ec:0d:9a:c0:01:0c",
-		ip:          "172.16.1.35/31",
+		id:  "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
+		mac: "ec:0d:9a:c0:01:0c",
+		ip: IP{
+			Address: net.ParseIP("192.168.1.5"),
+			Netmask: net.ParseIP("255.255.255.248"),
+			Gateway: net.ParseIP("192.168.1.1"),
+		},
 		hostname:    "server001",
 		leaseTime:   86400,
 		nameServers: []string{},
 		timeServers: []string{},
-		gateway:     "192.168.1.1",
-		arch:        "aarch64",
+		arch:        "x86_64",
 		uefi:        false,
 		mode:        "hardware",
 		json:        newJsonStruct,
@@ -386,40 +391,60 @@ var tests = map[string]struct {
 
 const (
 	newJsonStruct = `
-  {
-    "id": "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
-    "dhcp": {
-      "mac": "ec:0d:9a:c0:01:0c",
-      "ip": "172.16.1.35/31",
-      "hostname": "server001",
-      "lease_time": 86400,
-      "name_servers": [],
-      "time_servers": [],
-      "gateway": "192.168.1.1",
-      "arch": "aarch64",
-      "uefi": false
-    },
-    "netboot": {
-      "allow_pxe": true,
-      "allow_workflow": true,
-      "ipxe": {
-        "url": "http://<url>/menu.ipxe",
-        "contents": "#!ipxe"
-      },
-      "bootstrapper": {
-        "kernel": "http://<url-to>/kernel",
-        "initrd": "http://<url-to>/initrd",
-        "os": "http://<url-to>/osie"
-      }
-    },
-    "network": [{
-      "dhcp": {},
-      "netboot": {}
-    }],
-    "metadata": {
-      "state" : "active"
-    }
- }
+	{
+	  "id":"fde7c87c-d154-447e-9fce-7eb7bdec90c0",
+	  "network":{
+		 "interfaces":[
+			{
+			   "dhcp":{
+				  "mac":"ec:0d:9a:c0:01:0c",
+				  "ip":{
+					 "address":"192.168.1.5",
+					 "netmask":"255.255.255.248",
+					 "gateway":"192.168.1.1"
+				  },
+				  "hostname":"server001",
+				  "lease_time":86400,
+				  "name_servers": [],
+				  "time_servers": [],
+				  "arch":"x86_64",
+				  "uefi":false
+			   },
+			   "netboot":{
+				  "allow_pxe":true,
+				  "allow_workflow":true,
+				  "ipxe":{
+					 "url":"http://url/menu.ipxe",
+					 "contents":"#!ipxe"
+				  },
+				  "osie":{
+					 "kernel":"vmlinuz-x86_64",
+					 "initrd":"",
+					 "base_url":""
+				  }
+			   }
+			}
+		 ]
+	  },
+	  "metadata":{
+		 "state":"",
+		 "bonding_mode":5,
+		 "manufacturer":{
+			"id":"",
+			"slug":""
+		 },
+		 "instance":{},
+		 "custom":{
+			"preinstalled_operating_system_version":{},
+			"private_subnets":[]
+		 },
+		 "facility":{
+			"plan_slug":"c2.medium.x86",
+			"plan_version_slug":"",
+			"facility_code":"ewr1"
+		 }
+	  }
+	}
  `
 
 	discovered = `

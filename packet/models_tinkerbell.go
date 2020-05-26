@@ -141,19 +141,19 @@ func (h HardwareTinkerbell) HardwareUEFI(mac net.HardwareAddr) bool {
 	return h.Network.InterfaceByMac(mac).DHCP.UEFI
 }
 
-func (h *HardwareTinkerbell) Interfaces() []Port {
+func (h HardwareTinkerbell) Interfaces() []Port {
 	var ports []Port
 	return ports
 }
 
-func (h *HardwareTinkerbell) OsieBaseURL(mac net.HardwareAddr) string {
+func (h HardwareTinkerbell) OsieBaseURL(mac net.HardwareAddr) string {
 	return h.Network.InterfaceByMac(mac).Netboot.Osie.BaseURL
 }
 
-func (h *HardwareTinkerbell) KernelPath(mac net.HardwareAddr) string {
+func (h HardwareTinkerbell) KernelPath(mac net.HardwareAddr) string {
 	return h.Network.InterfaceByMac(mac).Netboot.Osie.Kernel
 }
 
-func (h *HardwareTinkerbell) InitrdPath(mac net.HardwareAddr) string {
+func (h HardwareTinkerbell) InitrdPath(mac net.HardwareAddr) string {
 	return h.Network.InterfaceByMac(mac).Netboot.Osie.Initrd
 }

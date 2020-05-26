@@ -12,11 +12,11 @@ import (
 
 	cacherClient "github.com/packethost/cacher/client"
 	"github.com/packethost/cacher/protos/cacher"
-	tinkClient "github.com/tinkerbell/tink/client"
-	tink "github.com/tinkerbell/tink/protos/hardware"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
+	tinkClient "github.com/tinkerbell/tink/client"
+	tink "github.com/tinkerbell/tink/protos/hardware"
 	"google.golang.org/grpc"
 )
 
