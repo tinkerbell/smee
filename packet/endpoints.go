@@ -45,25 +45,6 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	var msg getRequest
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
-	case discoveryTypeCacher:
-		msg = &cacher.GetRequest{
-			MAC: mac.String(),
-		}
-
-		resp, err := c.client.ByMAC(context.Background(), msg)
-
-		cacherTimer.ObserveDuration()
-		metrics.CacherRequestsInProgress.With(labels).Dec()
-
-		if err != nil {
-			return nil, errors.Wrap(err, "get hardware by mac from cacher")
-		}
-
-		b := []byte(resp.(*cacher.Hardware).JSON)
-		if string(b) != "" {
-			metrics.CacherCacheHits.With(labels).Inc()
-			return NewDiscovery(b)
-		}
 	case discoveryTypeTinkerbell:
 		msg = &tink.GetRequest{
 			Mac: mac.String(),
@@ -88,7 +69,24 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			return NewDiscovery(b)
 		}
 	default:
-		return nil, errors.New("invalid discovery type")
+		msg = &cacher.GetRequest{
+			MAC: mac.String(),
+		}
+
+		resp, err := c.client.ByMAC(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from cacher")
+		}
+
+		b := []byte(resp.(*cacher.Hardware).JSON)
+		if string(b) != "" {
+			metrics.CacherCacheHits.With(labels).Inc()
+			return NewDiscovery(b)
+		}
 	}
 
 	if giaddr == nil {
@@ -138,21 +136,6 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	var b []byte
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
-	case discoveryTypeCacher:
-		msg = &cacher.GetRequest{
-			IP: ip.String(),
-		}
-
-		resp, err := c.client.ByIP(context.Background(), msg)
-
-		cacherTimer.ObserveDuration()
-		metrics.CacherRequestsInProgress.With(labels).Dec()
-
-		if err != nil {
-			return nil, errors.Wrap(err, "get hardware by ip from cacher")
-		}
-
-		b = []byte(resp.(*cacher.Hardware).JSON)
 	case discoveryTypeTinkerbell:
 		msg = &tink.GetRequest{
 			Ip: ip.String(),
@@ -172,7 +155,20 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 			return nil, errors.New("marshalling tink hardware")
 		}
 	default:
-		return nil, errors.New("invalid discovery type")
+		msg = &cacher.GetRequest{
+			IP: ip.String(),
+		}
+
+		resp, err := c.client.ByIP(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by ip from cacher")
+		}
+
+		b = []byte(resp.(*cacher.Hardware).JSON)
 	}
 
 	return NewDiscovery(b)

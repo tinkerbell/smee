@@ -10,10 +10,7 @@ import (
 	"github.com/tinkerbell/boots/files/ignition"
 )
 
-const (
-	discoveryTypeCacher     = "cacher"
-	discoveryTypeTinkerbell = "tinkerbell"
-)
+const discoveryTypeTinkerbell = "tinkerbell"
 
 // BondingMode is the hardware bonding mode
 type BondingMode int
@@ -117,12 +114,10 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
-	case discoveryTypeCacher:
-		res = &DiscoveryCacher{}
 	case discoveryTypeTinkerbell:
 		res = &DiscoveryTinkerbell{}
 	default:
-		return nil, errors.New("invalid discovery type")
+		res = &DiscoveryCacher{}
 	}
 
 	err := json.Unmarshal(b, &res)

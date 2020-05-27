@@ -109,7 +109,6 @@ func (j *Job) setup(dp *packet.Discovery) error {
 	// mac is needed to find the hostname for DiscoveryCacher
 	d.SetMac(j.mac)
 
-	// dh.ID()
 	// is this necessary?
 	j.hardware = d.Hardware()
 

@@ -100,7 +100,13 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	var hg hardwareGetter
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
-	case discoveryTypeCacher:
+	case discoveryTypeTinkerbell:
+		tc, err := tinkClient.NewTinkerbellClient()
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to tink")
+		}
+		hg = hardwareGetterTink{client: tc}
+	default:
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
 			return nil, errors.New("FACILITY_CODE env must be set")
@@ -111,28 +117,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
 		hg = hardwareGetterCacher{client: cc}
-	case discoveryTypeTinkerbell:
-		//var tink hardwareGetterTink
-		tc, err := tinkClient.NewTinkerbellClient()
-		if err != nil {
-			return nil, errors.Wrap(err, "connect to tink")
-		}
-		hg = hardwareGetterTink{client: tc}
-	default:
-		return nil, errors.New("invalid discovery type")
 	}
-
-	//facility := os.Getenv("FACILITY_CODE")
-	//if facility == "" {
-	//	return nil, errors.New("FACILITY_CODE env must be set")
-	//}
-
-	//var tink hardwareGetterTink
-	//tinkClient, err := tinkClient.NewTinkerbellClient()
-	//if err != nil {
-	//	return nil, errors.Wrap(err, "connect to tink")
-	//}
-	//tink.client = tinkClient
 
 	return &Client{
 		http:          c,
