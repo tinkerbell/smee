@@ -45,8 +45,6 @@ type DiscoveryTinkerbell struct {
 }
 
 type Interface interface {
-	//Name() string //needed?
-	//MAC() net.HardwareAddr
 }
 
 type InterfaceCacher struct {
@@ -66,7 +64,7 @@ type Hardware interface {
 	HardwareFacilityCode() string
 	HardwareID() string
 	HardwareIPs() []IP
-	Interfaces() []Port
+	Interfaces() []Port // TODO: to be updated
 	HardwareManufacturer() string
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
@@ -313,7 +311,7 @@ type Osie struct {
 // Network holds hardware network details
 type Network struct {
 	Interfaces []NetworkInterface `json:"interfaces,omitempty"`
-	Default    NetworkInterface   `json:"default,omitempty"`
+	//Default    NetworkInterface   `json:"default,omitempty"`
 }
 
 // Metadata holds the hardware metadata

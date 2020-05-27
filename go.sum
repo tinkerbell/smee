@@ -98,6 +98,8 @@ github.com/json-iterator/go v1.1.9/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/u
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/kdeng3849/tink v0.0.0-20200515184551-b05e7847bc01 h1:eGidl9cQK6hPI35cWdy8kvbOPaaFnhVF+viCB2CQz9M=
 github.com/kdeng3849/tink v0.0.0-20200515184551-b05e7847bc01/go.mod h1:nOwtva5LoT5snDi8xe48ufG6NYWXjeE9p1WCE5rnHhA=
+github.com/kdeng3849/tink v0.0.0-20200527155229-11965b00a6ad h1:HDqkEW4sAPoYkyTTh9TyI/P7aKxJaKnHr/MJtFJkMvU=
+github.com/kdeng3849/tink v0.0.0-20200527155229-11965b00a6ad/go.mod h1:nOwtva5LoT5snDi8xe48ufG6NYWXjeE9p1WCE5rnHhA=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=

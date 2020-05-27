@@ -56,7 +56,7 @@ func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
 			return i
 		}
 	}
-	return n.Default // if there's no default then it'd be empty anyway?
+	return NetworkInterface{}
 }
 
 func (n Network) InterfaceByIp(ip net.IP) NetworkInterface {
@@ -65,7 +65,7 @@ func (n Network) InterfaceByIp(ip net.IP) NetworkInterface {
 			return i
 		}
 	}
-	return n.Default // if there's no default then it'd be empty anyway?
+	return NetworkInterface{}
 }
 
 func (d *DiscoveryTinkerbell) PrimaryDataMAC() MACAddr {
@@ -142,6 +142,7 @@ func (h HardwareTinkerbell) HardwareUEFI(mac net.HardwareAddr) bool {
 }
 
 func (h HardwareTinkerbell) Interfaces() []Port {
+	// TODO: to be updated
 	var ports []Port
 	return ports
 }
