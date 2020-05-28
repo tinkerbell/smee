@@ -15,8 +15,7 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
-	os.Setenv("DISCOVERY_TYPE", "cacher")
-	t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+	t.Log("DISCOVERY_TYPE (should be empty to use cacher):", os.Getenv("DISCOVERY_TYPE"))
 
 	for name, test := range tests {
 		t.Log(name)
@@ -33,7 +32,7 @@ func TestNewDiscoveryCacher(t *testing.T) {
 
 func TestNewDiscoveryTinkerbell(t *testing.T) {
 	os.Setenv("DISCOVERY_TYPE", "tinkerbell")
-	t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+	t.Log("DISCOVERY_TYPE:", os.Getenv("DISCOVERY_TYPE"))
 
 	for name, test := range tinkerbellTests {
 		t.Log(name)
@@ -58,12 +57,12 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 	func() {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Fatal("TestDiscoveryFail should have panicked")
+				t.Fatal("TestDiscoveryMismatch should have panicked")
 			}
 		}()
 
-		os.Setenv("DISCOVERY_TYPE", "cacher")
-		t.Log("DISCOVERY_TYPE", os.Getenv("DISCOVERY_TYPE"))
+		os.Setenv("DISCOVERY_TYPE", "tinkerbell")
+		t.Log("DISCOVERY_TYPE:", os.Getenv("DISCOVERY_TYPE"))
 
 		for name, test := range tinkerbellTests {
 			t.Log(name)
@@ -71,7 +70,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
-			dt := (*d).(*DiscoveryTinkerbell)
+			dt := (*d).(*DiscoveryCacher)
 			t.Log(dt)
 		}
 	}()
@@ -197,24 +196,24 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Fatalf("unexpected uefi, want: %v, got: %v\n", test.uefi, d.Network.InterfaceByMac(mac).DHCP.UEFI)
 		}
 
-		t.Logf("netboot %v\n", d.Network.InterfaceByMac(mac).Netboot)
-		t.Logf("netboot allow_pxe %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowPXE)
-		t.Logf("netboot allow_workflow %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
-		t.Logf("netboot ipxe %v\n", d.Network.InterfaceByMac(mac).Netboot.IPXE)
-		t.Logf("netboot osie %v\n", d.Network.InterfaceByMac(mac).Netboot.Osie)
+		t.Logf("netboot: %v\n", d.Network.InterfaceByMac(mac).Netboot)
+		t.Logf("netboot allow_pxe: %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowPXE)
+		t.Logf("netboot allow_workflow: %v\n", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
+		t.Logf("netboot ipxe: %v\n", d.Network.InterfaceByMac(mac).Netboot.IPXE)
+		t.Logf("netboot osie: %v\n", d.Network.InterfaceByMac(mac).Netboot.Osie)
 		t.Log("\n")
 
-		t.Logf("metadata %v\n", d.Metadata)
-		t.Logf("metadata state %v\n", d.Metadata.State)
-		t.Logf("metadata bonding_mode %v\n", d.Metadata.BondingMode)
-		t.Logf("metadata manufacturer %v\n", d.Metadata.Manufacturer)
+		t.Logf("metadata: %v\n", d.Metadata)
+		t.Logf("metadata state: %v\n", d.Metadata.State)
+		t.Logf("metadata bonding_mode: %v\n", d.Metadata.BondingMode)
+		t.Logf("metadata manufacturer: %v\n", d.Metadata.Manufacturer)
 		if d.Instance() != nil {
 			t.Logf("instance: %v\n", d.Instance())
-			t.Logf("instanceId: %s\n", d.Instance().ID)
-			t.Logf("instance State: %s\n", d.Instance().State)
+			t.Logf("instance id: %s\n", d.Instance().ID)
+			t.Logf("instance state: %s\n", d.Instance().State)
 		}
-		t.Logf("metadata custom %v\n", d.Metadata.Custom)
-		t.Logf("metadata facility%v\n", d.Metadata.Facility)
+		t.Logf("metadata custom: %v\n", d.Metadata.Custom)
+		t.Logf("metadata facility: %v\n", d.Metadata.Facility)
 
 		//t.Logf("hardware IP: %v\n", d.hardwareIP())
 		t.Log("\n")

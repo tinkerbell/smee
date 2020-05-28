@@ -318,7 +318,7 @@ type Metadata struct {
 	Custom       struct {
 		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
 		PrivateSubnets []string        `json:"private_subnets"`
-	}
+	} `json:"custom"`
 	Facility Facility `json:"facility"`
 }
 
