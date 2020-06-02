@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -11,74 +10,21 @@ import (
 	"runtime"
 
 	cacherClient "github.com/packethost/cacher/client"
-	"github.com/packethost/cacher/protos/cacher"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
-	tink "github.com/tinkerbell/tink/protos/hardware"
-	"google.golang.org/grpc"
 )
 
 type hardwareGetter interface {
-	ByMAC(context.Context, getRequest, ...grpc.CallOption) (hardware, error)
-	ByIP(context.Context, getRequest, ...grpc.CallOption) (hardware, error)
-}
-
-type getRequest interface {
-}
-
-type hardware interface {
-}
-
-type hardwareGetterTink struct {
-	client tink.HardwareServiceClient
-}
-
-type hardwareGetterCacher struct {
-	client cacher.CacherClient
-}
-
-func (hg hardwareGetterTink) ByMAC(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
-	h, err := hg.client.ByMAC(ctx, in.(*tink.GetRequest), opts...)
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
-}
-
-func (hg hardwareGetterTink) ByIP(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
-
-	h, err := hg.client.ByIP(ctx, in.(*tink.GetRequest), opts...)
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
-}
-
-func (hg hardwareGetterCacher) ByMAC(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
-	h, err := hg.client.ByMAC(ctx, in.(*cacher.GetRequest), opts...)
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
-}
-
-func (hg hardwareGetterCacher) ByIP(ctx context.Context, in getRequest, opts ...grpc.CallOption) (hardware, error) {
-
-	h, err := hg.client.ByIP(ctx, in.(*cacher.GetRequest), opts...)
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
 }
 
 type Client struct {
-	http          *http.Client
-	baseURL       *url.URL
-	consumerToken string
-	authToken     string
-	client        hardwareGetter
+	http           *http.Client
+	baseURL        *url.URL
+	consumerToken  string
+	authToken      string
+	hardwareClient hardwareGetter
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -98,33 +44,32 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	}
 
 	var hg hardwareGetter
+	var err error
 	discoveryType := os.Getenv("DISCOVERY_TYPE")
 	switch discoveryType {
 	case discoveryTypeTinkerbell:
-		tc, err := tinkClient.NewTinkerbellClient()
+		hg, err = tinkClient.NewTinkerbellClient()
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
-		hg = hardwareGetterTink{client: tc}
 	default:
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
 			return nil, errors.New("FACILITY_CODE env must be set")
 		}
 
-		cc, err := cacherClient.New(facility)
+		hg, err = cacherClient.New(facility)
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
-		hg = hardwareGetterCacher{client: cc}
 	}
 
 	return &Client{
-		http:          c,
-		baseURL:       baseURL,
-		consumerToken: consumerToken,
-		authToken:     authToken,
-		client:        hg,
+		http:           c,
+		baseURL:        baseURL,
+		consumerToken:  consumerToken,
+		authToken:      authToken,
+		hardwareClient: hg,
 	}, nil
 }
 
