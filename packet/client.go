@@ -45,9 +45,9 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 
 	var hg hardwareGetter
 	var err error
-	discoveryType := os.Getenv("DISCOVERY_TYPE")
-	switch discoveryType {
-	case discoveryTypeTinkerbell:
+	hardwareDataModel := os.Getenv("HARDWARE_DATA_MODEL")
+	switch hardwareDataModel {
+	case hardwareDataModelTinkerbell:
 		hg, err = tinkClient.NewTinkerbellClient()
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")

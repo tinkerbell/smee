@@ -15,7 +15,7 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
-	t.Log("DISCOVERY_TYPE (should be empty to use cacher):", os.Getenv("DISCOVERY_TYPE"))
+	t.Log("HARDWARE_DATA_MODEL (should be empty to use cacher):", os.Getenv("HARDWARE_DATA_MODEL"))
 
 	for name, test := range tests {
 		t.Log(name)
@@ -31,8 +31,8 @@ func TestNewDiscoveryCacher(t *testing.T) {
 }
 
 func TestNewDiscoveryTinkerbell(t *testing.T) {
-	os.Setenv("DISCOVERY_TYPE", "tinkerbell")
-	t.Log("DISCOVERY_TYPE:", os.Getenv("DISCOVERY_TYPE"))
+	os.Setenv("HARDWARE_DATA_MODEL", "tinkerbell")
+	t.Log("HARDWARE_DATA_MODEL:", os.Getenv("HARDWARE_DATA_MODEL"))
 
 	for name, test := range tinkerbellTests {
 		t.Log(name)
@@ -61,8 +61,8 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 			}
 		}()
 
-		os.Setenv("DISCOVERY_TYPE", "tinkerbell")
-		t.Log("DISCOVERY_TYPE:", os.Getenv("DISCOVERY_TYPE"))
+		os.Setenv("HARDWARE_DATA_MODEL", "tinkerbell")
+		t.Log("HARDWARE_DATA_MODEL:", os.Getenv("HARDWARE_DATA_MODEL"))
 
 		for name, test := range tinkerbellTests {
 			t.Log(name)

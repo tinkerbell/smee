@@ -10,7 +10,7 @@ import (
 	"github.com/tinkerbell/boots/files/ignition"
 )
 
-const discoveryTypeTinkerbell = "tinkerbell"
+const hardwareDataModelTinkerbell = "tinkerbell"
 
 // BondingMode is the hardware bonding mode
 type BondingMode int
@@ -112,9 +112,9 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 		return nil, errors.New("empty response from db")
 	}
 
-	discoveryType := os.Getenv("DISCOVERY_TYPE")
-	switch discoveryType {
-	case discoveryTypeTinkerbell:
+	hardwareDataModel := os.Getenv("HARDWARE_DATA_MODEL")
+	switch hardwareDataModel {
+	case hardwareDataModelTinkerbell:
 		res = &DiscoveryTinkerbell{}
 	default:
 		res = &DiscoveryCacher{}
