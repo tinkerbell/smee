@@ -397,7 +397,8 @@ func determineDisk(j job.Job) string {
 		"x2.xlarge.x86":
 		return "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci"
 	case "c3.medium.x86",
-		"c3.small.x86":
+		"c3.small.x86",
+		"s3.xlarge.x86":
 		return "--firstdisk=vmw_ahci,lsi_mr3,lsi_msgpt3"
 	case "m1.xlarge.x86":
 		if j.PlanVersionSlug() == "baremetal_2_04" {
