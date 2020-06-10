@@ -74,5 +74,5 @@ var kickstartTypes = map[string]string{
 	"s1.large.x86":                 "--firstdisk=vmw_ahci",
 	"t1.small.x86":                 "--firstdisk=vmw_ahci",
 	"x1.small.x86":                 "--firstdisk=vmw_ahci",
-	"x2.xlarge.x86":                "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci",
+	"x2.xlarge.x86":                "--firstdisk=vmw_ahci,lsi_mr3,lsi_msgpt3",
 }
