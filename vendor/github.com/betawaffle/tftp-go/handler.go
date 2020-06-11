@@ -18,6 +18,7 @@ package tftp
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -260,6 +261,7 @@ func (s *session) serveRRQ(p *packetRRQ) {
 		p := &packetOACK{options: options}
 		_, err = s.writeAndWaitForPacket(p, ackValidator(0))
 		if err != nil {
+			fmt.Printf("got an error negotiating options: error=%v, errorVerbose=%+v\n", err, err)
 			return
 		}
 	}
@@ -295,8 +297,12 @@ func (s *session) serveRRQ(p *packetRRQ) {
 
 		_, writeErr = s.writeAndWaitForPacket(p, ackValidator(blockNr))
 		if writeErr != nil {
+			fmt.Printf("got an error sending and/or processing ack: error=%v, errorVerbose=%+v\n", err, err)
 			return
 		}
+	}
+	if readErr != nil {
+		fmt.Printf("got an error reading file: error=%v, errorVerbose=%+v\n", err, err)
 	}
 }
 
