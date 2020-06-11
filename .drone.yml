@@ -44,12 +44,12 @@ steps:
   - name: test
     image: golang:1.13-alpine
     commands:
-      - CGO_ENABLED=0 go test -v ./...
+      - CGO_ENABLED=0 go test -mod=vendor -v ./...
 
   - name: build
     image: golang:1.13-alpine
     commands:
-      - CGO_ENABLED=0 go build
+      - CGO_ENABLED=0 go build -mod=vendor
 
   - name: publish pr
     <<: *publish_tmpl
