@@ -153,10 +153,7 @@ func initrdPath(j job.Job) string {
 }
 
 func isCustomOSIE(j job.Job) bool {
-	if version := j.ServicesVersion(); version != "" {
-		return true
-	}
-	return false
+	return j.OSIEVersion() != ""
 }
 
 // osieBaseURL returns the value of Custom OSIE Service Version or just /current
@@ -165,7 +162,7 @@ func osieBaseURL(j job.Job) string {
 		return u
 	}
 	if isCustomOSIE(j) {
-		return osieURL + "/" + j.ServicesVersion()
+		return osieURL + "/" + j.OSIEVersion()
 	}
 	return osieURL + "/current"
 }
