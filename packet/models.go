@@ -1,15 +1,20 @@
 package packet
 
 import (
+	"bufio"
 	"encoding/json"
 	"net"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
 // models.go contains the Hardware structures matching the data models defined by tink and cacher
+
+var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
 
 // BondingMode is the hardware bonding mode
 type BondingMode int
@@ -169,6 +174,32 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 		}
 	}
 	return nil
+}
+
+func (i *Instance) ServicesVersion() ServicesVersion {
+	if i.servicesVersion.OSIE != "" {
+		return i.servicesVersion
+	}
+
+	if i.UserData == "" {
+		return ServicesVersion{}
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
+	for scanner.Scan() {
+		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
+		if len(matches) == 0 {
+			continue
+		}
+
+		var sv ServicesVersion
+		err := json.Unmarshal([]byte(matches[1]), &sv)
+		if err != nil {
+			return ServicesVersion{}
+		}
+		return sv
+	}
+	return ServicesVersion{}
 }
 
 func managementPublicIPv4IP(ip IP) bool {
