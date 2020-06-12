@@ -181,11 +181,12 @@ type Instance struct {
 	AllowPXE bool          `json:"allow_pxe"`
 	Rescue   bool          `json:"rescue"`
 
-	OS            OperatingSystem `json:"operating_system_version"`
-	AlwaysPXE     bool            `json:"always_pxe,omitempty"`
-	IPXEScriptURL string          `json:"ipxe_script_url,omitempty"`
-	IPs           []IP            `json:"ip_addresses"`
-	UserData      string          `json:"userdata,omitempty"`
+	OS              OperatingSystem `json:"operating_system_version"`
+	AlwaysPXE       bool            `json:"always_pxe,omitempty"`
+	IPXEScriptURL   string          `json:"ipxe_script_url,omitempty"`
+	IPs             []IP            `json:"ip_addresses"`
+	UserData        string          `json:"userdata,omitempty"`
+	servicesVersion ServicesVersion
 
 	// Only returned in the first 24 hours
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
