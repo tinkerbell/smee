@@ -1,11 +1,16 @@
 package packet
 
 import (
+	"bufio"
 	"encoding/json"
 	"net"
+	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 )
+
+var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
 
 type BondingMode int
 
@@ -204,6 +209,32 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 		}
 	}
 	return nil
+}
+
+func (i *Instance) ServicesVersion() ServicesVersion {
+	if i.servicesVersion.OSIE != "" {
+		return i.servicesVersion
+	}
+
+	if i.UserData == "" {
+		return ServicesVersion{}
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
+	for scanner.Scan() {
+		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
+		if len(matches) == 0 {
+			continue
+		}
+
+		var sv ServicesVersion
+		err := json.Unmarshal([]byte(matches[1]), &sv)
+		if err != nil {
+			return ServicesVersion{}
+		}
+		return sv
+	}
+	return ServicesVersion{}
 }
 
 func managementPublicIPv4IP(ip IP) bool {
