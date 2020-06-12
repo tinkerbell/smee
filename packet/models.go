@@ -3,9 +3,12 @@ package packet
 import (
 	"encoding/json"
 	"net"
+	"regexp"
 
 	"github.com/pkg/errors"
 )
+
+var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
 
 type BondingMode int
 
@@ -204,6 +207,29 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 		}
 	}
 	return nil
+}
+
+func (i *Instance) ServicesVersion() ServicesVersion {
+	if i.servicesVersion.OSIE != "" {
+		return i.servicesVersion
+	}
+
+	if i.UserData == "" {
+		return ServicesVersion{}
+	}
+
+	matches := servicesVersionUserdataRegex.FindStringSubmatch(i.UserData)
+	if len(matches) == 0 {
+		return ServicesVersion{}
+	}
+
+	var sv ServicesVersion
+	err := json.Unmarshal([]byte(matches[1]), &sv)
+	if err != nil {
+		return ServicesVersion{}
+	}
+
+	return sv
 }
 
 func managementPublicIPv4IP(ip IP) bool {
