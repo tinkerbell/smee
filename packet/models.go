@@ -228,7 +228,7 @@ type UserEvent struct {
 }
 
 type ServicesVersion struct {
-	Osie string `json:"osie"`
+	OSIE string `json:"osie"`
 }
 
 type Hardware struct {
