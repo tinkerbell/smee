@@ -56,7 +56,7 @@ func TestDiscovery(t *testing.T) {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Gateway, conf.Gateway)
 		}
 
-		osie := d.ServicesVersion.Osie
+		osie := d.ServicesVersion.OSIE
 		if osie != test.osie {
 			t.Fatalf("unexpected osie version, want: %s, got: %s\n", test.osie, osie)
 		}
