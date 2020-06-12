@@ -184,9 +184,9 @@ func (j Job) CanWorkflow() bool {
 	return j.hardware.HardwareAllowWorkflow(j.mac)
 }
 
-func (j Job) OsieBaseURL() string {
+func (j Job) OSIEBaseURL() string {
 	if h := j.hardware; h != nil {
-		return j.hardware.OsieBaseURL(j.mac)
+		return j.hardware.OSIEBaseURL(j.mac)
 	}
 	return ""
 }

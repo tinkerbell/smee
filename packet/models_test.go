@@ -168,7 +168,7 @@ func TestDiscoveryCacher(t *testing.T) {
 				t.Fatalf("unexpected address, want: %s, got: %s", test.conf.Gateway, conf.Gateway)
 			}
 
-			osie := d.ServicesVersion.Osie
+			osie := d.ServicesVersion.OSIE
 			if osie != test.osie {
 				t.Fatalf("unexpected osie version, want: %s, got: %s", test.osie, osie)
 			}
@@ -231,7 +231,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Logf("netboot allow_pxe: %v", d.Network.InterfaceByMac(mac).Netboot.AllowPXE)
 			t.Logf("netboot allow_workflow: %v", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
 			t.Logf("netboot ipxe: %v", d.Network.InterfaceByMac(mac).Netboot.IPXE)
-			t.Logf("netboot osie: %v", d.Network.InterfaceByMac(mac).Netboot.Osie)
+			t.Logf("netboot osie: %v", d.Network.InterfaceByMac(mac).Netboot.OSIE)
 			t.Log()
 
 			t.Logf("metadata: %v", d.Metadata)

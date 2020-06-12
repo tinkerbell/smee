@@ -161,14 +161,14 @@ func (h HardwareTinkerbellV1) Interfaces() []Port {
 	return ports
 }
 
-func (h HardwareTinkerbellV1) OsieBaseURL(mac net.HardwareAddr) string {
-	return h.Network.InterfaceByMac(mac).Netboot.Osie.BaseURL
+func (h HardwareTinkerbellV1) OSIEBaseURL(mac net.HardwareAddr) string {
+	return h.Network.InterfaceByMac(mac).Netboot.OSIE.BaseURL
 }
 
 func (h HardwareTinkerbellV1) KernelPath(mac net.HardwareAddr) string {
-	return h.Network.InterfaceByMac(mac).Netboot.Osie.Kernel
+	return h.Network.InterfaceByMac(mac).Netboot.OSIE.Kernel
 }
 
 func (h HardwareTinkerbellV1) InitrdPath(mac net.HardwareAddr) string {
-	return h.Network.InterfaceByMac(mac).Netboot.Osie.Initrd
+	return h.Network.InterfaceByMac(mac).Netboot.OSIE.Initrd
 }

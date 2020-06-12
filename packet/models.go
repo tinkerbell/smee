@@ -68,7 +68,7 @@ type Hardware interface {
 	HardwareState() HardwareState
 	HardwareServicesVersion() string
 	HardwareUEFI(mac net.HardwareAddr) bool
-	OsieBaseURL(mac net.HardwareAddr) string
+	OSIEBaseURL(mac net.HardwareAddr) string
 	KernelPath(mac net.HardwareAddr) string
 	InitrdPath(mac net.HardwareAddr) string
 }
@@ -194,7 +194,7 @@ type UserEvent struct {
 }
 
 type ServicesVersion struct {
-	Osie string `json:"osie"`
+	OSIE string `json:"osie"`
 }
 
 // HardwareState is the hardware state (e.g. provisioning)
@@ -273,11 +273,11 @@ type Netboot struct {
 		URL      string `json:"url"`
 		Contents string `json:"contents"`
 	} `json:"ipxe"`
-	Osie Osie `json:"osie"`
+	OSIE OSIE `json:"osie"`
 }
 
 // Bootstrapper is the bootstrapper to be used during netboot
-type Osie struct {
+type OSIE struct {
 	BaseURL string `json:"base_url"`
 	Kernel  string `json:"kernel"`
 	Initrd  string `json:"initrd"`

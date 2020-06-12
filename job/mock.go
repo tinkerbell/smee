@@ -33,7 +33,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 
 	servicesVersion := packet.ServicesVersion{}
 	if strings.Contains(slug, "custom-osie") {
-		servicesVersion.Osie = "osie-v18.08.13.00"
+		servicesVersion.OSIE = "osie-v18.08.13.00"
 	}
 
 	mockLog := log.Test(t, "job.Mock")

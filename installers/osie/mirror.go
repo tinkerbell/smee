@@ -10,18 +10,18 @@ import (
 )
 
 const (
-	defaultOsiePath = "/misc/osie"
+	defaultOSIEPath = "/misc/osie"
 )
 
 var (
-	osieURL                            = mustBuildOsieURL().String()
+	osieURL                            = mustBuildOSIEURL().String()
 	mirrorBaseURL                      = conf.MirrorBaseUrl
 	dockerRegistry                     string
 	grpcAuthority, grpcCertURL         string
 	registryUsername, registryPassword string
 )
 
-func buildOsieURL() (*url.URL, error) {
+func buildOSIEURL() (*url.URL, error) {
 	base, err := url.Parse(conf.MirrorBaseUrl)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing MirrorBaseUrl")
@@ -33,15 +33,15 @@ func buildOsieURL() (*url.URL, error) {
 		}
 		return u, nil
 	}
-	u, err := base.Parse(defaultOsiePath)
+	u, err := base.Parse(defaultOSIEPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid default osie path: %s", defaultOsiePath)
+		return nil, errors.Wrapf(err, "invalid default osie path: %s", defaultOSIEPath)
 	}
 	return u, nil
 }
 
-func mustBuildOsieURL() *url.URL {
-	u, err := buildOsieURL()
+func mustBuildOSIEURL() *url.URL {
+	u, err := buildOSIEURL()
 	if err != nil {
 		panic(err)
 	}
