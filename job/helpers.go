@@ -172,8 +172,14 @@ func (j Job) HardwareState() string {
 	return ""
 }
 
-// OSIEVersion returns any non-standard osie versions specified in the underlying hardware
+// OSIEVersion returns any non-standard osie versions specified in either the instance proper or in userdata or attached to underlying hardware
 func (j Job) OSIEVersion() string {
+	if i := j.instance; i != nil {
+		ov := i.ServicesVersion().OSIE
+		if ov != "" {
+			return ov
+		}
+	}
 	h := j.hardware
 	if h == nil {
 		return ""
