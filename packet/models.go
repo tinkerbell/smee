@@ -10,8 +10,6 @@ import (
 	"github.com/tinkerbell/boots/files/ignition"
 )
 
-const hardwareDataModelTinkerbell = "tinkerbell"
-
 // BondingMode is the hardware bonding mode
 type BondingMode int
 
@@ -35,9 +33,9 @@ type DiscoveryCacher struct {
 	mac net.HardwareAddr
 }
 
-// DiscoveryTinkerbell presents the structure for tinkerbell's new data model
-type DiscoveryTinkerbell struct {
-	*HardwareTinkerbell
+// DiscoveryTinkerbellV1 presents the structure for tinkerbell's new data model, version 1
+type DiscoveryTinkerbellV1 struct {
+	*HardwareTinkerbellV1
 	mac net.HardwareAddr
 }
 
@@ -97,8 +95,8 @@ type HardwareCacher struct {
 	Instance        *Instance       `json:"instance"`
 }
 
-// HardwareTinkerbell represents the new hardware data model for tinkerbell
-type HardwareTinkerbell struct {
+// HardwareTinkerbellV1 represents the new hardware data model for tinkerbell, version 1
+type HardwareTinkerbellV1 struct {
 	ID       string   `json:"id"`
 	Network  Network  `json:"network"`
 	Metadata Metadata `json:"metadata"`
@@ -112,10 +110,10 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 		return nil, errors.New("empty response from db")
 	}
 
-	hardwareDataModel := os.Getenv("HARDWARE_DATA_MODEL")
-	switch hardwareDataModel {
-	case hardwareDataModelTinkerbell:
-		res = &DiscoveryTinkerbell{}
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
+		res = &DiscoveryTinkerbellV1{}
 	default:
 		res = &DiscoveryCacher{}
 	}

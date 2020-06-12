@@ -7,7 +7,7 @@ require (
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/betawaffle/tftp-go v0.0.0-20160921192434-dc649c1318ff
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
-	github.com/golang/groupcache v0.0.0-20180513044358-24b0969c4cb7
+	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
 	github.com/google/uuid v1.1.1
 	github.com/packethost/cacher v0.0.0-20200512205048-5253af131795
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
@@ -20,9 +20,9 @@ require (
 	github.com/tinkerbell/tink v0.0.0-20200428163249-b654f8630288
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
-	google.golang.org/grpc v1.28.0
+	google.golang.org/grpc v1.29.1
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 
-replace github.com/tinkerbell/tink v0.0.0-20200428163249-b654f8630288 => github.com/kdeng3849/tink v0.0.0-20200527155229-11965b00a6ad
+replace github.com/tinkerbell/tink v0.0.0-20200428163249-b654f8630288 => github.com/kdeng3849/tink v0.0.0-20200610164039-8cbc23b575a7

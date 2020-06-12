@@ -42,9 +42,9 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	hardwareDataModel := os.Getenv("HARDWARE_DATA_MODEL")
-	switch hardwareDataModel {
-	case hardwareDataModelTinkerbell:
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
 		tc := c.hardwareClient.(tink.HardwareServiceClient)
 		msg := &tink.GetRequest{
 			Mac: mac.String(),
@@ -134,9 +134,9 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	defer metrics.CacherRequestsInProgress.With(labels).Dec()
 
 	var b []byte
-	hardwareDataModel := os.Getenv("HARDWARE_DATA_MODEL")
-	switch hardwareDataModel {
-	case hardwareDataModelTinkerbell:
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
 		tc := c.hardwareClient.(tink.HardwareServiceClient)
 		msg := &tink.GetRequest{
 			Ip: ip.String(),

@@ -11,7 +11,7 @@ import (
 
 func TestInterfaces(t *testing.T) {
 	var _ Discovery = (*DiscoveryCacher)(nil)
-	var _ Discovery = (*DiscoveryTinkerbell)(nil)
+	var _ Discovery = (*DiscoveryTinkerbellV1)(nil)
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
@@ -40,7 +40,7 @@ func TestNewDiscoveryTinkerbell(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewDiscovery", err)
 		}
-		dt := (*d).(*DiscoveryTinkerbell)
+		dt := (*d).(*DiscoveryTinkerbellV1)
 
 		mac, err := net.ParseMAC(test.mac)
 		if err != nil {
@@ -148,7 +148,7 @@ func TestDiscoveryCacher(t *testing.T) {
 func TestDiscoveryTinkerbell(t *testing.T) {
 	for name, test := range tinkerbellTests {
 		t.Log(name)
-		d := DiscoveryTinkerbell{}
+		d := DiscoveryTinkerbellV1{}
 
 		if err := json.Unmarshal([]byte(test.json), &d); err != nil {
 			t.Fatal(test.mode, err)
