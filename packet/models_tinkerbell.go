@@ -7,6 +7,8 @@ import (
 	"github.com/tinkerbell/boots/conf"
 )
 
+// models_tinkerbell.go contains the interface methods specific to DiscoveryTinkerbell and HardwareTinkerbell structs
+
 func (i InterfaceTinkerbell) Name() string {
 	return i.DHCP.IfaceName
 }
@@ -31,7 +33,7 @@ func (d DiscoveryTinkerbellV1) Instance() *Instance {
 	return d.Metadata.Instance
 }
 
-func (d DiscoveryTinkerbellV1) Mac() net.HardwareAddr {
+func (d DiscoveryTinkerbellV1) MAC() net.HardwareAddr {
 	return d.mac
 }
 
@@ -39,17 +41,19 @@ func (d DiscoveryTinkerbellV1) Mode() string {
 	return "hardware"
 }
 
-func (d DiscoveryTinkerbellV1) GetIp(mac net.HardwareAddr) IP {
+func (d DiscoveryTinkerbellV1) GetIP(mac net.HardwareAddr) IP {
 	//if i := d.Network.Interface(mac); i.DHCP.IP.Address != nil {
 	//	return i.DHCP.IP
 	//}
 	return d.Network.InterfaceByMac(mac).DHCP.IP
 }
 
-func (d DiscoveryTinkerbellV1) GetMac(ip net.IP) net.HardwareAddr {
+func (d DiscoveryTinkerbellV1) GetMAC(ip net.IP) net.HardwareAddr {
 	return d.Network.InterfaceByIp(ip).DHCP.MAC.HardwareAddr()
 }
 
+// InterfacesByMac returns the NetworkInterface that contains the matching mac address
+// returns an empty NetworkInterface if not found
 func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
 	for _, i := range n.Interfaces {
 		if i.DHCP.MAC.String() == mac.String() {
@@ -59,6 +63,8 @@ func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
 	return NetworkInterface{}
 }
 
+// InterfacesByIp returns the NetworkInterface that contains the matching ip address
+// returns an empty NetworkInterface if not found
 func (n Network) InterfaceByIp(ip net.IP) NetworkInterface {
 	for _, i := range n.Interfaces {
 		if i.DHCP.IP.Address.String() == ip.String() {
@@ -78,7 +84,7 @@ func (d *DiscoveryTinkerbellV1) Hostname() (string, error) {
 	return d.Instance().Hostname, nil // temp
 }
 
-func (d *DiscoveryTinkerbellV1) SetMac(mac net.HardwareAddr) {
+func (d *DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 

@@ -10,21 +10,23 @@ import (
 	"github.com/tinkerbell/boots/files/ignition"
 )
 
+// models.go contains the Hardware structures matching the data models defined by tink and cacher
+
 // BondingMode is the hardware bonding mode
 type BondingMode int
 
 // Discovery interface is the base for cacher and tinkerbell hardware discovery
 type Discovery interface {
 	Instance() *Instance
-	Mac() net.HardwareAddr
+	MAC() net.HardwareAddr
 	Mode() string
-	GetIp(addr net.HardwareAddr) IP
-	GetMac(ip net.IP) net.HardwareAddr
+	GetIP(addr net.HardwareAddr) IP
+	GetMAC(ip net.IP) net.HardwareAddr
 	DnsServers() []net.IP
 	LeaseTime(mac net.HardwareAddr) time.Duration
 	Hostname() (string, error)
 	Hardware() *Hardware
-	SetMac(mac net.HardwareAddr)
+	SetMAC(mac net.HardwareAddr)
 }
 
 // DiscoveryCacher presents the structure for old data model
@@ -39,6 +41,7 @@ type DiscoveryTinkerbellV1 struct {
 	mac net.HardwareAddr
 }
 
+// Interface is the base for cacher and tinkerbell hardware (network) interface
 type Interface interface {
 }
 

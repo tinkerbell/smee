@@ -8,6 +8,8 @@ import (
 	"github.com/tinkerbell/boots/conf"
 )
 
+// models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
+
 func (d DiscoveryCacher) Hardware() *Hardware {
 	var h Hardware = d.HardwareCacher
 	return &h
@@ -25,7 +27,7 @@ func (d DiscoveryCacher) LeaseTime(mac net.HardwareAddr) time.Duration {
 	return conf.DHCPLeaseTime
 }
 
-func (d DiscoveryCacher) Mac() net.HardwareAddr {
+func (d DiscoveryCacher) MAC() net.HardwareAddr {
 	if d.mac == nil {
 		mac := d.PrimaryDataMAC()
 		return mac.HardwareAddr()
@@ -71,7 +73,7 @@ func (d DiscoveryCacher) Mode() string {
 }
 
 // NetConfig returns the network configuration that corresponds to the interface whose MAC address is mac.
-func (d DiscoveryCacher) GetIp(mac net.HardwareAddr) IP {
+func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) IP {
 	ip := d.InstanceIP(mac.String())
 	if ip != nil {
 		return *ip
@@ -92,7 +94,7 @@ func (d DiscoveryCacher) GetIp(mac net.HardwareAddr) IP {
 }
 
 // dummy method for tink data model transition
-func (d DiscoveryCacher) GetMac(ip net.IP) net.HardwareAddr {
+func (d DiscoveryCacher) GetMAC(ip net.IP) net.HardwareAddr {
 	return d.PrimaryDataMAC().HardwareAddr()
 }
 
@@ -213,7 +215,7 @@ func (d DiscoveryCacher) Hostname() (string, error) {
 	return hostname, nil
 }
 
-func (d *DiscoveryCacher) SetMac(mac net.HardwareAddr) {
+func (d *DiscoveryCacher) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 

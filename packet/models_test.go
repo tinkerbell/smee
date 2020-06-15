@@ -15,7 +15,7 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
-	t.Log("HARDWARE_DATA_MODEL (should be empty to use cacher):", os.Getenv("HARDWARE_DATA_MODEL"))
+	t.Log("DATA_MODEL_VERSION (should be empty to use cacher):", os.Getenv("DATA_MODEL_VERSION"))
 
 	for name, test := range tests {
 		t.Log(name)
@@ -31,8 +31,8 @@ func TestNewDiscoveryCacher(t *testing.T) {
 }
 
 func TestNewDiscoveryTinkerbell(t *testing.T) {
-	os.Setenv("HARDWARE_DATA_MODEL", "tinkerbell")
-	t.Log("HARDWARE_DATA_MODEL:", os.Getenv("HARDWARE_DATA_MODEL"))
+	os.Setenv("DATA_MODEL_VERSION", "1")
+	t.Log("DATA_MODEL_VERSION:", os.Getenv("DATA_MODEL_VERSION"))
 
 	for name, test := range tinkerbellTests {
 		t.Log(name)
@@ -61,8 +61,8 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 			}
 		}()
 
-		os.Setenv("HARDWARE_DATA_MODEL", "tinkerbell")
-		t.Log("HARDWARE_DATA_MODEL:", os.Getenv("HARDWARE_DATA_MODEL"))
+		os.Setenv("DATA_MODEL_VERSION", "1")
+		t.Log("DATA_MODEL_VERSION:", os.Getenv("DATA_MODEL_VERSION"))
 
 		for name, test := range tinkerbellTests {
 			t.Log(name)
@@ -94,7 +94,7 @@ func TestDiscoveryCacher(t *testing.T) {
 		t.Logf("MacType: %s\n", d.MacType(mac.String()))
 		t.Logf("MacIsType=data: %v\n", d.MacIsType(mac.String(), "data"))
 		t.Logf("primaryDataMac: %s\n", d.PrimaryDataMAC().HardwareAddr().String())
-		t.Logf("Mac: %v\n", d.Mac())
+		t.Logf("MAC: %v\n", d.MAC())
 		t.Logf("d.mac: %v\n", d.mac)
 		t.Logf("mac: %s\n", mac.String())
 		if d.Instance() != nil {
@@ -110,7 +110,7 @@ func TestDiscoveryCacher(t *testing.T) {
 			t.Log("\n")
 		}
 
-		d.SetMac(mac)
+		d.SetMAC(mac)
 		mode := d.Mode()
 		if mode != test.mode {
 			t.Fatalf("unexpected mode, want: %s, got: %s\n", test.mode, mode)
@@ -123,11 +123,11 @@ func TestDiscoveryCacher(t *testing.T) {
 		if d.PrimaryDataMAC().String() != test.primaryDataMac {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.primaryDataMac, d.PrimaryDataMAC().String())
 		}
-		if d.Mac().String() != test.mac {
-			t.Fatalf("unexpected address, want: %s, got: %s\n", test.mac, d.Mac().String())
+		if d.MAC().String() != test.mac {
+			t.Fatalf("unexpected address, want: %s, got: %s\n", test.mac, d.MAC().String())
 		}
 
-		conf := d.GetIp(mac)
+		conf := d.GetIP(mac)
 		if conf.Address.String() != test.conf.Address.String() {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.conf.Address, conf.Address)
 		}
@@ -223,7 +223,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Log("\n")
 		}
 
-		d.SetMac(mac)
+		d.SetMAC(mac)
 		mode := d.Mode()
 		if mode != test.mode {
 			t.Fatalf("unexpected mode, want: %s, got: %s\n", test.mode, mode)
@@ -233,7 +233,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			continue
 		}
 
-		conf := d.GetIp(mac)
+		conf := d.GetIP(mac)
 		if conf.Address.String() != test.ip.Address.String() {
 			t.Fatalf("unexpected address, want: %s, got: %s\n", test.ip.Address, conf.Address)
 		}

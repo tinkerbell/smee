@@ -74,7 +74,7 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
-	mac := (*d).GetMac(ip)
+	mac := (*d).GetMAC(ip)
 	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
@@ -107,12 +107,12 @@ func (j *Job) setup(dp *packet.Discovery) error {
 	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
 
 	// mac is needed to find the hostname for DiscoveryCacher
-	d.SetMac(j.mac)
+	d.SetMAC(j.mac)
 
-	// is this necessary?
+	// (kdeng3849) is this necessary?
 	j.hardware = d.Hardware()
 
-	//how can we remove this?
+	// (kdeng3849) how can we remove this?
 	j.instance = d.Instance()
 	if j.instance == nil {
 		j.instance = &packet.Instance{}
@@ -120,7 +120,7 @@ func (j *Job) setup(dp *packet.Discovery) error {
 		j.Logger = j.Logger.With("instance.id", j.InstanceID())
 	}
 
-	ip := d.GetIp(j.mac)
+	ip := d.GetIP(j.mac)
 	if ip.Address == nil {
 		return errors.New("could not find IP address")
 	}
