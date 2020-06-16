@@ -19,7 +19,6 @@ var (
 	dockerRegistry                     string
 	grpcAuthority, grpcCertURL         string
 	registryUsername, registryPassword string
-	elasticSearchURL                   string
 )
 
 func buildOsieURL() (*url.URL, error) {
@@ -55,7 +54,6 @@ func buildWorkerParams() {
 	grpcCertURL = getParam("TINKERBELL_CERT_URL")
 	registryUsername = getParam("REGISTRY_USERNAME")
 	registryPassword = getParam("REGISTRY_PASSWORD")
-	elasticSearchURL = getParam("ELASTIC_SEARCH_URL")
 }
 
 func getParam(key string) string {
