@@ -81,7 +81,6 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 		s.Args("grpc_cert_url=" + grpcCertURL)
 		s.Args("registry_username=" + registryUsername)
 		s.Args("registry_password=" + registryPassword)
-		s.Args("elastic_search_url=" + elasticSearchURL)
 		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID())
 	}
