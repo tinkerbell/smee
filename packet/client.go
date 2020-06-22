@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -10,25 +9,22 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/packethost/cacher/client"
-	"github.com/packethost/cacher/protos/cacher"
+	cacherClient "github.com/packethost/cacher/client"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
-	"google.golang.org/grpc"
+	tinkClient "github.com/tinkerbell/tink/client"
 )
 
 type hardwareGetter interface {
-	ByMAC(context.Context, *cacher.GetRequest, ...grpc.CallOption) (*cacher.Hardware, error)
-	ByIP(context.Context, *cacher.GetRequest, ...grpc.CallOption) (*cacher.Hardware, error)
 }
 
 type Client struct {
-	http          *http.Client
-	baseURL       *url.URL
-	consumerToken string
-	authToken     string
-	cacher        hardwareGetter
+	http           *http.Client
+	baseURL        *url.URL
+	consumerToken  string
+	authToken      string
+	hardwareClient hardwareGetter
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -47,22 +43,33 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		},
 	}
 
-	facility := os.Getenv("FACILITY_CODE")
-	if facility == "" {
-		return nil, errors.New("FACILITY_CODE env must be set")
-	}
+	var hg hardwareGetter
+	var err error
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
+		hg, err = tinkClient.NewTinkerbellClient()
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to tink")
+		}
+	default:
+		facility := os.Getenv("FACILITY_CODE")
+		if facility == "" {
+			return nil, errors.New("FACILITY_CODE env must be set")
+		}
 
-	cacher, err := client.New(facility)
-	if err != nil {
-		return nil, errors.Wrap(err, "connect to cacher")
+		hg, err = cacherClient.New(facility)
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to cacher")
+		}
 	}
 
 	return &Client{
-		http:          c,
-		baseURL:       baseURL,
-		consumerToken: consumerToken,
-		authToken:     authToken,
-		cacher:        cacher,
+		http:           c,
+		baseURL:        baseURL,
+		consumerToken:  consumerToken,
+		authToken:      authToken,
+		hardwareClient: hg,
 	}, nil
 }
 

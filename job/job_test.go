@@ -1,13 +1,10 @@
 package job
 
 import (
-	"fmt"
 	"net"
 	"os"
-	"reflect"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/packet"
@@ -24,24 +21,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestSetupNil(t *testing.T) {
-	d := &packet.Discovery{Hardware: &packet.Hardware{}}
-	j1 := &Job{}
-	j2 := &Job{}
-
-	j1.setup(d)
-	j1.Logger = log.Logger{}
-	j2.Logger = j1.Logger
-	if !reflect.DeepEqual(j1, j2) {
-		fmt.Println(pretty.Compare(j1, j2))
-		t.Fatal("jobs do not match")
-	}
-}
-
 func TestSetupDiscover(t *testing.T) {
 	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	d := &packet.Discovery{
-		Hardware: &packet.Hardware{
+	var d packet.Discovery = &packet.DiscoveryCacher{
+		HardwareCacher: &packet.HardwareCacher{
 			Name:     "TestSetupDiscover",
 			Instance: nil,
 			NetworkPorts: []packet.Port{
@@ -64,14 +47,20 @@ func TestSetupDiscover(t *testing.T) {
 	}
 
 	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(d)
+	j.setup(&d)
 
-	wantMode := modeManagement
-	if j.mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, j.mode)
+	dh := *d.Hardware()
+	h := dh.(*packet.HardwareCacher)
+
+	mode := d.Mode()
+
+	wantMode := "management"
+	if mode != wantMode {
+		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
 	}
 
-	netConfig := d.IPMI
+	dc := d.(*packet.DiscoveryCacher)
+	netConfig := dc.HardwareIPMI()
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
 		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
 	}
@@ -81,16 +70,16 @@ func TestSetupDiscover(t *testing.T) {
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
 		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
 	}
-	if d.Hardware.Name != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", d.Hardware.Name, j.dhcp.Hostname())
+	if h.Name != j.dhcp.Hostname() {
+		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", h.Name, j.dhcp.Hostname())
 	}
 }
 
 // The easy way to differentiate between discovered hardware and enrolled/not-active hardware is by existence of PlanSLug
 func TestSetupManagement(t *testing.T) {
 	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	d := &packet.Discovery{
-		Hardware: &packet.Hardware{
+	var d packet.Discovery = &packet.DiscoveryCacher{
+		HardwareCacher: &packet.HardwareCacher{
 			Name:     "TestSetupManagement",
 			Instance: &packet.Instance{},
 			PlanSlug: "f1.fake.x86",
@@ -113,15 +102,22 @@ func TestSetupManagement(t *testing.T) {
 		},
 	}
 
-	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(d)
+	dh := *d.Hardware()
+	h := dh.(*packet.HardwareCacher)
 
-	wantMode := modeManagement
-	if j.mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, j.mode)
+	j := &Job{mac: macIPMI.HardwareAddr()}
+	j.setup(&d)
+
+	mode := d.Mode()
+
+	wantMode := "management"
+	if mode != wantMode {
+		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
 	}
 
-	netConfig := d.IPMI
+	dc := d.(*packet.DiscoveryCacher)
+	netConfig := dc.HardwareIPMI()
+
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
 		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
 	}
@@ -131,23 +127,27 @@ func TestSetupManagement(t *testing.T) {
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
 		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
 	}
-	if d.Hardware.Name != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", d.Name, j.dhcp.Hostname())
+	if h.Name != j.dhcp.Hostname() {
+		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", h.Name, j.dhcp.Hostname())
 	}
 }
 
 func TestSetupInstance(t *testing.T) {
-	d, macs, _ := MakeHardwareWithInstance()
+	var d packet.Discovery
+	var macs []packet.MACAddr
+	d, macs, _ = MakeHardwareWithInstance()
 
 	j := &Job{mac: macs[1].HardwareAddr()}
-	j.setup(d)
+	j.setup(&d)
 
-	wantMode := modeInstance
-	if j.mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, j.mode)
+	mode := d.Mode()
+
+	wantMode := "instance"
+	if mode != wantMode {
+		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
 	}
 
-	netConfig := d.NetConfig(macs[1].HardwareAddr())
+	netConfig := d.GetIP(macs[1].HardwareAddr())
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
 		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
 	}
@@ -157,16 +157,15 @@ func TestSetupInstance(t *testing.T) {
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
 		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
 	}
-	if d.Instance.Hostname != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", d.Instance.Hostname, j.dhcp.Hostname())
+	if d.Instance().Hostname != j.dhcp.Hostname() {
+		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", d.Instance().Hostname, j.dhcp.Hostname())
 	}
 }
-
 func TestSetupFails(t *testing.T) {
-	d := &packet.Discovery{Hardware: &packet.Hardware{}}
+	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
 	j := &Job{}
 
-	err := j.setup(d)
+	err := j.setup(&d)
 	if err == nil {
 		t.Fatal("expected an error but got nil")
 	}

@@ -51,19 +51,21 @@ func TestSetPXEFilename(t *testing.T) {
 	}
 
 	for i, tt := range setPXEFilenameTests {
-		t.Logf("index=%d hStahe=%q id=%q iState=%q slug=%q plan=%q allowPXE=%v packet=%v arm=%v uefi=%v filename=%q",
+		t.Logf("index=%d hState=%q id=%q iState=%q slug=%q plan=%q allowPXE=%v packet=%v arm=%v uefi=%v filename=%q",
 			i, tt.hState, tt.id, tt.iState, tt.slug, tt.plan, tt.allowPXE, tt.packet, tt.arm, tt.uefi, tt.filename)
 
 		if tt.plan == "" {
 			tt.plan = "0"
 		}
+
+		var hardware packet.Hardware = &packet.HardwareCacher{
+			ID:       "$hardware_id",
+			State:    packet.HardwareState(tt.hState),
+			PlanSlug: "baremetal_" + tt.plan,
+		}
 		j := Job{
-			Logger: joblog.With("index", i, "hStahe", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
-			hardware: &packet.Hardware{
-				ID:       "$hardware_id",
-				State:    packet.HardwareState(tt.hState),
-				PlanSlug: "baremetal_" + tt.plan,
-			},
+			Logger:   joblog.With("index", i, "hStahe", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+			hardware: &hardware,
 			instance: &packet.Instance{
 				ID:       tt.id,
 				State:    packet.InstanceState(tt.iState),
@@ -97,10 +99,11 @@ func TestAllowPXE(t *testing.T) {
 	} {
 		t.Logf("want=%t, hardware=%t, instance=%t, instance_id=%s",
 			tt.want, tt.hw, tt.instance, tt.iid)
+		var hardware packet.Hardware = packet.HardwareCacher{
+			AllowPXE: tt.hw,
+		}
 		j := Job{
-			hardware: &packet.Hardware{
-				AllowPXE: tt.hw,
-			},
+			hardware: &hardware,
 			instance: &packet.Instance{
 				ID:       tt.iid,
 				AllowPXE: tt.instance,

@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"io"
 	"net"
+	"os"
 
 	"github.com/packethost/cacher/protos/cacher"
+	tink "github.com/tinkerbell/tink/protos/hardware"
+
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
@@ -39,21 +42,52 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	msg := &cacher.GetRequest{
-		MAC: mac.String(),
-	}
-	resp, err := c.cacher.ByMAC(context.Background(), msg)
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
+		tc := c.hardwareClient.(tink.HardwareServiceClient)
+		msg := &tink.GetRequest{
+			Mac: mac.String(),
+		}
 
-	cacherTimer.ObserveDuration()
-	metrics.CacherRequestsInProgress.With(labels).Dec()
+		resp, err := tc.ByMAC(context.Background(), msg)
 
-	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by mac from cacher")
-	}
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
 
-	if resp.JSON != "" {
-		metrics.CacherCacheHits.With(labels).Inc()
-		return NewDiscovery(resp.JSON)
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from tink")
+		}
+
+		b, err := json.Marshal(resp)
+		if err != nil {
+			return nil, errors.New("marshalling tink hardware")
+		}
+
+		if string(b) != "{}" {
+			metrics.CacherCacheHits.With(labels).Inc()
+			return NewDiscovery(b)
+		}
+	default:
+		cc := c.hardwareClient.(cacher.CacherClient)
+		msg := &cacher.GetRequest{
+			MAC: mac.String(),
+		}
+
+		resp, err := cc.ByMAC(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from cacher")
+		}
+
+		b := []byte(resp.JSON)
+		if string(b) != "" {
+			metrics.CacherCacheHits.With(labels).Inc()
+			return NewDiscovery(b)
+		}
 	}
 
 	if giaddr == nil {
@@ -99,19 +133,47 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	defer metrics.CacherRequestsInProgress.With(labels).Dec()
 
-	msg := &cacher.GetRequest{
-		IP: ip.String(),
-	}
-	resp, err := c.cacher.ByIP(context.Background(), msg)
-	if err != nil {
-		return nil, errors.Wrap(err, "get hardware by ip from cacher")
+	var b []byte
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
+		tc := c.hardwareClient.(tink.HardwareServiceClient)
+		msg := &tink.GetRequest{
+			Ip: ip.String(),
+		}
+
+		resp, err := tc.ByIP(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by ip from tink")
+		}
+
+		b, err = json.Marshal(resp)
+		if err != nil {
+			return nil, errors.New("marshalling tink hardware")
+		}
+	default:
+		cc := c.hardwareClient.(cacher.CacherClient)
+		msg := &cacher.GetRequest{
+			IP: ip.String(),
+		}
+
+		resp, err := cc.ByIP(context.Background(), msg)
+
+		cacherTimer.ObserveDuration()
+		metrics.CacherRequestsInProgress.With(labels).Dec()
+
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by ip from cacher")
+		}
+
+		b = []byte(resp.JSON)
 	}
 
-	if resp.JSON == "" {
-		return nil, errors.New("empty response from cacher")
-	}
-	metrics.CacherCacheHits.With(labels).Inc()
-	return NewDiscovery(resp.JSON)
+	return NewDiscovery(b)
 }
 
 // GetDeviceIDFromIP Looks up a device (instance) in cacher via ByIP
@@ -120,10 +182,10 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if d.Instance == nil {
+	if (*d).Instance() == nil {
 		return "", nil
 	}
-	return d.Instance.ID, nil
+	return (*d).Instance().ID, nil
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API

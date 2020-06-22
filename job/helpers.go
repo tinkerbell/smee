@@ -18,14 +18,14 @@ func (j Job) IsARM() bool {
 
 func (j Job) IsUEFI() bool {
 	if h := j.hardware; h != nil {
-		return h.UEFI
+		return (*h).HardwareUEFI(j.mac)
 	}
 	return false
 }
 
 func (j Job) Arch() string {
 	if h := j.hardware; h != nil {
-		return h.Arch
+		return (*h).HardwareArch(j.mac)
 	}
 	return ""
 }
@@ -49,7 +49,6 @@ func (j Job) PArch() string {
 	if parch != "" {
 		return parch
 	}
-
 	return j.Arch()
 }
 
@@ -83,13 +82,6 @@ func (j Job) InstanceIPs() []packet.IP {
 	return nil
 }
 
-func (j Job) PrivateSubnets() []string {
-	if h := j.hardware; h != nil {
-		return h.PrivateSubnets
-	}
-	return nil
-}
-
 func (j Job) CryptedPassword() string {
 	if j.instance != nil {
 		return j.instance.CryptedRootPassword
@@ -113,7 +105,7 @@ func (j Job) ID() string {
 
 func (j Job) Interfaces() []packet.Port {
 	if h := j.hardware; h != nil {
-		return h.Interfaces()
+		return (*h).Interfaces()
 	}
 	return nil
 }
@@ -134,35 +126,35 @@ func (j Job) InterfaceMAC(i int) net.HardwareAddr {
 
 func (j Job) HardwareID() string {
 	if h := j.hardware; h != nil {
-		return h.ID
+		return (*h).HardwareID()
 	}
 	return ""
 }
 
 func (j Job) FacilityCode() string {
 	if h := j.hardware; h != nil {
-		return h.FacilityCode
+		return (*h).HardwareFacilityCode()
 	}
 	return ""
 }
 
 func (j Job) PlanSlug() string {
 	if h := j.hardware; h != nil {
-		return h.PlanSlug
+		return (*h).HardwarePlanSlug()
 	}
 	return ""
 }
 
 func (j Job) PlanVersionSlug() string {
 	if h := j.hardware; h != nil {
-		return h.PlanVersionSlug
+		return (*h).HardwarePlanVersionSlug()
 	}
 	return ""
 }
 
 func (j Job) Manufacturer() string {
 	if h := j.hardware; h != nil {
-		return h.Manufacturer.Slug
+		return (*h).HardwareManufacturer()
 	}
 	return ""
 }
@@ -172,27 +164,48 @@ func (j Job) PrimaryNIC() net.HardwareAddr {
 	return j.mac
 }
 
-// golangci-lint: unused
-//func (j Job) isPrimaryNIC(mac net.HardwareAddr) bool {
-//	return bytes.Equal(mac, j.PrimaryNIC())
-//}
+// unused, but keeping for now
+// func (j Job) isPrimaryNIC(mac net.HardwareAddr) bool {
+// 	return bytes.Equal(mac, j.PrimaryNIC())
+// }
 
 // HardwareState will return (enrolled burn_in preinstallable preinstalling failed_preinstall provisionable provisioning deprovisioning in_use)
 func (j Job) HardwareState() string {
-	if h := j.hardware; h != nil && h.ID != "" {
-		return string(h.State)
+	if h := j.hardware; h != nil && (*h).HardwareID() != "" {
+		return string((*h).HardwareState())
 	}
 	return ""
 }
 
-func (j Job) ServicesVersion() packet.ServicesVersion {
-	if h := j.hardware; h != nil && h.ID != "" {
-		return h.ServicesVersion
+func (j Job) ServicesVersion() string {
+	if h := j.hardware; h != nil && (*h).HardwareID() != "" {
+		return (*h).HardwareServicesVersion()
 	}
-	return packet.ServicesVersion{}
+	return ""
 }
 
 // CanWorkflow checks if workflow is allowed
 func (j Job) CanWorkflow() bool {
-	return j.hardware.AllowWorkflow
+	return (*j.hardware).HardwareAllowWorkflow(j.mac)
+}
+
+func (j Job) OsieBaseURL() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).OsieBaseURL(j.mac)
+	}
+	return ""
+}
+
+func (j Job) KernelPath() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).KernelPath(j.mac)
+	}
+	return ""
+}
+
+func (j Job) InitrdPath() string {
+	if h := j.hardware; h != nil {
+		return (*j.hardware).InitrdPath(j.mac)
+	}
+	return ""
 }
