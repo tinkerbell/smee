@@ -17,10 +17,9 @@ require (
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tinkerbell/tink v0.0.0-20200428163249-b654f8630288
+	github.com/tinkerbell/tink v0.0.0-20200622174048-5e66098170f3
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
-	google.golang.org/grpc v1.29.1
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
