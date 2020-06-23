@@ -95,11 +95,6 @@ func (j Job) MarkDeviceActive() {
 	}
 }
 
-// golangci-lint: unused
-//func (j Job) markFailed(reason string) {
-//	j.postFailure(reason)
-//}
-
 func (j *Job) setup(dp *packet.Discovery) error {
 	d := *dp
 	dh := *d.Hardware()

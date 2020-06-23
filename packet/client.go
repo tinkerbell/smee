@@ -140,15 +140,6 @@ func (c *Client) addHeaders(req *http.Request) {
 	}
 }
 
-// golangci-lint: unused
-//func (c *Client) do(fn func() (*http.Request, error), v interface{}) error {
-//	req, err := fn()
-//	if err != nil {
-//		return err
-//	}
-//	return c.Do(req, v)
-//}
-
 func unmarshalResponse(res *http.Response, result interface{}) error {
 	defer res.Body.Close()
 	defer io.Copy(ioutil.Discard, res.Body) // ensure all of the body is read so we can quickly reuse connection

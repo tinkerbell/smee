@@ -206,29 +206,6 @@ type IP struct {
 	Management bool   `json:"management"`
 }
 
-// type NetworkPorts struct {
-// 	Main []Port `json:"main"`
-// 	IPMI Port   `json:"ipmi"`
-// }
-
-// unused, but keeping for now
-// func (p *NetworkPorts) addMain(port Port) {
-// 	var (
-// 		mac   = port.MAC()
-// 		ports = p.Main
-// 	)
-// 	n := len(ports)
-// 	i := sort.Search(n, func(i int) bool {
-// 		return bytes.Compare(mac, ports[i].MAC()) < 0
-// 	})
-// 	if i < n {
-// 		ports = append(append(ports[:i], port), ports[i:]...)
-// 	} else {
-// 		ports = append(ports, port)
-// 	}
-// 	p.Main = ports
-// }
-
 // OperatingSystem holds details for the operating system
 type OperatingSystem struct {
 	Slug     string `json:"slug"`

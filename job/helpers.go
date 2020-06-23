@@ -164,11 +164,6 @@ func (j Job) PrimaryNIC() net.HardwareAddr {
 	return j.mac
 }
 
-// unused, but keeping for now
-// func (j Job) isPrimaryNIC(mac net.HardwareAddr) bool {
-// 	return bytes.Equal(mac, j.PrimaryNIC())
-// }
-
 // HardwareState will return (enrolled burn_in preinstallable preinstalling failed_preinstall provisionable provisioning deprovisioning in_use)
 func (j Job) HardwareState() string {
 	if h := j.hardware; h != nil && (*h).HardwareID() != "" {
