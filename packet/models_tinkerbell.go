@@ -17,11 +17,11 @@ func (i InterfaceTinkerbell) Name() string {
 
 func (d DiscoveryTinkerbellV1) LeaseTime(mac net.HardwareAddr) time.Duration {
 	leaseTime := d.Network.InterfaceByMac(mac).DHCP.LeaseTime
-	if leaseTime != 0 {
-		duration, _ := time.ParseDuration(fmt.Sprintf("%ds", leaseTime))
-		return duration
+	if leaseTime == 0 {
+		return conf.DHCPLeaseTime
 	}
-	return conf.DHCPLeaseTime
+	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", leaseTime))
+	return duration
 }
 
 func (d DiscoveryTinkerbellV1) Hardware() *Hardware {
