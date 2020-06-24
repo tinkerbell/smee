@@ -290,7 +290,7 @@ var tinkerbellTests = map[string]struct {
                         Gateway: net.ParseIP("192.168.1.1"),
                 },
                 hostname:    "server001",
-                leaseTime:   86400,
+                leaseTime:   172800000000000,
                 nameServers: []string{"1.2.3.4"},
                 timeServers: []string{},
                 arch:        "x86_64",
