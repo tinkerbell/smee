@@ -176,8 +176,8 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 		if d.Network.InterfaceByMac(mac).DHCP.Hostname != test.hostname {
 			t.Fatalf("unexpected hostname, want: %s, got: %s\n", test.hostname, d.Network.InterfaceByMac(mac).DHCP.Hostname)
 		}
-		if d.Network.InterfaceByMac(mac).DHCP.LeaseTime != test.leaseTime {
-			t.Fatalf("unexpected lease time, want: %s, got: %v\n", test.leaseTime, d.Network.InterfaceByMac(mac).DHCP.LeaseTime)
+		if d.LeaseTime(mac) != test.leaseTime {
+			t.Fatalf("unexpected lease time, want: %d, got: %d\n", test.leaseTime, d.LeaseTime(mac))
 		}
 		// note the difference between []string(nil) and []string{}; use cmp.Diff to check
 		if !reflect.DeepEqual(d.Network.InterfaceByMac(mac).DHCP.NameServers, test.nameServers) {
@@ -273,13 +273,30 @@ var tinkerbellTests = map[string]struct {
 			Gateway: net.ParseIP("192.168.1.1"),
 		},
 		hostname:    "server001",
-		leaseTime:   86400,
+		leaseTime:   172800,
 		nameServers: []string{},
 		timeServers: []string{},
 		arch:        "x86_64",
 		uefi:        false,
 		mode:        "hardware",
 		json:        newJsonStruct,
+	},
+	"new_structure_defaults": {
+                id:  "fde7c87c-d154-448e-9fce-7eb7bdec90c0",
+                mac: "ec:0d:9a:c0:01:0d",
+                ip: IP{
+                        Address: net.ParseIP("192.168.1.5"),
+                        Netmask: net.ParseIP("255.255.255.248"),
+                        Gateway: net.ParseIP("192.168.1.1"),
+                },
+                hostname:    "server001",
+                leaseTime:   86400,
+                nameServers: []string{"1.2.3.4"},
+                timeServers: []string{},
+                arch:        "x86_64",
+                uefi:        false,
+                mode:        "hardware",
+                json:        newJsonStructUseDefaults,
 	},
 }
 
@@ -389,6 +406,44 @@ var tests = map[string]struct {
 }
 
 const (
+	newJsonStructUseDefaults = `
+	{
+	  "id":"fde7c87c-d154-448e-9fce-7eb7bdec90c0",
+	  "network":{
+		 "interfaces":[
+			{
+			   "dhcp":{
+				  "mac":"ec:0d:9a:c0:01:0d",
+				  "ip":{
+					 "address":"192.168.1.5",
+					 "netmask":"255.255.255.248",
+					 "gateway":"192.168.1.1"
+				  },
+				  "hostname":"server001",
+				  "name_servers": ["1.2.3.4"],
+				  "time_servers": [],
+				  "arch":"x86_64",
+				  "uefi":false
+			   },
+			   "netboot":{
+				  "allow_pxe":true,
+				  "allow_workflow":true,
+				  "ipxe":{
+					 "url":"http://url/menu.ipxe",
+					 "contents":"#!ipxe"
+				  },
+				  "osie":{
+					 "kernel":"vmlinuz-x86_64",
+					 "initrd":"",
+					 "base_url":""
+				  }
+			   }
+			}
+		 ]
+	  }
+}
+`
+
 	newJsonStruct = `
 	{
 	  "id":"fde7c87c-d154-447e-9fce-7eb7bdec90c0",
@@ -403,7 +458,7 @@ const (
 					 "gateway":"192.168.1.1"
 				  },
 				  "hostname":"server001",
-				  "lease_time":86400,
+				  "lease_time":172800,
 				  "name_servers": [],
 				  "time_servers": [],
 				  "arch":"x86_64",

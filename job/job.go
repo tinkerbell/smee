@@ -125,9 +125,9 @@ func (j *Job) setup(dp *packet.Discovery) error {
 		return errors.New("could not find IP address")
 	}
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
-	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac)) // cacher=env.DHCPLeaseTime
+	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))
 	j.dhcp.SetDHCPServer(conf.PublicIPv4)   // used for the unicast DHCPREQUEST
-	j.dhcp.SetDNSServers(d.DnsServers())    // cacher=env.DNSServers
+	j.dhcp.SetDNSServers(d.DnsServers(j.mac))
 
 	hostname, err := d.Hostname()
 	if err != nil {

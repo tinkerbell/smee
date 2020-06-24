@@ -22,7 +22,7 @@ type Discovery interface {
 	Mode() string
 	GetIP(addr net.HardwareAddr) IP
 	GetMAC(ip net.IP) net.HardwareAddr
-	DnsServers() []net.IP
+	DnsServers(mac net.HardwareAddr) []net.IP
 	LeaseTime(mac net.HardwareAddr) time.Duration
 	Hostname() (string, error)
 	Hardware() *Hardware

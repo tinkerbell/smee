@@ -15,7 +15,7 @@ func (d DiscoveryCacher) Hardware() *Hardware {
 	return &h
 }
 
-func (d DiscoveryCacher) DnsServers() []net.IP {
+func (d DiscoveryCacher) DnsServers(mac net.HardwareAddr) []net.IP {
 	return conf.DNSServers
 }
 
