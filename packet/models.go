@@ -275,15 +275,15 @@ type NetworkInterface struct {
 
 // DHCP holds details for DHCP connection
 type DHCP struct {
-	MAC         *MACAddr      `json:"mac"`
-	IP          IP            `json:"ip"`
-	Hostname    string        `json:"hostname"`
-	LeaseTime   time.Duration `json:"lease_time"`
-	NameServers []string      `json:"name_servers"`
-	TimeServers []string      `json:"time_servers"`
-	Arch        string        `json:"arch"`
-	UEFI        bool          `json:"uefi"`
-	IfaceName   string        `json:"iface_name"` // to be removed?
+	MAC         *MACAddr `json:"mac"`
+	IP          IP       `json:"ip"`
+	Hostname    string   `json:"hostname"`
+	LeaseTime   int      `json:"lease_time"`
+	NameServers []string `json:"name_servers"`
+	TimeServers []string `json:"time_servers"`
+	Arch        string   `json:"arch"`
+	UEFI        bool     `json:"uefi"`
+	IfaceName   string   `json:"iface_name"` // to be removed?
 }
 
 // Netboot holds details for a hardware to boot over network

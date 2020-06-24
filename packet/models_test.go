@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestInterfaces(t *testing.T) {
@@ -176,7 +175,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 		if d.Network.InterfaceByMac(mac).DHCP.Hostname != test.hostname {
 			t.Fatalf("unexpected hostname, want: %s, got: %s\n", test.hostname, d.Network.InterfaceByMac(mac).DHCP.Hostname)
 		}
-		if d.LeaseTime(mac) != test.leaseTime {
+		if int(d.LeaseTime(mac).Seconds()) != test.leaseTime {
 			t.Fatalf("unexpected lease time, want: %d, got: %d\n", test.leaseTime, d.LeaseTime(mac))
 		}
 		// note the difference between []string(nil) and []string{}; use cmp.Diff to check
@@ -251,7 +250,7 @@ var tinkerbellTests = map[string]struct {
 	mac           string
 	ip            IP
 	hostname      string
-	leaseTime     time.Duration
+	leaseTime     int
 	nameServers   []string
 	timeServers   []string
 	arch          string
@@ -273,7 +272,7 @@ var tinkerbellTests = map[string]struct {
 			Gateway: net.ParseIP("192.168.1.1"),
 		},
 		hostname:    "server001",
-		leaseTime:   172800,
+		leaseTime:   172801,
 		nameServers: []string{},
 		timeServers: []string{},
 		arch:        "x86_64",
@@ -290,7 +289,7 @@ var tinkerbellTests = map[string]struct {
 			Gateway: net.ParseIP("192.168.1.1"),
 		},
 		hostname:    "server001",
-		leaseTime:   172800000000000,
+		leaseTime:   172800,
 		nameServers: []string{"1.2.3.4"},
 		timeServers: []string{},
 		arch:        "x86_64",
@@ -458,7 +457,7 @@ const (
 					 "gateway":"192.168.1.1"
 				  },
 				  "hostname":"server001",
-				  "lease_time":172800,
+				  "lease_time":172801,
 				  "name_servers": [],
 				  "time_servers": [],
 				  "arch":"x86_64",
