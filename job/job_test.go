@@ -56,22 +56,22 @@ func TestSetupDiscover(t *testing.T) {
 
 	wantMode := "management"
 	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
+		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	dc := d.(*packet.DiscoveryCacher)
 	netConfig := dc.HardwareIPMI()
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
-		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
+		t.Fatalf("incorrect Address, want: %v, got: %v", netConfig.Address, j.dhcp.Address())
 	}
 	if !netConfig.Netmask.Equal(j.dhcp.Netmask()) {
-		t.Fatalf("incorrect Netmask, want: %v, got: %v\n", netConfig.Netmask, j.dhcp.Netmask())
+		t.Fatalf("incorrect Netmask, want: %v, got: %v", netConfig.Netmask, j.dhcp.Netmask())
 	}
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
-		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
+		t.Fatalf("incorrect Gateway, want: %v, got: %v", netConfig.Gateway, j.dhcp.Gateway())
 	}
 	if h.Name != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", h.Name, j.dhcp.Hostname())
+		t.Fatalf("incorrect Hostname, want: %v, got: %v", h.Name, j.dhcp.Hostname())
 	}
 }
 
@@ -112,23 +112,23 @@ func TestSetupManagement(t *testing.T) {
 
 	wantMode := "management"
 	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
+		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	dc := d.(*packet.DiscoveryCacher)
 	netConfig := dc.HardwareIPMI()
 
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
-		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
+		t.Fatalf("incorrect Address, want: %v, got: %v", netConfig.Address, j.dhcp.Address())
 	}
 	if !netConfig.Netmask.Equal(j.dhcp.Netmask()) {
-		t.Fatalf("incorrect Netmask, want: %v, got: %v\n", netConfig.Netmask, j.dhcp.Netmask())
+		t.Fatalf("incorrect Netmask, want: %v, got: %v", netConfig.Netmask, j.dhcp.Netmask())
 	}
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
-		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
+		t.Fatalf("incorrect Gateway, want: %v, got: %v", netConfig.Gateway, j.dhcp.Gateway())
 	}
 	if h.Name != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", h.Name, j.dhcp.Hostname())
+		t.Fatalf("incorrect Hostname, want: %v, got: %v", h.Name, j.dhcp.Hostname())
 	}
 }
 
@@ -144,21 +144,21 @@ func TestSetupInstance(t *testing.T) {
 
 	wantMode := "instance"
 	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v\n", wantMode, mode)
+		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	netConfig := d.GetIP(macs[1].HardwareAddr())
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
-		t.Fatalf("incorrect Address, want: %v, got: %v\n", netConfig.Address, j.dhcp.Address())
+		t.Fatalf("incorrect Address, want: %v, got: %v", netConfig.Address, j.dhcp.Address())
 	}
 	if !netConfig.Netmask.Equal(j.dhcp.Netmask()) {
-		t.Fatalf("incorrect Netmask, want: %v, got: %v\n", netConfig.Netmask, j.dhcp.Netmask())
+		t.Fatalf("incorrect Netmask, want: %v, got: %v", netConfig.Netmask, j.dhcp.Netmask())
 	}
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
-		t.Fatalf("incorrect Gateway, want: %v, got: %v\n", netConfig.Gateway, j.dhcp.Gateway())
+		t.Fatalf("incorrect Gateway, want: %v, got: %v", netConfig.Gateway, j.dhcp.Gateway())
 	}
 	if d.Instance().Hostname != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v\n", d.Instance().Hostname, j.dhcp.Hostname())
+		t.Fatalf("incorrect Hostname, want: %v, got: %v", d.Instance().Hostname, j.dhcp.Hostname())
 	}
 }
 func TestSetupFails(t *testing.T) {

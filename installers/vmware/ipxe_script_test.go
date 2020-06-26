@@ -35,7 +35,7 @@ func TestScriptPerType(t *testing.T) {
 
 			want := fmt.Sprintf(script, version)
 			if !strings.Contains(want, version) {
-				t.Fatalf("expected %s to be present in script:%v\n", version, want)
+				t.Fatalf("expected %s to be present in script:%v", version, want)
 			}
 			if want != got {
 				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(want, got))
