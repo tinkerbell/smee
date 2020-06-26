@@ -13,7 +13,7 @@ reboot
 echo "Packet firstboot executed" > /packet-firstboot.log
 echo "Packet firstboot executed" > /var/log/packet-firstboot.log
 # Fetch packet MD
-wget http://metadata.packet.net/metadata -O /tmp/metadata
+wget https://metadata.packet.net/metadata -O /tmp/metadata
 uuid=$(cat /tmp/metadata | python -c "import sys, json; print(json.load(sys.stdin)['id'])")
 hostname=$(cat /tmp/metadata | python -c "import sys, json; print(json.load(sys.stdin)['hostname'])")
 # Set hostname
@@ -154,7 +154,7 @@ kickstartfbshellcmd=$(custom_data "['kickstart']['firstboot_shell_cmd']")
 if [ "$sshset" == "true" ]; then
 	echo "Enabling SSHd"
 	vim-cmd hostsvc/enable_ssh
-	wget -q http://metadata.packet.net/2009-04-04/meta-data/public-keys -O /etc/ssh/keys-root/authorized_keys
+	wget -q https://metadata.packet.net/2009-04-04/meta-data/public-keys -O /etc/ssh/keys-root/authorized_keys
 elif [ "$sshset" == "false" ]; then
 	echo "Disabling SSHd"
 	vim-cmd hostsvc/disable_ssh
@@ -232,7 +232,7 @@ fi
 EOF
 python /tmp/netcfg.py
 # Setup public SSH key auth for root
-wget http://metadata.packet.net/2009-04-04/meta-data/public-keys -O /etc/ssh/keys-root/authorized_keys
+wget https://metadata.packet.net/2009-04-04/meta-data/public-keys -O /etc/ssh/keys-root/authorized_keys
 # Disable SSH password auth and force public key auth
 echo 'ChallengeResponseAuthentication no' >> /etc/ssh/sshd_config
 # Enable ssh
@@ -256,7 +256,7 @@ reboot
 cat << 'EOF' > /tmp/customize-pi.sh
 #/bin/sh
 metadata=/tmp/metadata
-wget http://metadata.packet.net/metadata -O $metadata
+wget https://metadata.packet.net/metadata -O $metadata
 
 custom_data () {
         python -c "import json; print(json.load(open('$metadata'))['customdata']$1)" 2>/dev/null
