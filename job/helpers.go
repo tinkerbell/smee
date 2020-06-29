@@ -185,11 +185,18 @@ func (j Job) HardwareState() string {
 	return ""
 }
 
-func (j Job) ServicesVersion() packet.ServicesVersion {
-	if h := j.hardware; h != nil && h.ID != "" {
-		return h.ServicesVersion
+// OSIEVersion returns any non-standard osie versions specified in either the instance proper or in userdata or attached to underlying hardware
+func (j Job) OSIEVersion() string {
+	if i := j.instance; i != nil {
+		ov := i.ServicesVersion().OSIE
+		if ov != "" {
+			return ov
+		}
 	}
-	return packet.ServicesVersion{}
+	if h := j.hardware; h != nil && h.ServicesVersion.OSIE != "" {
+		return h.ServicesVersion.OSIE
+	}
+	return ""
 }
 
 // CanWorkflow checks if workflow is allowed

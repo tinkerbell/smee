@@ -1,11 +1,16 @@
 package packet
 
 import (
+	"bufio"
 	"encoding/json"
 	"net"
+	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 )
+
+var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
 
 type BondingMode int
 
@@ -181,11 +186,12 @@ type Instance struct {
 	AllowPXE bool          `json:"allow_pxe"`
 	Rescue   bool          `json:"rescue"`
 
-	OS            OperatingSystem `json:"operating_system_version"`
-	AlwaysPXE     bool            `json:"always_pxe,omitempty"`
-	IPXEScriptURL string          `json:"ipxe_script_url,omitempty"`
-	IPs           []IP            `json:"ip_addresses"`
-	UserData      string          `json:"userdata,omitempty"`
+	OS              OperatingSystem `json:"operating_system_version"`
+	AlwaysPXE       bool            `json:"always_pxe,omitempty"`
+	IPXEScriptURL   string          `json:"ipxe_script_url,omitempty"`
+	IPs             []IP            `json:"ip_addresses"`
+	UserData        string          `json:"userdata,omitempty"`
+	servicesVersion ServicesVersion
 
 	// Only returned in the first 24 hours
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
@@ -203,6 +209,32 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 		}
 	}
 	return nil
+}
+
+func (i *Instance) ServicesVersion() ServicesVersion {
+	if i.servicesVersion.OSIE != "" {
+		return i.servicesVersion
+	}
+
+	if i.UserData == "" {
+		return ServicesVersion{}
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
+	for scanner.Scan() {
+		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
+		if len(matches) == 0 {
+			continue
+		}
+
+		var sv ServicesVersion
+		err := json.Unmarshal([]byte(matches[1]), &sv)
+		if err != nil {
+			return ServicesVersion{}
+		}
+		return sv
+	}
+	return ServicesVersion{}
 }
 
 func managementPublicIPv4IP(ip IP) bool {
@@ -228,7 +260,7 @@ type UserEvent struct {
 }
 
 type ServicesVersion struct {
-	Osie string `json:"osie"`
+	OSIE string `json:"osie"`
 }
 
 type Hardware struct {

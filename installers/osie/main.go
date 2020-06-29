@@ -70,7 +70,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 		s.Args("eclypsium_token=" + conf.EclypsiumToken)
 	}
 
-	if isCustomOsie(j) {
+	if isCustomOSIE(j) {
 		s.Args("packet_base_url=" + osieBaseUrl(j))
 	}
 
@@ -146,17 +146,14 @@ func initrdPath(j job.Job) string {
 	return "initramfs-${parch}"
 }
 
-func isCustomOsie(j job.Job) bool {
-	if version := j.ServicesVersion(); version.Osie != "" {
-		return true
-	}
-	return false
+func isCustomOSIE(j job.Job) bool {
+	return j.OSIEVersion() != ""
 }
 
-// OsieBaseUrl returns the value of Osie Custom Service Version, or boots/osie
+// osieBaseUrl returns the value of Custom OSIE Service Version or just /current
 func osieBaseUrl(j job.Job) string {
-	if isCustomOsie(j) {
-		return osieURL + "/" + j.ServicesVersion().Osie
+	if isCustomOSIE(j) {
+		return osieURL + "/" + j.OSIEVersion()
 	}
 	return osieURL + "/current"
 }
