@@ -70,7 +70,9 @@ steps:
         - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
       event: push
-      branch: master
+      branch:
+        - master
+        - production
 
   - name: publish tag
     <<: *publish_tmpl
