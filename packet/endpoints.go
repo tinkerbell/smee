@@ -10,6 +10,7 @@ import (
 
 	"github.com/packethost/cacher/protos/cacher"
 	tink "github.com/tinkerbell/tink/protos/hardware"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -30,6 +31,29 @@ type Component struct {
 
 type ComponentsResponse struct {
 	Components []Component `json:"components"`
+}
+
+// GetWorkflowsFromTink fetches the list of workflows from tink
+func (c *Client) GetWorkflowsFromTink(hwID string) (result *tw.WorkflowContextList, err error) {
+	if hwID == "" {
+		return result, errors.New("missing hardware id")
+	}
+
+	labels := prometheus.Labels{"from": "dhcp"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+	metrics.CacherRequestsInProgress.With(labels).Inc()
+	metrics.CacherTotal.With(labels).Inc()
+
+	result, err = c.workflowClient.GetWorkflowContexts(context.Background(), &tw.WorkflowContextRequest{WorkerId: hwID})
+
+	cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Dec()
+
+	if err != nil {
+		return result, errors.New("fetching the workflow")
+	}
+
+	return result, nil
 }
 
 func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
