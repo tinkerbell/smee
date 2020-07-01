@@ -25,7 +25,6 @@ func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
 	// setup reply
 	reply := dhcp.NewReply(w, req)
 	if reply == nil {
-		j.Error(errors.New("unable to create DHCP reply"))
 		return false
 	}
 
