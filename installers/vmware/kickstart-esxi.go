@@ -398,6 +398,7 @@ func determineDisk(j job.Job) string {
 		return "--firstdisk=vmw_ahci,lsi_mr3,lsi_msgpt3"
 	case "c3.medium.x86",
 		"c3.small.x86",
+		"m3.large.x86",
 		"s3.xlarge.x86":
 		if j.PlanVersionSlug() == "c3.medium.x86.01" {
 			return "--firstdisk=Micron_5100_MTFD,vmw_ahci"
