@@ -48,7 +48,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
 	case "1":
-		hg, err = tinkClient.NewTinkerbellClient()
+		hg, err = tinkClient.TinkerbellHWClient()
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
