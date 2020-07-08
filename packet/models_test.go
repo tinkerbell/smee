@@ -6,6 +6,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestInterfaces(t *testing.T) {
@@ -107,17 +109,12 @@ func TestDiscoveryCacher(t *testing.T) {
 			}
 
 			// suggest we leave this here for the time being for ease of test why we're not seeing what we expect
+			t.Logf("Discovery: %s", spew.Sdump(d))
 			t.Logf("MacType: %s", d.MacType(mac.String()))
 			t.Logf("MacIsType=data: %v", d.MacIsType(mac.String(), "data"))
-			t.Logf("primaryDataMac: %s", d.PrimaryDataMAC().HardwareAddr().String())
+			t.Logf("PrimaryDataMac: %s", d.PrimaryDataMAC().HardwareAddr().String())
 			t.Logf("MAC: %v", d.MAC())
-			t.Logf("d.mac: %v", d.mac)
 			t.Logf("mac: %s", mac.String())
-			if d.Instance() != nil {
-				t.Logf("instance: %v", d.Instance())
-				t.Logf("instanceId: %s", d.Instance().ID)
-				t.Logf("instance State: %s", d.Instance().State)
-			}
 			t.Logf("hardware IP: %v", d.hardwareIP())
 			t.Log()
 			h := *d.Hardware()
