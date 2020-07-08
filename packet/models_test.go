@@ -60,23 +60,19 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
 	os.Setenv("DATA_MODEL_VERSION", "1")
 
-	func() {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Fatal("TestDiscoveryMismatch should have panicked")
-			}
-		}()
-
-		for name, test := range tinkerbellTests {
-			t.Log(name)
-			d, err := NewDiscovery([]byte(test.json))
-			if err != nil {
-				t.Fatal("NewDiscovery", err)
-			}
-			dt := (*d).(*DiscoveryCacher)
-			t.Log(dt)
+	for name, test := range tinkerbellTests {
+		t.Log(name)
+		d, err := NewDiscovery([]byte(test.json))
+		if err != nil {
+			t.Fatal("NewDiscovery", err)
 		}
-	}()
+		dt, ok := (*d).(*DiscoveryCacher)
+		t.Log(dt)
+		if ok {
+			t.Fatalf("unexpected concrete type returned from NewDiscovery: want=%T, got=%T", &DiscoveryTinkerbellV1{}, dt)
+		}
+	}
+
 }
 
 func TestDiscoveryCacher(t *testing.T) {
