@@ -14,7 +14,9 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
-	t.Log("DATA_MODEL_VERSION (should be empty to use cacher):", os.Getenv("DATA_MODEL_VERSION"))
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
+	os.Unsetenv("DATA_MODEL_VERSION")
 
 	for name, test := range tests {
 		t.Log(name)
@@ -30,8 +32,9 @@ func TestNewDiscoveryCacher(t *testing.T) {
 }
 
 func TestNewDiscoveryTinkerbell(t *testing.T) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
 	os.Setenv("DATA_MODEL_VERSION", "1")
-	t.Log("DATA_MODEL_VERSION:", os.Getenv("DATA_MODEL_VERSION"))
 
 	for name, test := range tinkerbellTests {
 		t.Log(name)
@@ -53,15 +56,16 @@ func TestNewDiscoveryTinkerbell(t *testing.T) {
 }
 
 func TestNewDiscoveryMismatch(t *testing.T) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
+	os.Setenv("DATA_MODEL_VERSION", "1")
+
 	func() {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Fatal("TestDiscoveryMismatch should have panicked")
 			}
 		}()
-
-		os.Setenv("DATA_MODEL_VERSION", "1")
-		t.Log("DATA_MODEL_VERSION:", os.Getenv("DATA_MODEL_VERSION"))
 
 		for name, test := range tinkerbellTests {
 			t.Log(name)
