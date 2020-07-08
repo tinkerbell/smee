@@ -1,7 +1,9 @@
 package packet
 
 import (
+	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/tinkerbell/boots/conf"
@@ -14,7 +16,12 @@ func (i InterfaceTinkerbell) Name() string {
 }
 
 func (d DiscoveryTinkerbellV1) LeaseTime(mac net.HardwareAddr) time.Duration {
-	return d.Network.InterfaceByMac(mac).DHCP.LeaseTime
+	leaseTime := d.Network.InterfaceByMac(mac).DHCP.LeaseTime
+	if leaseTime == 0 {
+		return conf.DHCPLeaseTime
+	}
+	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", leaseTime))
+	return duration
 }
 
 func (d DiscoveryTinkerbellV1) Hardware() *Hardware {
@@ -22,11 +29,12 @@ func (d DiscoveryTinkerbellV1) Hardware() *Hardware {
 	return &h
 }
 
-func (d DiscoveryTinkerbellV1) DnsServers() []net.IP {
-	var servers = conf.DNSServers
-	// change to new way
-
-	return servers
+func (d DiscoveryTinkerbellV1) DnsServers(mac net.HardwareAddr) []net.IP {
+	dnsServers := d.Network.InterfaceByMac(mac).DHCP.NameServers
+	if len(dnsServers) == 0 {
+		return conf.DNSServers
+	}
+	return conf.ParseIPv4s(strings.Join(dnsServers, ","))
 }
 
 func (d DiscoveryTinkerbellV1) Instance() *Instance {

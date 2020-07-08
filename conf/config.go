@@ -21,7 +21,7 @@ var (
 
 	// Default to Google Public DNS
 	DHCPLeaseTime = env.Duration("DHCP_LEASE_TIME", (2 * 24 * time.Hour))
-	DNSServers    = parseIPv4s(env.Get("DNS_SERVERS", "8.8.8.8,8.8.4.4"))
+	DNSServers    = ParseIPv4s(env.Get("DNS_SERVERS", "8.8.8.8,8.8.4.4"))
 
 	ignoredOUIs = getIgnoredMACs()
 	ignoredGIs  = getIgnoredGIs()
@@ -60,7 +60,7 @@ func mustPublicIPv4() net.IP {
 	panic(err)
 }
 
-func parseIPv4s(str string) (ips []net.IP) {
+func ParseIPv4s(str string) (ips []net.IP) {
 	for _, s := range strings.Split(str, ",") {
 		ip := net.ParseIP(s).To4()
 		if ip == nil {
