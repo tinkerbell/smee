@@ -116,8 +116,10 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 	switch dataModelVersion {
 	case "1":
 		res = &DiscoveryTinkerbellV1{}
-	default:
+	case "":
 		res = &DiscoveryCacher{}
+	default:
+		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
 
 	err := json.Unmarshal(b, &res)

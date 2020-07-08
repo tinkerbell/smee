@@ -2,9 +2,11 @@ package packet
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -54,6 +56,21 @@ func TestNewDiscoveryTinkerbell(t *testing.T) {
 
 			if dt.Network.InterfaceByMac(mac).DHCP.IP.Address.String() != test.ip.Address.String() {
 				t.Fatalf("unexpected ip, want: %v, got: %v", test.ip, dt.Network.InterfaceByMac([]byte(test.mac)).DHCP.IP.Address)
+			}
+		})
+	}
+}
+
+func TestNewDiscoveryUnknown(t *testing.T) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
+
+	for _, version := range []string{"42", strconv.Itoa(rand.Int())} {
+		t.Run(version, func(t *testing.T) {
+			os.Setenv("DATA_MODEL_VERSION", version)
+			_, err := NewDiscovery([]byte("not empty"))
+			if err == nil {
+				t.Error("expected an error, got nil")
 			}
 		})
 	}
