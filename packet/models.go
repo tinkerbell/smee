@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/files/ignition"
 )
 
 // models.go contains the Hardware structures matching the data models defined by tink and cacher
@@ -147,8 +146,7 @@ type Instance struct {
 
 	Tags []string `json:"tags,omitempty"`
 	// Project
-	Storage ignition.Storage `json:"storage,omitempty"`
-	SSHKeys []string         `json:"ssh_keys,omitempty"`
+	SSHKeys []string `json:"ssh_keys,omitempty"`
 	// CustomData
 	NetworkReady bool `json:"network_ready,omitempty"`
 }
