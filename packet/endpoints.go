@@ -68,7 +68,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			metrics.CacherCacheHits.With(labels).Inc()
 			return NewDiscovery(b)
 		}
-	default:
+	case "":
 		cc := c.hardwareClient.(cacher.CacherClient)
 		msg := &cacher.GetRequest{
 			MAC: mac.String(),
@@ -88,6 +88,8 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			metrics.CacherCacheHits.With(labels).Inc()
 			return NewDiscovery(b)
 		}
+	default:
+		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
 
 	if giaddr == nil {
@@ -155,7 +157,7 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 		if err != nil {
 			return nil, errors.New("marshalling tink hardware")
 		}
-	default:
+	case "":
 		cc := c.hardwareClient.(cacher.CacherClient)
 		msg := &cacher.GetRequest{
 			IP: ip.String(),
@@ -171,6 +173,8 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 		}
 
 		b = []byte(resp.JSON)
+	default:
+		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
 
 	return NewDiscovery(b)
