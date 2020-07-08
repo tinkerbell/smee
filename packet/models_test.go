@@ -18,7 +18,7 @@ func TestNewDiscoveryCacher(t *testing.T) {
 	defer os.Setenv("DATA_MODEL_VERSION", dataModelVersion)
 	os.Unsetenv("DATA_MODEL_VERSION")
 
-	for name, test := range tests {
+	for name, test := range cacherTests {
 		t.Log(name)
 		d, err := NewDiscovery([]byte(test.json))
 		if err != nil {
@@ -80,7 +80,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 }
 
 func TestDiscoveryCacher(t *testing.T) {
-	for name, test := range tests {
+	for name, test := range cacherTests {
 		t.Log(name)
 		d := DiscoveryCacher{}
 
@@ -320,7 +320,7 @@ var tinkerbellTests = map[string]struct {
 	},
 }
 
-var tests = map[string]struct {
+var cacherTests = map[string]struct {
 	mac            string
 	primaryDataMac string
 	mode           string
