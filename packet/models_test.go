@@ -102,11 +102,11 @@ func TestDiscoveryCacher(t *testing.T) {
 			t.Logf("instance State: %s", d.Instance().State)
 		}
 		t.Logf("hardware IP: %v", d.hardwareIP())
-		t.Log("")
+		t.Log()
 		h := *d.Hardware()
 		for _, ip := range h.HardwareIPs() {
 			t.Logf("hardware IP: %v", ip)
-			t.Log("")
+			t.Log()
 		}
 
 		d.SetMAC(mac)
@@ -165,7 +165,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 
 		t.Logf("d.mac: %s", d.mac)
 		t.Logf("dhcp %v", d.Network.InterfaceByMac(mac).DHCP)
-		t.Log("")
+		t.Log()
 		if d.Network.InterfaceByMac(mac).DHCP.IP.Address.String() != test.ip.Address.String() {
 			t.Fatalf("unexpected ip, want: %v, got: %v", test.ip, d.Network.InterfaceByMac(mac).DHCP.IP)
 		}
@@ -200,7 +200,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 		t.Logf("netboot allow_workflow: %v", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
 		t.Logf("netboot ipxe: %v", d.Network.InterfaceByMac(mac).Netboot.IPXE)
 		t.Logf("netboot osie: %v", d.Network.InterfaceByMac(mac).Netboot.Osie)
-		t.Log("")
+		t.Log()
 
 		t.Logf("metadata: %v", d.Metadata)
 		t.Logf("metadata state: %v", d.Metadata.State)
@@ -215,11 +215,11 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 		t.Logf("metadata facility: %v", d.Metadata.Facility)
 
 		//t.Logf("hardware IP: %v", d.hardwareIP())
-		t.Log("")
+		t.Log()
 		h := *d.Hardware()
 		for _, ip := range h.HardwareIPs() {
 			t.Logf("hardware IP: %v", ip)
-			t.Log("")
+			t.Log()
 		}
 
 		d.SetMAC(mac)
