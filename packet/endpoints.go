@@ -32,7 +32,7 @@ type ComponentsResponse struct {
 	Components []Component `json:"components"`
 }
 
-func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (*Discovery, error) {
+func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
 	if mac == nil {
 		return nil, errors.New("missing MAC address")
 	}
@@ -119,10 +119,10 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	if err := c.Post("/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return res, nil
 }
 
-func (c *Client) DiscoverHardwareFromIP(ip net.IP) (*Discovery, error) {
+func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 	if ip.String() == net.IPv4zero.String() {
 		return nil, errors.New("missing ip address")
 	}
@@ -182,10 +182,10 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if (*d).Instance() == nil {
+	if d.Instance() == nil {
 		return "", nil
 	}
-	return (*d).Instance().ID, nil
+	return d.Instance().ID, nil
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API

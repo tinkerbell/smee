@@ -54,7 +54,7 @@ func (j Job) PostHardwareProblem(slug string) bool {
 		j.With("problem", slug).Error(errors.WithMessage(err, "encoding hardware problem request"))
 		return false
 	}
-	if _, err := client.PostHardwareProblem((*j.hardware).HardwareID(), bytes.NewReader(b)); err != nil {
+	if _, err := client.PostHardwareProblem(j.hardware.HardwareID(), bytes.NewReader(b)); err != nil {
 		j.With("problem", slug).Error(errors.WithMessage(err, "posting hardware problem"))
 		return false
 	}
@@ -94,7 +94,7 @@ func (j Job) phoneHome(body []byte) bool {
 			j.With("state", j.HardwareState()).Info("ignoring hardware phone-home when state is not preinstalling")
 			return false
 		}
-		id = (*j.hardware).HardwareID()
+		id = j.hardware.HardwareID()
 		typ = "hardware"
 		post = p.postHardware
 	}

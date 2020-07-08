@@ -47,9 +47,9 @@ func TestSetupDiscover(t *testing.T) {
 	}
 
 	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(&d)
+	j.setup(d)
 
-	dh := *d.Hardware()
+	dh := d.Hardware()
 	h := dh.(*packet.HardwareCacher)
 
 	mode := d.Mode()
@@ -102,11 +102,11 @@ func TestSetupManagement(t *testing.T) {
 		},
 	}
 
-	dh := *d.Hardware()
+	dh := d.Hardware()
 	h := dh.(*packet.HardwareCacher)
 
 	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(&d)
+	j.setup(d)
 
 	mode := d.Mode()
 
@@ -138,7 +138,7 @@ func TestSetupInstance(t *testing.T) {
 	d, macs, _ = MakeHardwareWithInstance()
 
 	j := &Job{mac: macs[1].HardwareAddr()}
-	j.setup(&d)
+	j.setup(d)
 
 	mode := d.Mode()
 
@@ -165,7 +165,7 @@ func TestSetupFails(t *testing.T) {
 	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
 	j := &Job{}
 
-	err := j.setup(&d)
+	err := j.setup(d)
 	if err == nil {
 		t.Fatal("expected an error but got nil")
 	}

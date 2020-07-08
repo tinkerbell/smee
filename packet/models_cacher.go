@@ -10,9 +10,9 @@ import (
 
 // models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
 
-func (d DiscoveryCacher) Hardware() *Hardware {
+func (d DiscoveryCacher) Hardware() Hardware {
 	var h Hardware = d.HardwareCacher
-	return &h
+	return h
 }
 
 func (d DiscoveryCacher) DnsServers(mac net.HardwareAddr) []net.IP {
@@ -131,7 +131,7 @@ func (d DiscoveryCacher) HardwareIP(mac string) *IP {
 
 // hardwareIP returns the IP configuration that should be offered to the hardware (not exported)
 func (d DiscoveryCacher) hardwareIP() *IP {
-	h := *d.Hardware()
+	h := d.Hardware()
 	for _, ip := range h.HardwareIPs() {
 		if ip.Family != 4 {
 			continue

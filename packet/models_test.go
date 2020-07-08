@@ -13,8 +13,8 @@ import (
 )
 
 func TestInterfaces(t *testing.T) {
-	var _ Discovery = (*DiscoveryCacher)(nil)
-	var _ Discovery = (*DiscoveryTinkerbellV1)(nil)
+	var _ Discovery = &DiscoveryCacher{}
+	var _ Discovery = &DiscoveryTinkerbellV1{}
 }
 
 func TestNewDiscoveryCacher(t *testing.T) {
@@ -28,7 +28,7 @@ func TestNewDiscoveryCacher(t *testing.T) {
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
-			dc := (*d).(*DiscoveryCacher)
+			dc := d.(*DiscoveryCacher)
 			if dc.PrimaryDataMAC().String() != test.primaryDataMac {
 				t.Fatalf("unexpected primary data mac, want: %s, got: %s", test.primaryDataMac, dc.PrimaryDataMAC())
 			}
@@ -47,7 +47,7 @@ func TestNewDiscoveryTinkerbell(t *testing.T) {
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
-			dt := (*d).(*DiscoveryTinkerbellV1)
+			dt := d.(*DiscoveryTinkerbellV1)
 
 			mac, err := net.ParseMAC(test.mac)
 			if err != nil {
@@ -87,7 +87,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
-			dt, ok := (*d).(*DiscoveryTinkerbellV1)
+			dt, ok := d.(*DiscoveryTinkerbellV1)
 			t.Log(dt)
 			if ok {
 				t.Fatalf("unexpected concrete type returned from NewDiscovery: want=%T, got=%T", &DiscoveryCacher{}, dt)
@@ -102,7 +102,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 			if err != nil {
 				t.Fatal("NewDiscovery", err)
 			}
-			dt, ok := (*d).(*DiscoveryCacher)
+			dt, ok := d.(*DiscoveryCacher)
 			t.Log(dt)
 			if ok {
 				t.Fatalf("unexpected concrete type returned from NewDiscovery: want=%T, got=%T", &DiscoveryTinkerbellV1{}, dt)
@@ -114,7 +114,7 @@ func TestNewDiscoveryMismatch(t *testing.T) {
 func TestDiscoveryCacher(t *testing.T) {
 	for name, test := range cacherTests {
 		t.Run(name, func(t *testing.T) {
-			d := DiscoveryCacher{}
+			d := &DiscoveryCacher{}
 
 			if err := json.Unmarshal([]byte(test.json), &d); err != nil {
 				t.Fatal(test.mode, err)
@@ -134,7 +134,7 @@ func TestDiscoveryCacher(t *testing.T) {
 			t.Logf("mac: %s", mac.String())
 			t.Logf("hardware IP: %v", d.hardwareIP())
 			t.Log()
-			h := *d.Hardware()
+			h := d.Hardware()
 			for _, ip := range h.HardwareIPs() {
 				t.Logf("hardware IP: %v", ip)
 				t.Log()
@@ -246,9 +246,8 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Logf("metadata custom: %v", d.Metadata.Custom)
 			t.Logf("metadata facility: %v", d.Metadata.Facility)
 
-			//t.Logf("hardware IP: %v", d.hardwareIP())
 			t.Log()
-			h := *d.Hardware()
+			h := d.Hardware()
 			for _, ip := range h.HardwareIPs() {
 				t.Logf("hardware IP: %v", ip)
 				t.Log()

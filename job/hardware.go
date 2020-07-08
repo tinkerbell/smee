@@ -47,7 +47,7 @@ func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if _, err := client.PostHardwareComponent((*j.hardware).HardwareID(), bytes.NewReader(jsonBody)); err != nil {
+	if _, err := client.PostHardwareComponent(j.hardware.HardwareID(), bytes.NewReader(jsonBody)); err != nil {
 		joblog.Error(errors.Wrap(err, "posting componenents"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
