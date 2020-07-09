@@ -147,7 +147,7 @@ func (h HardwareTinkerbellV1) HardwareState() HardwareState {
 }
 
 // dummy method for backward compatibility
-func (h HardwareTinkerbellV1) HardwareServicesVersion() string {
+func (h HardwareTinkerbellV1) HardwareOSIEVersion() string {
 	return ""
 }
 

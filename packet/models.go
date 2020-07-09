@@ -66,7 +66,7 @@ type Hardware interface {
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
 	HardwareState() HardwareState
-	HardwareServicesVersion() string
+	HardwareOSIEVersion() string
 	HardwareUEFI(mac net.HardwareAddr) bool
 	OSIEBaseURL(mac net.HardwareAddr) string
 	KernelPath(mac net.HardwareAddr) string

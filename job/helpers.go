@@ -179,7 +179,7 @@ func (j Job) OSIEVersion() string {
 		return ""
 	}
 
-	return h.HardwareServicesVersion()
+	return h.HardwareOSIEVersion()
 }
 
 // CanWorkflow checks if workflow is allowed

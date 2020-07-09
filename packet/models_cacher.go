@@ -286,7 +286,7 @@ func (h HardwareCacher) HardwarePlanVersionSlug() string {
 	return h.PlanVersionSlug
 }
 
-func (h HardwareCacher) HardwareServicesVersion() string {
+func (h HardwareCacher) HardwareOSIEVersion() string {
 	return h.ServicesVersion.OSIE
 }
 
