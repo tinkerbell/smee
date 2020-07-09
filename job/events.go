@@ -54,7 +54,7 @@ func (j Job) PostHardwareProblem(slug string) bool {
 		j.With("problem", slug).Error(errors.WithMessage(err, "encoding hardware problem request"))
 		return false
 	}
-	if _, err := client.PostHardwareProblem((*j.hardware).HardwareID(), bytes.NewReader(b)); err != nil {
+	if _, err := client.PostHardwareProblem(j.hardware.HardwareID(), bytes.NewReader(b)); err != nil {
 		j.With("problem", slug).Error(errors.WithMessage(err, "posting hardware problem"))
 		return false
 	}
@@ -94,7 +94,7 @@ func (j Job) phoneHome(body []byte) bool {
 			j.With("state", j.HardwareState()).Info("ignoring hardware phone-home when state is not preinstalling")
 			return false
 		}
-		id = (*j.hardware).HardwareID()
+		id = j.hardware.HardwareID()
 		typ = "hardware"
 		post = p.postHardware
 	}
@@ -137,26 +137,6 @@ func (j Job) postEvent(kind, body string, private bool) bool {
 	}
 	return true
 }
-
-// unused, but keeping for now
-// func (j Job) postFailure(reason string) bool {
-// 	f := failure{
-// 		Reason: reason,
-// 	}
-
-// 	if j.InstanceID() != "" {
-// 		if err := f.postInstance(j.instance.ID); err != nil {
-// 			j.Error(errors.WithMessage(err, "posting instance failure"))
-// 			return false
-// 		}
-// 	} else {
-// 		if err := f.postHardware((*j.hardware).HardwareID()); err != nil {
-// 			j.Error(errors.WithMessage(err, "posting hardware failure"))
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
 
 func posterFromJSON(b []byte) (poster, error) {
 	if len(b) == 0 {

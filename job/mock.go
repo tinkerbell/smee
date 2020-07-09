@@ -37,26 +37,25 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 	}
 
 	mockLog := log.Test(t, "job.Mock")
-	var hardware packet.Hardware = &packet.HardwareCacher{
-		ID:              uuid.New().String(),
-		PlanSlug:        slug,
-		PlanVersionSlug: planVersion,
-		FacilityCode:    facility,
-		Arch:            arch,
-		State:           "provisionable",
-		UEFI:            uefi,
-		ServicesVersion: servicesVersion,
-	}
 	return Mock{
-		Logger:   mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
-		hardware: &hardware,
+		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
+		hardware: &packet.HardwareCacher{
+			ID:              uuid.New().String(),
+			PlanSlug:        slug,
+			PlanVersionSlug: planVersion,
+			FacilityCode:    facility,
+			Arch:            arch,
+			State:           "provisionable",
+			UEFI:            uefi,
+			ServicesVersion: servicesVersion,
+		},
 		instance: &packet.Instance{
 			State: "provisioning",
 		},
 	}
 }
 
-func NewMockFromDiscovery(d *packet.Discovery, mac net.HardwareAddr) Mock {
+func NewMockFromDiscovery(d packet.Discovery, mac net.HardwareAddr) Mock {
 	mockLog, _ := log.Init("job.Mock")
 	j := Job{Logger: mockLog, mac: mac}
 	j.setup(d)
@@ -88,9 +87,9 @@ func (m *Mock) SetMAC(mac string) {
 }
 
 func (m *Mock) SetManufacturer(slug string) {
-	hp := *m.hardware
+	hp := m.hardware
 	h := hp.(*packet.HardwareCacher)
-	(*h).Manufacturer = packet.Manufacturer{Slug: slug}
+	h.Manufacturer = packet.Manufacturer{Slug: slug}
 }
 
 func (m *Mock) SetOSDistro(distro string) {
@@ -111,9 +110,9 @@ func (m *Mock) SetPassword(password string) {
 }
 
 func (m *Mock) SetState(state string) {
-	hp := *m.hardware
+	hp := m.hardware
 	h := hp.(*packet.HardwareCacher)
-	(*h).State = packet.HardwareState(state)
+	h.State = packet.HardwareState(state)
 }
 
 func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, string) {

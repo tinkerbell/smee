@@ -24,9 +24,9 @@ func (d DiscoveryTinkerbellV1) LeaseTime(mac net.HardwareAddr) time.Duration {
 	return duration
 }
 
-func (d DiscoveryTinkerbellV1) Hardware() *Hardware {
+func (d DiscoveryTinkerbellV1) Hardware() Hardware {
 	var h Hardware = d.HardwareTinkerbellV1
-	return &h
+	return h
 }
 
 func (d DiscoveryTinkerbellV1) DnsServers(mac net.HardwareAddr) []net.IP {
@@ -88,11 +88,11 @@ func (d *DiscoveryTinkerbellV1) PrimaryDataMAC() MACAddr {
 	return mac
 }
 
-func (d *DiscoveryTinkerbellV1) Hostname() (string, error) {
+func (d DiscoveryTinkerbellV1) Hostname() (string, error) {
 	return d.Instance().Hostname, nil // temp
 }
 
-func (d *DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
+func (d DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 

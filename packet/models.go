@@ -24,7 +24,7 @@ type Discovery interface {
 	DnsServers(mac net.HardwareAddr) []net.IP
 	LeaseTime(mac net.HardwareAddr) time.Duration
 	Hostname() (string, error)
-	Hardware() *Hardware
+	Hardware() Hardware
 	SetMAC(mac net.HardwareAddr)
 }
 
@@ -105,9 +105,7 @@ type HardwareTinkerbellV1 struct {
 }
 
 // NewDiscovery instantiates a Discovery struct from the json argument
-func NewDiscovery(b []byte) (*Discovery, error) {
-	var res Discovery
-
+func NewDiscovery(b []byte) (Discovery, error) {
 	if string(b) == "" || string(b) == "{}" {
 		return nil, errors.New("empty response from db")
 	}
@@ -115,16 +113,22 @@ func NewDiscovery(b []byte) (*Discovery, error) {
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
 	case "1":
-		res = &DiscoveryTinkerbellV1{}
+		d := &DiscoveryTinkerbellV1{}
+		err := json.Unmarshal(b, &d)
+		if err != nil {
+			return nil, errors.Wrap(err, "unmarshal json for discovery")
+		}
+		return d, nil
+	case "":
+		d := &DiscoveryCacher{}
+		err := json.Unmarshal(b, &d)
+		if err != nil {
+			return nil, errors.Wrap(err, "unmarshal json for discovery")
+		}
+		return d, nil
 	default:
-		res = &DiscoveryCacher{}
+		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
-
-	err := json.Unmarshal(b, &res)
-	if err != nil {
-		return nil, errors.Wrap(err, "unmarshal json for discovery")
-	}
-	return &res, err
 }
 
 // Instance models the instance data as returned by the API
@@ -205,29 +209,6 @@ type IP struct {
 	Public     bool   `json:"public"`
 	Management bool   `json:"management"`
 }
-
-// type NetworkPorts struct {
-// 	Main []Port `json:"main"`
-// 	IPMI Port   `json:"ipmi"`
-// }
-
-// unused, but keeping for now
-// func (p *NetworkPorts) addMain(port Port) {
-// 	var (
-// 		mac   = port.MAC()
-// 		ports = p.Main
-// 	)
-// 	n := len(ports)
-// 	i := sort.Search(n, func(i int) bool {
-// 		return bytes.Compare(mac, ports[i].MAC()) < 0
-// 	})
-// 	if i < n {
-// 		ports = append(append(ports[:i], port), ports[i:]...)
-// 	} else {
-// 		ports = append(ports, port)
-// 	}
-// 	p.Main = ports
-// }
 
 // OperatingSystem holds details for the operating system
 type OperatingSystem struct {

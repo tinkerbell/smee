@@ -11,7 +11,7 @@ var (
 	servers singleflight.Group
 )
 
-func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (*packet.Discovery, error) {
+func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (packet.Discovery, error) {
 	fetch := func() (interface{}, error) {
 		return client.DiscoverHardwareFromDHCP(mac, giaddr, circuitID)
 	}
@@ -19,10 +19,10 @@ func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID str
 	if err != nil {
 		return nil, err
 	}
-	return v.(*packet.Discovery), nil
+	return v.(packet.Discovery), nil
 }
 
-func discoverHardwareFromIP(ip net.IP) (*packet.Discovery, error) {
+func discoverHardwareFromIP(ip net.IP) (packet.Discovery, error) {
 	fetch := func() (interface{}, error) {
 		return client.DiscoverHardwareFromIP(ip)
 	}
@@ -30,5 +30,5 @@ func discoverHardwareFromIP(ip net.IP) (*packet.Discovery, error) {
 	if err != nil {
 		return nil, err
 	}
-	return v.(*packet.Discovery), nil
+	return v.(packet.Discovery), nil
 }

@@ -30,7 +30,7 @@ type Job struct {
 	mode Mode
 	dhcp dhcp.Config
 
-	hardware *packet.Hardware
+	hardware packet.Hardware
 	instance *packet.Instance
 }
 
@@ -74,7 +74,7 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
-	mac := (*d).GetMAC(ip)
+	mac := d.GetMAC(ip)
 	if mac.String() == packet.ZeroMAC.String() {
 		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
@@ -95,14 +95,8 @@ func (j Job) MarkDeviceActive() {
 	}
 }
 
-// golangci-lint: unused
-//func (j Job) markFailed(reason string) {
-//	j.postFailure(reason)
-//}
-
-func (j *Job) setup(dp *packet.Discovery) error {
-	d := *dp
-	dh := *d.Hardware()
+func (j *Job) setup(d packet.Discovery) error {
+	dh := d.Hardware()
 
 	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
 
