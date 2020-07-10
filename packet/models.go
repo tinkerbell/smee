@@ -117,15 +117,15 @@ func NewDiscovery(b []byte) (Discovery, error) {
 
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
-	case "1":
-		d := &DiscoveryTinkerbellV1{}
+	case "":
+		d := &DiscoveryCacher{}
 		err := json.Unmarshal(b, &d)
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
 		}
 		return d, nil
-	case "":
-		d := &DiscoveryCacher{}
+	case "1":
+		d := &DiscoveryTinkerbellV1{}
 		err := json.Unmarshal(b, &d)
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
