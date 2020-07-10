@@ -1,15 +1,20 @@
 package packet
 
 import (
+	"bufio"
 	"encoding/json"
 	"net"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
 // models.go contains the Hardware structures matching the data models defined by tink and cacher
+
+var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
 
 // BondingMode is the hardware bonding mode
 type BondingMode int
@@ -66,9 +71,9 @@ type Hardware interface {
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
 	HardwareState() HardwareState
-	HardwareServicesVersion() string
+	HardwareOSIEVersion() string
 	HardwareUEFI(mac net.HardwareAddr) bool
-	OsieBaseURL(mac net.HardwareAddr) string
+	OSIEBaseURL(mac net.HardwareAddr) string
 	KernelPath(mac net.HardwareAddr) string
 	InitrdPath(mac net.HardwareAddr) string
 }
@@ -139,11 +144,12 @@ type Instance struct {
 	AllowPXE bool          `json:"allow_pxe"`
 	Rescue   bool          `json:"rescue"`
 
-	OS            OperatingSystem `json:"operating_system_version"`
-	AlwaysPXE     bool            `json:"always_pxe,omitempty"`
-	IPXEScriptURL string          `json:"ipxe_script_url,omitempty"`
-	IPs           []IP            `json:"ip_addresses"`
-	UserData      string          `json:"userdata,omitempty"`
+	OS              OperatingSystem `json:"operating_system_version"`
+	AlwaysPXE       bool            `json:"always_pxe,omitempty"`
+	IPXEScriptURL   string          `json:"ipxe_script_url,omitempty"`
+	IPs             []IP            `json:"ip_addresses"`
+	UserData        string          `json:"userdata,omitempty"`
+	servicesVersion ServicesVersion
 
 	// Only returned in the first 24 hours
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
@@ -170,6 +176,32 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 	return nil
 }
 
+func (i *Instance) ServicesVersion() ServicesVersion {
+	if i.servicesVersion.OSIE != "" {
+		return i.servicesVersion
+	}
+
+	if i.UserData == "" {
+		return ServicesVersion{}
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
+	for scanner.Scan() {
+		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
+		if len(matches) == 0 {
+			continue
+		}
+
+		var sv ServicesVersion
+		err := json.Unmarshal([]byte(matches[1]), &sv)
+		if err != nil {
+			return ServicesVersion{}
+		}
+		return sv
+	}
+	return ServicesVersion{}
+}
+
 func managementPublicIPv4IP(ip IP) bool {
 	return ip.Public && ip.Management && ip.Family == 4
 }
@@ -194,7 +226,7 @@ type UserEvent struct {
 }
 
 type ServicesVersion struct {
-	Osie string `json:"osie"`
+	OSIE string `json:"osie"`
 }
 
 // HardwareState is the hardware state (e.g. provisioning)
@@ -273,11 +305,11 @@ type Netboot struct {
 		URL      string `json:"url"`
 		Contents string `json:"contents"`
 	} `json:"ipxe"`
-	Osie Osie `json:"osie"`
+	OSIE OSIE `json:"osie"`
 }
 
 // Bootstrapper is the bootstrapper to be used during netboot
-type Osie struct {
+type OSIE struct {
 	BaseURL string `json:"base_url"`
 	Kernel  string `json:"kernel"`
 	Initrd  string `json:"initrd"`
