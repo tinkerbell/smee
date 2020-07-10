@@ -168,7 +168,7 @@ func TestDiscoveryCacher(t *testing.T) {
 				t.Fatalf("unexpected address, want: %s, got: %s", test.conf.Gateway, conf.Gateway)
 			}
 
-			osie := d.ServicesVersion.Osie
+			osie := d.ServicesVersion.OSIE
 			if osie != test.osie {
 				t.Fatalf("unexpected osie version, want: %s, got: %s", test.osie, osie)
 			}
@@ -231,7 +231,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Logf("netboot allow_pxe: %v", d.Network.InterfaceByMac(mac).Netboot.AllowPXE)
 			t.Logf("netboot allow_workflow: %v", d.Network.InterfaceByMac(mac).Netboot.AllowWorkflow)
 			t.Logf("netboot ipxe: %v", d.Network.InterfaceByMac(mac).Netboot.IPXE)
-			t.Logf("netboot osie: %v", d.Network.InterfaceByMac(mac).Netboot.Osie)
+			t.Logf("netboot osie: %v", d.Network.InterfaceByMac(mac).Netboot.OSIE)
 			t.Log()
 
 			t.Logf("metadata: %v", d.Metadata)
@@ -1681,3 +1681,33 @@ const (
 }
 `
 )
+
+func TestServicesVersion(t *testing.T) {
+	for _, test := range []struct {
+		desc     string
+		SV       ServicesVersion
+		userdata string
+		osie     string
+	}{
+		{desc: "empty"},
+		{desc: "SV", SV: ServicesVersion{OSIE: "SV osie"}, osie: "SV osie"},
+		{desc: "userdata", userdata: `#services={"osie":"userdata osie"}`, osie: "userdata osie"},
+		{desc: "userdata:junk-text", userdata: `I'm a little teapot` + "\n" + `#services={"osie":"userdata osie"}` + "\n" + `short and stout!`, osie: "userdata osie"},
+		{desc: "userdata:cloud-config", userdata: `#cloud-config` + "\n" + `#services={"osie":"userdata osie"}`, osie: "userdata osie"},
+		{desc: "userdata:bash", userdata: `#!/usr/bin/bash` + "\n" + `#services={"osie":"userdata osie"}`, osie: "userdata osie"},
+		{desc: "invalid userdata, not commented", userdata: `services={"osie":"userdata osie"}`},
+		{desc: "invalid userdata, garbage at end commented", userdata: `services={"osie":"userdata osie"}blah`},
+		{desc: "SV over userdata", SV: ServicesVersion{OSIE: "SV over osie"}, userdata: `#services={"osie":"userdata osie"}`, osie: "SV over osie"},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			i := Instance{
+				servicesVersion: test.SV,
+				UserData:        test.userdata,
+			}
+			got := i.ServicesVersion().OSIE
+			if got != test.osie {
+				t.Fatalf("incorrect services version returned, want=%q, got=%q", test.osie, got)
+			}
+		})
+	}
+}

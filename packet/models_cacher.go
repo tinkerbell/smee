@@ -286,8 +286,8 @@ func (h HardwareCacher) HardwarePlanVersionSlug() string {
 	return h.PlanVersionSlug
 }
 
-func (h HardwareCacher) HardwareServicesVersion() string {
-	return h.ServicesVersion.Osie
+func (h HardwareCacher) HardwareOSIEVersion() string {
+	return h.ServicesVersion.OSIE
 }
 
 func (h HardwareCacher) HardwareState() HardwareState {
@@ -299,7 +299,7 @@ func (h HardwareCacher) HardwareUEFI(mac net.HardwareAddr) bool {
 }
 
 // dummy method for tink data model transition
-func (h HardwareCacher) OsieBaseURL(mac net.HardwareAddr) string {
+func (h HardwareCacher) OSIEBaseURL(mac net.HardwareAddr) string {
 	return ""
 }
 
