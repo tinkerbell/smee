@@ -119,11 +119,11 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		return nil, errors.Wrap(err, "unmarshalling api discovery")
 	}
 
-	var res Discovery
+	var res DiscoveryCacher
 	if err := c.Post("/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
 		return nil, err
 	}
-	return res, nil
+	return &res, nil
 }
 
 func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
