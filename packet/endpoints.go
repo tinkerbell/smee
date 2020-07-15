@@ -88,6 +88,8 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			metrics.CacherCacheHits.With(labels).Inc()
 			return NewDiscovery(b)
 		}
+
+		return nil, errors.New("not found")
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
