@@ -9,13 +9,30 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-mkShell {
+let
+
+  mockgen = buildGoModule rec {
+    pname = "mock";
+    version = "1.4.3";
+
+    src = fetchFromGitHub {
+      owner = "golang";
+      repo = pname;
+      rev = "v${version}";
+      sha256 = "1p37xnja1dgq5ykx24n7wincwz2gahjh71b95p8vpw7ss2g8j8wx";
+    };
+    modSha256 = "0nfbh1sb4zh32xpfg25mbfnd4xflks95ram1m1rfdqbdwx2yc5jl";
+    subPackages = [ "mockgen" ];
+  };
+
+in mkShell {
   buildInputs = [
     gcc
     git-lfs
     gnumake
     go
     go-bindata
+    mockgen
     pkgsCross.aarch64-multiplatform.buildPackages.gcc
     protobuf
     xz

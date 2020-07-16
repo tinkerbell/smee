@@ -9,6 +9,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
+	github.com/golang/mock v1.4.3
 	github.com/google/uuid v1.1.1
 	github.com/packethost/cacher v0.0.0-20200512205048-5253af131795
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
@@ -20,7 +21,9 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tinkerbell/tink v0.0.0-20200622174048-5e66098170f3
 	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344 // indirect
+	google.golang.org/grpc v1.29.1
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3

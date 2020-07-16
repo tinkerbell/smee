@@ -1,0 +1,94 @@
+package packet
+
+import (
+	"fmt"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
+	assert "github.com/stretchr/testify/require"
+	metrics "github.com/tinkerbell/boots/metrics"
+	cacherMock "github.com/tinkerbell/boots/packet/mock_cacher"
+)
+
+func TestMain(m *testing.M) {
+	metrics.Init(log.Logger{})
+	os.Exit(m.Run())
+}
+
+func TestDiscoverHardwareFromDHCP(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		err       error
+		gResponse string
+		code      int
+		hResponse string
+		id        string
+	}{
+		{name: "has grpc error",
+			err: errors.New("some error"),
+		},
+		{name: "data in cacher",
+			gResponse: `{"id":"%s"}`,
+		},
+		{name: "data in packet api",
+			hResponse: `{"id":"%s"}`,
+		},
+		{name: "unknown",
+			hResponse: "{}",
+			code:      http.StatusNotFound},
+	} {
+
+		t.Run(test.name, func(t *testing.T) {
+			id := uuid.New()
+			if test.gResponse != "" {
+				test.gResponse = fmt.Sprintf(test.gResponse, id)
+			}
+			if strings.Contains(test.hResponse, "%") {
+				test.hResponse = fmt.Sprintf(test.hResponse, id)
+			}
+
+			s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if test.code != 0 {
+					w.WriteHeader(test.code)
+				}
+				fmt.Fprintln(w, test.hResponse)
+			}))
+			defer s.Close()
+			u, _ := url.Parse(s.URL)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			cMock := cacherMock.NewMockCacherClient(ctrl)
+			cMock.EXPECT().ByMAC(gomock.Any(), gomock.Any()).Return(&cacher.Hardware{JSON: test.gResponse}, test.err)
+
+			c := &Client{
+				baseURL:        u,
+				http:           s.Client(),
+				hardwareClient: cMock,
+			}
+			m, _ := net.ParseMAC("00:00:ba:dd:be:ef")
+			d, err := c.DiscoverHardwareFromDHCP(m, net.ParseIP("127.0.0.1"), "")
+			if test.err != nil || test.code != 0 {
+				assert.Error(t, err)
+				assert.Nil(t, d)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, d)
+			assert.IsType(t, &DiscoveryCacher{}, d)
+			assert.Equal(t, id.String(), d.Hardware().HardwareID())
+		})
+	}
+}
