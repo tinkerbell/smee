@@ -18,6 +18,8 @@ import (
 	assert "github.com/stretchr/testify/require"
 	metrics "github.com/tinkerbell/boots/metrics"
 	cacherMock "github.com/tinkerbell/boots/packet/mock_cacher"
+	workflowMock "github.com/tinkerbell/boots/packet/mock_workflow"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 func TestMain(m *testing.M) {
@@ -89,6 +91,48 @@ func TestDiscoverHardwareFromDHCP(t *testing.T) {
 			assert.NotNil(t, d)
 			assert.IsType(t, &DiscoveryCacher{}, d)
 			assert.Equal(t, id.String(), d.Hardware().HardwareID())
+		})
+	}
+}
+
+func TestGetWorkflowsFromTink(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		hwID string
+		wcl  *tw.WorkflowContextList
+		err  error
+	}{
+		{name: "test hardware workflow",
+			hwID: "Hardware-fake-bde9-812726eff314",
+			wcl: &tw.WorkflowContextList{
+				WorkflowContexts: []*tw.WorkflowContext{
+					&tw.WorkflowContext{
+						WorkflowId:         "active-fake-workflow-bde9-812726eff314",
+						CurrentActionState: 0,
+					},
+				},
+			},
+			err: nil,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ht := &httptest.Server{URL: "FakeURL"}
+			u, err := url.Parse(ht.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			c := NewMockClient(u)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			cMock := workflowMock.NewMockWorkflowSvcClient(ctrl)
+			cMock.EXPECT().GetWorkflowContexts(gomock.Any(), gomock.Any()).Return(test.wcl, test.err)
+			c.workflowClient = cMock
+			w, err := c.GetWorkflowsFromTink(test.hwID)
+			if test.err != nil {
+				assert.Error(t, err)
+				return
+			}
+			assert.Equal(t, w, test.wcl)
 		})
 	}
 }

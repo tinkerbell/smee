@@ -9,6 +9,7 @@ import (
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/packet"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 var client *packet.Client
@@ -32,6 +33,19 @@ type Job struct {
 
 	hardware packet.Hardware
 	instance *packet.Instance
+}
+
+// hasActiveWorkflow fetches workflows for a given hwID and returns
+// the status true if there is a pending (active) workflow for hwID
+// hwID is the hardware/worker ID corresponding to the MAC
+func hasActiveWorkflow(wcl *tw.WorkflowContextList) (bool, error) {
+	for _, wf := range (*wcl).WorkflowContexts {
+		if wf.CurrentActionState == tw.ActionState_ACTION_PENDING {
+			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job
@@ -84,9 +98,29 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	if err != nil {
 		return Job{}, err
 	}
+
+	hd := d.Hardware()
+	hwID := hd.HardwareID()
+
+	joblog.With("hardwareID", hwID).Info("fetching workflows for hardware")
+	wcl, err := client.GetWorkflowsFromTink(hwID)
+	if err != nil {
+		return Job{}, err
+	}
+
+	activeWorkflows, err := hasActiveWorkflow(wcl)
+	if err != nil {
+		return Job{}, err
+	}
+
+	if !activeWorkflows {
+		return Job{}, errors.Errorf("no active workflow found for hardware %s", hwID)
+	}
+
 	return j, nil
 }
 
+// MarkDeviceActive marks the device active
 func (j Job) MarkDeviceActive() {
 	if id := j.InstanceID(); id != "" {
 		if err := client.PostInstancePhoneHome(id); err != nil {

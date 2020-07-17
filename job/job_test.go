@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/packethost/pkg/log"
+	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/packet"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 func TestMain(m *testing.M) {
@@ -161,6 +163,7 @@ func TestSetupInstance(t *testing.T) {
 		t.Fatalf("incorrect Hostname, want: %v, got: %v", d.Instance().Hostname, j.dhcp.Hostname())
 	}
 }
+
 func TestSetupFails(t *testing.T) {
 	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
 	j := &Job{}
@@ -172,4 +175,43 @@ func TestSetupFails(t *testing.T) {
 
 	// should still be able to log, see #_incident-130
 	j.With("happyThoughts", true).Error(err)
+}
+
+func TestHasActiveWorkflow(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		wcl    *tw.WorkflowContextList
+		status bool
+	}{
+		{name: "test active workflow",
+			wcl: &tw.WorkflowContextList{
+				WorkflowContexts: []*tw.WorkflowContext{
+					&tw.WorkflowContext{
+						WorkflowId:         "active-fake-workflow-bde9-812726eff314",
+						CurrentActionState: 0,
+					},
+				},
+			},
+			status: true,
+		},
+		{name: "test inactive workflow",
+			wcl: &tw.WorkflowContextList{
+				WorkflowContexts: []*tw.WorkflowContext{
+					&tw.WorkflowContext{
+						WorkflowId:         "inactive-fake-workflow-bde9-812726eff314",
+						CurrentActionState: 1,
+					},
+				},
+			},
+			status: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := hasActiveWorkflow(test.wcl)
+			if err != nil {
+				t.Fatal("error occured while testing")
+			}
+			assert.Equal(t, s, test.status)
+		})
+	}
 }

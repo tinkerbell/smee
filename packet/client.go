@@ -14,17 +14,20 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 type hardwareGetter interface {
 }
 
+// Client has all the fields corresponding to connection
 type Client struct {
 	http           *http.Client
 	baseURL        *url.URL
 	consumerToken  string
 	authToken      string
 	hardwareClient hardwareGetter
+	workflowClient tw.WorkflowSvcClient
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -44,11 +47,17 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	}
 
 	var hg hardwareGetter
+	var wg tw.WorkflowSvcClient
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
 	case "1":
-		hg, err = tinkClient.NewTinkerbellClient()
+		hg, err = tinkClient.TinkHardwareClient()
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to tink")
+		}
+
+		wg, err = tinkClient.TinkWorkflowClient()
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
@@ -70,6 +79,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		consumerToken:  consumerToken,
 		authToken:      authToken,
 		hardwareClient: hg,
+		workflowClient: wg,
 	}, nil
 }
 
