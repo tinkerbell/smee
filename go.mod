@@ -19,7 +19,7 @@ require (
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tinkerbell/tink v0.0.0-20200714130438-0100e535bd94
+	github.com/tinkerbell/tink v0.0.0-20200724140154-850584d46c8d
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344 // indirect
