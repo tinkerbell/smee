@@ -99,24 +99,6 @@ func CreateFromIP(ip net.IP) (Job, error) {
 		return Job{}, err
 	}
 
-	hd := d.Hardware()
-	hwID := hd.HardwareID()
-
-	joblog.With("hardwareID", hwID).Info("fetching workflows for hardware")
-	wcl, err := client.GetWorkflowsFromTink(hwID)
-	if err != nil {
-		return Job{}, err
-	}
-
-	activeWorkflows, err := hasActiveWorkflow(wcl)
-	if err != nil {
-		return Job{}, err
-	}
-
-	if !activeWorkflows {
-		return Job{}, errors.Errorf("no active workflow found for hardware %s", hwID)
-	}
-
 	return j, nil
 }
 
