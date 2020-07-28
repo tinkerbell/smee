@@ -1,6 +1,8 @@
 package httplog
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
@@ -69,12 +71,24 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	)
 	httplog.With("event", "cs", "method", method, "uri", uri).Debug()
 
+	reqBuf, _ := ioutil.ReadAll(req.Body)
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBuf))
+
 	start := time.Now()
 	res, err = t.RoundTripper.RoundTrip(req)
 	d := time.Since(start)
 
+	resBuf, _ = ioutil.ReadAll(res.Body)
+	res.Body = ioutil.NopCloser(bytes.NewBuffer(resBuf))
+
 	if res != nil {
-		httplog.With("event", "cr", "method", method, "uri", uri, "duration", d, "status", res.StatusCode).Info()
+		httplog.With("event", "cr",
+			"method", method,
+			"uri", uri,
+			"duration", d,
+			"status", res.StatusCode,
+			"request_body", string(reqBuf),
+			"response_body", string(resBuf)).Info()
 	}
 	return
 }

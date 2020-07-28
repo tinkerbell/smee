@@ -75,8 +75,6 @@ func (j Job) phoneHome(body []byte) bool {
 		return false
 	}
 
-	j.With("kind", p.kind(), "id", p.id(), "body", body).Info("Processing")
-
 	var id string
 	var typ string
 	var post func(string) error
