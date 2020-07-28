@@ -78,10 +78,10 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	res, err = t.RoundTripper.RoundTrip(req)
 	d := time.Since(start)
 
-	resBuf, _ := ioutil.ReadAll(res.Body)
-	res.Body = ioutil.NopCloser(bytes.NewBuffer(resBuf))
-
 	if res != nil {
+		resBuf, _ := ioutil.ReadAll(res.Body)
+		res.Body = ioutil.NopCloser(bytes.NewBuffer(resBuf))
+
 		httplog.With("event", "cr",
 			"method", method,
 			"uri", uri,
