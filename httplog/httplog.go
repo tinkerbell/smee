@@ -69,13 +69,18 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		method = req.Method
 		uri    = req.URL.String()
 	)
-	httplog.With("event", "cs", "method", method, "uri", uri).Debug()
 
 	var reqBuf []byte
 	if req.Body != nil {
 		reqBuf, _ = ioutil.ReadAll(req.Body)
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBuf))
 	}
+	httplog.With(
+		"event", "cs",
+		"method", method,
+		"uri", uri,
+		"request_body", string(reqBuf),
+	).Debug()
 
 	start := time.Now()
 	res, err = t.RoundTripper.RoundTrip(req)
