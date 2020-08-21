@@ -216,3 +216,27 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 	}
 	return d, []packet.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceId
 }
+
+func MakeHardwareWithoutInstance() (*packet.DiscoveryCacher, packet.MACAddr) {
+	mac := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
+	d := &packet.DiscoveryCacher{
+		HardwareCacher: &packet.HardwareCacher{
+			ID:   uuid.New().String(),
+			Name: "TestSetupWithoutInstanceHardwareName",
+			NetworkPorts: []packet.Port{
+				packet.Port{
+					Type: "data",
+					Name: "eth0",
+					Data: struct {
+						MAC  *packet.MACAddr `json:"mac"`
+						Bond string          `json:"bond"`
+					}{
+						MAC:  &mac,
+						Bond: "bond0",
+					},
+				},
+			},
+		},
+	}
+	return d, mac
+}
