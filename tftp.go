@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/avast/retry-go"
-	tftp "github.com/betawaffle/tftp-go"
+	tftp "github.com/packethost/tftp-go"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/conf"

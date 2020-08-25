@@ -143,6 +143,8 @@ github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1 h1:iDclrzE6G/J0AAtT
 github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1/go.mod h1:GkI1SaiEDaO+JsKjtcMsn/eDSU4/GD8CMin2b03fQvE=
 github.com/packethost/pkg v0.0.0-20200807181840-a2cb6bbc41b9 h1:BikdQN3TbmCk9uMYgmy6vt3Wzefn7D3a1n2SiJN1J/s=
 github.com/packethost/pkg v0.0.0-20200807181840-a2cb6bbc41b9/go.mod h1:GSv7cTtIjns4yc0pyajaM1RE/KE4djJONoblFIRDrxA=
+github.com/packethost/tftp-go v0.0.0-20200825170601-eda11df39706 h1:EKEBjTHhzZy7IdKi7y6sq0fBYV0vLgpKbEj2d0v9uc0=
+github.com/packethost/tftp-go v0.0.0-20200825170601-eda11df39706/go.mod h1:kspAl6qKoiRC7OpGYRj9ofxA++UO+GfBFnfnylKNWeA=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3 h1:QcUVLV3NdkCVv4DxQkhgkxTsRvuXn+ZuSqD93mQYouc=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3/go.mod h1:nt3WBqCaQsbnxYVBoB4pF+F584z9PjdSVm29iu4gIBg=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

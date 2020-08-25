@@ -1,7 +1,7 @@
 package job
 
 import (
-	tftpgo "github.com/betawaffle/tftp-go"
+	tftpgo "github.com/packethost/tftp-go"
 	"github.com/tinkerbell/boots/tftp"
 )
 
