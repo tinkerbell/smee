@@ -201,6 +201,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
+github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd h1:xzbrPNdX+FbdZla90nnDPf3wv0v0Re6PfhZOwX7tSdo=
+github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd/go.mod h1:fIVwBIM3uQepwxarJe/ixO4KtVYcoXPIUBtVFK/OhY0=
 github.com/tinkerbell/tink v0.0.0-20200806104854-0f947d87c35f h1:zEKK3pMw8hB0BYkv0mIhJzhouh32v6/PwvMQBRCVmgk=
 github.com/tinkerbell/tink v0.0.0-20200806104854-0f947d87c35f/go.mod h1:5Kv1re+s/uSfE3vWsoOS+tKwZYwLrrPXgEXViTbEmv4=
 go.mongodb.org/mongo-driver v1.0.3/go.mod h1:u7ryQJ+DOzQmeO7zB6MHyr8jkEQvC8vH7qLUO4lqsUM=
