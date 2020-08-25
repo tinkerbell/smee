@@ -11,9 +11,9 @@ require (
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
 	github.com/golang/mock v1.4.3
 	github.com/google/uuid v1.1.1
-	github.com/packethost/cacher v0.0.0-20200512205048-5253af131795
+	github.com/packethost/cacher v0.0.0-20200825140532-0b62e6726807
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
-	github.com/packethost/pkg v0.0.0-20200422151836-417b049b48b1
+	github.com/packethost/pkg v0.0.0-20200807181840-a2cb6bbc41b9
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.6.0
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
