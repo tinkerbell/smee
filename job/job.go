@@ -2,6 +2,7 @@ package job
 
 import (
 	"net"
+	"os"
 	"time"
 
 	"github.com/packethost/pkg/log"
@@ -97,6 +98,10 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	err = j.setup(d)
 	if err != nil {
 		return Job{}, err
+	}
+
+	if os.Getenv("DATA_MODEL_VERSION") != "1" {
+		return j, nil
 	}
 
 	hd := d.Hardware()
