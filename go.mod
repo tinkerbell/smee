@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
-	github.com/betawaffle/tftp-go v0.0.0-20160921192434-dc649c1318ff
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
@@ -19,7 +18,7 @@ require (
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd // indirect
+	github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd
 	github.com/tinkerbell/tink v0.0.0-20200806104854-0f947d87c35f
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
