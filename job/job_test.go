@@ -215,3 +215,14 @@ func TestHasActiveWorkflow(t *testing.T) {
 		})
 	}
 }
+
+func TestSetupWithoutInstance(t *testing.T) {
+	d, mac := MakeHardwareWithoutInstance()
+	j := &Job{mac: mac.HardwareAddr()}
+	j.setup(d)
+
+	hostname, _ := d.Hostname()
+	if hostname != j.dhcp.Hostname() {
+		t.Fatalf("incorrect Hostname, want: %v, got: %v", hostname, j.dhcp.Hostname())
+	}
+}

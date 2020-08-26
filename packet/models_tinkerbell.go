@@ -89,7 +89,10 @@ func (d *DiscoveryTinkerbellV1) PrimaryDataMAC() MACAddr {
 }
 
 func (d DiscoveryTinkerbellV1) Hostname() (string, error) {
-	return d.Instance().Hostname, nil // temp
+	if d.Instance() == nil {
+		return "", nil
+	}
+	return d.Instance().Hostname, nil
 }
 
 func (d DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
