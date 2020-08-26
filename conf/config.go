@@ -14,6 +14,9 @@ var (
 	PublicIPv4 = mustPublicIPv4()
 	PublicFQDN = env.Get("PUBLIC_FQDN", PublicIPv4.String())
 
+	PublicSyslogIPv4 = mustPublicSyslogIPv4()
+	PublicSyslogFQDN = env.Get("PUBLIC_SYSLOG_FQDN", PublicSyslogIPv4.String())
+
 	SyslogBind = env.Get("SYSLOG_BIND", PublicIPv4.String()+":514")
 	HTTPBind   = env.Get("HTTP_BIND", PublicIPv4.String()+":80")
 	TFTPBind   = env.Get("TFTP_BIND", PublicIPv4.String()+":69")
@@ -58,6 +61,17 @@ func mustPublicIPv4() net.IP {
 	}
 	err = errors.New("unable to auto-detect public IPv4")
 	panic(err)
+}
+
+func mustPublicSyslogIPv4() net.IP {
+	if s, ok := os.LookupEnv("PUBLIC_SYSLOG_IP"); ok {
+		if a := net.ParseIP(s).To4(); a != nil {
+			return a
+		}
+		err := errors.New("PUBLIC_SYSLOG_IP must be an IPv4 address")
+		panic(err)
+	}
+	return PublicIPv4
 }
 
 func ParseIPv4s(str string) (ips []net.IP) {
