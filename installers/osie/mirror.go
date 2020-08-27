@@ -14,11 +14,13 @@ const (
 )
 
 var (
-	osieURL                            = mustBuildOSIEURL().String()
-	mirrorBaseURL                      = conf.MirrorBaseUrl
-	dockerRegistry                     string
-	grpcAuthority, grpcCertURL         string
-	registryUsername, registryPassword string
+	osieURL                                 = mustBuildOSIEURL().String()
+	mirrorBaseURL                           = conf.MirrorBaseUrl
+	dockerRegistry                          string
+	grpcAuthority, grpcCertURL              string
+	registryUsername, registryPassword      string
+	log_driver, log_tag, log_server_address string
+	log_server_address_type                 string
 )
 
 func buildOSIEURL() (*url.URL, error) {
@@ -54,6 +56,10 @@ func buildWorkerParams() {
 	grpcCertURL = getParam("TINKERBELL_CERT_URL")
 	registryUsername = getParam("REGISTRY_USERNAME")
 	registryPassword = getParam("REGISTRY_PASSWORD")
+	log_driver = getParam("LOG_DRIVER")
+	log_tag = getParam("LOG_TAG")
+	log_server_address = getParam("LOG_SERVER_ADDRESS")
+	log_server_address_type = getParam("LOG_SERVER_ADDRESS_TYPE")
 }
 
 func getParam(key string) string {
