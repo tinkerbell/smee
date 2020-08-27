@@ -2,7 +2,6 @@ package conf
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -21,7 +20,6 @@ var (
 	mirrorURL     = mustBuildMirrorURL()
 	MirrorURL     = mirrorURL.String()
 	MirrorHost    = mirrorURL.Host
-	MirrorBaseIP  = mustFindMirrorIPBase()
 	MirrorPath    = mirrorURL.Path
 	MirrorBase    = strings.TrimSuffix(MirrorURL, MirrorPath)
 	mirrorBaseUrl = mustBuildMirrorBaseURL()
@@ -74,17 +72,6 @@ func buildMirrorBaseURL() (*url.URL, error) {
 		return nil, errors.Wrapf(err, "invalid default mirror host: %s", mirror)
 	}
 	return u, nil
-}
-
-func mustFindMirrorIPBase() string {
-	i, err := net.LookupIP(mirrorURL.Host)
-	if err != nil {
-		panic(errors.Wrap(err, "looking up ip of mirror url"))
-	}
-	if len(i) == 0 || i[0].String() == "" {
-		panic(fmt.Sprintf("Looking up %s failed to return either an IPv4 or IPv6 address", mirrorURL.Host))
-	}
-	return "http://" + i[0].String()
 }
 
 func mustBuildMirrorURL() *url.URL {
