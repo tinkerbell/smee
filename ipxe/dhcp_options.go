@@ -65,7 +65,7 @@ var encapOptions = dhcp4.OptionMap{
 
 func Setup(rep *dhcp4.Packet) {
 	rep.SetOption(EncapsulatedOptions, encapOptions)
-	rep.SetIP(dhcp4.OptionLogServer, conf.PublicIPv4) // Have iPXE send syslog to me.
+	rep.SetIP(dhcp4.OptionLogServer, conf.PublicSyslogIPv4) // Have iPXE send syslog to me.
 }
 
 var packetVersion = []byte{1, 0, 255}

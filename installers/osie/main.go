@@ -61,6 +61,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("alpine_repo=" + alpineMirror(j))
 	s.Args("modloop=${base-url}/" + modloopPath(j))
 	s.Args("tinkerbell=${tinkerbell}")
+	s.Args("syslog_host=${syslog_host}")
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
