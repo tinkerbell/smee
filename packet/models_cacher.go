@@ -31,7 +31,7 @@ type HardwareCacher struct {
 	AllowPXE        bool            `json:"allow_pxe"`
 	AllowWorkflow   bool            `json:"allow_workflow"`
 	ServicesVersion ServicesVersion `json:"services"`
-	Instance        *Instance       `json:"instance"`
+	Instance        *InstanceCacher `json:"instance"`
 }
 
 func (d DiscoveryCacher) Hardware() Hardware {
@@ -43,8 +43,11 @@ func (d DiscoveryCacher) DnsServers(mac net.HardwareAddr) []net.IP {
 	return conf.DNSServers
 }
 
-func (d DiscoveryCacher) Instance() *Instance {
-	return d.HardwareCacher.Instance
+func (d DiscoveryCacher) Instance() (i Instance) {
+	if d.HardwareCacher.Instance != nil {
+		i = d.HardwareCacher.Instance
+	}
+	return
 }
 
 func (d DiscoveryCacher) LeaseTime(mac net.HardwareAddr) time.Duration {
@@ -124,16 +127,16 @@ func (d DiscoveryCacher) GetMAC(ip net.IP) net.HardwareAddr {
 
 // InstanceIP returns the IP configuration that should be Offered to the instance if there is one; if it's prov/deprov'ing, it's the hardware IP
 func (d DiscoveryCacher) InstanceIP(mac string) *IP {
-	if d.Instance() == nil || d.Instance().ID == "" || !d.MacIsType(mac, "data") || d.PrimaryDataMAC().HardwareAddr().String() != mac {
+	if d.Instance() == nil || d.Instance().Common().ID == "" || !d.MacIsType(mac, "data") || d.PrimaryDataMAC().HardwareAddr().String() != mac {
 		return nil
 	}
-	if ip := d.Instance().FindIP(managementPublicIPv4IP); ip != nil {
+	if ip := d.Instance().Common().FindIP(managementPublicIPv4IP); ip != nil {
 		return ip
 	}
-	if ip := d.Instance().FindIP(managementPrivateIPv4IP); ip != nil {
+	if ip := d.Instance().Common().FindIP(managementPrivateIPv4IP); ip != nil {
 		return ip
 	}
-	if d.Instance().State == "provisioning" || d.Instance().State == "deprovisioning" {
+	if d.Instance().Common().State == "provisioning" || d.Instance().Common().State == "deprovisioning" {
 		ip := d.hardwareIP()
 		if ip != nil {
 			return ip
@@ -224,7 +227,7 @@ func (d DiscoveryCacher) Hostname() (string, error) {
 	case "discovered", "management":
 		hostname = d.Name
 	case "instance":
-		hostname = d.Instance().Hostname
+		hostname = d.Instance().Common().Hostname
 		switch d.State {
 		case "deprovisioning":
 			hostname = d.Name

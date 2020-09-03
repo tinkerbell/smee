@@ -240,8 +240,8 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Logf("metadata manufacturer: %v", d.Metadata.Manufacturer)
 			if d.Instance() != nil {
 				t.Logf("instance: %v", d.Instance())
-				t.Logf("instance id: %s", d.Instance().ID)
-				t.Logf("instance state: %s", d.Instance().State)
+				t.Logf("instance id: %s", d.Instance().Common().ID)
+				t.Logf("instance state: %s", d.Instance().Common().State)
 			}
 			t.Logf("metadata custom: %v", d.Metadata.Custom)
 			t.Logf("metadata facility: %v", d.Metadata.Facility)
@@ -1700,9 +1700,11 @@ func TestServicesVersion(t *testing.T) {
 		{desc: "SV over userdata", SV: ServicesVersion{OSIE: "SV over osie"}, userdata: `#services={"osie":"userdata osie"}`, osie: "SV over osie"},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
-			i := Instance{
-				servicesVersion: test.SV,
-				UserData:        test.userdata,
+			i := InstanceCacher{
+				InstanceCommon: &InstanceCommon{
+					servicesVersion: test.SV,
+					UserData:        test.userdata,
+				},
 			}
 			got := i.ServicesVersion().OSIE
 			if got != test.osie {

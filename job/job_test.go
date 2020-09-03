@@ -83,7 +83,7 @@ func TestSetupManagement(t *testing.T) {
 	var d packet.Discovery = &packet.DiscoveryCacher{
 		HardwareCacher: &packet.HardwareCacher{
 			Name:     "TestSetupManagement",
-			Instance: &packet.Instance{},
+			Instance: &packet.InstanceCacher{},
 			PlanSlug: "f1.fake.x86",
 			NetworkPorts: []packet.Port{
 				packet.Port{
@@ -159,8 +159,8 @@ func TestSetupInstance(t *testing.T) {
 	if !netConfig.Gateway.Equal(j.dhcp.Gateway()) {
 		t.Fatalf("incorrect Gateway, want: %v, got: %v", netConfig.Gateway, j.dhcp.Gateway())
 	}
-	if d.Instance().Hostname != j.dhcp.Hostname() {
-		t.Fatalf("incorrect Hostname, want: %v, got: %v", d.Instance().Hostname, j.dhcp.Hostname())
+	if d.Instance().Common().Hostname != j.dhcp.Hostname() {
+		t.Fatalf("incorrect Hostname, want: %v, got: %v", d.Instance().Common().Hostname, j.dhcp.Hostname())
 	}
 }
 

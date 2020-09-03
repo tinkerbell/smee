@@ -54,7 +54,7 @@ func (j Job) PArch() string {
 
 func (j Job) InstanceID() string {
 	if i := j.instance; i != nil {
-		return i.ID
+		return i.Common().ID
 	}
 	return ""
 }
@@ -62,7 +62,7 @@ func (j Job) InstanceID() string {
 // UserData returns instance.UserData
 func (j Job) UserData() string {
 	if i := j.instance; i != nil {
-		return i.UserData
+		return i.Common().UserData
 	}
 	return ""
 }
@@ -70,31 +70,31 @@ func (j Job) UserData() string {
 // IPXEScriptURL returns the value of instance.IPXEScriptURL
 func (j Job) IPXEScriptURL() string {
 	if i := j.instance; i != nil {
-		return i.IPXEScriptURL
+		return i.Common().IPXEScriptURL
 	}
 	return ""
 }
 
 func (j Job) InstanceIPs() []packet.IP {
 	if i := j.instance; i != nil {
-		return i.IPs
+		return i.Common().IPs
 	}
 	return nil
 }
 
 func (j Job) CryptedPassword() string {
 	if j.instance != nil {
-		return j.instance.CryptedRootPassword
+		return j.instance.Common().CryptedRootPassword
 	}
 	return ""
 }
 
 func (j Job) OperatingSystem() *packet.OperatingSystem {
 	if i := j.instance; i != nil {
-		if i.Rescue {
+		if i.Common().Rescue {
 			return rescueOS
 		}
-		return &i.OS
+		return i.OperatingSystem()
 	}
 	return nil
 }
@@ -175,7 +175,7 @@ func (j Job) HardwareState() string {
 // OSIEVersion returns any non-standard osie versions specified in either the instance proper or in userdata or attached to underlying hardware
 func (j Job) OSIEVersion() string {
 	if i := j.instance; i != nil {
-		ov := i.ServicesVersion().OSIE
+		ov := i.Common().ServicesVersion().OSIE
 		if ov != "" {
 			return ov
 		}

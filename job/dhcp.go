@@ -11,11 +11,11 @@ import (
 	"github.com/tinkerbell/boots/packet"
 )
 
-func IsSpecialOS(i *packet.Instance) bool {
+func IsSpecialOS(i packet.Instance) bool {
 	if i == nil {
 		return false
 	}
-	slug := i.OS.Slug
+	slug := i.OperatingSystem().Slug
 	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
 }
 
@@ -74,7 +74,7 @@ func (j Job) isPXEAllowed() bool {
 	if j.InstanceID() == "" {
 		return false
 	}
-	return j.instance.AllowPXE
+	return j.instance.Common().AllowPXE
 }
 
 func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
@@ -84,16 +84,16 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 			return
 		}
 
-		if j.instance.State != "active" {
-			j.With("hardware.state", j.HardwareState(), "instance.state", j.instance.State).Info("device should NOT be trying to PXE boot")
+		if j.instance.Common().State != "active" {
+			j.With("hardware.state", j.HardwareState(), "instance.state", j.instance.Common().State).Info("device should NOT be trying to PXE boot")
 			return
 		}
 
 		// ignore custom_ipxe because we always do dhcp for it and we'll want to do /nonexistent filename so
 		// nics don't timeout.... but why though?
-		if !j.isPXEAllowed() && j.instance.OS.OsSlug != "custom_ipxe" {
+		if !j.isPXEAllowed() && j.instance.OperatingSystem().OsSlug != "custom_ipxe" {
 			err := errors.New("device should NOT be trying to PXE boot")
-			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.instance.OS.OsSlug).Info(err)
+			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.OperatingSystem().OsSlug).Info(err)
 			return
 		}
 		// custom_ipxe or rescue
@@ -122,7 +122,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		// TODO(mmlb) try to move this logic to much earlier in the function, maybe all the way as the first thing even.
 
 		os := j.OperatingSystem()
-		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
+		j.With("instance.state", j.instance.Common().State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
 		pxeClient = true
 		filename = "/nonexistent"
 	} else {

@@ -49,9 +49,11 @@ func TestPhoneHome(t *testing.T) {
 				ID:    "$hardware_id",
 				State: packet.HardwareState(test.state),
 			},
-			instance: &packet.Instance{
-				ID: test.id,
-				OS: packet.OperatingSystem{
+			instance: &packet.InstanceCacher{
+				InstanceCommon: &packet.InstanceCommon{
+					ID: test.id,
+				},
+				OS: &packet.OperatingSystem{
 					OsSlug: test.os,
 				},
 			},

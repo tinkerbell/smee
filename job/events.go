@@ -22,7 +22,7 @@ func (j Job) CustomPXEDone() {
 
 	e := event{_kind: "phone-home"}
 
-	if err := e.postInstance(j.instance.ID); err != nil {
+	if err := e.postInstance(j.instance.Common().ID); err != nil {
 		j.With("os", "custom_ipxe").Error(errors.WithMessage(err, "posting phone-home event"))
 	}
 }
@@ -33,7 +33,7 @@ func (j Job) DisablePXE() {
 		return
 	}
 
-	if err := client.UpdateInstance(j.instance.ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
+	if err := client.UpdateInstance(j.instance.Common().ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
 		j.Error(errors.WithMessage(err, "disabling PXE"))
 		return
 	}
@@ -80,12 +80,12 @@ func (j Job) phoneHome(body []byte) bool {
 	var post func(string) error
 	var disablePXE bool
 	if j.InstanceID() != "" {
-		id = j.instance.ID
+		id = j.instance.Common().ID
 		typ = "instance"
 		post = p.postInstance
 		if p.kind() == "provisioning.104.01" {
 			disablePXE = true
-			if j.instance.OS.OsSlug == "custom_ipxe" {
+			if j.instance.OperatingSystem().OsSlug == "custom_ipxe" {
 				defer j.CustomPXEDone()
 			}
 		}
@@ -126,7 +126,7 @@ func (j Job) postEvent(kind, body string, private bool) bool {
 		j.With("kind", kind).Error(errors.WithMessage(err, "encoding event"))
 		return false
 	}
-	if err := e.postInstance(j.instance.ID); err != nil {
+	if err := e.postInstance(j.instance.Common().ID); err != nil {
 		// do not use j.Error to avoid infinite recursion
 		j.With("kind", kind).Error(err, "posting event")
 	}

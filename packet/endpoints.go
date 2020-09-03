@@ -216,7 +216,7 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 	if d.Instance() == nil {
 		return "", nil
 	}
-	return d.Instance().ID, nil
+	return d.Instance().Common().ID, nil
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API

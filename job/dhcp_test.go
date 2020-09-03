@@ -65,11 +65,13 @@ func TestSetPXEFilename(t *testing.T) {
 				State:    packet.HardwareState(tt.hState),
 				PlanSlug: "baremetal_" + tt.plan,
 			},
-			instance: &packet.Instance{
-				ID:       tt.id,
-				State:    packet.InstanceState(tt.iState),
-				AllowPXE: tt.allowPXE,
-				OS: packet.OperatingSystem{
+			instance: &packet.InstanceCacher{
+				InstanceCommon: &packet.InstanceCommon{
+					ID:       tt.id,
+					State:    packet.InstanceState(tt.iState),
+					AllowPXE: tt.allowPXE,
+				},
+				OS: &packet.OperatingSystem{
 					OsSlug: tt.slug,
 				},
 			},
@@ -102,9 +104,11 @@ func TestAllowPXE(t *testing.T) {
 			hardware: packet.HardwareCacher{
 				AllowPXE: tt.hw,
 			},
-			instance: &packet.Instance{
-				ID:       tt.iid,
-				AllowPXE: tt.instance,
+			instance: &packet.InstanceCacher{
+				InstanceCommon: &packet.InstanceCommon{
+					ID:       tt.iid,
+					AllowPXE: tt.instance,
+				},
 			},
 		}
 		got := j.isPXEAllowed()

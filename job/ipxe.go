@@ -74,11 +74,11 @@ func auto(j Job, s *ipxe.Script) {
 		shell(j, s)
 		return
 	}
-	if f, ok := bySlug[j.instance.OS.Slug]; ok {
+	if f, ok := bySlug[j.instance.OperatingSystem().Slug]; ok {
 		f(j, s)
 		return
 	}
-	if f, ok := byDistro[j.instance.OS.Distro]; ok {
+	if f, ok := byDistro[j.instance.OperatingSystem().Distro]; ok {
 		f(j, s)
 		return
 	}
@@ -86,7 +86,7 @@ func auto(j Job, s *ipxe.Script) {
 		defaultInstaller(j, s)
 		return
 	}
-	j.With("slug", j.instance.OS.Slug, "distro", j.instance.OS.Distro).Error(errors.New("unsupported slug/distro"))
+	j.With("slug", j.instance.OperatingSystem().Slug, "distro", j.instance.OperatingSystem().Distro).Error(errors.New("unsupported slug/distro"))
 	shell(j, s)
 }
 

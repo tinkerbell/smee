@@ -44,8 +44,11 @@ func (d DiscoveryTinkerbellV1) DnsServers(mac net.HardwareAddr) []net.IP {
 	return conf.ParseIPv4s(strings.Join(dnsServers, ","))
 }
 
-func (d DiscoveryTinkerbellV1) Instance() *Instance {
-	return d.Metadata.Instance
+func (d DiscoveryTinkerbellV1) Instance() (i Instance) {
+	if d.Metadata.Instance != nil {
+		i = d.Metadata.Instance
+	}
+	return
 }
 
 func (d DiscoveryTinkerbellV1) MAC() net.HardwareAddr {
@@ -99,10 +102,10 @@ func (d DiscoveryTinkerbellV1) Hostname() (string, error) {
 	if d.Instance() == nil {
 		return "", nil
 	}
-	return d.Instance().Hostname, nil
+	return d.Instance().Common().Hostname, nil
 }
 
-func (d DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
+func (d *DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 

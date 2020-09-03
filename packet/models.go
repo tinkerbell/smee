@@ -21,7 +21,7 @@ type BondingMode int
 
 // Discovery interface is the base for cacher and tinkerbell hardware discovery
 type Discovery interface {
-	Instance() *Instance
+	Instance() Instance
 	MAC() net.HardwareAddr
 	Mode() string
 	GetIP(addr net.HardwareAddr) IP
@@ -106,18 +106,61 @@ func NewDiscovery(b []byte) (Discovery, error) {
 }
 
 // Instance models the instance data as returned by the API
-type Instance struct {
+type Instance interface {
+	Common() *InstanceCommon
+	OperatingSystem() *OperatingSystem
+}
+
+type InstanceCacher struct {
+	*InstanceCommon
+	OS *OperatingSystem `json:"operating_system_version"`
+}
+
+type InstanceTinkerbell struct {
+	*InstanceCommon
+	OS *OperatingSystem `json:"operating_system"`
+}
+
+func (i *InstanceCacher) Common() *InstanceCommon {
+	if i.InstanceCommon == nil {
+		i.InstanceCommon = &InstanceCommon{}
+	}
+	return i.InstanceCommon
+}
+
+func (i *InstanceCacher) OperatingSystem() *OperatingSystem {
+	if i.OS == nil {
+		i.OS = &OperatingSystem{}
+	}
+	return i.OS
+}
+
+func (i *InstanceTinkerbell) Common() *InstanceCommon {
+	if i.InstanceCommon == nil {
+		i.InstanceCommon = &InstanceCommon{}
+	}
+	return i.InstanceCommon
+}
+
+func (i *InstanceTinkerbell) OperatingSystem() *OperatingSystem {
+	if i.OS == nil {
+		i.OS = &OperatingSystem{}
+	}
+	return i.OS
+}
+
+// InstanceCommon holds the fields shared by both InstanceCacher and InstanceTinkerbell
+type InstanceCommon struct {
 	ID       string        `json:"id"`
 	State    InstanceState `json:"state"`
 	Hostname string        `json:"hostname"`
 	AllowPXE bool          `json:"allow_pxe"`
 	Rescue   bool          `json:"rescue"`
 
-	OS              OperatingSystem `json:"operating_system_version"`
-	AlwaysPXE       bool            `json:"always_pxe,omitempty"`
-	IPXEScriptURL   string          `json:"ipxe_script_url,omitempty"`
-	IPs             []IP            `json:"ip_addresses"`
-	UserData        string          `json:"userdata,omitempty"`
+	AlwaysPXE       bool   `json:"always_pxe,omitempty"`
+	IPXEScriptURL   string `json:"ipxe_script_url,omitempty"`
+	IPs             []IP   `json:"ip_addresses"`
+	UserData        string `json:"userdata,omitempty"`
 	servicesVersion ServicesVersion
 
 	// Only returned in the first 24 hours
@@ -136,7 +179,7 @@ type Device struct {
 }
 
 // FindIP returns IP for an instance, nil otherwise
-func (i *Instance) FindIP(pred func(IP) bool) *IP {
+func (i *InstanceCommon) FindIP(pred func(IP) bool) *IP {
 	for _, ip := range i.IPs {
 		if pred(ip) {
 			return &ip
@@ -145,7 +188,7 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 	return nil
 }
 
-func (i *Instance) ServicesVersion() ServicesVersion {
+func (i *InstanceCommon) ServicesVersion() ServicesVersion {
 	if i.servicesVersion.OSIE != "" {
 		return i.servicesVersion
 	}
@@ -292,10 +335,10 @@ type Network struct {
 
 // Metadata holds the hardware metadata
 type Metadata struct {
-	State        HardwareState `json:"state"`
-	BondingMode  BondingMode   `json:"bonding_mode"`
-	Manufacturer Manufacturer  `json:"manufacturer"`
-	Instance     *Instance     `json:"instance"`
+	State        HardwareState       `json:"state"`
+	BondingMode  BondingMode         `json:"bonding_mode"`
+	Manufacturer Manufacturer        `json:"manufacturer"`
+	Instance     *InstanceTinkerbell `json:"instance"`
 	Custom       struct {
 		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
 		PrivateSubnets []string        `json:"private_subnets"`

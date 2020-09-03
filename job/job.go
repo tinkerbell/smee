@@ -33,7 +33,7 @@ type Job struct {
 	dhcp dhcp.Config
 
 	hardware packet.Hardware
-	instance *packet.Instance
+	instance packet.Instance
 }
 
 // hasActiveWorkflow fetches workflows for a given hwID and returns
@@ -148,7 +148,12 @@ func (j *Job) setup(d packet.Discovery) error {
 	// (kdeng3849) how can we remove this?
 	j.instance = d.Instance()
 	if j.instance == nil {
-		j.instance = &packet.Instance{}
+		switch d.(type) {
+		case *packet.DiscoveryCacher:
+			j.instance = &packet.InstanceCacher{}
+		case *packet.DiscoveryTinkerbellV1:
+			j.instance = &packet.InstanceTinkerbell{}
+		}
 	} else {
 		j.Logger = j.Logger.With("instance.id", j.InstanceID())
 	}

@@ -49,8 +49,10 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 			UEFI:            uefi,
 			ServicesVersion: servicesVersion,
 		},
-		instance: &packet.Instance{
-			State: "provisioning",
+		instance: &packet.InstanceCacher{
+			InstanceCommon: &packet.InstanceCommon{
+				State: "provisioning",
+			},
 		},
 	}
 }
@@ -75,7 +77,7 @@ func (m *Mock) SetIP(ip net.IP) {
 }
 
 func (m *Mock) SetIPXEScriptURL(url string) {
-	m.instance.IPXEScriptURL = url
+	m.instance.Common().IPXEScriptURL = url
 }
 
 func (m *Mock) SetMAC(mac string) {
@@ -93,20 +95,20 @@ func (m *Mock) SetManufacturer(slug string) {
 }
 
 func (m *Mock) SetOSDistro(distro string) {
-	m.instance.OS.Distro = distro
+	m.instance.OperatingSystem().Distro = distro
 }
 
 func (m *Mock) SetOSSlug(slug string) {
-	m.instance.OS.Slug = slug
-	m.instance.OS.OsSlug = slug
+	m.instance.OperatingSystem().Slug = slug
+	m.instance.OperatingSystem().OsSlug = slug
 }
 
 func (m *Mock) SetOSVersion(version string) {
-	m.instance.OS.Version = version
+	m.instance.OperatingSystem().Version = version
 }
 
 func (m *Mock) SetPassword(password string) {
-	m.instance.CryptedRootPassword = "insecure"
+	m.instance.Common().CryptedRootPassword = "insecure"
 }
 
 func (m *Mock) SetState(state string) {
@@ -182,25 +184,27 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 					},
 				},
 			},
-			Instance: &packet.Instance{
-				ID:       instanceId,
-				Hostname: "TestSetupInstanceHostname",
-				IPs: []packet.IP{
-					packet.IP{
-						Address:    net.ParseIP("192.168.100.2"),
-						Gateway:    net.ParseIP("192.168.100.1"),
-						Netmask:    net.ParseIP("192.168.100.255"),
-						Family:     4,
-						Management: true,
-						Public:     true,
-					},
-					packet.IP{
-						Address:    net.ParseIP("192.168.200.2"),
-						Gateway:    net.ParseIP("192.168.200.1"),
-						Netmask:    net.ParseIP("192.168.200.255"),
-						Family:     4,
-						Management: true,
-						Public:     false,
+			Instance: &packet.InstanceCacher{
+				InstanceCommon: &packet.InstanceCommon{
+					ID:       instanceId,
+					Hostname: "TestSetupInstanceHostname",
+					IPs: []packet.IP{
+						packet.IP{
+							Address:    net.ParseIP("192.168.100.2"),
+							Gateway:    net.ParseIP("192.168.100.1"),
+							Netmask:    net.ParseIP("192.168.100.255"),
+							Family:     4,
+							Management: true,
+							Public:     true,
+						},
+						packet.IP{
+							Address:    net.ParseIP("192.168.200.2"),
+							Gateway:    net.ParseIP("192.168.200.1"),
+							Netmask:    net.ParseIP("192.168.200.255"),
+							Family:     4,
+							Management: true,
+							Public:     false,
+						},
 					},
 				},
 			},
