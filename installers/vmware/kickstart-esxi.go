@@ -351,11 +351,11 @@ BODY='{"type":"provisioning.109"}'
 BODY_LEN=$( echo -n ${BODY} | wc -c )
 echo -ne "POST /phone-home HTTP/1.0\r\nHost: {{ tink_host }}\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 {{ tink_host }} 80 > /tmp/post-phone-home.log
 
-%post --ignorefailure=true
+%post --interpreter=busybox --ignorefailure=true
 echo "Packet installation postinstall executed" > /packet-pi-ks.log
 sleep 20
 
-%post --ignorefailure=true
+%post --interpreter=busybox --ignorefailure=true
 echo "Packet installation postinstall executed" > /packet-pi-ks-nc.log
 sleep 20
 
