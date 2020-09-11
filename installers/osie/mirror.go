@@ -14,13 +14,12 @@ const (
 )
 
 var (
-	osieURL                                 = mustBuildOSIEURL().String()
-	mirrorBaseURL                           = conf.MirrorBaseUrl
-	dockerRegistry                          string
-	grpcAuthority, grpcCertURL              string
-	registryUsername, registryPassword      string
-	log_driver, log_tag, log_server_address string
-	log_server_address_type                 string
+	osieURL                                                                      = mustBuildOSIEURL().String()
+	mirrorBaseURL                                                                = conf.MirrorBaseUrl
+	dockerRegistry                                                               string
+	grpcAuthority, grpcCertURL                                                   string
+	registryUsername, registryPassword                                           string
+	log_driver, log_opt_tag, log_opt_server_address, log_opt_server_address_type string
 )
 
 func buildOSIEURL() (*url.URL, error) {
@@ -57,9 +56,9 @@ func buildWorkerParams() {
 	registryUsername = getParam("REGISTRY_USERNAME")
 	registryPassword = getParam("REGISTRY_PASSWORD")
 	log_driver = getParam("LOG_DRIVER")
-	log_tag = getParam("LOG_TAG")
-	log_server_address = getParam("LOG_SERVER_ADDRESS")
-	log_server_address_type = getParam("LOG_SERVER_ADDRESS_TYPE")
+	log_opt_tag = getParam("LOG_OPT_TAG")
+	log_opt_server_address = getParam("LOG_OPT_SERVER_ADDRESS")
+	log_opt_server_address_type = getParam("LOG_OPT_SERVER_ADDRESS_TYPE")
 }
 
 func getParam(key string) string {
