@@ -37,7 +37,7 @@ ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin
 export GOBIN
 endif
-ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/snp.efi ipxe/bin/undionly.kpxe
 	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
 	gofmt -w $@
 
@@ -46,8 +46,9 @@ ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
 
 ipxe/bin/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
 ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
+ipxe/bin/snp.efi: ipxe/ipxe/build/bin-x86_64-efi/snp.efi
 ipxe/bin/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
-ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
+ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/snp.efi ipxe/bin/undionly.kpxe:
 	cp $^ $@
 
 ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk
@@ -58,7 +59,7 @@ ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk
 # given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
 # and   $@=ipxe/ipxe/build/*/*
 # t       =                */*
-ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin-x86_64-efi/snp.efi ipxe/ipxe/build/bin/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
 	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
 	rm -rf $(@D)
 	mkdir -p $(@D)
