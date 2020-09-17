@@ -82,6 +82,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 		s.Args("grpc_cert_url=" + grpcCertURL)
 		s.Args("registry_username=" + registryUsername)
 		s.Args("registry_password=" + registryPassword)
+		s.Args("centralized_logging=" + centralized_logging)
 		s.Args("log_driver=" + log_driver)
 		s.Args("log_opt_tag=" + log_opt_tag)
 		s.Args("log_opt_server_address=" + log_opt_server_address)
