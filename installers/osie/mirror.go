@@ -14,12 +14,14 @@ const (
 )
 
 var (
-	osieURL                                                              = mustBuildOSIEURL().String()
-	mirrorBaseURL                                                        = conf.MirrorBaseUrl
-	dockerRegistry                                                       string
-	grpcAuthority, grpcCertURL                                           string
-	registryUsername, registryPassword                                   string
-	centralized_logging, log_driver, log_opt_tag, log_opt_server_address string
+	osieURL                             = mustBuildOSIEURL().String()
+	mirrorBaseURL                       = conf.MirrorBaseUrl
+	dockerRegistry                      string
+	grpcAuthority, grpcCertURL          string
+	registryUsername, registryPassword  string
+	centralized_logging                 string
+	log_driver                          string
+	log_opt_tag, log_opt_server_address string
 )
 
 func buildOSIEURL() (*url.URL, error) {
