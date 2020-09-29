@@ -25,7 +25,11 @@ func getInstallOpts(j job.Job, channel, facilityCode string) string {
 	}
 
 	if strings.HasPrefix(distro, "flatcar") {
-		args = append(args, "-s")
+		if strings.Contains(j.PlanSlug(), "s3.xlarge") {
+			args = append(args, "-s", "-e", "259")
+		} else {
+			args = append(args, "-s")
+		}
 	} else {
 		disk := "/dev/sda"
 		if strings.Contains(j.PlanSlug(), "s1.large") {
