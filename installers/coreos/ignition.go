@@ -30,6 +30,8 @@ func buildNetworkUnits(j job.Job) (nu ignition.NetworkUnits) {
 }
 
 func buildSystemdUnits(j job.Job) (su ignition.SystemdUnits) {
+	configureNetworkService(j, su.Add("systemd-networkd.service"))
+	configureNetworkService(j, su.Add("systemd-networkd-wait-online.service"))
 	configureInstaller(j, su.Add("install.service"))
 	return
 }
