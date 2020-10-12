@@ -68,7 +68,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	installOpts := getInstallOpts(j, channel, facilityCode)
 	lines := []string{
 		// Install to disk:
-		`/usr/bin/curl -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
+		`/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
 		"/usr/bin/" + distro + "-install " + installOpts,
 		"/usr/bin/udevadm settle",
 		"/usr/bin/mkdir -p /oemmnt",
