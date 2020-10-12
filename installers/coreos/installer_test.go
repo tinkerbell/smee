@@ -49,8 +49,8 @@ func TestInstaller(t *testing.T) {
 // this is the base set of starter commands for coreos installs
 var baseStart = []string{
 	"[Unit]",
-	"Requires=network-online.target",
-	"After=network-online.target",
+	"Requires=systemd-networkd-wait-online.target",
+	"After=systemd-networkd-wait-online.target",
 	"",
 	"[Service]",
 	"Type=oneshot",
