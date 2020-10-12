@@ -43,7 +43,7 @@ func getInstallOpts(j job.Job, channel, facilityCode string) string {
 
 func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	distro := j.OperatingSystem().Distro
-	u.AddSection("Unit", "Requires=systemd-networkd-wait-online.target", "After=systemd-networkd-wait-online.target")
+	u.AddSection("Unit", "Requires=systemd-networkd-wait-online.service", "After=systemd-networkd-wait-online.service")
 
 	var channel string
 	var facilityCode string
