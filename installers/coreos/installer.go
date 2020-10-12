@@ -43,7 +43,7 @@ func getInstallOpts(j job.Job, channel, facilityCode string) string {
 
 func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	distro := j.OperatingSystem().Distro
-	u.AddSection("Unit", "Requires=systemd-networkd-wait-online.target", "After=systemd-networkd-wait-online.target")
+	u.AddSection("Unit", "Requires=systemd-networkd-wait-online.service", "After=systemd-networkd-wait-online.service")
 
 	var channel string
 	var facilityCode string
@@ -68,7 +68,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	installOpts := getInstallOpts(j, channel, facilityCode)
 	lines := []string{
 		// Install to disk:
-		`/usr/bin/curl -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
+		`/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
 		"/usr/bin/" + distro + "-install " + installOpts,
 		"/usr/bin/udevadm settle",
 		"/usr/bin/mkdir -p /oemmnt",

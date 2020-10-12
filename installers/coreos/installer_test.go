@@ -49,8 +49,8 @@ func TestInstaller(t *testing.T) {
 // this is the base set of starter commands for coreos installs
 var baseStart = []string{
 	"[Unit]",
-	"Requires=systemd-networkd-wait-online.target",
-	"After=systemd-networkd-wait-online.target",
+	"Requires=systemd-networkd-wait-online.service",
+	"After=systemd-networkd-wait-online.service",
 	"",
 	"[Service]",
 	"Type=oneshot",
@@ -66,7 +66,7 @@ var baseEnd = []string{
 }
 
 var Exec = []string{
-	`ExecStart=/usr/bin/curl -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
+	`ExecStart=/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
 	"ExecStart=/usr/bin/coreos-install -V current -C alpha -b http://install." + facility + ".packet.net/coreos/amd64-usr/alpha -o packet -d /dev/sda",
 	"ExecStart=/usr/bin/udevadm settle",
 	"ExecStart=/usr/bin/mkdir -p /oemmnt",
