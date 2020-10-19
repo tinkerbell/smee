@@ -277,6 +277,58 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 	}
 }
 
+func TestInstanceCacher(t *testing.T) {
+	for name, test := range cacherTests {
+		t.Run(name, func(t *testing.T) {
+			d := &DiscoveryCacher{}
+
+			if err := json.Unmarshal([]byte(test.json), &d); err != nil {
+				t.Fatal(test.mode, err)
+			}
+
+			if d.Instance() != nil {
+				t.Logf("instance: %v", d.Instance())
+				t.Logf("instance id: %s", d.Instance().Common().ID)
+				t.Logf("instance state: %s", d.Instance().Common().State)
+				t.Logf("instance operating system slug: %s", d.Instance().OperatingSystem().Slug)
+
+				d.Instance().OperatingSystem().Slug = "test" // test setting a field
+
+				if d.Instance().OperatingSystem().Slug != "test" {
+					t.Fatal("operating system slug should have been set to 'test'")
+				}
+			}
+
+		})
+	}
+}
+
+func TestInstanceTinkerbell(t *testing.T) {
+	for name, test := range tinkerbellTests {
+		t.Run(name, func(t *testing.T) {
+			d := &DiscoveryTinkerbellV1{}
+
+			if err := json.Unmarshal([]byte(test.json), &d); err != nil {
+				t.Fatal(test.mode, err)
+			}
+
+			if d.Instance() != nil { // instead of just logging, actually check for id, etc.
+				t.Logf("instance: %v", d.Instance())
+				t.Logf("instance id: %s", d.Instance().Common().ID)
+				//t.Logf("instance state: %s", d.Instance().Common().State)
+				t.Logf("instance operating system slug: %s", d.Instance().OperatingSystem().Slug)
+
+				d.Instance().OperatingSystem().Slug = "test" // test setting a field
+
+				if d.Instance().OperatingSystem().Slug != "test" {
+					t.Fatal("operating system slug should have been set to 'test'")
+				}
+			}
+
+		})
+	}
+}
+
 var tinkerbellTests = map[string]struct {
 	id            string
 	mac           string
@@ -576,6 +628,7 @@ const (
       "plan_version_slug": ""
     },
     "instance": {
+      "id": "331d355a-1925-4ecf-ab6b-75990733c50c",
       "crypted_root_password": "redacted",
       "operating_system_version": {
         "distro": "ubuntu",
