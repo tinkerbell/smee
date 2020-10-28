@@ -42,9 +42,9 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: boots
-        path: ./boots
-    - name: set boots permission
-      run: ls -l && ls -alR boots/ && chmod +x ./boots && ls -l && ls -alR boots/
+        path: ./boots-artifact
+    - name: Fixup boots binary from artifact
+      run: install -m0755 -o root -g root boots-artifact/boots boots
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - name: Login to quay.io
