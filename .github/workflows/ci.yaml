@@ -42,7 +42,7 @@ jobs:
         name: boots
         path: ./boots
     - name: set boots permission
-      run: chmod +x  ./boots
+      run: ls -l && ls -alR boots/ && chmod +x ./boots && ls -l && ls -alR boots/
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - name: Login to quay.io
