@@ -44,7 +44,7 @@ jobs:
         name: boots
         path: ./boots-artifact
     - name: Fixup boots binary from artifact
-      run: install -m0755 -o root -g root boots-artifact/boots boots
+      run: sudo install -m0755 -o root -g root boots-artifact/boots boots
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - name: Login to quay.io
