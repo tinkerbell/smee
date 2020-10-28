@@ -24,6 +24,8 @@ jobs:
       with:
         name: boots
         path: ./boots
+    - name: Dump Env
+      run: env
   docker-images:
     runs-on: ubuntu-latest
     needs: [validation]
