@@ -78,37 +78,6 @@ type Hardware interface {
 	InitrdPath(mac net.HardwareAddr) string
 }
 
-// HardwareCacher represents the old hardware data model for backward compatibility
-type HardwareCacher struct {
-	ID    string        `json:"id"`
-	Name  string        `json:"name"`
-	State HardwareState `json:"state"`
-
-	BondingMode     BondingMode     `json:"bonding_mode"`
-	NetworkPorts    []Port          `json:"network_ports"`
-	Manufacturer    Manufacturer    `json:"manufacturer"`
-	PlanSlug        string          `json:"plan_slug"`
-	PlanVersionSlug string          `json:"plan_version_slug"`
-	Arch            string          `json:"arch"`
-	FacilityCode    string          `json:"facility_code"`
-	IPMI            IP              `json:"management"`
-	IPs             []IP            `json:"ip_addresses"`
-	PreinstallOS    OperatingSystem `json:"preinstalled_operating_system_version"`
-	PrivateSubnets  []string        `json:"private_subnets,omitempty"`
-	UEFI            bool            `json:"efi_boot"`
-	AllowPXE        bool            `json:"allow_pxe"`
-	AllowWorkflow   bool            `json:"allow_workflow"`
-	ServicesVersion ServicesVersion `json:"services"`
-	Instance        *Instance       `json:"instance"`
-}
-
-// HardwareTinkerbellV1 represents the new hardware data model for tinkerbell, version 1
-type HardwareTinkerbellV1 struct {
-	ID       string   `json:"id"`
-	Network  Network  `json:"network"`
-	Metadata Metadata `json:"metadata"`
-}
-
 // NewDiscovery instantiates a Discovery struct from the json argument
 func NewDiscovery(b []byte) (Discovery, error) {
 	if string(b) == "" || string(b) == "{}" {
