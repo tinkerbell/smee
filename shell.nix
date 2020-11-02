@@ -9,24 +9,7 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-let
-
-  mockgen = buildGoModule rec {
-    pname = "mock";
-    version = "1.4.3";
-
-    doCheck = false;
-    src = fetchFromGitHub {
-      owner = "golang";
-      repo = pname;
-      rev = "v${version}";
-      sha256 = "1p37xnja1dgq5ykx24n7wincwz2gahjh71b95p8vpw7ss2g8j8wx";
-    };
-    vendorSha256 = "1kpiij3pimwv3gn28rbrdvlw9q5c76lzw6zpa12q6pgck76acdw4";
-    subPackages = [ "mockgen" ];
-  };
-
-in mkShell {
+mkShell {
   buildInputs = [
     gcc
     git-lfs
