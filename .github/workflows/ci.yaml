@@ -27,11 +27,8 @@ jobs:
         run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
       - name: go vet
         run: go vet ./...
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.30
-          args: -v -D errcheck
+      - name: golangci-lint brought to you by Nix
+        run: nix-shell --run 'GOROOT= golangci-lint run -v -D errcheck'
       - name: go test
         run: go test -v ./...
       - name: go test coverage
