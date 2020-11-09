@@ -15,10 +15,14 @@ mkShell {
     git-lfs
     gnumake
     go
+    golangci-lint
     go-bindata
     mockgen
+    nodePackages.prettier
     pkgsCross.aarch64-multiplatform.buildPackages.gcc
     protobuf
+    shfmt
+    shellcheck
     xz
   ];
 }
