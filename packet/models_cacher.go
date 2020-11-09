@@ -10,6 +10,30 @@ import (
 
 // models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
 
+// HardwareCacher represents the old hardware data model for backward compatibility
+type HardwareCacher struct {
+	ID    string        `json:"id"`
+	Name  string        `json:"name"`
+	State HardwareState `json:"state"`
+
+	BondingMode     BondingMode     `json:"bonding_mode"`
+	NetworkPorts    []Port          `json:"network_ports"`
+	Manufacturer    Manufacturer    `json:"manufacturer"`
+	PlanSlug        string          `json:"plan_slug"`
+	PlanVersionSlug string          `json:"plan_version_slug"`
+	Arch            string          `json:"arch"`
+	FacilityCode    string          `json:"facility_code"`
+	IPMI            IP              `json:"management"`
+	IPs             []IP            `json:"ip_addresses"`
+	PreinstallOS    OperatingSystem `json:"preinstalled_operating_system_version"`
+	PrivateSubnets  []string        `json:"private_subnets,omitempty"`
+	UEFI            bool            `json:"efi_boot"`
+	AllowPXE        bool            `json:"allow_pxe"`
+	AllowWorkflow   bool            `json:"allow_workflow"`
+	ServicesVersion ServicesVersion `json:"services"`
+	Instance        *Instance       `json:"instance"`
+}
+
 func (d DiscoveryCacher) Hardware() Hardware {
 	var h Hardware = d.HardwareCacher
 	return h

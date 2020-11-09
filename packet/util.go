@@ -28,6 +28,10 @@ func (m MACAddr) String() string {
 	return net.HardwareAddr(m[:]).String()
 }
 
+func (m *MACAddr) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + m.String() + `"`), nil
+}
+
 func (m *MACAddr) UnmarshalText(text []byte) error {
 	const example = "00:00:00:00:00:00"
 	if len(text) != len(example) {

@@ -11,6 +11,13 @@ import (
 
 // models_tinkerbell.go contains the interface methods specific to DiscoveryTinkerbell and HardwareTinkerbell structs
 
+// HardwareTinkerbellV1 represents the new hardware data model for tinkerbell, version 1
+type HardwareTinkerbellV1 struct {
+	ID       string   `json:"id"`
+	Network  Network  `json:"network"`
+	Metadata Metadata `json:"metadata"`
+}
+
 func (i InterfaceTinkerbell) Name() string {
 	return i.DHCP.IfaceName
 }
