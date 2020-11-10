@@ -11,6 +11,7 @@ import (
 func init() {
 	job.RegisterDefaultInstaller(bootScripts["install"])
 	job.RegisterDistro("alpine", bootScripts["rescue"])
+	job.RegisterDistro("discovery", bootScripts["discover"])
 }
 
 var bootScripts = map[string]func(job.Job, *ipxe.Script){
@@ -33,6 +34,11 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 		}
 		s.Set("state", j.HardwareState())
 		bootScript("install", j, s)
+	},
+	"discover": func(j job.Job, s *ipxe.Script) {
+		s.Set("action", "discover")
+		s.Set("state", j.HardwareState())
+		bootScript("discover", j, s)
 	},
 }
 
