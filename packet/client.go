@@ -27,7 +27,7 @@ type Client struct {
 	consumerToken  string
 	authToken      string
 	hardwareClient hardwareGetter
-	workflowClient tw.WorkflowSvcClient
+	workflowClient tw.WorkflowServiceClient
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -47,7 +47,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	}
 
 	var hg hardwareGetter
-	var wg tw.WorkflowSvcClient
+	var wg tw.WorkflowServiceClient
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {

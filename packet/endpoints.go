@@ -9,9 +9,9 @@ import (
 	"os"
 
 	"github.com/packethost/cacher/protos/cacher"
+	tpkg "github.com/tinkerbell/tink/pkg"
 	tink "github.com/tinkerbell/tink/protos/hardware"
 	tw "github.com/tinkerbell/tink/protos/workflow"
-	tinkUtil "github.com/tinkerbell/tink/util"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -104,7 +104,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			return nil, errors.Wrap(err, "get hardware by mac from tink")
 		}
 
-		b, err := json.Marshal(&tinkUtil.HardwareWrapper{Hardware: resp}) // uses HardwareWrapper for its custom marshaler
+		b, err := json.Marshal(&tpkg.HardwareWrapper{Hardware: resp}) // uses HardwareWrapper for its custom marshaler
 		if err != nil {
 			return nil, errors.New("marshalling tink hardware")
 		}
@@ -196,7 +196,7 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 			return nil, errors.Wrap(err, "get hardware by ip from tink")
 		}
 
-		b, err = json.Marshal(&tinkUtil.HardwareWrapper{Hardware: resp}) // uses HardwareWrapper for its custom marshaler
+		b, err = json.Marshal(&tpkg.HardwareWrapper{Hardware: resp}) // uses HardwareWrapper for its custom marshaler
 		if err != nil {
 			return nil, errors.New("marshalling tink hardware")
 		}
