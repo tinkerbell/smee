@@ -93,6 +93,18 @@ func TestScript(t *testing.T) {
 }
 
 var prefaces = map[string]string{
+	"discover": `echo Packet.net Baremetal - iPXE boot
+set iface eth0 || shell
+set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
+set ipxe_cloud_config packet
+set action %s
+set state %s
+set arch %s
+set parch %s
+set bootdevmac %s
+set base-url http://install.ewr1.packet.net/misc/osie/current
+`,
 	"install": `echo Packet.net Baremetal - iPXE boot
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
@@ -126,8 +138,69 @@ set base-url http://install.` + facility + `.packet.net/misc/osie/current
 }
 
 var action2Plan2Body = map[string]map[string]string{
-	"install": installBodies,
-	"rescue":  rescueBodies,
+	"discover": discoverBodies,
+	"install":  installBodies,
+	"rescue":   rescueBodies,
+}
+
+var discoverBodies = map[string]string{
+	"baremetal_0": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_1": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_2": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_3": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_2a": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_2a2": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${parch}
+sleep 15
+boot
+`,
+	"baremetal_2a4": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_2a5": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_s": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
+	"baremetal_hua": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` initrd=initramfs-${parch} console=ttyS0,115200
+initrd ${base-url}/initramfs-${parch}
+sleep 15
+boot
+`,
+	"c2.large.arm": `
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 initrd=initramfs-${parch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${parch}
+boot
+`,
 }
 
 var installBodies = map[string]string{
