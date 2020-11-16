@@ -33,18 +33,6 @@ type Discovery interface {
 	SetMAC(mac net.HardwareAddr)
 }
 
-// DiscoveryCacher presents the structure for old data model
-type DiscoveryCacher struct {
-	*HardwareCacher
-	mac net.HardwareAddr
-}
-
-// DiscoveryTinkerbellV1 presents the structure for tinkerbell's new data model, version 1
-type DiscoveryTinkerbellV1 struct {
-	*HardwareTinkerbellV1
-	mac net.HardwareAddr
-}
-
 // Interface is the base for cacher and tinkerbell hardware (network) interface
 type Interface interface {
 }

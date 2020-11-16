@@ -11,6 +11,12 @@ import (
 
 // models_tinkerbell.go contains the interface methods specific to DiscoveryTinkerbell and HardwareTinkerbell structs
 
+// DiscoveryTinkerbellV1 presents the structure for tinkerbell's new data model, version 1
+type DiscoveryTinkerbellV1 struct {
+	*HardwareTinkerbellV1
+	mac net.HardwareAddr
+}
+
 // HardwareTinkerbellV1 represents the new hardware data model for tinkerbell, version 1
 type HardwareTinkerbellV1 struct {
 	ID       string   `json:"id"`
