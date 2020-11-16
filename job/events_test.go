@@ -42,19 +42,22 @@ func TestPhoneHome(t *testing.T) {
 		fmt.Println("test:", name)
 		t.Log("test:", name)
 		reqs = nil
+
+		instance := &packet.Instance{
+			ID: test.id,
+			OSV: &packet.OperatingSystem{
+				OsSlug: test.os,
+			},
+		}
 		j := Job{
 			Logger: joblog.With("test", name),
 			mode:   modeInstance,
-			hardware: packet.HardwareCacher{
-				ID:    "$hardware_id",
-				State: packet.HardwareState(test.state),
+			hardware: &packet.HardwareCacher{
+				ID:       "$hardware_id",
+				State:    packet.HardwareState(test.state),
+				Instance: instance,
 			},
-			instance: &packet.Instance{
-				ID: test.id,
-				OS: packet.OperatingSystem{
-					OsSlug: test.os,
-				},
-			},
+			instance: instance,
 		}
 		bad := !j.phoneHome([]byte(test.event))
 		if bad != test.bad {

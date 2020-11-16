@@ -30,6 +30,7 @@ require (
 	google.golang.org/genproto v0.0.0-20200921165018-b9da36f5f452 // indirect
 	google.golang.org/grpc v1.32.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3

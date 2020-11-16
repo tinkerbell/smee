@@ -15,7 +15,13 @@ func IsSpecialOS(i *packet.Instance) bool {
 	if i == nil {
 		return false
 	}
-	slug := i.OS.Slug
+	var slug string
+	if i.OSV.Slug != "" {
+		slug = i.OSV.Slug
+	}
+	if i.OS.Slug != "" {
+		slug = i.OS.Slug
+	}
 	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
 }
 
@@ -91,9 +97,9 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 
 		// ignore custom_ipxe because we always do dhcp for it and we'll want to do /nonexistent filename so
 		// nics don't timeout.... but why though?
-		if !j.isPXEAllowed() && j.instance.OS.OsSlug != "custom_ipxe" {
+		if !j.isPXEAllowed() && j.hardware.OperatingSystem().OsSlug != "custom_ipxe" {
 			err := errors.New("device should NOT be trying to PXE boot")
-			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.instance.OS.OsSlug).Info(err)
+			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.hardware.OperatingSystem().OsSlug).Info(err)
 			return
 		}
 		// custom_ipxe or rescue

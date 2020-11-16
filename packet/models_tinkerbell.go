@@ -188,3 +188,18 @@ func (h HardwareTinkerbellV1) KernelPath(mac net.HardwareAddr) string {
 func (h HardwareTinkerbellV1) InitrdPath(mac net.HardwareAddr) string {
 	return h.Network.InterfaceByMac(mac).Netboot.OSIE.Initrd
 }
+
+func (h *HardwareTinkerbellV1) OperatingSystem() *OperatingSystem {
+	i := h.instance()
+	if i.OS == nil {
+		i.OS = &OperatingSystem{}
+	}
+	return i.OS
+}
+
+func (h *HardwareTinkerbellV1) instance() *Instance {
+	if h.Metadata.Instance == nil {
+		h.Metadata.Instance = &Instance{}
+	}
+	return h.Metadata.Instance
+}

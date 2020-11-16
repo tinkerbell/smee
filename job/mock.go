@@ -93,16 +93,16 @@ func (m *Mock) SetManufacturer(slug string) {
 }
 
 func (m *Mock) SetOSDistro(distro string) {
-	m.instance.OS.Distro = distro
+	m.hardware.OperatingSystem().Distro = distro
 }
 
 func (m *Mock) SetOSSlug(slug string) {
-	m.instance.OS.Slug = slug
-	m.instance.OS.OsSlug = slug
+	m.hardware.OperatingSystem().Slug = slug
+	m.hardware.OperatingSystem().OsSlug = slug
 }
 
 func (m *Mock) SetOSVersion(version string) {
-	m.instance.OS.Version = version
+	m.hardware.OperatingSystem().Version = version
 }
 
 func (m *Mock) SetPassword(password string) {
