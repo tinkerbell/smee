@@ -10,6 +10,12 @@ import (
 
 // models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
 
+// DiscoveryCacher presents the structure for old data model
+type DiscoveryCacher struct {
+	*HardwareCacher
+	mac net.HardwareAddr
+}
+
 // HardwareCacher represents the old hardware data model for backward compatibility
 type HardwareCacher struct {
 	ID    string        `json:"id"`
