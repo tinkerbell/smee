@@ -5,10 +5,18 @@ MAKEFLAGS += --no-builtin-rules
 binary := boots
 all: ${binary}
 
+crosscompile: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
+	CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -v -o ./boots-linux-x86_64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./boots-linux-amd64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -v -o ./boots-linux-aarch64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -v -o ./boots-linux-armv7l -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v -o ./boots-linux-arm64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+
+
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 ${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
-	CGO_ENABLED=0 GOOS=$$GOOS go build -v -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
+	CGO_ENABLED=0 go build -v -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
 
 ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin

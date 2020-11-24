@@ -2,9 +2,9 @@ let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs";
-  #branch@date: nixpkgs@2020-10-25
-  rev = "1920b371c870f4e939e1e73ee83db9d8b6e0b217";
-  sha256 = "0riyyxvygc7dbz2jh1n0gss1x03m0wh7dwqldczisx15hws3w3nm";
+  #branch@date: nixpkgs@2020-11-24
+  rev = "6625284c397b44bc9518a5a1567c1b5aae455c08";
+  sha256 = "1w0czzv53sg35gp7sr506facbmzd33jm34p6cg23fb9kz5rf5c89";
 }) { } }:
 
 with pkgs;
