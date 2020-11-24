@@ -18,6 +18,7 @@ mkShell {
     golangci-lint
     go-bindata
     mockgen
+    nixfmt
     nodePackages.prettier
     pkgsCross.aarch64-multiplatform.buildPackages.gcc
     protobuf
