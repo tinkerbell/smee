@@ -86,6 +86,7 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 		s.Args("docker_registry=" + dockerRegistry)
 		s.Args("grpc_authority=" + grpcAuthority)
 		s.Args("grpc_cert_url=" + grpcCertURL)
+		s.Args("instance_id=" + j.InstanceID())
 		s.Args("registry_username=" + registryUsername)
 		s.Args("registry_password=" + registryPassword)
 		s.Args("packet_base_url=" + workflowBaseURL())
