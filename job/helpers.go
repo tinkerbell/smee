@@ -94,7 +94,7 @@ func (j Job) OperatingSystem() *packet.OperatingSystem {
 		if i.Rescue {
 			return rescueOS
 		}
-		return &i.OS
+		return j.hardware.OperatingSystem()
 	}
 	return nil
 }

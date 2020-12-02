@@ -342,3 +342,18 @@ func (h HardwareCacher) KernelPath(mac net.HardwareAddr) string {
 func (h HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
 	return ""
 }
+
+func (h *HardwareCacher) OperatingSystem() *OperatingSystem {
+	i := h.instance()
+	if i.OSV == (*OperatingSystem)(nil) {
+		i.OSV = &OperatingSystem{}
+	}
+	return i.OSV
+}
+
+func (h *HardwareCacher) instance() *Instance {
+	if h.Instance == nil {
+		h.Instance = &Instance{}
+	}
+	return h.Instance
+}

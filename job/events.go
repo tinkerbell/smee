@@ -85,7 +85,7 @@ func (j Job) phoneHome(body []byte) bool {
 		post = p.postInstance
 		if p.kind() == "provisioning.104.01" {
 			disablePXE = true
-			if j.instance.OS.OsSlug == "custom_ipxe" {
+			if j.hardware.OperatingSystem().OsSlug == "custom_ipxe" {
 				defer j.CustomPXEDone()
 			}
 		}

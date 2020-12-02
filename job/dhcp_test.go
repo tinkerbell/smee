@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
+	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/packet"
 )
@@ -58,21 +59,23 @@ func TestSetPXEFilename(t *testing.T) {
 			tt.plan = "0"
 		}
 
+		instance := &packet.Instance{
+			ID:       tt.id,
+			State:    packet.InstanceState(tt.iState),
+			AllowPXE: tt.allowPXE,
+			OSV: &packet.OperatingSystem{
+				OsSlug: tt.slug,
+			},
+		}
 		j := Job{
-			Logger: joblog.With("index", i, "hStahe", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
-			hardware: packet.HardwareCacher{
+			Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+			hardware: &packet.HardwareCacher{
 				ID:       "$hardware_id",
 				State:    packet.HardwareState(tt.hState),
 				PlanSlug: "baremetal_" + tt.plan,
+				Instance: instance,
 			},
-			instance: &packet.Instance{
-				ID:       tt.id,
-				State:    packet.InstanceState(tt.iState),
-				AllowPXE: tt.allowPXE,
-				OS: packet.OperatingSystem{
-					OsSlug: tt.slug,
-				},
-			},
+			instance: instance,
 		}
 		rep := dhcp4.NewPacket(42)
 		j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
@@ -99,7 +102,7 @@ func TestAllowPXE(t *testing.T) {
 		t.Logf("want=%t, hardware=%t, instance=%t, instance_id=%s",
 			tt.want, tt.hw, tt.instance, tt.iid)
 		j := Job{
-			hardware: packet.HardwareCacher{
+			hardware: &packet.HardwareCacher{
 				AllowPXE: tt.hw,
 			},
 			instance: &packet.Instance{
@@ -111,5 +114,41 @@ func TestAllowPXE(t *testing.T) {
 		if got != tt.want {
 			t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
 		}
+	}
+}
+
+func TestIsSpecialOS(t *testing.T) {
+	t.Run("nil instance", func(t *testing.T) {
+		special := IsSpecialOS(nil)
+		assert.Equal(t, false, special)
+	})
+
+	for name, want := range map[string]bool{
+		"custom_ipxe": true,
+		"custom":      true,
+		"vmware_foo":  true,
+		"nixos_foo":   true,
+		"flatcar_foo": false,
+	} {
+		t.Run("OS-"+name, func(t *testing.T) {
+			instance := &packet.Instance{
+				OS: &packet.OperatingSystem{
+					Slug: name,
+				},
+				OSV: &packet.OperatingSystem{},
+			}
+			got := IsSpecialOS(instance)
+			assert.Equal(t, want, got)
+		})
+		t.Run("OSV-"+name, func(t *testing.T) {
+			instance := &packet.Instance{
+				OS: &packet.OperatingSystem{},
+				OSV: &packet.OperatingSystem{
+					Slug: name,
+				},
+			}
+			got := IsSpecialOS(instance)
+			assert.Equal(t, want, got)
+		})
 	}
 }

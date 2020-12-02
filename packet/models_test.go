@@ -172,6 +172,17 @@ func TestDiscoveryCacher(t *testing.T) {
 			if osie != test.osie {
 				t.Fatalf("unexpected osie version, want: %s, got: %s", test.osie, osie)
 			}
+
+			if d.Instance() != nil {
+				if d.OperatingSystem().Distro != test.distro {
+					t.Fatalf("unexpected distro, want: %s, got: %s", test.distro, d.OperatingSystem().Distro)
+				}
+
+				d.OperatingSystem().Distro = "test" // test setting field inside operating system
+				if d.OperatingSystem().Distro != "test" {
+					t.Fatalf("could not set field inside operating system (distro), should be set to 'test', but got %s", d.OperatingSystem().Distro)
+				}
+			}
 		})
 	}
 }
@@ -242,6 +253,15 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 				t.Logf("instance: %v", d.Instance())
 				t.Logf("instance id: %s", d.Instance().ID)
 				t.Logf("instance state: %s", d.Instance().State)
+
+				if d.OperatingSystem().Distro != test.distro {
+					t.Fatalf("unexpected os distro, want: %s, got: %s", test.distro, d.OperatingSystem().Distro)
+				}
+
+				d.OperatingSystem().Distro = "test" // test setting field inside operating system
+				if d.OperatingSystem().Distro != "test" {
+					t.Fatalf("could not set field inside operating system (distro), should be set to 'test', but got %s", d.OperatingSystem().Distro)
+				}
 			}
 			t.Logf("metadata custom: %v", d.Metadata.Custom)
 			t.Logf("metadata facility: %v", d.Metadata.Facility)
@@ -277,6 +297,46 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 	}
 }
 
+func TestOperatingSystemCacher(t *testing.T) {
+	for name, test := range cacherTests {
+		t.Run(name, func(t *testing.T) {
+			d := &DiscoveryCacher{}
+
+			if err := json.Unmarshal([]byte(test.json), &d); err != nil {
+				t.Fatal(test.mode, err)
+			}
+
+			if d.OperatingSystem().Distro != test.distro {
+				t.Fatalf("unexpected instance operating system slug, want: %s, got: %s", test.distro, d.OperatingSystem().Distro)
+			}
+			d.OperatingSystem().Distro = "test" // test setting a field
+			if d.OperatingSystem().Distro != "test" {
+				t.Fatal("operating system distro should have been set to 'test'")
+			}
+		})
+	}
+}
+
+func TestOperatingSystemTinkerbell(t *testing.T) {
+	for name, test := range tinkerbellTests {
+		t.Run(name, func(t *testing.T) {
+			d := &DiscoveryTinkerbellV1{}
+
+			if err := json.Unmarshal([]byte(test.json), &d); err != nil {
+				t.Fatal(test.mode, err)
+			}
+
+			if d.OperatingSystem().Distro != test.distro {
+				t.Fatalf("unexpected instance operating system slug, want: %s, got: %s", test.distro, d.OperatingSystem().Distro)
+			}
+			d.OperatingSystem().Distro = "test" // test setting a field
+			if d.OperatingSystem().Distro != "test" {
+				t.Fatal("operating system slug should have been set to 'test'")
+			}
+		})
+	}
+}
+
 var tinkerbellTests = map[string]struct {
 	id            string
 	mac           string
@@ -293,6 +353,7 @@ var tinkerbellTests = map[string]struct {
 	ipxeContents  string
 	mode          string
 	osie          string
+	distro        string
 	json          string
 }{
 	"new_structure": {
@@ -344,6 +405,7 @@ var tinkerbellTests = map[string]struct {
 		arch:        "x86_64",
 		uefi:        false,
 		mode:        "hardware",
+		distro:      "ubuntu",
 		json:        fullStructTinkerbell,
 	},
 }
@@ -354,6 +416,7 @@ var cacherTests = map[string]struct {
 	mode           string
 	conf           IP
 	osie           string
+	distro         string
 	json           string
 }{
 	"unknown": {
@@ -393,7 +456,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("10.255.252.1"),
 			Netmask: net.ParseIP("255.255.255.0"),
 		},
-		json: withInstance,
+		distro: "centos",
+		json:   withInstance,
 	},
 	"instance": {
 		mac:            "00:25:90:e7:68:da",
@@ -404,7 +468,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("147.75.193.105"),
 			Netmask: net.ParseIP("255.255.255.252"),
 		},
-		json: withInstance,
+		distro: "centos",
+		json:   withInstance,
 	},
 	"preinstalling": {
 		mac:            "00:25:99:e7:6c:78",
@@ -426,7 +491,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("172.16.0.13"),
 			Netmask: net.ParseIP("255.255.255.252"),
 		},
-		json: deprovisioning,
+		distro: "centos",
+		json:   deprovisioning,
 	},
 	"provisioning": {
 		mac:            "fc:15:b4:97:04:f5",
@@ -437,7 +503,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("147.75.14.15"),
 			Netmask: net.ParseIP("255.255.255.252"),
 		},
-		json: provisioning,
+		distro: "centos",
+		json:   provisioning,
 	},
 	"provisioning with custom service": {
 		mac:            "fc:15:b4:97:04:f5",
@@ -449,7 +516,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("147.75.14.15"),
 			Netmask: net.ParseIP("255.255.255.252"),
 		},
-		json: provisioningWithService,
+		distro: "centos",
+		json:   provisioningWithService,
 	},
 	"full structure cacher": {
 		mac:            "f4:79:2b:fa:4f:ae",
@@ -460,7 +528,8 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("10.255.3.1"),
 			Netmask: net.ParseIP("255.255.255.0"),
 		},
-		json: fullStructCacher,
+		distro: "vmware",
+		json:   fullStructCacher,
 	},
 }
 
@@ -577,7 +646,7 @@ const (
     },
     "instance": {
       "crypted_root_password": "redacted",
-      "operating_system_version": {
+      "operating_system": {
         "distro": "ubuntu",
         "os_slug": "ubuntu_18_04",
         "version": "18.04"
