@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
+	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/packet"
 )
@@ -113,5 +114,41 @@ func TestAllowPXE(t *testing.T) {
 		if got != tt.want {
 			t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
 		}
+	}
+}
+
+func TestIsSpecialOS(t *testing.T) {
+	t.Run("nil instance", func(t *testing.T) {
+		special := IsSpecialOS(nil)
+		assert.Equal(t, false, special)
+	})
+
+	for name, want := range map[string]bool{
+		"custom_ipxe": true,
+		"custom":      true,
+		"vmware_foo":  true,
+		"nixos_foo":   true,
+		"flatcar_foo": false,
+	} {
+		t.Run("OS-"+name, func(t *testing.T) {
+			instance := &packet.Instance{
+				OS: &packet.OperatingSystem{
+					Slug: name,
+				},
+				OSV: &packet.OperatingSystem{},
+			}
+			got := IsSpecialOS(instance)
+			assert.Equal(t, want, got)
+		})
+		t.Run("OSV-"+name, func(t *testing.T) {
+			instance := &packet.Instance{
+				OS: &packet.OperatingSystem{},
+				OSV: &packet.OperatingSystem{
+					Slug: name,
+				},
+			}
+			got := IsSpecialOS(instance)
+			assert.Equal(t, want, got)
+		})
 	}
 }
