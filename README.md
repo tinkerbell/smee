@@ -1,6 +1,6 @@
 # Boots
 
-[![Build Status](https://cloud.drone.io/api/badges/tinkerbell/boots/status.svg)](https://cloud.drone.io/tinkerbell/boots)
+[![Build Status](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 
 This services handles DHCP, PXE, tftp, and iPXE for provisions.
