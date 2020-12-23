@@ -41,7 +41,7 @@ type Job struct {
 // hwID is the hardware/worker ID corresponding to the MAC
 func hasActiveWorkflow(wcl *tw.WorkflowContextList) (bool, error) {
 	for _, wf := range (*wcl).WorkflowContexts {
-		if wf.CurrentActionState == tw.State_STATE_PENDING {
+		if wf.CurrentActionState == tw.State_STATE_PENDING || wf.CurrentActionState == tw.State_STATE_RUNNING {
 			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
 			return true, nil
 		}
