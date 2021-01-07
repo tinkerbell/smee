@@ -1,8 +1,8 @@
 MAKEFLAGS += --no-builtin-rules
-.PHONY: ${binary} dc gen test
 .SUFFIXES:
 
 binary := boots
+.PHONY: all ${binary} crosscompile dc gen run test
 all: ${binary}
 
 crosscompile: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
