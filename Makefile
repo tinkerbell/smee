@@ -25,7 +25,7 @@ crosscompile: ${binary}
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
+${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go
 	CGO_ENABLED=0 go build -v -ldflags="-X main.GitRev=${GitRev}"
 
 ifeq ($(origin GOBIN), undefined)
