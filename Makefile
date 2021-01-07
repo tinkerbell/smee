@@ -15,7 +15,7 @@ binary := boots
 .PHONY: all ${binary} crosscompile dc gen run test
 all: ${binary}
 
-crosscompile: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
+crosscompile: ${binary}
 	CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -v -o ./boots-linux-x86_64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./boots-linux-amd64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -v -o ./boots-linux-aarch64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
