@@ -22,7 +22,6 @@ crosscompile: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -v -o ./boots-linux-armv7l -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v -o ./boots-linux-arm64 -ldflags="-X main.GitRev=$(shell git rev-parse --short HEAD)"
 
-
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 ${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' )
@@ -33,8 +32,35 @@ GOBIN := ${PWD}/bin
 export GOBIN
 endif
 
-ipxe/bindata.go:
-	$(MAKE) -C ipxe
+ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+	go-bindata -pkg ipxe -o $@ $^
+	gofmt -w $@
+
+ipxev := 18dc73d27edb55ebe9cb13c58d59af3da3bd374b
+ipxeh := 17b6bbad8f0a94b15cdb5470bb60c8c7868759efd89f0ea8111c94eefaaa4c0c665a5b8d9547defeb8caf432a0d9d12e25aa81709b4e5a6055cb416c140b4de7
+ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
+
+ipxe/bin/ipxe.efi: ipxe/ipxe/build/ipxe-x86_64-efi/ipxe.efi
+ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/ipxe-arm64-efi/snp.efi
+ipxe/bin/undionly.kpxe: ipxe/ipxe/build/ipxe-x86_64-kpxe/undionly.kpxe
+ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
+	cp $^ $@
+
+ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk
+	mkdir -p $(@D)
+	curl -fL https://github.com/ipxe/ipxe/archive/${ipxev}.tar.gz > $@
+	echo "${ipxeh}  $@" | sha512sum -c
+
+# given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
+# and   $@=ipxe/ipxe/build/*/*
+# t       =                */*
+ipxe/ipxe/build/ipxe-arm64-efi/snp.efi ipxe/ipxe/build/ipxe-x86_64-efi/ipxe.efi ipxe/ipxe/build/ipxe-x86_64-kpxe/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
+	rm -rf $(@D)
+	mkdir -p $(@D)
+	tar -xzf $< -C $(@D)
+	cp ${ipxeconfigs} $(@D)
+	cd $(@D) && ../../build.sh $$t ${ipxev}
 
 ifeq ($(CI),drone)
 run: ${binary}
