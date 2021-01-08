@@ -39,9 +39,9 @@ ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi 
 include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
 
-ipxe/bin/ipxe.efi: ipxe/ipxe/build/ipxe-x86_64-efi/ipxe.efi
-ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/ipxe-arm64-efi/snp.efi
-ipxe/bin/undionly.kpxe: ipxe/ipxe/build/ipxe-x86_64-kpxe/undionly.kpxe
+ipxe/bin/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
+ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
+ipxe/bin/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
 ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
 	cp $^ $@
 
@@ -53,7 +53,7 @@ ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk
 # given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
 # and   $@=ipxe/ipxe/build/*/*
 # t       =                */*
-ipxe/ipxe/build/ipxe-arm64-efi/snp.efi ipxe/ipxe/build/ipxe-x86_64-efi/ipxe.efi ipxe/ipxe/build/ipxe-x86_64-kpxe/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
 	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
 	rm -rf $(@D)
 	mkdir -p $(@D)
