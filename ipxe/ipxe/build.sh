@@ -25,7 +25,9 @@ bin-arm64-efi/snp.efi)
 	cp "$topdir/src/config/local/general.aarch64-snp-nolacp.h" "$topdir/src/config/local/general.h"
 	# http://lists.ipxe.org/pipermail/ipxe-devel/2018-August/006254.html
 	sed -i '/^WORKAROUND_CFLAGS/ s|^|#|' "$topdir/src/arch/arm64/Makefile"
-	export CROSS_COMPILE=aarch64-unknown-linux-gnu-
+	if [[ -z ${CROSS_COMPILE:-} ]]; then
+		export CROSS_COMPILE=aarch64-unknown-linux-gnu-
+	fi
 	;;
 *) echo "unknown target: $1" >&2 && exit 1 ;;
 esac
