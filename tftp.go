@@ -53,6 +53,15 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 		return j.ServeTFTP(filename, ip.String())
 	}
 
+	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	if err != nil {
+		return nil, err
+	}
+
+	if !activeWorkflows {
+		return nil, err
+	}
+
 	err = errors.WithMessage(err, "retrieved job is empty")
 
 	filename = path.Base(filename)
