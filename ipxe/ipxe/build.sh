@@ -32,5 +32,6 @@ bin-arm64-efi/snp.efi)
 *) echo "unknown target: $1" >&2 && exit 1 ;;
 esac
 
+rm "$topdir"/src/config/local/general.*.h
 make -C "$topdir/src" VERSION_PATCH=255 EXTRAVERSION="+ ($short_version)" "$build"
 cp "$topdir/src/$build" .
