@@ -22,7 +22,7 @@ bin-x86_64-efi/ipxe.efi)
 	cp "$topdir/src/config/local/general.efi.h" "$topdir/src/config/local/general.h"
 	;;
 bin-arm64-efi/snp.efi)
-	cp "$topdir/src/config/local/general.aarch64-snp-nolacp.h" "$topdir/src/config/local/general.h"
+	cp "$topdir/src/config/local/general.efi.h" "$topdir/src/config/local/general.h"
 	# http://lists.ipxe.org/pipermail/ipxe-devel/2018-August/006254.html
 	sed -i '/^WORKAROUND_CFLAGS/ s|^|#|' "$topdir/src/arch/arm64/Makefile"
 	if [[ -z ${CROSS_COMPILE:-} ]]; then
