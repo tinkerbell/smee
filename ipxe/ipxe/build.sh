@@ -16,12 +16,14 @@ sed -i '/#define OCSP_CHECK/ d' "$topdir/src/config/crypto.h"
 set -x
 case $build in
 bin/undionly.kpxe)
+	rm "$topdir/src/config/local/isa.h"
 	cp "$topdir/src/config/local/general.undionly.h" "$topdir/src/config/local/general.h"
 	;;
 bin-x86_64-efi/ipxe.efi)
 	cp "$topdir/src/config/local/general.efi.h" "$topdir/src/config/local/general.h"
 	;;
 bin-arm64-efi/snp.efi)
+	rm "$topdir/src/config/local/isa.h"
 	cp "$topdir/src/config/local/general.efi.h" "$topdir/src/config/local/general.h"
 	# http://lists.ipxe.org/pipermail/ipxe-devel/2018-August/006254.html
 	sed -i '/^WORKAROUND_CFLAGS/ s|^|#|' "$topdir/src/arch/arm64/Makefile"
