@@ -44,6 +44,8 @@ jobs:
         run: go test -coverprofile=coverage.txt ./...
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
+      - name: compile iPXE binaries
+        run: nix-shell --run 'make ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe'
       - name: compile binaries
         run: nix-shell --run 'make crosscompile'
       - name: Docker Image Tag for Sha
