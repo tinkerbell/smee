@@ -33,7 +33,7 @@ GOBIN := ${PWD}/bin
 export GOBIN
 endif
 ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
-	go-bindata -pkg ipxe -o $@ $^
+	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
 	gofmt -w $@
 
 include ipxev.mk
