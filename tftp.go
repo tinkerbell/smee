@@ -48,7 +48,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	defer metrics.JobsInProgress.With(labels).Dec()
 
 	ip := tftpClientIP(c.RemoteAddr())
-	j, err := job.CreateFromIP(ip)
+	j, err := job.CreateFromRemoteAddr(ip.String())
 	if err == nil {
 		return j.ServeTFTP(filename, ip.String())
 	}

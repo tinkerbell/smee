@@ -4,3 +4,4 @@
 .idea*/**
 /bin/
 boots
+ipxe/bin/ipxe.efi
