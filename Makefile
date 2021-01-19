@@ -19,13 +19,14 @@ CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
-crosscompile: ${binary}
-	export GOOS=linux
-	GOARCH=386 go build -v -o ./boots-linux-x86_64 -ldflags="-X main.GitRev=${GitRev}"
-	GOARCH=amd64 go build -v -o ./boots-linux-amd64 -ldflags="-X main.GitRev=${GitRev}"
-	GOARCH=arm GOARM=6 go build -v -o ./boots-linux-aarch64 -ldflags="-X main.GitRev=${GitRev}"
-	GOARCH=arm GOARM=7 go build -v -o ./boots-linux-armv7l -ldflags="-X main.GitRev=${GitRev}"
-	GOARCH=arm64 go build -v -o ./boots-linux-arm64 -ldflags="-X main.GitRev=${GitRev}"
+crosscompile: boots-linux-aarch64 boots-linux-amd64 boots-linux-arm64 boots-linux-armv7l boots-linux-x86_64
+boots-linux-aarch64: FLAGS=GOARCH=arm GOARM=6
+boots-linux-amd64:   FLAGS=GOARCH=amd64
+boots-linux-arm64:   FLAGS=GOARCH=arm64
+boots-linux-armv7l:  FLAGS=GOARCH=arm GOARM=7
+boots-linux-x86_64:  FLAGS=GOARCH=386
+boots-linux-aarch64 boots-linux-amd64 boots-linux-arm64 boots-linux-armv7l boots-linux-x86_64: ${binary}
+	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
