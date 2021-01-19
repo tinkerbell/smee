@@ -4,6 +4,7 @@
 #define NET_PROTO_IPV6        /* IPv6 protocol */
 #define NSLOOKUP_CMD          /* DNS resolving command */
 #define NTP_CMD               /* NTP commands */
+#define NVO_CMD               /* Non-volatile option storage commands */
 #define PARAM_CMD             /* params and param commands, for POSTing to tink */
 #define REBOOT_CMD            /* Reboot command */
 #define VLAN_CMD              /* VLAN commands */
@@ -18,7 +19,6 @@
 #undef IWMGMT_CMD             /* Wireless interface management commands */
 #undef NET_PROTO_LACP         /* Link Aggregation control protocol */
 #undef NET_PROTO_STP          /* Spanning Tree protocol */
-#undef NVO_CMD                /* Non-volatile option storage commands */
 #undef ROUTE_CMD              /* Routing table management commands */
 #undef VNIC_IPOIB             /* Infiniband IPoIB virtual NICs */
 
