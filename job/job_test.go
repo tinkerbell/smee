@@ -183,12 +183,23 @@ func TestHasActiveWorkflow(t *testing.T) {
 		wcl    *tw.WorkflowContextList
 		status bool
 	}{
-		{name: "test active workflow",
+		{name: "test pending workflow",
 			wcl: &tw.WorkflowContextList{
 				WorkflowContexts: []*tw.WorkflowContext{
 					&tw.WorkflowContext{
-						WorkflowId:         "active-fake-workflow-bde9-812726eff314",
+						WorkflowId:         "pending-fake-workflow-bde9-812726eff314",
 						CurrentActionState: 0,
+					},
+				},
+			},
+			status: true,
+		},
+		{name: "test running workflow",
+			wcl: &tw.WorkflowContextList{
+				WorkflowContexts: []*tw.WorkflowContext{
+					&tw.WorkflowContext{
+						WorkflowId:         "running-fake-workflow-bde9-812726eff314",
+						CurrentActionState: 1,
 					},
 				},
 			},
@@ -199,7 +210,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 				WorkflowContexts: []*tw.WorkflowContext{
 					&tw.WorkflowContext{
 						WorkflowId:         "inactive-fake-workflow-bde9-812726eff314",
-						CurrentActionState: 1,
+						CurrentActionState: 4,
 					},
 				},
 			},
