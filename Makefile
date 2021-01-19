@@ -19,13 +19,13 @@ CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
-crosscompile: boots-linux-armv6 boots-linux-amd64 boots-linux-arm64 boots-linux-armv7 boots-linux-386
-boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
+crosscompile: boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7
+boots-linux-386:   FLAGS=GOARCH=386
 boots-linux-amd64: FLAGS=GOARCH=amd64
 boots-linux-arm64: FLAGS=GOARCH=arm64
+boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
-boots-linux-386:   FLAGS=GOARCH=386
-boots-linux-armv6 boots-linux-amd64 boots-linux-arm64 boots-linux-armv7 boots-linux-386: ${binary}
+boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: ${binary}
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
