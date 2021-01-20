@@ -15,18 +15,23 @@ binary := boots
 .PHONY: all ${binary} crosscompile dc gen run test
 all: ${binary}
 
+CGO_ENABLED := 0
+export CGO_ENABLED
+
 GitRev := $(shell git rev-parse --short HEAD)
-crosscompile: ${binary}
-	CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -v -o ./boots-linux-x86_64 -ldflags="-X main.GitRev=${GitRev}"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./boots-linux-amd64 -ldflags="-X main.GitRev=${GitRev}"
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -v -o ./boots-linux-aarch64 -ldflags="-X main.GitRev=${GitRev}"
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -v -o ./boots-linux-armv7l -ldflags="-X main.GitRev=${GitRev}"
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v -o ./boots-linux-arm64 -ldflags="-X main.GitRev=${GitRev}"
+crosscompile: boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7
+boots-linux-386:   FLAGS=GOARCH=386
+boots-linux-amd64: FLAGS=GOARCH=amd64
+boots-linux-arm64: FLAGS=GOARCH=arm64
+boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
+boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
+boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: ${binary}
+	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 ${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go
-	CGO_ENABLED=0 go build -v -ldflags="-X main.GitRev=${GitRev}"
+	go build -v -ldflags="-X main.GitRev=${GitRev}"
 
 ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin
