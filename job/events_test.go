@@ -36,7 +36,7 @@ func TestPhoneHome(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	SetClient(packet.NewMockClient(u))
+	SetClient(packet.NewMockClient(u, nil))
 
 	for name, test := range phoneHomeTests {
 		fmt.Println("test:", name)

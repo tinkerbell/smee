@@ -117,6 +117,16 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
 		return
 	}
+
+	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	if err != nil {
+		return
+	}
+
+	if !activeWorkflows {
+		return
+	}
+
 	j.ServeFile(w, req)
 }
 
@@ -134,6 +144,16 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
 		return
 	}
+
+	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	if err != nil {
+		return
+	}
+
+	if !activeWorkflows {
+		return
+	}
+
 	j.AddHardware(w, req)
 }
 
@@ -168,6 +188,16 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
 		return
 	}
+
+	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	if err != nil {
+		return
+	}
+
+	if !activeWorkflows {
+		return
+	}
+
 	j.ServeProblemEndpoint(w, req)
 }
 

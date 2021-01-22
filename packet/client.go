@@ -83,7 +83,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	}, nil
 }
 
-func NewMockClient(baseURL *url.URL) *Client {
+func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *Client {
 	t := &httplog.Transport{
 		RoundTripper: http.DefaultTransport,
 	}
@@ -91,8 +91,9 @@ func NewMockClient(baseURL *url.URL) *Client {
 		Transport: t,
 	}
 	return &Client{
-		http:    c,
-		baseURL: baseURL,
+		http:           c,
+		workflowClient: workflowClient,
+		baseURL:        baseURL,
 	}
 }
 

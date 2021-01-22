@@ -1,14 +1,21 @@
 package job
 
 import (
+	"crypto/tls"
 	"net"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/packethost/pkg/log"
 	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/packet"
+	workflowMock "github.com/tinkerbell/boots/packet/mock_workflow"
 	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -20,6 +27,7 @@ func TestMain(m *testing.M) {
 
 	joblog, _ = log.Init("github.com/tinkerbell/boots")
 	httplog.Init(joblog)
+	metrics.Init(joblog)
 	os.Exit(m.Run())
 }
 
@@ -30,7 +38,7 @@ func TestSetupDiscover(t *testing.T) {
 			Name:     "TestSetupDiscover",
 			Instance: nil,
 			NetworkPorts: []packet.Port{
-				packet.Port{
+				{
 					Type: "ipmi",
 					Data: struct {
 						MAC  *packet.MACAddr `json:"mac"`
@@ -86,7 +94,7 @@ func TestSetupManagement(t *testing.T) {
 			Instance: &packet.Instance{},
 			PlanSlug: "f1.fake.x86",
 			NetworkPorts: []packet.Port{
-				packet.Port{
+				{
 					Type: "ipmi",
 					Data: struct {
 						MAC  *packet.MACAddr `json:"mac"`
@@ -186,7 +194,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 		{name: "test pending workflow",
 			wcl: &tw.WorkflowContextList{
 				WorkflowContexts: []*tw.WorkflowContext{
-					&tw.WorkflowContext{
+					{
 						WorkflowId:         "pending-fake-workflow-bde9-812726eff314",
 						CurrentActionState: 0,
 					},
@@ -197,7 +205,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 		{name: "test running workflow",
 			wcl: &tw.WorkflowContextList{
 				WorkflowContexts: []*tw.WorkflowContext{
-					&tw.WorkflowContext{
+					{
 						WorkflowId:         "running-fake-workflow-bde9-812726eff314",
 						CurrentActionState: 1,
 					},
@@ -208,7 +216,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 		{name: "test inactive workflow",
 			wcl: &tw.WorkflowContextList{
 				WorkflowContexts: []*tw.WorkflowContext{
-					&tw.WorkflowContext{
+					{
 						WorkflowId:         "inactive-fake-workflow-bde9-812726eff314",
 						CurrentActionState: 4,
 					},
@@ -218,7 +226,25 @@ func TestHasActiveWorkflow(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			s, err := hasActiveWorkflow(test.wcl)
+			ht := &httptest.Server{
+				URL:         "FakeURL",
+				Listener:    nil,
+				EnableHTTP2: false,
+				TLS:         &tls.Config{},
+				Config:      &http.Server{},
+			}
+			u, err := url.Parse(ht.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			cMock := workflowMock.NewMockWorkflowServiceClient(ctrl)
+			cMock.EXPECT().GetWorkflowContextList(gomock.Any(), gomock.Any()).Return(test.wcl, nil)
+			c := packet.NewMockClient(u, cMock)
+			SetClient(c)
+			s, err := HasActiveWorkflow("Hardware-fake-bde9-812726eff314")
 			if err != nil {
 				t.Fatal("error occured while testing")
 			}

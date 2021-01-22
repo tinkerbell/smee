@@ -36,10 +36,14 @@ type Job struct {
 	instance *packet.Instance
 }
 
-// hasActiveWorkflow fetches workflows for a given hwID and returns
+// HasActiveWorkflow fetches workflows for a given hwID and returns
 // the status true if there is a pending (active) workflow for hwID
 // hwID is the hardware/worker ID corresponding to the MAC
-func hasActiveWorkflow(wcl *tw.WorkflowContextList) (bool, error) {
+func HasActiveWorkflow(hwID string) (bool, error) {
+	wcl, err := client.GetWorkflowsFromTink(hwID)
+	if err != nil {
+		return false, err
+	}
 	for _, wf := range (*wcl).WorkflowContexts {
 		if wf.CurrentActionState == tw.State_STATE_PENDING || wf.CurrentActionState == tw.State_STATE_RUNNING {
 			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
@@ -108,18 +112,8 @@ func CreateFromIP(ip net.IP) (Job, error) {
 	hwID := hd.HardwareID()
 
 	joblog.With("hardwareID", hwID).Info("fetching workflows for hardware")
-	wcl, err := client.GetWorkflowsFromTink(hwID)
 	if err != nil {
 		return Job{}, err
-	}
-
-	activeWorkflows, err := hasActiveWorkflow(wcl)
-	if err != nil {
-		return Job{}, err
-	}
-
-	if !activeWorkflows {
-		return Job{}, errors.Errorf("no active workflow found for hardware %s", hwID)
 	}
 
 	return j, nil
