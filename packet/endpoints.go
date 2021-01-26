@@ -51,7 +51,7 @@ func (c *Client) GetWorkflowsFromTink(hwID string) (result *tw.WorkflowContextLi
 	metrics.CacherRequestsInProgress.With(labels).Dec()
 
 	if err != nil {
-		return result, errors.New("error while fetching the workflow")
+		return result, errors.Wrap(err, "error while fetching the workflow")
 	}
 
 	return result, nil
