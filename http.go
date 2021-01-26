@@ -118,7 +118,7 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
@@ -148,7 +148,7 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
@@ -195,7 +195,7 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
