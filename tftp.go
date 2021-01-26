@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/avast/retry-go"
+	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/conf"
@@ -70,6 +71,10 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	l := mainlog.With("client", ip, "event", "open", "filename", filename)
 	l.With("error", err).Info()
 
+	return serveFakeReader(l, filename)
+}
+
+func serveFakeReader(l log.Logger, filename string) (tftp.ReadCloser, error) {
 	switch filename {
 	case "test.1mb":
 		l.With("tftp_fake_read", true).Info()
