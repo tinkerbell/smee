@@ -120,10 +120,13 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 
 	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
 	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
 		return
 	}
-
 	if !activeWorkflows {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr).Info("no active workflows")
 		return
 	}
 
@@ -147,10 +150,13 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 
 	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
 	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
 		return
 	}
-
 	if !activeWorkflows {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr).Info("no active workflows")
 		return
 	}
 
@@ -191,10 +197,13 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 
 	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
 	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr, "error", err).Info("failed to get workflows")
 		return
 	}
-
 	if !activeWorkflows {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr).Info("no active workflows")
 		return
 	}
 
