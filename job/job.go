@@ -36,9 +36,8 @@ type Job struct {
 	instance *packet.Instance
 }
 
-// HasActiveWorkflow fetches workflows for a given hwID and returns
-// the status true if there is a pending (active) workflow for hwID
-// hwID is the hardware/worker ID corresponding to the MAC
+// HasActiveWorkflow fetches workflows for the given hardware and returns
+// the status true if there is a pending (active) workflow
 func HasActiveWorkflow(hwID string) (bool, error) {
 	wcl, err := client.GetWorkflowsFromTink(hwID)
 	if err != nil {

@@ -58,7 +58,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 		return serveFakeReader(l, filename)
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
+	activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "unable to fetch workflows")).Info()
 		return serveFakeReader(l, filename)
