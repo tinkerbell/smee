@@ -35,7 +35,7 @@ type ComponentsResponse struct {
 }
 
 // GetWorkflowsFromTink fetches the list of workflows from tink
-func (c *Client) GetWorkflowsFromTink(hwID string) (result *tw.WorkflowContextList, err error) {
+func (c *Client) GetWorkflowsFromTink(hwID HardwareID) (result *tw.WorkflowContextList, err error) {
 	if hwID == "" {
 		return result, errors.New("missing hardware id")
 	}
@@ -45,7 +45,7 @@ func (c *Client) GetWorkflowsFromTink(hwID string) (result *tw.WorkflowContextLi
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	result, err = c.workflowClient.GetWorkflowContextList(context.Background(), &tw.WorkflowContextRequest{WorkerId: hwID})
+	result, err = c.workflowClient.GetWorkflowContextList(context.Background(), &tw.WorkflowContextRequest{WorkerId: hwID.String()})
 
 	cacherTimer.ObserveDuration()
 	metrics.CacherRequestsInProgress.With(labels).Dec()
@@ -220,10 +220,10 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API
-func (c *Client) PostHardwareComponent(hardwareID string, body io.Reader) (*ComponentsResponse, error) {
+func (c *Client) PostHardwareComponent(hardwareID HardwareID, body io.Reader) (*ComponentsResponse, error) {
 	var response ComponentsResponse
 
-	if err := c.Post("/hardware/"+hardwareID+"/components", mimeJSON, body, &response); err != nil {
+	if err := c.Post("/hardware/"+hardwareID.String()+"/components", mimeJSON, body, &response); err != nil {
 		return nil, err
 	}
 
@@ -244,11 +244,11 @@ func (c *Client) PostHardwarePhoneHome(id string) error {
 func (c *Client) PostHardwareFail(id string, body io.Reader) error {
 	return c.Post("/hardware/"+id+"/fail", mimeJSON, body, nil)
 }
-func (c *Client) PostHardwareProblem(id string, body io.Reader) (string, error) {
+func (c *Client) PostHardwareProblem(id HardwareID, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
 	}
-	if err := c.Post("/hardware/"+id+"/problems", mimeJSON, body, &res); err != nil {
+	if err := c.Post("/hardware/"+id.String()+"/problems", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
 	return res.ID, nil

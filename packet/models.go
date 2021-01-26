@@ -45,6 +45,12 @@ type InterfaceTinkerbell struct {
 	*NetworkInterface
 }
 
+type HardwareID string
+
+func (hid HardwareID) String() string {
+	return string(hid)
+}
+
 // Hardware interface holds primary hardware methods
 type Hardware interface {
 	HardwareAllowPXE(mac net.HardwareAddr) bool
@@ -52,7 +58,7 @@ type Hardware interface {
 	HardwareArch(mac net.HardwareAddr) string
 	HardwareBondingMode() BondingMode
 	HardwareFacilityCode() string
-	HardwareID() string
+	HardwareID() HardwareID
 	HardwareIPs() []IP
 	Interfaces() []Port // TODO: to be updated
 	HardwareManufacturer() string
