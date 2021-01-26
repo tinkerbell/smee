@@ -4,7 +4,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
 	"time"
 
 	"github.com/packethost/pkg/log"
@@ -29,7 +28,7 @@ type tftpTransfer struct {
 func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) {
 	l := tftplog.With("mac", mac, "client", client, "filename", filename)
 
-	content, ok := tftpFiles[path.Base(filename)]
+	content, ok := tftpFiles[filename]
 	if !ok {
 		err := errors.Wrap(os.ErrNotExist, "unknown file")
 		l.With("event", "open", "error", err).Info()
