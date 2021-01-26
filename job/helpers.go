@@ -124,7 +124,7 @@ func (j Job) InterfaceMAC(i int) net.HardwareAddr {
 	return nil
 }
 
-func (j Job) HardwareID() string {
+func (j Job) HardwareID() packet.HardwareID {
 	if h := j.hardware; h != nil {
 		return h.HardwareID()
 	}

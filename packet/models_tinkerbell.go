@@ -132,8 +132,8 @@ func (h HardwareTinkerbellV1) HardwareFacilityCode() string {
 	return h.Metadata.Facility.FacilityCode
 }
 
-func (h HardwareTinkerbellV1) HardwareID() string {
-	return h.ID
+func (h HardwareTinkerbellV1) HardwareID() HardwareID {
+	return HardwareID(h.ID)
 }
 
 func (h HardwareTinkerbellV1) HardwareIPs() []IP {
