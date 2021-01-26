@@ -49,28 +49,26 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	defer metrics.JobsInProgress.With(labels).Dec()
 
 	ip := tftpClientIP(c.RemoteAddr())
+	filename = path.Base(filename)
+	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
+
 	j, err := job.CreateFromIP(ip)
-	if err == nil {
-		return j.ServeTFTP(filename, ip.String())
+	if err != nil {
+		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
+		return serveFakeReader(l, filename)
 	}
 
 	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
 	if err != nil {
-		mainlog.With("client", c.RemoteAddr(), "error", err).Info("failed to get workflows")
-		return nil, err
+		l.With("error", errors.WithMessage(err, "unable to fetch workflows")).Info()
+		return serveFakeReader(l, filename)
 	}
 	if !activeWorkflows {
-		mainlog.With("client", c.RemoteAddr(), "error", err).Info("no active workflows")
-		return nil, err
+		l.Info("no active workflows")
+		return serveFakeReader(l, filename)
 	}
 
-	err = errors.WithMessage(err, "retrieved job is empty")
-
-	filename = path.Base(filename)
-	l := mainlog.With("client", ip, "event", "open", "filename", filename)
-	l.With("error", err).Info()
-
-	return serveFakeReader(l, filename)
+	return j.ServeTFTP(filename, ip.String())
 }
 
 func serveFakeReader(l log.Logger, filename string) (tftp.ReadCloser, error) {
