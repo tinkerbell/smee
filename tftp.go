@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -88,6 +89,7 @@ func (tftpHandler) WriteFile(c tftp.Conn, filename string) (tftp.WriteCloser, er
 }
 
 func tftpClientIP(addr net.Addr) net.IP {
+	mainlog.Info(fmt.Sprintf("tftpClientIP type: %T", addr))
 	switch a := addr.(type) {
 	case *net.IPAddr:
 		return a.IP
