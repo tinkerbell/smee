@@ -55,10 +55,11 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 
 	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
 	if err != nil {
+		mainlog.With("client", c.RemoteAddr(), "error", err).Info("failed to get workflows")
 		return nil, err
 	}
-
 	if !activeWorkflows {
+		mainlog.With("client", c.RemoteAddr(), "error", err).Info("no active workflows")
 		return nil, err
 	}
 
