@@ -1,5 +1,1 @@
-ipxe/bin/ipxe.efi filter=lfs diff=lfs merge=lfs -text
 ipxe/bin/snp-hua.efi filter=lfs diff=lfs merge=lfs -text
-ipxe/bin/snp-nolacp.efi filter=lfs diff=lfs merge=lfs -text
-ipxe/bin/undionly.kpxe filter=lfs diff=lfs merge=lfs -text
-ipxe/bindata.go filter=lfs diff=lfs merge=lfs -text
