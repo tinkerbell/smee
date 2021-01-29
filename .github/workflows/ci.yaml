@@ -32,6 +32,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "1.15.5"
+      - name: generate bindata.go
+        run: nix-shell --run 'make ipxe/bindata.go'
       - name: goimports
         run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
       - name: go vet
@@ -44,8 +46,6 @@ jobs:
         run: go test -coverprofile=coverage.txt ./...
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
-      - name: compile iPXE binaries
-        run: nix-shell --run 'make ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe'
       - name: compile binaries
         run: nix-shell --run 'make crosscompile'
       - name: Docker Image Tag for Sha
