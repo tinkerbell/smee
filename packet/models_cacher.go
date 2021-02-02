@@ -292,8 +292,8 @@ func (h HardwareCacher) HardwareFacilityCode() string {
 	return h.FacilityCode
 }
 
-func (h HardwareCacher) HardwareID() string {
-	return h.ID
+func (h HardwareCacher) HardwareID() HardwareID {
+	return HardwareID(h.ID)
 }
 
 func (h HardwareCacher) HardwareIPs() []IP {

@@ -94,7 +94,7 @@ func (j Job) phoneHome(body []byte) bool {
 			j.With("state", j.HardwareState()).Info("ignoring hardware phone-home when state is not preinstalling")
 			return false
 		}
-		id = j.hardware.HardwareID()
+		id = j.hardware.HardwareID().String()
 		typ = "hardware"
 		post = p.postHardware
 	}
