@@ -36,6 +36,12 @@ type Job struct {
 	instance *packet.Instance
 }
 
+// AllowPxe returns the value from the hardware data
+// in tink server defined at network.interfaces[].netboot.allow_pxe
+func (j Job) AllowPxe() bool {
+	return j.hardware.HardwareAllowPXE(j.mac)
+}
+
 // HasActiveWorkflow fetches workflows for the given hardware and returns
 // the status true if there is a pending (active) workflow
 func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
