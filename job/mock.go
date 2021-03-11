@@ -105,6 +105,10 @@ func (m *Mock) SetOSVersion(version string) {
 	m.hardware.OperatingSystem().Version = version
 }
 
+func (m *Mock) SetOSImageTag(tag string) {
+	m.hardware.OperatingSystem().ImageTag = tag
+}
+
 func (m *Mock) SetPassword(password string) {
 	m.instance.CryptedRootPassword = "insecure"
 }
