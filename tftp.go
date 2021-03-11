@@ -58,14 +58,15 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 		return serveFakeReader(l, filename)
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
-	if err != nil {
-		l.With("error", errors.WithMessage(err, "unable to fetch workflows")).Info()
-		return serveFakeReader(l, filename)
-	}
-	if !activeWorkflows {
-		l.Info("no active workflows")
-		return serveFakeReader(l, filename)
+	// This gates serving PXE file by
+	// 1. the existence of a hardware record in tink server
+	// AND
+	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
+	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
+	// without a tink workflow present.
+	if !j.AllowPxe() {
+		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+		serveFakeReader(l, filename)
 	}
 
 	return j.ServeTFTP(filename, ip.String())
