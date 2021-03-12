@@ -78,3 +78,24 @@ run: ${binary}
 test:
 	docker-compose up -d --build cacher
 endif
+
+vet: # go vet
+	go vet ./...
+
+go-test: # go test
+	go test -gcflags=-l -coverprofile=cover.out ./...
+	go tool cover -func=cover.out
+	rm -rf cover.out
+
+goimports: # goimports
+	@echo be sure goimports is installed
+	goimports -w .
+
+golangci-lint: # golangci-lint 
+	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
+	golangci-lint run
+
+.PHONY: validate-local
+validate-local: vet go-test goimports golangci-lint # validate-local runs all the same validations and tests that CI run
+	
+	

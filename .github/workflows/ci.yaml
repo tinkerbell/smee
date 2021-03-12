@@ -41,9 +41,9 @@ jobs:
       - name: golangci-lint brought to you by Nix
         run: nix-shell --run 'GOROOT= golangci-lint run -v -D errcheck'
       - name: go test
-        run: go test -v ./...
+        run: go test -v ./... -gcflags=-l
       - name: go test coverage
-        run: go test -coverprofile=coverage.txt ./...
+        run: go test -coverprofile=coverage.txt ./... -gcflags=-l
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
       - name: compile binaries

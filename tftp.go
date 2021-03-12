@@ -66,7 +66,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	// without a tink workflow present.
 	if !j.AllowPxe() {
 		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
-		serveFakeReader(l, filename)
+		return serveFakeReader(l, filename)
 	}
 
 	return j.ServeTFTP(filename, ip.String())
