@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	client     *packet.Client
-	apiBaseURL = env.URL("API_BASE_URL", "https://api.packet.net")
+	client                 *packet.Client
+	apiBaseURL             = env.URL("API_BASE_URL", "https://api.packet.net")
+	provisioningEngineName = env.String("PROVISIONING_ENGINE_NAME", "packet")
 
 	mainlog log.Logger
 
@@ -73,6 +74,7 @@ func main() {
 		mainlog.Fatal(err)
 	}
 	job.SetClient(client)
+	job.SetProvisioningEngineName(provisioningEngineName)
 
 	go func() {
 		mainlog.Info("serving syslog")

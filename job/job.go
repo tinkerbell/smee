@@ -14,10 +14,17 @@ import (
 )
 
 var client *packet.Client
+var provisioningEngineName string
 
 // SetClient sets the client used to interact with the api.
 func SetClient(c *packet.Client) {
 	client = c
+}
+
+// SetProvisioningEngineName sets the provisioning engine name used
+// for this instance of boots
+func SetProvisioningEngineName(engineName string) {
+	provisioningEngineName = engineName
 }
 
 // Job this comment is useless

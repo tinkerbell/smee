@@ -249,6 +249,7 @@ func TestDiscoveryTinkerbell(t *testing.T) {
 			t.Logf("metadata state: %v", d.Metadata.State)
 			t.Logf("metadata bonding_mode: %v", d.Metadata.BondingMode)
 			t.Logf("metadata manufacturer: %v", d.Metadata.Manufacturer)
+			t.Logf("metadata provisioning_engine: %v", d.Metadata.ProvisioningEngine)
 			if d.Instance() != nil {
 				t.Logf("instance: %v", d.Instance())
 				t.Logf("instance id: %s", d.Instance().ID)
@@ -578,6 +579,7 @@ const (
 {
   "id": "fde7c87c-d154-447e-9fce-7eb7bdec90c0",
   "metadata": {
+    "provisioning_engine": "tinkerbell",
     "bonding_mode": 5,
     "custom": {
       "preinstalled_operating_system_version": {},
@@ -634,6 +636,7 @@ const (
 {
   "id": "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a94",
   "metadata": {
+    "provisioning_engine": "tinkerbell",
     "bonding_mode": 5,
     "custom": {
       "preinstalled_operating_system_version": {},
@@ -749,6 +752,7 @@ const (
 	discovered = `
 {
   "id": "1a02e6c4-43e5-4be6-aa00-a8b42e4c770d",
+  "provisioning_engine": "packet",
   "management": {
     "address": "10.250.142.74",
     "gateway": "10.250.142.1",
@@ -772,6 +776,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "d7e1feaf-d6d5-4d6c-8d16-5c6913be2dea",
+  "provisioning_engine": "packet",
   "instance": {},
   "ip_addresses": [
     {
@@ -863,6 +868,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "6300b237-c417-4264-8a0a-58bce33c303f",
+  "provisioning_engine": "packet",
   "instance": {},
   "ip_addresses": [
     {
@@ -980,6 +986,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "506ad180-8692-480d-b6c2-3ec7f8d719ac",
+  "provisioning_engine": "packet",
   "instance": {
     "allow_pxe": true,
     "always_pxe": false,
@@ -1099,6 +1106,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "6300b237-c417-4264-8a0a-58bce33c303f",
+  "provisioning_engine": "packet",
   "instance": {
     "allow_pxe": true,
     "always_pxe": false,
@@ -1228,6 +1236,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "6300b237-c417-4264-8a0a-58bce33c303f",
+  "provisioning_engine": "packet",
   "instance": {
     "allow_pxe": true,
     "always_pxe": false,
@@ -1367,6 +1376,7 @@ const (
   "efi_boot": true,
   "facility_code": "lab1",
   "id": "6300b237-c417-4264-8a0a-58bce33c303f",
+  "provisioning_engine": "packet",
   "instance": {
     "allow_pxe": true,
     "always_pxe": false,
@@ -1510,6 +1520,7 @@ const (
   "efi_boot": false,
   "facility_code": "dfw2",
   "id": "55639911-2278-498c-b364-8b2a62f5493c",
+  "provisioning_engine": "packet",
   "instance": {
     "allow_pxe": false,
     "always_pxe": false,
