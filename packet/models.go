@@ -296,7 +296,8 @@ type Metadata struct {
 		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
 		PrivateSubnets []string        `json:"private_subnets"`
 	} `json:"custom"`
-	Facility Facility `json:"facility"`
+	Facility           Facility `json:"facility"`
+	ProvisioningEngine string   `json:"provisioning_engine"`
 }
 
 // Facility represents the facilty in use
