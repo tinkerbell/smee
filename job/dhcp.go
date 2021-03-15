@@ -90,7 +90,11 @@ func (j Job) isPXEAllowed() bool {
 }
 
 func (j Job) areWeProvisioner() bool {
-	return j.hardware.HardwareProvisioner() == j.ProvisioningEngineName()
+	if len(j.hardware.HardwareProvisioner()) > 0 {
+		return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
+	}
+
+	return true
 }
 
 func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {

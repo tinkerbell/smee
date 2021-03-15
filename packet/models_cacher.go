@@ -22,23 +22,23 @@ type HardwareCacher struct {
 	Name  string        `json:"name"`
 	State HardwareState `json:"state"`
 
-	BondingMode        BondingMode     `json:"bonding_mode"`
-	NetworkPorts       []Port          `json:"network_ports"`
-	Manufacturer       Manufacturer    `json:"manufacturer"`
-	PlanSlug           string          `json:"plan_slug"`
-	PlanVersionSlug    string          `json:"plan_version_slug"`
-	Arch               string          `json:"arch"`
-	FacilityCode       string          `json:"facility_code"`
-	IPMI               IP              `json:"management"`
-	IPs                []IP            `json:"ip_addresses"`
-	PreinstallOS       OperatingSystem `json:"preinstalled_operating_system_version"`
-	PrivateSubnets     []string        `json:"private_subnets,omitempty"`
-	UEFI               bool            `json:"efi_boot"`
-	AllowPXE           bool            `json:"allow_pxe"`
-	AllowWorkflow      bool            `json:"allow_workflow"`
-	ServicesVersion    ServicesVersion `json:"services"`
-	Instance           *Instance       `json:"instance"`
-	ProvisioningEngine string          `json:"provisioning_engine"`
+	BondingMode       BondingMode     `json:"bonding_mode"`
+	NetworkPorts      []Port          `json:"network_ports"`
+	Manufacturer      Manufacturer    `json:"manufacturer"`
+	PlanSlug          string          `json:"plan_slug"`
+	PlanVersionSlug   string          `json:"plan_version_slug"`
+	Arch              string          `json:"arch"`
+	FacilityCode      string          `json:"facility_code"`
+	IPMI              IP              `json:"management"`
+	IPs               []IP            `json:"ip_addresses"`
+	PreinstallOS      OperatingSystem `json:"preinstalled_operating_system_version"`
+	PrivateSubnets    []string        `json:"private_subnets,omitempty"`
+	UEFI              bool            `json:"efi_boot"`
+	AllowPXE          bool            `json:"allow_pxe"`
+	AllowWorkflow     bool            `json:"allow_workflow"`
+	ServicesVersion   ServicesVersion `json:"services"`
+	Instance          *Instance       `json:"instance"`
+	ProvisionerEngine string          `json:"provisioner_engine"`
 }
 
 func (d DiscoveryCacher) Hardware() Hardware {
@@ -310,7 +310,7 @@ func (h HardwareCacher) HardwareManufacturer() string {
 }
 
 func (h HardwareCacher) HardwareProvisioner() string {
-	return h.ProvisioningEngine
+	return h.ProvisionerEngine
 }
 
 func (h HardwareCacher) HardwarePlanSlug() string {

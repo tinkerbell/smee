@@ -14,17 +14,17 @@ import (
 )
 
 var client *packet.Client
-var provisioningEngineName string
+var provisionerEngineName string
 
 // SetClient sets the client used to interact with the api.
 func SetClient(c *packet.Client) {
 	client = c
 }
 
-// SetProvisioningEngineName sets the provisioning engine name used
+// SetProvisionerEngineName sets the provisioning engine name used
 // for this instance of boots
-func SetProvisioningEngineName(engineName string) {
-	provisioningEngineName = engineName
+func SetProvisionerEngineName(engineName string) {
+	provisionerEngineName = engineName
 }
 
 // Job this comment is useless
@@ -49,10 +49,10 @@ func (j Job) AllowPxe() bool {
 	return j.hardware.HardwareAllowPXE(j.mac)
 }
 
-// ProvisioningEngineName returns the current provisioning engine name
-// as defined by the env var PROVISIONING_ENGINE_NAME supplied at runtime
-func (j Job) ProvisioningEngineName() string {
-	return provisioningEngineName
+// ProvisionerEngineName returns the current provisioning engine name
+// as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime
+func (j Job) ProvisionerEngineName() string {
+	return provisionerEngineName
 }
 
 // HasActiveWorkflow fetches workflows for the given hardware and returns

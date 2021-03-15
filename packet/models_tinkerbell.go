@@ -147,7 +147,7 @@ func (h HardwareTinkerbellV1) HardwareIPs() []IP {
 //}
 
 func (h HardwareTinkerbellV1) HardwareProvisioner() string {
-	return h.Metadata.ProvisioningEngine
+	return h.Metadata.ProvisionerEngine
 }
 
 func (h HardwareTinkerbellV1) HardwareManufacturer() string {
