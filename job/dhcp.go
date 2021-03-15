@@ -90,7 +90,7 @@ func (j Job) isPXEAllowed() bool {
 }
 
 func (j Job) areWeProvisioner() bool {
-	if j.hardware.HardwareProvisioner() == j.provisioningEngineName {
+	if j.hardware.HardwareProvisioner() == j.ProvisioningEngineName() {
 		return true
 	}
 
