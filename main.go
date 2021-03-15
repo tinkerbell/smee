@@ -30,7 +30,7 @@ import (
 var (
 	client                 *packet.Client
 	apiBaseURL             = env.URL("API_BASE_URL", "https://api.packet.net")
-	provisioningEngineName = env.String("PROVISIONING_ENGINE_NAME", "packet")
+	provisioningEngineName = env.Get("PROVISIONING_ENGINE_NAME", "packet")
 
 	mainlog log.Logger
 
