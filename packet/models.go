@@ -62,6 +62,7 @@ type Hardware interface {
 	HardwareIPs() []IP
 	Interfaces() []Port // TODO: to be updated
 	HardwareManufacturer() string
+	HardwareProvisioner() string
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
 	HardwareState() HardwareState

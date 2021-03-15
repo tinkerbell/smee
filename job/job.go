@@ -49,6 +49,12 @@ func (j Job) AllowPxe() bool {
 	return j.hardware.HardwareAllowPXE(j.mac)
 }
 
+// ProvisioningEngineName returns the current provisioning engine name
+// as defined by the env var PROVISIONING_ENGINE_NAME supplied at runtime
+func (j Job) ProvisioningEngineName() string {
+	return provisioningEngineName
+}
+
 // HasActiveWorkflow fetches workflows for the given hardware and returns
 // the status true if there is a pending (active) workflow
 func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
