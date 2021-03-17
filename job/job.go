@@ -14,10 +14,17 @@ import (
 )
 
 var client *packet.Client
+var provisionerEngineName string
 
 // SetClient sets the client used to interact with the api.
 func SetClient(c *packet.Client) {
 	client = c
+}
+
+// SetProvisionerEngineName sets the provisioning engine name used
+// for this instance of boots
+func SetProvisionerEngineName(engineName string) {
+	provisionerEngineName = engineName
 }
 
 // Job this comment is useless
@@ -40,6 +47,12 @@ type Job struct {
 // in tink server defined at network.interfaces[].netboot.allow_pxe
 func (j Job) AllowPxe() bool {
 	return j.hardware.HardwareAllowPXE(j.mac)
+}
+
+// ProvisionerEngineName returns the current provisioning engine name
+// as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime
+func (j Job) ProvisionerEngineName() string {
+	return provisionerEngineName
 }
 
 // HasActiveWorkflow fetches workflows for the given hardware and returns

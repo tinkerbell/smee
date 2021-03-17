@@ -117,6 +117,34 @@ func TestAllowPXE(t *testing.T) {
 	}
 }
 
+func TestAreWeProvisioner(t *testing.T) {
+	for _, tt := range []struct {
+		want              bool
+		ProvisionerEngine string
+		env               string
+	}{
+		{want: true, ProvisionerEngine: "tinkerbell", env: "tinkerbell"},
+		{want: false, ProvisionerEngine: "tinkerbell", env: "packet"},
+		{want: true, ProvisionerEngine: "", env: "packet"},
+		{want: false, ProvisionerEngine: "tinkerbell", env: ""},
+	} {
+		t.Logf("want=%t, ProvisionerEngine=%s env=%s",
+			tt.want, tt.ProvisionerEngine, tt.env)
+		j := Job{
+			hardware: &packet.HardwareTinkerbellV1{
+				Metadata: packet.Metadata{
+					ProvisionerEngine: tt.ProvisionerEngine,
+				},
+			},
+		}
+		SetProvisionerEngineName(tt.env)
+		got := j.areWeProvisioner()
+		if got != tt.want {
+			t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
+		}
+	}
+}
+
 func TestIsSpecialOS(t *testing.T) {
 	t.Run("nil instance", func(t *testing.T) {
 		special := IsSpecialOS(nil)

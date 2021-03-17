@@ -62,6 +62,7 @@ type Hardware interface {
 	HardwareIPs() []IP
 	Interfaces() []Port // TODO: to be updated
 	HardwareManufacturer() string
+	HardwareProvisioner() string
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
 	HardwareState() HardwareState
@@ -296,7 +297,8 @@ type Metadata struct {
 		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
 		PrivateSubnets []string        `json:"private_subnets"`
 	} `json:"custom"`
-	Facility Facility `json:"facility"`
+	Facility          Facility `json:"facility"`
+	ProvisionerEngine string   `json:"provisioner_engine"`
 }
 
 // Facility represents the facilty in use

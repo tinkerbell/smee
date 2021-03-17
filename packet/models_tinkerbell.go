@@ -146,6 +146,10 @@ func (h HardwareTinkerbellV1) HardwareIPs() []IP {
 //	return h.DHCP.IP // is this correct?
 //}
 
+func (h HardwareTinkerbellV1) HardwareProvisioner() string {
+	return h.Metadata.ProvisionerEngine
+}
+
 func (h HardwareTinkerbellV1) HardwareManufacturer() string {
 	return h.Metadata.Manufacturer.Slug
 }
