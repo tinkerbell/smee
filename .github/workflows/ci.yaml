@@ -70,7 +70,6 @@ jobs:
         with:
           tags: ci-image-build:sha-${{github.sha}}
           cache-from: type=registry,ref=${QUAY_REPO}:latest
-          cache-to: type=inline
           platforms: ${{env.platforms}}
 
       - name: Export Images
