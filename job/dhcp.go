@@ -31,6 +31,7 @@ func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
 	// If we are not the chosen provisioner for this piece of hardware
 	// do not respond to the DHCP request
 	if !j.areWeProvisioner() {
+		j.With("dhcp", j.ProvisionerEngineName(), "hw", j.hardware.HardwareProvisioner()).Info("We are not the provisioner")
 		return false
 	}
 
