@@ -11,32 +11,32 @@ MAKEFLAGS += --no-builtin-rules
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
-binary := boots
-.PHONY: all ${binary} crosscompile dc gen run test
-all: ${binary}
+.PHONY: all boots crosscompile dc gen run test
+all: boots
 
 CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
-crosscompile: boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7
+crosscompile: boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7 ## Compile boots for all architectures
 boots-linux-386:   FLAGS=GOARCH=386
 boots-linux-amd64: FLAGS=GOARCH=amd64
 boots-linux-arm64: FLAGS=GOARCH=arm64
 boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
-boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: ${binary}
+boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: boots
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-${binary}: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go
+boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go ## Compile boots for host OS and Architecture
 	go build -v -ldflags="-X main.GitRev=${GitRev}"
 
 ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin
 export GOBIN
 endif
+bindata: ipxe/bindata.go ## Build and generate embedded iPXE binaries
 ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
 	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
 	gofmt -w $@
@@ -50,7 +50,7 @@ ipxe/bin/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
 ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
 	cp $^ $@
 
-ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk
+ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 	mkdir -p $(@D)
 	curl -fL https://github.com/ipxe/ipxe/archive/${ipxev}.tar.gz > $@
 	echo "${ipxeh}  $@" | sha512sum -c
@@ -66,22 +66,24 @@ ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ip
 	cp ${ipxeconfigs} $(@D)
 	cd $(@D) && ../../build.sh $$t ${ipxev}
 
-test:
+test: ## Run go test
 	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
 
-coverage: test
+coverage: test ## Show test coverage
 	go tool cover -func=coverage.txt
 	
-vet: # go vet
+vet: ## Run go vet
 	go vet ./...
 
-goimports: # goimports
+goimports: ## Run goimports
 	@echo be sure goimports is installed
 	goimports -w .
 
-golangci-lint: # golangci-lint 
+golangci-lint: ## Run golangci-lint 
 	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
 	golangci-lint run
 
-validate-local: vet coverage goimports golangci-lint # validate-local runs all the same validations and tests that CI run
+validate-local: vet coverage goimports golangci-lint ## Runs all the same validations and tests that run in CI
 	
+help: ## Print this help
+	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
