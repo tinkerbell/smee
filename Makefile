@@ -66,26 +66,14 @@ ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ip
 	cp ${ipxeconfigs} $(@D)
 	cd $(@D) && ../../build.sh $$t ${ipxev}
 
-ifeq ($(CI),drone)
-run: ${binary}
-	${binary}
 test:
-	go test -race -coverprofile=coverage.txt -covermode=atomic ${TEST_ARGS} ./...
-else
-run: ${binary}
-	docker-compose up -d --build cacher
-	docker-compose up --build boots
-test:
-	docker-compose up -d --build cacher
-endif
+	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
 
+coverage: test
+	go tool cover -func=coverage.txt
+	
 vet: # go vet
 	go vet ./...
-
-go-test: # go test
-	go test -gcflags=-l -coverprofile=cover.out ./...
-	go tool cover -func=cover.out
-	rm -rf cover.out
 
 goimports: # goimports
 	@echo be sure goimports is installed
@@ -95,7 +83,5 @@ golangci-lint: # golangci-lint
 	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
 	golangci-lint run
 
-.PHONY: validate-local
-validate-local: vet go-test goimports golangci-lint # validate-local runs all the same validations and tests that CI run
-	
+validate-local: vet coverage goimports golangci-lint # validate-local runs all the same validations and tests that CI run
 	
