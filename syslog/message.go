@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//go:generate stringer -type=facility
 type facility byte
 
 const (
@@ -37,33 +38,7 @@ const (
 	local7
 )
 
-var facilityStrings = map[facility]string{
-	kern:     "kern",
-	user:     "user",
-	mail:     "mail",
-	daemon:   "daemon",
-	auth:     "auth",
-	syslog:   "syslog",
-	lpr:      "lpr",
-	news:     "news",
-	uucp:     "uucp",
-	clock:    "clock",
-	authpriv: "authpriv",
-	ftp:      "ftp",
-	ntp:      "ntp",
-	audit:    "audit",
-	alert:    "alert",
-	cron:     "cron",
-	local0:   "local0",
-	local1:   "local1",
-	local2:   "local2",
-	local3:   "local3",
-	local4:   "local4",
-	local5:   "local5",
-	local6:   "local6",
-	local7:   "local7",
-}
-
+//go:generate stringer -type=severity
 type severity byte
 
 const (
@@ -76,17 +51,6 @@ const (
 	INFO
 	DEBUG
 )
-
-var severityStrings = map[severity]string{
-	EMERG:   "EMERG",
-	ALERT:   "ALERT",
-	CRIT:    "CRIT",
-	ERR:     "ERR",
-	WARNING: "WARNING",
-	NOTICE:  "NOTICE",
-	INFO:    "INFO",
-	DEBUG:   "DEBUG",
-}
 
 type message struct {
 	buf  [1024]byte
@@ -133,16 +97,8 @@ func (m *message) String() string {
 		fields = append(fields, "host="+m.host.String())
 	}
 
-	facility := m.Facility()
-	if s, ok := facilityStrings[facility]; ok {
-		fields = append(fields, "facility="+s)
-	} else {
-		fields = append(fields, fmt.Sprintf("facility=%d", facility))
-	}
-
-	if severity := m.Severity(); severity < 3 {
-		fields = append(fields, "severity="+severityStrings[severity])
-	}
+	fields = append(fields, "facility="+m.Facility().String())
+	fields = append(fields, "severity="+m.Severity().String())
 
 	if m.app != nil {
 		fields = append(fields, fmt.Sprintf("app-name=%s", m.app))
@@ -347,7 +303,7 @@ func (m *message) reset() {
 }
 
 func (m *message) trimSeverityPrefix() {
-	prefix := []byte(severityStrings[m.Severity()] + ": ")
+	prefix := []byte(m.Severity().String() + ": ")
 	m.msg = bytes.TrimPrefix(m.msg, prefix)
 }
 
