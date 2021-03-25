@@ -14,14 +14,13 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/packethost/cacher v0.0.0-20200825140532-0b62e6726807
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
-	github.com/packethost/pkg v0.0.0-20200903155310-0433e0605550
-	github.com/pkg/errors v0.8.1
+	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.6.0
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/stretchr/testify v1.6.1
 	github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd
 	github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303
-	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
@@ -32,7 +31,6 @@ require (
 	google.golang.org/genproto v0.0.0-20200921165018-b9da36f5f452 // indirect
 	google.golang.org/grpc v1.32.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
-	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3

@@ -351,6 +351,8 @@ github.com/packethost/pkg v0.0.0-20200807181840-a2cb6bbc41b9 h1:BikdQN3TbmCk9uMY
 github.com/packethost/pkg v0.0.0-20200807181840-a2cb6bbc41b9/go.mod h1:GSv7cTtIjns4yc0pyajaM1RE/KE4djJONoblFIRDrxA=
 github.com/packethost/pkg v0.0.0-20200903155310-0433e0605550 h1:/ojL7LAVjyH1MY+db0+j6rcWU3UWWpzHksYFsHWs9vQ=
 github.com/packethost/pkg v0.0.0-20200903155310-0433e0605550/go.mod h1:GSv7cTtIjns4yc0pyajaM1RE/KE4djJONoblFIRDrxA=
+github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0 h1:MVbXLrf9K4rWYp8/DIhde+U2iGaafqjSDd1yxhzcpEc=
+github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0/go.mod h1:lc8ecJ4Rj8SJUf4kjMkgiHk/MH0MR2lLAL+Qs4VeMco=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3 h1:QcUVLV3NdkCVv4DxQkhgkxTsRvuXn+ZuSqD93mQYouc=
 github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3/go.mod h1:nt3WBqCaQsbnxYVBoB4pF+F584z9PjdSVm29iu4gIBg=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
@@ -364,6 +366,8 @@ github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/profile v1.2.1/go.mod h1:hJw3o1OdXxsrSjjVksARp5W95eeEaEfptyVZyv6JUPA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
