@@ -8,42 +8,84 @@ import (
 	"time"
 )
 
-var facilityStrings = map[byte]string{
-	0:  "kern",
-	1:  "user",
-	2:  "mail",
-	3:  "daemon",
-	4:  "auth",
-	5:  "syslog",
-	6:  "lpr",
-	7:  "news",
-	8:  "uucp",
-	9:  "clock",
-	10: "authpriv",
-	11: "ftp",
-	12: "ntp",
-	13: "audit",
-	14: "alert",
-	15: "cron",
-	16: "local0",
-	17: "local1",
-	18: "local2",
-	19: "local3",
-	20: "local4",
-	21: "local5",
-	22: "local6",
-	23: "local7",
+type facility byte
+
+const (
+	kern facility = iota
+	user
+	mail
+	daemon
+	auth
+	syslog
+	lpr
+	news
+	uucp
+	clock
+	authpriv
+	ftp
+	ntp
+	audit
+	alert
+	cron
+	local0
+	local1
+	local2
+	local3
+	local4
+	local5
+	local6
+	local7
+)
+
+var facilityStrings = map[facility]string{
+	kern:     "kern",
+	user:     "user",
+	mail:     "mail",
+	daemon:   "daemon",
+	auth:     "auth",
+	syslog:   "syslog",
+	lpr:      "lpr",
+	news:     "news",
+	uucp:     "uucp",
+	clock:    "clock",
+	authpriv: "authpriv",
+	ftp:      "ftp",
+	ntp:      "ntp",
+	audit:    "audit",
+	alert:    "alert",
+	cron:     "cron",
+	local0:   "local0",
+	local1:   "local1",
+	local2:   "local2",
+	local3:   "local3",
+	local4:   "local4",
+	local5:   "local5",
+	local6:   "local6",
+	local7:   "local7",
 }
 
-var severityStrings = map[byte]string{
-	0: "EMERG",
-	1: "ALERT",
-	2: "CRIT",
-	3: "ERR",
-	4: "WARNING",
-	5: "NOTICE",
-	6: "INFO",
-	7: "DEBUG",
+type severity byte
+
+const (
+	EMERG severity = iota
+	ALERT
+	CRIT
+	ERR
+	WARNING
+	NOTICE
+	INFO
+	DEBUG
+)
+
+var severityStrings = map[severity]string{
+	EMERG:   "EMERG",
+	ALERT:   "ALERT",
+	CRIT:    "CRIT",
+	ERR:     "ERR",
+	WARNING: "WARNING",
+	NOTICE:  "NOTICE",
+	INFO:    "INFO",
+	DEBUG:   "DEBUG",
 }
 
 type message struct {
@@ -61,16 +103,16 @@ type message struct {
 	msg      []byte
 }
 
-func (m *message) Facility() byte {
-	return m.priority / 8
+func (m *message) Facility() facility {
+	return facility(m.priority / 8)
 }
 
 func (m *message) Host() string {
 	return m.host.String()
 }
 
-func (m *message) Severity() byte {
-	return m.priority % 8
+func (m *message) Severity() severity {
+	return severity(m.priority % 8)
 }
 
 var msgCleanup = strings.NewReplacer([]string{"\b", ""}...)

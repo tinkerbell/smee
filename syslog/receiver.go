@@ -119,7 +119,7 @@ func (r *Receiver) run() {
 func (r *Receiver) runParser() {
 	for m := range r.parse {
 		if m.parse() {
-			loggerFuncs[m.Severity()](m)
+			loggerFuncs[byte(m.Severity())](m)
 		} else {
 			sysloglog.Debug(m)
 		}
