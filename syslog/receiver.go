@@ -10,19 +10,7 @@ import (
 	"github.com/tinkerbell/boots/conf"
 )
 
-var (
-	syslogAddr  = conf.SyslogBind
-	loggerFuncs = map[byte]func(...interface{}){
-		0: sysloglog.Info,
-		1: sysloglog.Info,
-		2: sysloglog.Info,
-		3: sysloglog.Info,
-		4: sysloglog.Info,
-		5: sysloglog.Info,
-		6: sysloglog.Info,
-		7: sysloglog.Debug,
-	}
-)
+var syslogAddr = conf.SyslogBind
 
 func init() {
 	flag.StringVar(&syslogAddr, "syslog-addr", syslogAddr, "IP and port to listen on for syslog messages.")
@@ -119,7 +107,11 @@ func (r *Receiver) run() {
 func (r *Receiver) runParser() {
 	for m := range r.parse {
 		if m.parse() {
-			loggerFuncs[byte(m.Severity())](m)
+			if m.Severity() == DEBUG {
+				sysloglog.Debug(m)
+			} else {
+				sysloglog.Info(m)
+			}
 		} else {
 			sysloglog.Debug(m)
 		}
