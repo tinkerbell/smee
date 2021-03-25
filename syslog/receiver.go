@@ -11,9 +11,17 @@ import (
 )
 
 var (
-	syslogAddr = conf.SyslogBind
-
-	loggerFuncs map[byte]func(...interface{})
+	syslogAddr  = conf.SyslogBind
+	loggerFuncs = map[byte]func(...interface{}){
+		0: sysloglog.Info,
+		1: sysloglog.Info,
+		2: sysloglog.Info,
+		3: sysloglog.Info,
+		4: sysloglog.Info,
+		5: sysloglog.Info,
+		6: sysloglog.Info,
+		7: sysloglog.Debug,
+	}
 )
 
 func init() {
