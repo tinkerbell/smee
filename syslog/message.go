@@ -8,43 +8,49 @@ import (
 	"time"
 )
 
-var facilityStrings = map[byte]string{
-	0:  "kern",
-	1:  "user",
-	2:  "mail",
-	3:  "daemon",
-	4:  "auth",
-	5:  "syslog",
-	6:  "lpr",
-	7:  "news",
-	8:  "uucp",
-	9:  "clock",
-	10: "authpriv",
-	11: "ftp",
-	12: "ntp",
-	13: "audit",
-	14: "alert",
-	15: "cron",
-	16: "local0",
-	17: "local1",
-	18: "local2",
-	19: "local3",
-	20: "local4",
-	21: "local5",
-	22: "local6",
-	23: "local7",
-}
+//go:generate stringer -type=facility
+type facility byte
 
-var severityStrings = map[byte]string{
-	0: "EMERG",
-	1: "ALERT",
-	2: "CRIT",
-	3: "ERR",
-	4: "WARNING",
-	5: "NOTICE",
-	6: "INFO",
-	7: "DEBUG",
-}
+const (
+	kern facility = iota
+	user
+	mail
+	daemon
+	auth
+	syslog
+	lpr
+	news
+	uucp
+	clock
+	authpriv
+	ftp
+	ntp
+	audit
+	alert
+	cron
+	local0
+	local1
+	local2
+	local3
+	local4
+	local5
+	local6
+	local7
+)
+
+//go:generate stringer -type=severity
+type severity byte
+
+const (
+	EMERG severity = iota
+	ALERT
+	CRIT
+	ERR
+	WARNING
+	NOTICE
+	INFO
+	DEBUG
+)
 
 type message struct {
 	buf  [1024]byte
@@ -61,16 +67,16 @@ type message struct {
 	msg      []byte
 }
 
-func (m *message) Facility() byte {
-	return m.priority / 8
+func (m *message) Facility() facility {
+	return facility(m.priority / 8)
 }
 
 func (m *message) Host() string {
 	return m.host.String()
 }
 
-func (m *message) Severity() byte {
-	return m.priority % 8
+func (m *message) Severity() severity {
+	return severity(m.priority % 8)
 }
 
 var msgCleanup = strings.NewReplacer([]string{"\b", ""}...)
@@ -91,16 +97,8 @@ func (m *message) String() string {
 		fields = append(fields, "host="+m.host.String())
 	}
 
-	facility := m.Facility()
-	if s, ok := facilityStrings[facility]; ok {
-		fields = append(fields, "facility="+s)
-	} else {
-		fields = append(fields, fmt.Sprintf("facility=%d", facility))
-	}
-
-	if severity := m.Severity(); severity < 3 {
-		fields = append(fields, "severity="+severityStrings[severity])
-	}
+	fields = append(fields, "facility="+m.Facility().String())
+	fields = append(fields, "severity="+m.Severity().String())
 
 	if m.app != nil {
 		fields = append(fields, fmt.Sprintf("app-name=%s", m.app))
@@ -305,7 +303,7 @@ func (m *message) reset() {
 }
 
 func (m *message) trimSeverityPrefix() {
-	prefix := []byte(severityStrings[m.Severity()] + ": ")
+	prefix := []byte(m.Severity().String() + ": ")
 	m.msg = bytes.TrimPrefix(m.msg, prefix)
 }
 
