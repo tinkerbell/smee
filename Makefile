@@ -5,9 +5,9 @@ MAKEFLAGS += --no-builtin-rules
 # This avoids a failure to then skip building on next run if the output is created by shell redirection for example
 # Not really necessary for now, but just good to have already if it becomes necessary later.
 .DELETE_ON_ERROR:
-# Treat the whole recipe as a one shell script/invocation instead of one-per-line 
+# Treat the whole recipe as a one shell script/invocation instead of one-per-line
 .ONESHELL:
-# Use bash instead of plain sh 
+# Use bash instead of plain sh
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
@@ -25,6 +25,7 @@ boots-linux-arm64: FLAGS=GOARCH=arm64
 boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: boots
+	GOOS=linux go generate ./
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
@@ -71,7 +72,7 @@ test: ## Run go test
 
 coverage: test ## Show test coverage
 	go tool cover -func=coverage.txt
-	
+
 vet: ## Run go vet
 	go vet ./...
 
@@ -79,11 +80,11 @@ goimports: ## Run goimports
 	@echo be sure goimports is installed
 	goimports -w .
 
-golangci-lint: ## Run golangci-lint 
+golangci-lint: ## Run golangci-lint
 	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
 	golangci-lint run
 
 validate-local: vet coverage goimports golangci-lint ## Runs all the same validations and tests that run in CI
-	
+
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
