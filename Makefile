@@ -25,13 +25,15 @@ boots-linux-arm64: FLAGS=GOARCH=arm64
 boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: boots
-	GOOS=linux go generate ./...
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go ## Compile boots for host OS and Architecture
+boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go ## Compile boots for host OS and Architecture
 	go build -v -ldflags="-X main.GitRev=${GitRev}"
+
+syslog/%_string.go:
+	go generate -run="$*" ./...
 
 ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin
