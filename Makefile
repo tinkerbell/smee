@@ -25,7 +25,7 @@ boots-linux-arm64: FLAGS=GOARCH=arm64
 boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: boots
-	GOOS=linux go generate ./
+	GOOS=linux go generate ./...
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
