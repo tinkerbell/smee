@@ -12,7 +12,7 @@ SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
 .PHONY: all boots crosscompile dc gen run test
-all: boots
+all: help
 
 CGO_ENABLED := 0
 export CGO_ENABLED
