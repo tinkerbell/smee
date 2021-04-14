@@ -18,19 +18,20 @@ CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
-crosscompile: boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7 ## Compile boots for all architectures
-boots-linux-386:   FLAGS=GOARCH=386
-boots-linux-amd64: FLAGS=GOARCH=amd64
-boots-linux-arm64: FLAGS=GOARCH=arm64
-boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
-boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
-boots-linux-386 boots-linux-amd64 boots-linux-arm64 boots-linux-armv6 boots-linux-armv7: boots
-	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@
+crosscompile: cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7 ## Compile boots for all architectures
+cmd/boots/boots-linux-386:   FLAGS=GOARCH=386
+cmd/boots/boots-linux-amd64: FLAGS=GOARCH=amd64
+cmd/boots/boots-linux-arm64: FLAGS=GOARCH=arm64
+cmd/boots/boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
+cmd/boots/boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
+cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7: boots
+	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go ## Compile boots for host OS and Architecture
-	go build -v -ldflags="-X main.GitRev=${GitRev}"
+boots: cmd/boots/boots ## Compile boots for host OS and Architecture
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
+	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 syslog/%_string.go:
 	go generate -run="$*" ./...
