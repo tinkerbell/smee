@@ -11,7 +11,7 @@ MAKEFLAGS += --no-builtin-rules
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
-.PHONY: all boots crosscompile dc gen run test
+.PHONY: all boots crosscompile dc image gen run test
 all: help
 
 CGO_ENABLED := 0
@@ -26,6 +26,9 @@ cmd/boots/boots-linux-armv6: FLAGS=GOARCH=arm GOARM=6
 cmd/boots/boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7: boots
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+
+image: cmd/boots/boots-linux-amd64
+	docker build -t boots .
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
