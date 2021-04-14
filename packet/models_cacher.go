@@ -10,6 +10,8 @@ import (
 
 // models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
 
+//go:generate mockgen -destination mock_cacher/cacher_mock.go github.com/packethost/cacher/protos/cacher CacherClient
+
 // DiscoveryCacher presents the structure for old data model
 type DiscoveryCacher struct {
 	*HardwareCacher

@@ -39,11 +39,18 @@ tools: $(toolsBins)
 $(toolsBins): tools.go
 	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
 	
-generated_files := ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
+generated_files := \
+	ipxe/bindata.go \
+	packet/mock_cacher/cacher_mock.go \
+	packet/mock_workflow/workflow_mock.go \
+	syslog/facility_string.go \
+	syslog/severity_string.go \
+	
 .PHONY: $(generated_files)
 
 ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
 $(filter %_string.go,$(generated_files)): bin/stringer
+$(filter %_mock.go,$(generated_files)): bin/mockgen
 $(generated_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
