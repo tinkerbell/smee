@@ -26,7 +26,7 @@ cmd/boots/boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7: boots
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
-generated_files := packet/mock_cacher/cacher_mock.go packet/mock_workflow/workflow_mock.go syslog/facility_string.go syslog/severity_string.go
+generated_files := packet/mock_cacher/cacher_mock.go packet/mock_hardware/hardware_mock.go packet/mock_workflow/workflow_mock.go syslog/facility_string.go syslog/severity_string.go
 .PHONY: $(generated_files)
 $(generated_files):
 	go generate -run="$(@F)" ./...

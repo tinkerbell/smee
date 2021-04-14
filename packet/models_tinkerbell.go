@@ -10,6 +10,7 @@ import (
 )
 
 //go:generate mockgen -destination mock_workflow/workflow_mock.go github.com/tinkerbell/tink/protos/workflow WorkflowServiceClient
+//go:generate mockgen -destination mock_hardware/hardware_mock.go github.com/tinkerbell/tink/protos/hardware HardwareServiceClient
 
 // models_tinkerbell.go contains the interface methods specific to DiscoveryTinkerbell and HardwareTinkerbell structs
 
