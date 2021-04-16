@@ -26,6 +26,12 @@ cmd/boots/boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7: boots
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
+toolsBins := $(addprefix bin/,$(shell sed -n '/^\s*_/ s|.*/\(.*\)"|\1|p' tools.go | tr '\n' ' '))
+tools: $(toolsBins)
+
+$(toolsBins): tools.go
+	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
+	
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
