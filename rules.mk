@@ -44,10 +44,10 @@ $(toolsBins): tools.go
 cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
-syslog/%_string.go:
+syslog/%_string.go: bin/stringer
 	go generate -run="$*" ./...
 
-ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
 	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
 	gofmt -w $@
 
