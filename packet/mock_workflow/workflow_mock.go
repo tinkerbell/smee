@@ -13,30 +13,30 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// MockWorkflowServiceClient is a mock of WorkflowServiceClient interface
+// MockWorkflowServiceClient is a mock of WorkflowServiceClient interface.
 type MockWorkflowServiceClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockWorkflowServiceClientMockRecorder
 }
 
-// MockWorkflowServiceClientMockRecorder is the mock recorder for MockWorkflowServiceClient
+// MockWorkflowServiceClientMockRecorder is the mock recorder for MockWorkflowServiceClient.
 type MockWorkflowServiceClientMockRecorder struct {
 	mock *MockWorkflowServiceClient
 }
 
-// NewMockWorkflowServiceClient creates a new mock instance
+// NewMockWorkflowServiceClient creates a new mock instance.
 func NewMockWorkflowServiceClient(ctrl *gomock.Controller) *MockWorkflowServiceClient {
 	mock := &MockWorkflowServiceClient{ctrl: ctrl}
 	mock.recorder = &MockWorkflowServiceClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWorkflowServiceClient) EXPECT() *MockWorkflowServiceClientMockRecorder {
 	return m.recorder
 }
 
-// CreateWorkflow mocks base method
+// CreateWorkflow mocks base method.
 func (m *MockWorkflowServiceClient) CreateWorkflow(arg0 context.Context, arg1 *workflow.CreateRequest, arg2 ...grpc.CallOption) (*workflow.CreateResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -49,14 +49,14 @@ func (m *MockWorkflowServiceClient) CreateWorkflow(arg0 context.Context, arg1 *w
 	return ret0, ret1
 }
 
-// CreateWorkflow indicates an expected call of CreateWorkflow
+// CreateWorkflow indicates an expected call of CreateWorkflow.
 func (mr *MockWorkflowServiceClientMockRecorder) CreateWorkflow(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkflow", reflect.TypeOf((*MockWorkflowServiceClient)(nil).CreateWorkflow), varargs...)
 }
 
-// DeleteWorkflow mocks base method
+// DeleteWorkflow mocks base method.
 func (m *MockWorkflowServiceClient) DeleteWorkflow(arg0 context.Context, arg1 *workflow.GetRequest, arg2 ...grpc.CallOption) (*workflow.Empty, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -69,14 +69,14 @@ func (m *MockWorkflowServiceClient) DeleteWorkflow(arg0 context.Context, arg1 *w
 	return ret0, ret1
 }
 
-// DeleteWorkflow indicates an expected call of DeleteWorkflow
+// DeleteWorkflow indicates an expected call of DeleteWorkflow.
 func (mr *MockWorkflowServiceClientMockRecorder) DeleteWorkflow(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkflow", reflect.TypeOf((*MockWorkflowServiceClient)(nil).DeleteWorkflow), varargs...)
 }
 
-// GetWorkflow mocks base method
+// GetWorkflow mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflow(arg0 context.Context, arg1 *workflow.GetRequest, arg2 ...grpc.CallOption) (*workflow.Workflow, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -89,14 +89,14 @@ func (m *MockWorkflowServiceClient) GetWorkflow(arg0 context.Context, arg1 *work
 	return ret0, ret1
 }
 
-// GetWorkflow indicates an expected call of GetWorkflow
+// GetWorkflow indicates an expected call of GetWorkflow.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflow(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflow", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflow), varargs...)
 }
 
-// GetWorkflowActions mocks base method
+// GetWorkflowActions mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowActions(arg0 context.Context, arg1 *workflow.WorkflowActionsRequest, arg2 ...grpc.CallOption) (*workflow.WorkflowActionList, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -109,14 +109,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowActions(arg0 context.Context, arg
 	return ret0, ret1
 }
 
-// GetWorkflowActions indicates an expected call of GetWorkflowActions
+// GetWorkflowActions indicates an expected call of GetWorkflowActions.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowActions(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowActions", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowActions), varargs...)
 }
 
-// GetWorkflowContext mocks base method
+// GetWorkflowContext mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowContext(arg0 context.Context, arg1 *workflow.GetRequest, arg2 ...grpc.CallOption) (*workflow.WorkflowContext, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -129,14 +129,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowContext(arg0 context.Context, arg
 	return ret0, ret1
 }
 
-// GetWorkflowContext indicates an expected call of GetWorkflowContext
+// GetWorkflowContext indicates an expected call of GetWorkflowContext.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowContext(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowContext", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowContext), varargs...)
 }
 
-// GetWorkflowContextList mocks base method
+// GetWorkflowContextList mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowContextList(arg0 context.Context, arg1 *workflow.WorkflowContextRequest, arg2 ...grpc.CallOption) (*workflow.WorkflowContextList, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -149,14 +149,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowContextList(arg0 context.Context,
 	return ret0, ret1
 }
 
-// GetWorkflowContextList indicates an expected call of GetWorkflowContextList
+// GetWorkflowContextList indicates an expected call of GetWorkflowContextList.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowContextList(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowContextList", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowContextList), varargs...)
 }
 
-// GetWorkflowContexts mocks base method
+// GetWorkflowContexts mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowContexts(arg0 context.Context, arg1 *workflow.WorkflowContextRequest, arg2 ...grpc.CallOption) (workflow.WorkflowService_GetWorkflowContextsClient, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -169,14 +169,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowContexts(arg0 context.Context, ar
 	return ret0, ret1
 }
 
-// GetWorkflowContexts indicates an expected call of GetWorkflowContexts
+// GetWorkflowContexts indicates an expected call of GetWorkflowContexts.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowContexts(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowContexts", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowContexts), varargs...)
 }
 
-// GetWorkflowData mocks base method
+// GetWorkflowData mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowData(arg0 context.Context, arg1 *workflow.GetWorkflowDataRequest, arg2 ...grpc.CallOption) (*workflow.GetWorkflowDataResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -189,14 +189,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowData(arg0 context.Context, arg1 *
 	return ret0, ret1
 }
 
-// GetWorkflowData indicates an expected call of GetWorkflowData
+// GetWorkflowData indicates an expected call of GetWorkflowData.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowData(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowData", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowData), varargs...)
 }
 
-// GetWorkflowDataVersion mocks base method
+// GetWorkflowDataVersion mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowDataVersion(arg0 context.Context, arg1 *workflow.GetWorkflowDataRequest, arg2 ...grpc.CallOption) (*workflow.GetWorkflowDataResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -209,14 +209,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowDataVersion(arg0 context.Context,
 	return ret0, ret1
 }
 
-// GetWorkflowDataVersion indicates an expected call of GetWorkflowDataVersion
+// GetWorkflowDataVersion indicates an expected call of GetWorkflowDataVersion.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowDataVersion(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowDataVersion", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowDataVersion), varargs...)
 }
 
-// GetWorkflowMetadata mocks base method
+// GetWorkflowMetadata mocks base method.
 func (m *MockWorkflowServiceClient) GetWorkflowMetadata(arg0 context.Context, arg1 *workflow.GetWorkflowDataRequest, arg2 ...grpc.CallOption) (*workflow.GetWorkflowDataResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -229,14 +229,14 @@ func (m *MockWorkflowServiceClient) GetWorkflowMetadata(arg0 context.Context, ar
 	return ret0, ret1
 }
 
-// GetWorkflowMetadata indicates an expected call of GetWorkflowMetadata
+// GetWorkflowMetadata indicates an expected call of GetWorkflowMetadata.
 func (mr *MockWorkflowServiceClientMockRecorder) GetWorkflowMetadata(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowMetadata", reflect.TypeOf((*MockWorkflowServiceClient)(nil).GetWorkflowMetadata), varargs...)
 }
 
-// ListWorkflows mocks base method
+// ListWorkflows mocks base method.
 func (m *MockWorkflowServiceClient) ListWorkflows(arg0 context.Context, arg1 *workflow.Empty, arg2 ...grpc.CallOption) (workflow.WorkflowService_ListWorkflowsClient, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -249,14 +249,14 @@ func (m *MockWorkflowServiceClient) ListWorkflows(arg0 context.Context, arg1 *wo
 	return ret0, ret1
 }
 
-// ListWorkflows indicates an expected call of ListWorkflows
+// ListWorkflows indicates an expected call of ListWorkflows.
 func (mr *MockWorkflowServiceClientMockRecorder) ListWorkflows(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkflows", reflect.TypeOf((*MockWorkflowServiceClient)(nil).ListWorkflows), varargs...)
 }
 
-// ReportActionStatus mocks base method
+// ReportActionStatus mocks base method.
 func (m *MockWorkflowServiceClient) ReportActionStatus(arg0 context.Context, arg1 *workflow.WorkflowActionStatus, arg2 ...grpc.CallOption) (*workflow.Empty, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -269,14 +269,14 @@ func (m *MockWorkflowServiceClient) ReportActionStatus(arg0 context.Context, arg
 	return ret0, ret1
 }
 
-// ReportActionStatus indicates an expected call of ReportActionStatus
+// ReportActionStatus indicates an expected call of ReportActionStatus.
 func (mr *MockWorkflowServiceClientMockRecorder) ReportActionStatus(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportActionStatus", reflect.TypeOf((*MockWorkflowServiceClient)(nil).ReportActionStatus), varargs...)
 }
 
-// ShowWorkflowEvents mocks base method
+// ShowWorkflowEvents mocks base method.
 func (m *MockWorkflowServiceClient) ShowWorkflowEvents(arg0 context.Context, arg1 *workflow.GetRequest, arg2 ...grpc.CallOption) (workflow.WorkflowService_ShowWorkflowEventsClient, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -289,14 +289,14 @@ func (m *MockWorkflowServiceClient) ShowWorkflowEvents(arg0 context.Context, arg
 	return ret0, ret1
 }
 
-// ShowWorkflowEvents indicates an expected call of ShowWorkflowEvents
+// ShowWorkflowEvents indicates an expected call of ShowWorkflowEvents.
 func (mr *MockWorkflowServiceClientMockRecorder) ShowWorkflowEvents(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShowWorkflowEvents", reflect.TypeOf((*MockWorkflowServiceClient)(nil).ShowWorkflowEvents), varargs...)
 }
 
-// UpdateWorkflowData mocks base method
+// UpdateWorkflowData mocks base method.
 func (m *MockWorkflowServiceClient) UpdateWorkflowData(arg0 context.Context, arg1 *workflow.UpdateWorkflowDataRequest, arg2 ...grpc.CallOption) (*workflow.Empty, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -309,7 +309,7 @@ func (m *MockWorkflowServiceClient) UpdateWorkflowData(arg0 context.Context, arg
 	return ret0, ret1
 }
 
-// UpdateWorkflowData indicates an expected call of UpdateWorkflowData
+// UpdateWorkflowData indicates an expected call of UpdateWorkflowData.
 func (mr *MockWorkflowServiceClientMockRecorder) UpdateWorkflowData(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
