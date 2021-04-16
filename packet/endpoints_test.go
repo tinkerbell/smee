@@ -106,7 +106,7 @@ func TestGetWorkflowsFromTink(t *testing.T) {
 			hwID: "Hardware-fake-bde9-812726eff314",
 			wcl: &tw.WorkflowContextList{
 				WorkflowContexts: []*tw.WorkflowContext{
-					&tw.WorkflowContext{
+					{
 						WorkflowId:         "active-fake-workflow-bde9-812726eff314",
 						CurrentActionState: 0,
 					},

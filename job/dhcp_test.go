@@ -2,6 +2,7 @@ package job
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
@@ -14,6 +15,7 @@ func TestSetPXEFilename(t *testing.T) {
 	conf.PublicFQDN = "boots-testing.packet.net"
 
 	var setPXEFilenameTests = []struct {
+		name     string
 		hState   string
 		id       string
 		iState   string
@@ -25,65 +27,73 @@ func TestSetPXEFilename(t *testing.T) {
 		uefi     bool
 		filename string
 	}{
-		{hState: "in_use"},
-		{hState: "in_use", id: "$instance_id", iState: ""},
-		{hState: "in_use", id: "$instance_id", iState: "not_active"},
-		{hState: "in_use", id: "$instance_id", iState: "active"},
-		{hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe"},
-		{hState: "in_use", id: "$instance_id", iState: "active", slug: "custom_ipxe",
+		{name: "just in_use",
+			hState: "in_use"},
+		{name: "no instance state",
+			hState: "in_use", id: "$instance_id", iState: ""},
+		{name: "instance not active",
+			hState: "in_use", id: "$instance_id", iState: "not_active"},
+		{name: "instance active",
+			hState: "in_use", id: "$instance_id", iState: "active"},
+		{name: "active not custom ipxe",
+			hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe"},
+		{name: "active custom ipxe",
+			hState: "in_use", id: "$instance_id", iState: "active", slug: "custom_ipxe",
 			filename: "undionly.kpxe"},
-		{hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
+		{name: "active custom ipxe with allow pxe",
+			hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
 			filename: "undionly.kpxe"},
-
-		{plan: "hua",
-			filename: "snp-hua.efi"},
-		{plan: "2a2",
-			filename: "snp-hua.efi"},
-		{arm: true,
-			filename: "snp-nolacp.efi"},
-		{uefi: true,
-			filename: "ipxe.efi"},
-		{
+		{name: "hua",
+			plan: "hua", filename: "snp-hua.efi"},
+		{name: "2a2",
+			plan: "2a2", filename: "snp-hua.efi"},
+		{name: "arm",
+			arm: true, filename: "snp-nolacp.efi"},
+		{name: "x86 uefi",
+			uefi: true, filename: "ipxe.efi"},
+		{name: "all defaults",
 			filename: "undionly.kpxe"},
-		{packet: true,
-			filename: "/nonexistent"},
-		{packet: true, id: "$instance_id", allowPXE: true,
-			filename: "http://" + conf.PublicFQDN + "/auto.ipxe"},
+		{name: "packet iPXE",
+			packet: true, filename: "/nonexistent"},
+		{name: "packet iPXE PXE allowed",
+			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + conf.PublicFQDN + "/auto.ipxe"},
 	}
 
 	for i, tt := range setPXEFilenameTests {
-		t.Logf("index=%d hState=%q id=%q iState=%q slug=%q plan=%q allowPXE=%v packet=%v arm=%v uefi=%v filename=%q",
-			i, tt.hState, tt.id, tt.iState, tt.slug, tt.plan, tt.allowPXE, tt.packet, tt.arm, tt.uefi, tt.filename)
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("index=%d hState=%q id=%q iState=%q slug=%q plan=%q allowPXE=%v packet=%v arm=%v uefi=%v filename=%q",
+				i, tt.hState, tt.id, tt.iState, tt.slug, tt.plan, tt.allowPXE, tt.packet, tt.arm, tt.uefi, tt.filename)
 
-		if tt.plan == "" {
-			tt.plan = "0"
-		}
+			if tt.plan == "" {
+				tt.plan = "0"
+			}
 
-		instance := &packet.Instance{
-			ID:       tt.id,
-			State:    packet.InstanceState(tt.iState),
-			AllowPXE: tt.allowPXE,
-			OSV: &packet.OperatingSystem{
-				OsSlug: tt.slug,
-			},
-		}
-		j := Job{
-			Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
-			hardware: &packet.HardwareCacher{
-				ID:       "$hardware_id",
-				State:    packet.HardwareState(tt.hState),
-				PlanSlug: "baremetal_" + tt.plan,
-				Instance: instance,
-			},
-			instance: instance,
-		}
-		rep := dhcp4.NewPacket(42)
-		j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
-		filename := string(bytes.TrimRight(rep.File(), "\x00"))
+			instance := &packet.Instance{
+				ID:       tt.id,
+				State:    packet.InstanceState(tt.iState),
+				AllowPXE: tt.allowPXE,
+				OSV: &packet.OperatingSystem{
+					OsSlug: tt.slug,
+				},
+			}
+			j := Job{
+				Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+				hardware: &packet.HardwareCacher{
+					ID:       "$hardware_id",
+					State:    packet.HardwareState(tt.hState),
+					PlanSlug: "baremetal_" + tt.plan,
+					Instance: instance,
+				},
+				instance: instance,
+			}
+			rep := dhcp4.NewPacket(42)
+			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
+			filename := string(bytes.TrimRight(rep.File(), "\x00"))
 
-		if tt.filename != filename {
-			t.Fatalf("unexpected filename want:%q, got:%q", tt.filename, filename)
-		}
+			if tt.filename != filename {
+				t.Fatalf("unexpected filename want:%q, got:%q", tt.filename, filename)
+			}
+		})
 	}
 }
 
@@ -99,21 +109,22 @@ func TestAllowPXE(t *testing.T) {
 		{want: true, hw: false, instance: true, iid: "id"},
 		{want: false, hw: false, instance: false, iid: "id"},
 	} {
-		t.Logf("want=%t, hardware=%t, instance=%t, instance_id=%s",
-			tt.want, tt.hw, tt.instance, tt.iid)
-		j := Job{
-			hardware: &packet.HardwareCacher{
-				AllowPXE: tt.hw,
-			},
-			instance: &packet.Instance{
-				ID:       tt.iid,
-				AllowPXE: tt.instance,
-			},
-		}
-		got := j.isPXEAllowed()
-		if got != tt.want {
-			t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
-		}
+		name := fmt.Sprintf("want=%t, hardware=%t, instance=%t, instance_id=%s", tt.want, tt.hw, tt.instance, tt.iid)
+		t.Run(name, func(t *testing.T) {
+			j := Job{
+				hardware: &packet.HardwareCacher{
+					AllowPXE: tt.hw,
+				},
+				instance: &packet.Instance{
+					ID:       tt.iid,
+					AllowPXE: tt.instance,
+				},
+			}
+			got := j.isPXEAllowed()
+			if got != tt.want {
+				t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
+			}
+		})
 	}
 }
 
@@ -128,20 +139,21 @@ func TestAreWeProvisioner(t *testing.T) {
 		{want: true, ProvisionerEngine: "", env: "packet"},
 		{want: false, ProvisionerEngine: "tinkerbell", env: ""},
 	} {
-		t.Logf("want=%t, ProvisionerEngine=%s env=%s",
-			tt.want, tt.ProvisionerEngine, tt.env)
-		j := Job{
-			hardware: &packet.HardwareTinkerbellV1{
-				Metadata: packet.Metadata{
-					ProvisionerEngine: tt.ProvisionerEngine,
+		name := fmt.Sprintf("want=%t, ProvisionerEngine=%s env=%s", tt.want, tt.ProvisionerEngine, tt.env)
+		t.Run(name, func(t *testing.T) {
+			j := Job{
+				hardware: &packet.HardwareTinkerbellV1{
+					Metadata: packet.Metadata{
+						ProvisionerEngine: tt.ProvisionerEngine,
+					},
 				},
-			},
-		}
-		SetProvisionerEngineName(tt.env)
-		got := j.areWeProvisioner()
-		if got != tt.want {
-			t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
-		}
+			}
+			SetProvisionerEngineName(tt.env)
+			got := j.areWeProvisioner()
+			if got != tt.want {
+				t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
+			}
+		})
 	}
 }
 
