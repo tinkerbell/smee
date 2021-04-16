@@ -21,24 +21,27 @@ var facility = func() string {
 
 func TestScriptPerType(t *testing.T) {
 	for typ, script := range type2pxe {
-		for version, bootScript := range versions {
-			t.Log(typ + ":" + version)
+		t.Run(typ, func(t *testing.T) {
+			for version, bootScript := range versions {
+				t.Run(version, func(t *testing.T) {
 
-			m := job.NewMock(t, typ, facility)
-			m.SetMAC("00:00:ba:dd:be:ef")
+					m := job.NewMock(t, typ, facility)
+					m.SetMAC("00:00:ba:dd:be:ef")
 
-			s := ipxe.Script{}
-			bootScript(m.Job(), &s)
-			got := string(s.Bytes())
+					s := ipxe.Script{}
+					bootScript(m.Job(), &s)
+					got := string(s.Bytes())
 
-			want := fmt.Sprintf(script, version)
-			if !strings.Contains(want, version) {
-				t.Fatalf("expected %s to be present in script:%v", version, want)
+					want := fmt.Sprintf(script, version)
+					if !strings.Contains(want, version) {
+						t.Fatalf("expected %s to be present in script:%v", version, want)
+					}
+					if want != got {
+						t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(want, got))
+					}
+				})
 			}
-			if want != got {
-				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(want, got))
-			}
-		}
+		})
 	}
 }
 
