@@ -39,17 +39,19 @@ tools: $(toolsBins)
 $(toolsBins): tools.go
 	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
 	
+generated_files := ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
+.PHONY: $(generated_files)
+
+ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+$(filter %_string.go,$(generated_files)): bin/stringer
+$(generated_files): bin/goimports
+	go generate -run="$(@F)" ./...
+	goimports -w $@
+
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
-
-syslog/%_string.go: bin/stringer
-	go generate -run="$*" ./...
-
-ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
-	go generate -run="$(@F)" ./...
-	goimports -w $@
 
 include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)

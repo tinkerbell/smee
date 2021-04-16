@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//go:generate stringer -type=facility
+//go:generate stringer -type=facility -output=facility_string.go
 type facility byte
 
 const (
@@ -38,7 +38,7 @@ const (
 	local7
 )
 
-//go:generate stringer -type=severity
+//go:generate stringer -type=severity -output=severity_string.go
 type severity byte
 
 const (
