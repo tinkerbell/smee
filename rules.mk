@@ -48,8 +48,8 @@ syslog/%_string.go: bin/stringer
 	go generate -run="$*" ./...
 
 ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
-	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
-	gofmt -w $@
+	go generate -run="$(@F)" ./...
+	goimports -w $@
 
 include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
