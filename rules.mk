@@ -26,21 +26,39 @@ cmd/boots/boots-linux-armv7: FLAGS=GOARCH=arm GOARM=7
 cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7: boots
 	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
+ifeq ($(origin GOBIN), undefined)
+GOBIN := ${PWD}/bin
+export GOBIN
+PATH := ${GOBIN}:${PATH}
+export PATH
+endif
+
+toolsBins := $(addprefix bin/,$(shell sed -n '/^\s*_/ s|.*/\(.*\)"|\1|p' tools.go | tr '\n' ' '))
+tools: $(toolsBins)
+
+$(toolsBins): tools.go
+	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
+	
+generated_files := \
+	ipxe/bindata.go \
+	packet/mock_cacher/cacher_mock.go \
+	packet/mock_workflow/workflow_mock.go \
+	syslog/facility_string.go \
+	syslog/severity_string.go \
+	
+.PHONY: $(generated_files)
+
+ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+$(filter %_string.go,$(generated_files)): bin/stringer
+$(filter %_mock.go,$(generated_files)): bin/mockgen
+$(generated_files): bin/goimports
+	go generate -run="$(@F)" ./...
+	goimports -w $@
+
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
 cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
-
-syslog/%_string.go:
-	go generate -run="$*" ./...
-
-ifeq ($(origin GOBIN), undefined)
-GOBIN := ${PWD}/bin
-export GOBIN
-endif
-ipxe/bindata.go: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
-	go-bindata -pkg ipxe -prefix ipxe -o $@ $^
-	gofmt -w $@
 
 include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)

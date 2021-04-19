@@ -9,6 +9,8 @@ import (
 	"github.com/tinkerbell/boots/conf"
 )
 
+//go:generate mockgen -destination mock_workflow/workflow_mock.go github.com/tinkerbell/tink/protos/workflow WorkflowServiceClient
+
 // models_tinkerbell.go contains the interface methods specific to DiscoveryTinkerbell and HardwareTinkerbell structs
 
 // DiscoveryTinkerbellV1 presents the structure for tinkerbell's new data model, version 1
