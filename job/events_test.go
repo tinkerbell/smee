@@ -39,53 +39,47 @@ func TestPhoneHome(t *testing.T) {
 	SetClient(packet.NewMockClient(u, nil))
 
 	for name, test := range phoneHomeTests {
-		fmt.Println("test:", name)
-		t.Log("test:", name)
-		reqs = nil
+		t.Run(name, func(t *testing.T) {
+			reqs = nil
 
-		instance := &packet.Instance{
-			ID: test.id,
-			OSV: &packet.OperatingSystem{
-				OsSlug: test.os,
-			},
-		}
-		j := Job{
-			Logger: joblog.With("test", name),
-			mode:   modeInstance,
-			hardware: &packet.HardwareCacher{
-				ID:       "$hardware_id",
-				State:    packet.HardwareState(test.state),
-				Instance: instance,
-			},
-			instance: instance,
-		}
-		bad := !j.phoneHome([]byte(test.event))
-		if bad != test.bad {
-			t.Fatalf("mismatch in expected return from phoneHome, want:%t, got:%t", test.bad, bad)
-		}
-		if bad {
-			continue
-		}
+			instance := &packet.Instance{
+				ID: test.id,
+				OSV: &packet.OperatingSystem{
+					OsSlug: test.os,
+				},
+			}
+			j := Job{
+				Logger: joblog.With("test", name),
+				mode:   modeInstance,
+				hardware: &packet.HardwareCacher{
+					ID:       "$hardware_id",
+					State:    packet.HardwareState(test.state),
+					Instance: instance,
+				},
+				instance: instance,
+			}
+			bad := !j.phoneHome([]byte(test.event))
+			if bad != test.bad {
+				t.Fatalf("mismatch in expected return from phoneHome, want:%t, got:%t", test.bad, bad)
+			}
+			if bad {
+				return
+			}
 
-		/*
-			fmt.Println("reqs:")
-			for _, req := range reqs {
-				fmt.Println(req)
+			if len(test.reqs) != len(reqs) {
+				t.Fatalf("mismatch of api requests want:%d got:%d", len(test.reqs), len(reqs))
 			}
-		*/
-		if len(test.reqs) != len(reqs) {
-			t.Fatalf("mismatch of api requests want:%d got:%d", len(test.reqs), len(reqs))
-		}
-		for i := range reqs {
-			want := test.reqs[i]
-			got := reqs[i]
-			if want.url != got.url {
-				t.Fatalf("mismatch of url in api request want:%q, got:%q", want.url, got.url)
+			for i := range reqs {
+				want := test.reqs[i]
+				got := reqs[i]
+				if want.url != got.url {
+					t.Fatalf("mismatch of url in api request want:%q, got:%q", want.url, got.url)
+				}
+				if want.body != got.body {
+					t.Fatalf("mismatch of body in api request want:%q, got:%q", want.body, got.body)
+				}
 			}
-			if want.body != got.body {
-				t.Fatalf("mismatch of body in api request want:%q, got:%q", want.body, got.body)
-			}
-		}
+		})
 	}
 }
 
