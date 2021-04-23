@@ -377,7 +377,7 @@ func vmnic(j job.Job) string {
 }
 
 func rootpw(j job.Job) string {
-	return j.CryptedPassword()
+	return j.GetPasswordHash()
 }
 
 // We do not support anything other than ESXi 6.5 and above (os slug "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0" etc)
