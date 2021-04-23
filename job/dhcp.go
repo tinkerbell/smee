@@ -86,7 +86,15 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isOuriPXE, isARM, isUEFI)
+		filename := j.getPXEFilename(isOuriPXE, isARM, isUEFI)
+		if filename == "" {
+			err := errors.New("no filename is set")
+			j.Error(err)
+
+			return false
+		}
+		dhcp.SetFilename(rep, filename, conf.PublicIPv4)
+
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -113,16 +121,16 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isOuriPXE, isARM, isUEFI bool) {
+func (j Job) getPXEFilename(isOuriPXE, isARM, isUEFI bool) string {
 	if !j.isPXEAllowed() {
 		if j.instance != nil && j.instance.State == "active" {
 			// We set a filename because if a machine is actually trying to PXE and nothing is sent it may hang for
 			// a while waiting for any possible ProxyDHCP packets and it would delay booting from disks.
 			// This short cuts all that when we know we want to be booting from disk.
-			dhcp.SetFilename(rep, "/pxe-is-not-allowed", conf.PublicIPv4)
+			return "/pxe-is-not-allowed"
 		}
 
-		return
+		return ""
 	}
 
 	var filename string
@@ -136,22 +144,9 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isOuriPXE, isARM, isUEFI bool) {
 		} else {
 			filename = "undionly.kpxe"
 		}
-
-		if filename == "" {
-			j.Error(errors.New("unable to figure out iPXE to serve"))
-
-			return
-		}
 	} else {
 		filename = "http://" + conf.PublicFQDN + "/auto.ipxe"
 	}
 
-	if filename == "" {
-		err := errors.New("no filename is set")
-		j.Error(err)
-
-		return
-	}
-
-	dhcp.SetFilename(rep, filename, conf.PublicIPv4)
+	return filename
 }
