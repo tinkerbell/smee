@@ -81,12 +81,12 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			j.With("dhcp", isUEFI, "job", j.IsUEFI()).Info("uefi mismatch, using dhcp")
 		}
 
-		isPacket := ipxe.IsPacketIPXE(req)
-		if isPacket {
+		isOuriPXE := ipxe.IsOuriPXE(req)
+		if isOuriPXE {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
+		j.setPXEFilename(rep, isOuriPXE, isARM, isUEFI)
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -113,7 +113,7 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
+func (j Job) setPXEFilename(rep *dhcp4.Packet, isOuriPXE, isARM, isUEFI bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
@@ -149,7 +149,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 
 	var filename string
 	var pxeClient bool
-	if !isPacket {
+	if !isOuriPXE {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "snp-hua.efi"
 		} else if isARM {
