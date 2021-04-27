@@ -12,7 +12,7 @@ func TestGetPasswordHash(t *testing.T) {
 		input Job
 		want  string
 	}{
-		"job instance is nil": {input: Job{}, want: ""},
+		"job instance is nil":       {input: Job{}, want: ""},
 		"password hash has a value": {input: Job{instance: &packet.Instance{PasswordHash: "supersecret"}}, want: "supersecret"},
 	}
 
@@ -27,13 +27,12 @@ func TestGetPasswordHash(t *testing.T) {
 	}
 }
 
-
 func TestCryptedPassword(t *testing.T) {
 	tests := map[string]struct {
 		input Job
 		want  string
 	}{
-		"job instance is nil": {input: Job{}, want: ""},
+		"job instance is nil":             {input: Job{}, want: ""},
 		"CryptedRootPassword has a value": {input: Job{instance: &packet.Instance{CryptedRootPassword: "supersecret"}}, want: "supersecret"},
 	}
 
