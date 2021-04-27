@@ -18,10 +18,12 @@ mkShell {
     golangci-lint
     nixfmt
     nodePackages.prettier
-    pkgsCross.aarch64-multiplatform.buildPackages.gcc
     protobuf
     shfmt
     shellcheck
     xz
-  ];
+  ] ++ (if pkgs.stdenv.isDarwin then
+    [ ]
+  else
+    [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ]);
 }
