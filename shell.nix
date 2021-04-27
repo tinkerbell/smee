@@ -22,8 +22,6 @@ mkShell {
     shfmt
     shellcheck
     xz
-  ] ++ (if pkgs.stdenv.isDarwin then
-    [ ]
-  else
-    [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ]);
+  ] ++ lib.optionals stdenv.isLinux
+    [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ];
 }
