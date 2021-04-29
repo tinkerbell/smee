@@ -119,6 +119,8 @@ type Instance struct {
 
 	// Only returned in the first 24 hours
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
+	// Same as CryptedRootPassword. sorry, not my choice. i just work here
+	PasswordHash string `json:"password_hash,omitempty"`
 
 	Tags []string `json:"tags,omitempty"`
 	// Project
