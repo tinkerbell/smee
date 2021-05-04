@@ -16,6 +16,8 @@ image: cmd/boots/boots-linux-amd64 ## Build docker image
 test: gen ## Run go test
 	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
 
+test-ipxe: ipxe/tests ## Run iPXE feature tests
+
 coverage: test ## Show test coverage
 	go tool cover -func=coverage.txt
 

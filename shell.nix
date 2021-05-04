@@ -12,6 +12,7 @@ with pkgs;
 mkShell {
   buildInputs = [
     curl
+    expect
     gcc
     git
     git-lfs
@@ -22,8 +23,9 @@ mkShell {
     nodePackages.prettier
     perl
     protobuf
-    shfmt
+    qemu
     shellcheck
+    shfmt
     xz
   ] ++ lib.optionals stdenv.isLinux
     [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ];

@@ -38,6 +38,8 @@ jobs:
         run: nix-shell --run 'GOROOT= golangci-lint run -v -D errcheck'
       - name: go test
         run: go test -v ./... -gcflags=-l
+      - name: Run iPXE tests
+        run: nix-shell --run 'make test-ipxe'
       - name: go test coverage
         run: go test -coverprofile=coverage.txt ./... -gcflags=-l
       - name: upload codecov
