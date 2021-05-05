@@ -1,1 +1,4 @@
 bindata.go
+bin/ipxe.efi
+bin/snp-nolacp.efi
+bin/undionly.kpxe
