@@ -53,23 +53,3 @@ func TestPasswordHash(t *testing.T) {
 		})
 	}
 }
-
-func TestCryptedPassword(t *testing.T) {
-	tests := map[string]struct {
-		input Job
-		want  string
-	}{
-		"job instance is nil":             {input: Job{}, want: ""},
-		"CryptedRootPassword has a value": {input: Job{instance: &packet.Instance{CryptedRootPassword: "supersecret"}}, want: "supersecret"},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			got := tc.input.CryptedPassword()
-			diff := cmp.Diff(tc.want, got)
-			if diff != "" {
-				t.Fatalf(diff)
-			}
-		})
-	}
-}
