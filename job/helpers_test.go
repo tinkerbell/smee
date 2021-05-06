@@ -7,7 +7,7 @@ import (
 	"github.com/tinkerbell/boots/packet"
 )
 
-func TestGetPasswordHash(t *testing.T) {
+func TestPasswordHash(t *testing.T) {
 	tests := map[string]struct {
 		input Job
 		want  string
@@ -18,7 +18,7 @@ func TestGetPasswordHash(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := tc.input.GetPasswordHash()
+			got := tc.input.PasswordHash()
 			diff := cmp.Diff(tc.want, got)
 			if diff != "" {
 				t.Fatalf(diff)

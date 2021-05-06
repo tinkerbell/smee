@@ -89,8 +89,8 @@ func (j Job) CryptedPassword() string {
 	return ""
 }
 
-// GetPasswordHash returns the password hash or an empty string from the job instance
-func (j Job) GetPasswordHash() string {
+// PasswordHash returns the password hash or an empty string from the job instance
+func (j Job) PasswordHash() string {
 	if j.instance != nil {
 		return j.instance.PasswordHash
 	}
