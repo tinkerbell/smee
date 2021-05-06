@@ -12,8 +12,35 @@ func TestPasswordHash(t *testing.T) {
 		input Job
 		want  string
 	}{
-		"job instance is nil":       {input: Job{}, want: ""},
-		"password hash has a value": {input: Job{instance: &packet.Instance{PasswordHash: "supersecret"}}, want: "supersecret"},
+		"job instance is nil": {
+			want:  "",
+			input: Job{},
+		},
+		"only CryptedRootPassword is populated": {
+			want: "supersecret",
+			input: Job{
+				instance: &packet.Instance{
+					CryptedRootPassword: "supersecret",
+				},
+			},
+		},
+		"only PasswordHash is populated": {
+			want: "supersecret",
+			input: Job{
+				instance: &packet.Instance{
+					PasswordHash: "supersecret",
+				},
+			},
+		},
+		"CryptedRootPassword is preferred over PasswordHash": {
+			want: "cryptedrootpassword",
+			input: Job{
+				instance: &packet.Instance{
+					CryptedRootPassword: "cryptedrootpassword",
+					PasswordHash:        "passwordhash",
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
