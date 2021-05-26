@@ -12,6 +12,9 @@ func init() {
 	job.RegisterSlug("vmware_esxi_6_5", bootScriptVmwareEsxi65)
 	job.RegisterSlug("vmware_esxi_6_7", bootScriptVmwareEsxi67)
 	job.RegisterSlug("vmware_esxi_7_0", bootScriptVmwareEsxi70)
+	job.RegisterSlug("vmware_esxi_6_5_vcf", bootScriptVmwareEsxi65)
+	job.RegisterSlug("vmware_esxi_6_7_vcf", bootScriptVmwareEsxi67)
+	job.RegisterSlug("vmware_esxi_7_0_vcf", bootScriptVmwareEsxi70)
 	job.RegisterDistro("vmware", bootScriptDefault)
 }
 
