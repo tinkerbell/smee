@@ -129,6 +129,8 @@ type Instance struct {
 	SSHKeys []string `json:"ssh_keys,omitempty"`
 	// CustomData
 	NetworkReady bool `json:"network_ready,omitempty"`
+	// BootDriveHint defines what the VMware installer should pass as the argument to "--firstdisk=".
+	BootDriveHint string `json:"boot_drive_hint,omitempty"`
 }
 
 // Device Full device result from /devices endpoint
