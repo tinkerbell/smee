@@ -82,11 +82,17 @@ func (j Job) InstanceIPs() []packet.IP {
 	return nil
 }
 
-func (j Job) CryptedPassword() string {
-	if j.instance != nil {
+// PasswordHash will return the password hash from the job instance if it exists
+// PasswordHash first tries returning CryptedRootPassword if it exists and falls back to returning PasswordHash
+func (j Job) PasswordHash() string {
+	if j.instance == nil {
+		return ""
+	}
+	// TODO: remove this EMism
+	if j.instance.CryptedRootPassword != "" {
 		return j.instance.CryptedRootPassword
 	}
-	return ""
+	return j.instance.PasswordHash
 }
 
 func (j Job) OperatingSystem() *packet.OperatingSystem {

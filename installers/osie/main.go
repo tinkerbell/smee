@@ -114,8 +114,8 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 			s.Args("slug=" + slug)
 		}
 
-		if j.CryptedPassword() != "" {
-			s.Args("pwhash=" + j.CryptedPassword())
+		if j.PasswordHash() != "" {
+			s.Args("pwhash=" + j.PasswordHash())
 		}
 	}
 

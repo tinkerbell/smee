@@ -7,6 +7,7 @@
 #define NVO_CMD               /* Non-volatile option storage commands */
 #define PARAM_CMD             /* params and param commands, for POSTing to tink */
 #define REBOOT_CMD            /* Reboot command */
+#define SANBOOT_PROTO_HTTP    /* HTTP SAN protocol */
 #define VLAN_CMD              /* VLAN commands */
 
 #undef CRYPTO_80211_WEP       /* WEP encryption (deprecated and insecure!) */
@@ -25,7 +26,6 @@
 //defined in config/defaults/{efi,pcbios}.h and we don't want
 #undef SANBOOT_PROTO_AOE      /* AoE protocol */
 #undef SANBOOT_PROTO_FCP      /* Fibre Channel protocol */
-#undef SANBOOT_PROTO_HTTP     /* HTTP SAN protocol */
 #undef SANBOOT_PROTO_IB_SRP   /* Infiniband SCSI RDMA protocol */
 #undef SANBOOT_PROTO_ISCSI    /* iSCSI protocol */
 #undef USB_EFI                /* Provide EFI_USB_IO_PROTOCOL interface */

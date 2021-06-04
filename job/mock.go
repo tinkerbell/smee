@@ -111,6 +111,7 @@ func (m *Mock) SetOSImageTag(tag string) {
 
 func (m *Mock) SetPassword(password string) {
 	m.instance.CryptedRootPassword = "insecure"
+	m.instance.PasswordHash = "insecure"
 }
 
 func (m *Mock) SetState(state string) {

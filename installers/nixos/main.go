@@ -85,7 +85,7 @@ func kernelParams(j job.Job, s *ipxe.Script, init string) {
 		s.Args("console=ttyS1,115200")
 	}
 	s.Args("loglevel=7")
-	if j.CryptedPassword() != "" {
-		s.Args("pwhash=" + j.CryptedPassword())
+	if j.PasswordHash() != "" {
+		s.Args("pwhash=" + j.PasswordHash())
 	}
 }

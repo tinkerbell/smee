@@ -117,8 +117,12 @@ type Instance struct {
 	UserData        string           `json:"userdata,omitempty"`
 	servicesVersion ServicesVersion
 
-	// Only returned in the first 24 hours
+	// Same as PasswordHash
+	// Duplicated here, because CryptedRootPassword is in cacher/legacy mode
+	// which is soon to go away as Tinkerbell/PasswordHash is the future
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
+	// Only returned in the first 24 hours of a provision
+	PasswordHash string `json:"password_hash,omitempty"`
 
 	Tags []string `json:"tags,omitempty"`
 	// Project
