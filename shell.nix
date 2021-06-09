@@ -18,10 +18,10 @@ mkShell {
     golangci-lint
     nixfmt
     nodePackages.prettier
-    pkgsCross.aarch64-multiplatform.buildPackages.gcc
     protobuf
     shfmt
     shellcheck
     xz
-  ];
+  ] ++ lib.optionals stdenv.isLinux
+    [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ];
 }
