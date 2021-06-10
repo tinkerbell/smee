@@ -1,155 +1,233 @@
-# Contributors Guide
+# Contributor Guide
 
-## How to build Boots
+Welcome to Boots!
+We are really excited to have you.
+Please use the following guide on your contributing journey.
+Thanks for contributing!
 
-(Linux only)
+## Table of Contents
 
-1. Install dependencies
+- [Context](#Context)
+- [Architecture](#Architecture)
+  - [Design Docs](#Design-Docs)
+  - [Code Structure](#Code-Structure)
+- [Prerequisites](#Prerequisites)
+  - [DCO Sign Off](#DCO-Sign-Off)
+  - [Code of Conduct](#Code-of-Conduct)
+  - [Setting up your development environment](#Setting-up-your-development-environment)
+- [Development](#Development)
+  - [Building](#Building)
+  - [Unit testing](#Unit-testing)
+  - [Linting](#Linting)
+  - [Functional testing](#Functional-testing)
+  - [Running Boots locally](#Running-Boots-locally)
+- [Pull Requests](#Pull-Requests)
+  - [Branching strategy](#Branching-strategy)
+  - [Quality](#Quality)
+    - [CI](#CI)
+    - [Code coverage](#Code-coverage)
+  - [Pre PR Checklist](#Pre-PR-Checklist)
 
-    ```bash
-    # install nix
-    curl -L https://nixos.org/nix/install | sh
-    . /home/ubuntu/.nix-profile/etc/profile.d/nix.sh
-    ```
+---
 
-2. Clone the repo
+## Context
 
-    ```bash
-    git clone https://github.com/tinkerbell/boots.git
-    ```
+Boots is a DHCP and PXE (TFTP & HTTP) service.
+It is part of the [Tinkerbell stack](https://tinkerbell.org) and provides the first interaction for any machines being provisioned through Tinkerbell.
 
-3. Drop into nix-shell
+## Architecture
 
-    ```bash
-    cd boots
-    nix-shell
-    ```
+### Design Docs
 
-4. Build Boots
+Details and diagrams for Boots are found [here](docs/DESIGN.md).
 
-    ```bash
-    # this will build the ipxe binaries from github.com/ipxe/ipxe and embed them into a Go file and then build Boots
-    make boots
-    # this will create the boots binary at cmd/boots/boots
-    ```
+### Code Structure
 
-## How to run Boots
+Details on Boots's code structure is found [here](docs/CODE_STRUCTURE.md) (WIP)
 
-(Linux only)
+## Prerequisites
 
-1. Dependencies  
-    a. Running Tink server - follow the guide [here](https://docs.tinkerbell.org/setup/local-vagrant/)  
+### DCO Sign Off
 
-2. Define Boots environment variables
+Please read and understand the DCO found [here](docs/DCO.md).
 
-    ```bash
-    # MIRROR_HOST is for downloading kernel, initrd
-    MIRROR_HOST=192.168.2.3
-    # PUBLIC_FQDN is for phone home endpoint
-    PUBLIC_FQDN=192.168.2.4
-    # DOCKER_REGISTRY, REGISTRY_USERNAME, REGISTRY_PASSWORD, TINKERBELL_GRPC_AUTHORITY, TINKERBELL_CERT_URL are needed for auto.ipxe file generation
-    # TINKERBELL_GRPC_AUTHORITY, TINKERBELL_CERT_URL are needed for getting hardware data
-    DOCKER_REGISTRY=192.168.2.1:5000
-    REGISTRY_USERNAME=admin
-    REGISTRY_PASSWORD=secret
-    TINKERBELL_GRPC_AUTHORITY=tinkerbell.tinkerbell:42113
-    TINKERBELL_CERT_URL=http://tinkerbell.tinkerbell:42114/cert
-    # FACILITY_CODE is needed for ?
-    FACILITY_CODE=onprem
-    # DATA_MODEL_VERSION is need to set "tinkerbell" mode instead of "cacher" mode
-    DATA_MODEL_VERSION=1
-    # API_AUTH_TOKEN, API_CONSUMER_TOKEN are needed to by pass panicking in cmd/boots/main.go main func
-    API_AUTH_TOKEN=none
-    API_CONSUMER_TOKEN=none
-    ```
+### Code of Conduct
+
+Please read and understand the code of conduct found [here](https://github.com/tinkerbell/.github/blob/master/CODE_OF_CONDUCT.md).
+
+### Setting up your development environment
+
+---
+
+### Dependencies
+
+#### Build time dependencies
+
+All Boots build dependencies (except for the ones needed to cross compile ARM IPXE on mac) can be satisfied via nix in the `shell.nix` file.
+
+1. Install Nix
+
+   Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
+   In the top level directory of Boots run `nix-shell`
+
+2. Load Dependencies
+
+   Drop into a nix shell to load all build dependencies.
+   In the top level directory of Boots run: `nix-shell`
+
+3. Container image building
+
+   Docker is required to build the container images.
+   Install instructions can be found [here](https://docs.docker.com/engine/install/).
+
+#### Runtime dependencies
+
+At runtime Boots needs to communicate with a Tink server.
+Follow this [guide](https://docs.tinkerbell.org/setup/local-vagrant/) for running Tink server.
+
+## Development
+
+### Building
+
+> At the moment, these instructions are only stable on Linux environments
+
+To build Boots, run:
+
+```bash
+# drop into a shell with all build dependencies
+nix-shell
+
+# build all ipxe files, embed them, and build the Go binary
+# Built binary can be found here ./cmd/boots/boots
+make boots
+
+```
+
+To build the amd64 Boots container image, run:
+
+```bash
+# make the amd64 container image
+# Built image will be named boots:latest
+make image
+
+```
+
+To build the IPXE binaries and embed them into Go, run:
+
+```bash
+# Note, this will not build the Boots binary
+make bindata
+```
+
+To build Boots binaries for all distro
+
+### Unit testing
+
+To execute the unit tests, run:
+
+```bash
+make test
+
+# to get code coverage numbers, run:
+make coverage
+```
+
+### Linting
+
+To execute linting, run:
+
+```bash
+# runs golangci-lint
+make golangci-lint
+
+# runs goimports
+make goimports
+
+# runs go vet
+make vet
+```
+
+## Linting of Non Go files
+
+```bash
+# lints non Go files like shell scripts, markdown files, etc
+# this script is used in CI run, so be sure it passes before submitting a PR
+./.github/workflows/ci-non-go.sh
+```
+
+### Functional testing
+
+1. Create a hardware record in Tink server - follow the guide [here](https://docs.tinkerbell.org/hardware-data/)
+2. boot the machine
+
+### Running Boots
+
+1. Be sure all documented runtime dependencies are satisfied.
+2. Define all environment variables.
+
+   ```bash
+   # MIRROR_HOST is for downloading kernel, initrd
+   export MIRROR_HOST=192.168.2.3
+   # PUBLIC_FQDN is for phone home endpoint
+   export PUBLIC_FQDN=192.168.2.4
+   # DOCKER_REGISTRY, REGISTRY_USERNAME, REGISTRY_PASSWORD, TINKERBELL_GRPC_AUTHORITY, TINKERBELL_CERT_URL are needed for auto.ipxe file generation
+   # TINKERBELL_GRPC_AUTHORITY, TINKERBELL_CERT_URL are needed for getting hardware data
+   export DOCKER_REGISTRY=192.168.2.1:5000
+   export REGISTRY_USERNAME=admin
+   export REGISTRY_PASSWORD=secret
+   export TINKERBELL_GRPC_AUTHORITY=tinkerbell.tinkerbell:42113
+   export TINKERBELL_CERT_URL=http://tinkerbell.tinkerbell:42114/cert
+   # FACILITY_CODE is needed for ?
+   export FACILITY_CODE=onprem
+   # DATA_MODEL_VERSION is need to set "tinkerbell" mode instead of "cacher" mode
+   export DATA_MODEL_VERSION=1
+   # API_AUTH_TOKEN, API_CONSUMER_TOKEN are needed to by pass panicking in cmd/boots/main.go main func
+   export API_AUTH_TOKEN=none
+   export API_CONSUMER_TOKEN=none
+   ```
 
 3. Run Boots
 
-    ```bash
-    # Run the compiled boots
-    sudo BOOTS_PUBLIC_FQDN=192.168.2.225 MIRROR_HOST=192.168.2.225:9090 PUBLIC_FQDN=192.168.2.225 DOCKER_REGISTRY=docker.io REGISTRY_USERNAME=none REGISTRY_PASSWORD=none TINKERBELL_GRPC_AUTHORITY=localhost:42113 TINKERBELL_CERT_URL=http://localhost:42114/cert DATA_MODEL_VERSION=1 FACILITY_CODE=onprem API_AUTH_TOKEN=empty API_CONSUMER_TOKEN=empty ./cmd/boots/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
-    ```
+   ```bash
+   # Run the compiled boots
+   sudo ./cmd/boots/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   ```
 
 4. Faster iterating via `go run`
 
-    ```bash
-    # after the ipxe binaries have been compiled you can use `go run` to iterate a little more quickly than building the binary every time
-    sudo BOOTS_PUBLIC_FQDN=192.168.2.225 MIRROR_HOST=192.168.2.225:9090 PUBLIC_FQDN=192.168.2.225 DOCKER_REGISTRY=docker.io REGISTRY_USERNAME=none REGISTRY_PASSWORD=none TINKERBELL_GRPC_AUTHORITY=localhost:42113 TINKERBELL_CERT_URL=http://localhost:42114/cert DATA_MODEL_VERSION=1 FACILITY_CODE=onprem API_AUTH_TOKEN=empty API_CONSUMER_TOKEN=empty go run ./cmd/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
-    ```
+   ```bash
+   # after the ipxe binaries have been compiled you can use `go run` to iterate a little more quickly than building the binary every time
+   sudo go run ./cmd/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   ```
 
-5. Testing
+## Pull Requests
 
-    A. Unit testing
+### Branching strategy
 
-    ```bash
-    go test ./... -gcflags=-l
-    ```
+Boots uses a fork and pull request model.
+See this [doc](https://guides.github.com/activities/forking/) for more details.
 
-    B. Functional testing
+### Quality
 
-    1. Create a hardware record in Tink server - follow the guide [here](https://docs.tinkerbell.org/hardware-data/)
-    2. boot the machine
+#### CI
 
-## Boots Flow
+Boots uses GitHub Actions for CI.
+The workflow is found in [.github/workflows/ci.yaml](.github/workflows/ci.yaml).
+It is run for each commit and PR.
 
-![boots-flow](docs/boots-flow.png)
+#### Code coverage
 
-Copy and paste the code below into [https://www.websequencediagrams.com](https://www.websequencediagrams.com) to modify
+Boots does run code coverage with each PR.
+Coverage thresholds are not currently enforced.
+It is always nice and very welcomed to add tests and keep or increase the code coverage percentage.
 
-```flow
-title Boots - HTTP Flow
-# DHCP
-Machine->Boots: 1. DHCP Discover
-Boots->Tink: 2. Get Hardware data from MAC
-Tink->Boots: 3. Send Hardware data
-Boots->Machine: 4. DHCP Offer
-Machine->Boots: 5. DHCP Request
-Boots->Tink: 6. Get Hardware data from MAC
-Tink->Boots: 7. Send Hardware data
-Boots->Machine: 8. DHCP Ack
+### Pre PR Checklist
 
-# TFTP
-Machine->Boots: 9. TFTP Get ipxe binary
-Boots->Tink: 10. Get Hardware data from IP
-Tink->Boots: 11. Send Hardware data
-Boots->Machine: 12. Send ipxe binary
+This checklist is a helper to make sure there's no gotchas that come up when you submit a PR.
 
-# HTTP
-Machine->Boots: 13. HTTP Get ipxe file
-Boots->Tink: 14. Get Hardware data from IP
-Tink->Boots: 15. Send Hardware data
-Boots->Machine: 16. Send ipxe file
-```
-
-## Boots Installers
-
-A Boots Installer is a custom iPXE script.
-The code for each Installer lives in `installers/`
-The idea of iPXE Installers that live in-tree here is an idea that doesn't follow the existing template/workflow paradigm.
-Installers should eventually be deprecated.
-The deprecation process is forthcoming.
-
-### How an Installers is requested
-
-During a PXE boot request an iPXE script is provided to a PXE-ing machine through a dynamically generated endpoint (http://boots.addr/auto.ipxe).
-The contents of the auto.ipxe script is determined through the following steps:
-
-1. A hardware record is retrieved based off the PXE-ing machines mac addr.
-2. One of the following is used to determine the content of the iPXE script ([code ref](https://github.com/tinkerbell/boots/blob/b2f4d15f9b55806f4636003948ed95975e1d475e/job/ipxe.go#L71))
-    1. If the `metadata.instance.operating_system.slug` matches a registered Installer, the iPXE script from that Installer is returned
-    2. If the `metadata.instance.operating_system.distro` matches a registered Installer, the iPXE script from that Installer
-    3. If neither of the first 2 are matches, then the default (OSIE) iPXE script is used
-
-### Registering an Installer
-
-To register an Installer, at a minimum, the following are required
-
-1. Add a [blank import](https://github.com/golang/go/wiki/CodeReviewComments#import-blank) should be added to `cmd/boots/main.go`
-2. Your installer needs an `func init()` that calls `job.RegisterSlug("InstallerName", funcThatReturnsAnIPXEScript)`
-
-### Testing
-
-Unit tests should be created to validate that your registered func returns the iPXE script you're expecting.
-Functional tests would be great but depending on what is in your iPXE script might be difficult because of external dependencies.
-At a minimum try to create documentation that details these dependencies so that other can make them available for testing changes.
-
+- [ ] You've reviewed the [code of conduct](#Code-of-Conduct)
+- [ ] All commits are DCO signed off
+- [ ] Code is [formatted and linted](#Linting)
+- [ ] Code [builds](#Building) successfully
+- [ ] All tests are [passing](#Unit-testing)
+- [ ] Code coverage [percentage](#Code-coverage). (main line is the base with which to compare)
