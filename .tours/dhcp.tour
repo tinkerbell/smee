@@ -117,7 +117,17 @@
     },
     {
       "file": "job/dhcp.go",
-      "description": "# Handle requests\n\nThis function determines if the hardware profile returned from Tink or Cacher is allowed to PXE boot.\nThe following must be true.\n\n- The hardware profile has a `state` value that is equal to `in_use`\n- The hardware profile has an `allow_pxe` value of true\n\nIf any of the following are not true then a PXE boot is denied.\n\n- The hardware profile has an `instance.State` value of `active`\n- The hardware profile does not have an `instanceID`\n- The hardware profile has an `allow_pxe` value of false\n- The hardware profile has an operating instance slug value of `custom_ipxe`\n- The filename of the ipxe binary or script is `\"\"`\n",
+      "description": "# Handle requests\n\nThis function determines if the hardware profile returned from Tink or Cacher is allowed to PXE boot.\nThe following must be true.\n\n- The hardware profile has a `state` value that is equal to `in_use`\n- The hardware profile has an `allow_pxe` value of true\n\nIf it is determined that PXE booting is allowed, then the next server (option 66) and filename (option 67) are set.\n\nIf any of the following are not true then a PXE boot is denied.\n\n- The hardware profile has an `instance.State` value of `active`\n- The hardware profile does not have an `instanceID`\n- The hardware profile has an `allow_pxe` value of false\n- The hardware profile has an operating instance slug value of `custom_ipxe`\n- The filename of the ipxe binary or script is `\"\"`\n",
+      "line": 100
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests\n\nThis is where the filename to be provided as DHCP message option 67 is determined.\nThere are 3 options for filename.\n\n1. An ipxe binary name is used when:\n   - the DHCP request message option 77 (userclass) is NOT equal `iPXE`\n   - the DHCP request message option 175 is equal to `[]byte{1, 0, 255}`\n2. `/nonexistent` is used when:\n   - the DHCP request message option 77 (userclass) is equal to `iPXE`\n   - the hardware profile `allow_pxe` value is equal to false\n3. An ipxe script `http://<boots ip>/auto.ipxe` is used when:\n   - the DHCP request message option 77 (userclass) is equal to `iPXE`\n   - the hardware profile `allow_pxe` value is equal to true\n",
+      "line": 124
+    },
+    {
+      "file": "dhcp/pxe.go",
+      "description": "# Handle requests\n\nWhen we've made it here we update the DHCP response message:\n\n- DHCP message option 67 equal to the filename determined above\n- DHCP message option 66 equal to `conf.PublicIPv4`\n",
       "line": 100
     },
     {
