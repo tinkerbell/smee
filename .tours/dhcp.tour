@@ -1,0 +1,130 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "The journey of a DHCP request",
+  "steps": [
+    {
+      "title": "Introduction",
+      "description": "# The journey of a DHCP request\n\nHello and welcome!\n\nIn this code tour we will be following the path of a DHCP request as it enters and exits the Boots codebase.\n"
+    },
+    {
+      "file": "cmd/boots/main.go",
+      "description": "# Context\n\nIn order for Boots to received and respond to requests we must be listening for them.\nThis line is where the DHCP server is started.\n",
+      "line": 95,
+      "title": "Context"
+    },
+    {
+      "file": "cmd/boots/dhcp.go",
+      "description": "# Context Continued\n\nThe DHCP listener is instatiated here.\nIt will listen on the address and port defined in the package global variable: `listenAddr`.\nThe `handler` is a `dhcpHandler` struct that implements the `dhcp4.Handler` interface for responding to requests.\n",
+      "line": 32,
+      "selection": {
+        "start": {
+          "line": 18,
+          "character": 5
+        },
+        "end": {
+          "line": 18,
+          "character": 15
+        }
+      },
+      "title": "Context Continued..."
+    },
+    {
+      "file": "cmd/boots/dhcp.go",
+      "description": "# Receiving requests\n\nThis is where the request flow begins.\nWhenever a DHCP request is received, this is the method that is called.\n",
+      "line": 44,
+      "title": "Receiving requests"
+    },
+    {
+      "file": "cmd/boots/dhcp.go",
+      "description": "# Handling requests\n\nThis is the method that handles responding to DHCP requests.\nIt does 3 high level things.\n\n1. Retrieve a hardware profile from Tink or Cacher server using the mac address defined in the request packet.\n2. Populate the DHCP response message.\n3. Send the DHCP response.\n",
+      "line": 48,
+      "title": "Handling requests"
+    },
+    {
+      "file": "cmd/boots/dhcp.go",
+      "description": "# Handling requests - Step 1\n\n## Step 1\n\nThe first step when handling a request is actually 2 steps under the hood.\n\n1. Retreive a hardware profile of the requesting MAC address\n   - Boots calls out to Tink or Cacher server to retrieve the hardware profile.\n   - If no hardware profile is found, then no response is sent.\n   - Since DHCP responses are broadcast, a nil response IS the response to the client.\n2. Populate a DHCP response packet\n",
+      "line": 74
+    },
+    {
+      "file": "job/job.go",
+      "description": "# Get hardware profile\n\nThis function will return the hardware profile based on the MAC address of the request packet.\n",
+      "line": 81
+    },
+    {
+      "file": "job/fetch.go",
+      "description": "# Get hardware profile\n\nThis function sets up a singleton style pattern for calls to retrieve hardware profiles. The global `servers` implements this functionality.\n",
+      "line": 14
+    },
+    {
+      "file": "packet/endpoints.go",
+      "description": "# Get hardware profile\n\nBoots can get a hardware profile from either Tink server or Cacher server (internal Equinix Metal service).\nFrom which server the hardware profile is retrieved depends on the env variable `DATA_MODEL_VERSION`.\n\n```bash\nDATA_MODEL_VERSION=1 # for Tink server\nDATA_MODEL_VERSION=0 # all values other than 1 will enable using the cacher server\n```\n",
+      "line": 71,
+      "selection": {
+        "start": {
+          "line": 70,
+          "character": 33
+        },
+        "end": {
+          "line": 70,
+          "character": 51
+        }
+      }
+    },
+    {
+      "file": "job/job.go",
+      "description": "# Create response packet\n\nThis function handles populating the DHCP response packet.\n",
+      "line": 86
+    },
+    {
+      "file": "job/job.go",
+      "description": "# Create response packet\n\nThis function takes the data recieved from the hardware profile and populates the DHCP options for the response packet.\nNo PXE options are populated in the DHCP response packet here.\nThat will happen at a later time.\n",
+      "line": 149
+    },
+    {
+      "file": "cmd/boots/dhcp.go",
+      "description": "# Handle requests - Step 2\n\n## Step 2\n\nStep 2 is also multiple high level steps under the hood.\n\n1. Add the DHCP message type to the DHCP response (either Offer or Ack)\n2. Add PXE options to a DHCP response\n3. Send the DHCP response\n",
+      "line": 82
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests\n\nThis sets the DHCP message type.\nBoots only responds to DHCP Discovery and Request message types.\nAny other message type will cause Boots to not respond to a DHCP message.\n",
+      "line": 38
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests\n\nThis function handles whether a DHCP response packet gets PXE options added ([option 66](https://datatracker.ietf.org/doc/html/rfc2132#section-9.4) and [option 67](https://datatracker.ietf.org/doc/html/rfc2132#section-9.5)) or not.\n",
+      "line": 44
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests\n\nWhen should PXE options be added to a DHCP response?\nFor Boots, this is determined by the follow:\n\n- The DHCP message packet requested a PXE boot\n\nAND\n\n- The hardware profile retrieved from Tink or Cacher allows a PXE boot\n",
+      "line": 57,
+      "selection": {
+        "start": {
+          "line": 114,
+          "character": 9
+        },
+        "end": {
+          "line": 114,
+          "character": 21
+        }
+      }
+    },
+    {
+      "file": "dhcp/pxe.go",
+      "description": "# Handle requests\n\nThis function determines whether a received DHCP packet is requesting to PXE boot or not.\nIf the DHCP message has option 60 set and has a prefix of `PXEClient`, then Boots considers it a PXE boot request.\n",
+      "line": 89
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests\n\nThis function determines if the hardware profile returned from Tink or Cacher is allowed to PXE boot.\nThe following must be true.\n\n- The hardware profile has a `state` value that is equal to `in_use`\n- The hardware profile has an `allow_pxe` value of true\n\nIf any of the following are not true then a PXE boot is denied.\n\n- The hardware profile has an `instance.State` value of `active`\n- The hardware profile does not have an `instanceID`\n- The hardware profile has an `allow_pxe` value of false\n- The hardware profile has an operating instance slug value of `custom_ipxe`\n- The filename of the ipxe binary or script is `\"\"`\n",
+      "line": 100
+    },
+    {
+      "file": "job/dhcp.go",
+      "description": "# Handle requests - Step 3\n\n## Step 3\n\nIf we've made it here, then we send the DHCP response packet.\n",
+      "line": 50
+    }
+  ],
+  "ref": "master"
+}
