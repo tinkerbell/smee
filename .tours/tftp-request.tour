@@ -4,7 +4,7 @@
   "steps": [
     {
       "title": "Introduction",
-      "description": "# The journey of a TFTP request\n\nHello and welcome!\n\nIn this code tour we will be following the path of a TFTP request as it enters and exits the Boots codebase.\nIn Boots, TFTP is used to serve iPXE binaries.\nThis allow a PXE-ing machine to go from a standard and limited PXE environment to a more fully featured iPXE environment.\nThe PXE-ing machine downloads an iPXE binary from Boots via TFTP and boot into it.\nFrom here a machine now has access to a fully featured iPXE environment where it can utilize things like HTTP.\n"
+      "description": "# The journey of a TFTP request\n\nHello and welcome!\n\nIn this code tour we will be following the path of a TFTP request as it enters and exits the Boots codebase.\nIn Boots, TFTP is used to serve iPXE binaries.\nThis allow a PXE-ing machine to go from a standard and limited PXE environment to a more fully featured iPXE environment.\nThe PXE-ing machine downloads an iPXE binary from Boots via TFTP and boots into it.\nFrom here a machine now has access to a fully featured iPXE environment where it can utilize things like HTTP.\n"
     },
     {
       "file": "cmd/boots/main.go",
@@ -25,6 +25,11 @@
           "character": 10
         }
       }
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Context Continued...\n\nThe HTTP listener is instantiated here.\nIt will listen on the address and port defined in the package global variable: `httpAddr`.\n",
+      "line": 100
     },
     {
       "file": "cmd/boots/tftp.go",
@@ -68,7 +73,7 @@
     },
     {
       "file": "tftp/tftp.go",
-      "description": "# Handling requests - Step 3\n\n## Send the TFTP file\n\nThe client request must be for one of the following files.\nOtherwise the client gets an error of `os.ErrNotExist`, unknown file.\n\n- `undionly.kpxe`\n- `snp-nolacp.efi`\n- `ipxe.efi`\n- `snp-hua.efi`\n",
+      "description": "# Handling requests - Step 3\n\n## Send the TFTP file\n\nThe client request must be for one of the following files.\nOtherwise the client gets an error of `os.ErrNotExist`, unknown file.\n\n- `undionly.kpxe`\n- `snp-nolacp.efi`\n- `ipxe.efi`\n- `snp-hua.efi`\n\nThese files are compiled as part of the Boots build process.\nAfter they are built, they are embedded into the Boots binary.\nThey are then available to be served via TFTP.\n",
       "line": 28,
       "selection": {
         "start": {
