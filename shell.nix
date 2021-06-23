@@ -11,13 +11,16 @@ with pkgs;
 
 mkShell {
   buildInputs = [
+    curl
     gcc
+    git
     git-lfs
     gnumake
     go
     golangci-lint
     nixfmt
     nodePackages.prettier
+    perl
     protobuf
     shfmt
     shellcheck

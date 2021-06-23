@@ -84,3 +84,14 @@ ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ip
 	tar -xzf $< -C $(@D)
 	cp ${ipxeconfigs} $(@D)
 	cd $(@D) && ../../build.sh $$t ${ipxev}
+
+OSFLAG:= $(shell go env GOHOSTOS)
+# Build and generate embedded iPXE binaries based on OS
+bindata_by_os:
+ifeq (${OSFLAG},darwin)
+	rm -rf bin/go-bindata bin/goimports
+	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make ipxe/bindata.go"
+	rm -rf bin/go-bindata bin/goimports
+else
+	@$(MAKE) ipxe/bindata.go
+endif
