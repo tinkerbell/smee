@@ -4,7 +4,7 @@ all: help
 
 boots: cmd/boots/boots ## Compile boots for host OS and Architecture
 
-bindata: ipxe/bindata.go ## Build and generate embedded iPXE binaries
+bindata: bindata_by_os ## Build and generate embedded iPXE binaries
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 	

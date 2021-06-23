@@ -104,7 +104,6 @@ The IPXE binaries are built from source and then embedded into the Boots Go bina
 
 ### Building the IPXE binary
 
-The scripts in this repo to build the IPXE binaries only work on Linux.
 The IPXE binaries from [https://github.com/ipxe/ipxe](https://github.com/ipxe/ipxe) are built via a Make target.
 
 ```make
