@@ -363,6 +363,7 @@ sleep 20
 BOOTOPTIONS=$(/sbin/bootOption -o)
 echo $BOOTOPTIONS > /cmdline-bootoption
 echo $BOOTOPTIONS > /tmp/pre-bootoptions
+sleep 30
 `)
 
 var helpers = template.FuncMap{
