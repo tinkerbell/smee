@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Setup Dynamic Env
         run: |
-          echo "MAKEFLAGS=-j$(nproc)" >> $GITHUB_ENV
+          echo "MAKEFLAGS=-j$(nproc)" | tee $GITHUB_ENV
       - name: Checkout code
         uses: actions/checkout@v2
         with:
