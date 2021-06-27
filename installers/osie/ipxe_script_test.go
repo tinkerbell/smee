@@ -32,63 +32,64 @@ var facility = func() string {
 
 func TestScript(t *testing.T) {
 	for action, plan2Body := range action2Plan2Body {
-		t.Log(action)
-		for plan, body := range plan2Body {
-			t.Log(plan)
+		t.Run(action, func(t *testing.T) {
+			for plan, body := range plan2Body {
+				t.Run(plan, func(t *testing.T) {
+					m := job.NewMock(t, plan, facility)
+					m.SetManufacturer("supermicro")
+					m.SetOSSlug("ubuntu_16_04_image")
 
-			m := job.NewMock(t, plan, facility)
-			m.SetManufacturer("supermicro")
-			m.SetOSSlug("ubuntu_16_04_image")
+					state := ""
+					if action == "install" {
+						state = "provisioning"
+					} else {
+						state = "rescuing"
+					}
+					m.SetState(state)
 
-			state := ""
-			if action == "install" {
-				state = "provisioning"
-			} else {
-				state = "rescuing"
+					mac := genRandMAC(t)
+					m.SetMAC(mac)
+
+					s := ipxe.Script{}
+					s.Echo("Packet.net Baremetal - iPXE boot")
+					s.Set("iface", "eth0").Or("shell")
+					s.Set("tinkerbell", "http://127.0.0.1")
+					s.Set("syslog_host", "127.0.0.1")
+					s.Set("ipxe_cloud_config", "packet")
+
+					bootScripts[action](m.Job(), &s)
+					got := string(s.Bytes())
+
+					arch := "aarch64"
+					var parch string
+
+					switch plan {
+					case "baremetal_2a":
+						parch = "aarch64"
+					case "baremetal_2a2":
+						parch = "2a2"
+					case "baremetal_2a4":
+						parch = "tx2"
+					case "baremetal_2a5":
+						parch = "qcom"
+					case "baremetal_hua":
+						parch = "hua"
+					case "c2.large.arm", "c2.large.anbox":
+						parch = "amp"
+					default:
+						arch = "x86_64"
+						parch = "x86_64"
+					}
+
+					preface := prefaces[action]
+					preface = preface[:len(preface)-1] // drop extra \n at the end
+					script := fmt.Sprintf(preface+body, action, state, arch, parch, mac)
+					if script != got {
+						t.Fatalf("%s bad iPXE script:\n%v", plan, diff.LineDiff(script, got))
+					}
+				})
 			}
-			m.SetState(state)
-
-			mac := genRandMAC(t)
-			m.SetMAC(mac)
-
-			s := ipxe.Script{}
-			s.Echo("Packet.net Baremetal - iPXE boot")
-			s.Set("iface", "eth0").Or("shell")
-			s.Set("tinkerbell", "http://127.0.0.1")
-			s.Set("syslog_host", "127.0.0.1")
-			s.Set("ipxe_cloud_config", "packet")
-
-			bootScripts[action](m.Job(), &s)
-			got := string(s.Bytes())
-
-			arch := "aarch64"
-			var parch string
-
-			switch plan {
-			case "baremetal_2a":
-				parch = "aarch64"
-			case "baremetal_2a2":
-				parch = "2a2"
-			case "baremetal_2a4":
-				parch = "tx2"
-			case "baremetal_2a5":
-				parch = "qcom"
-			case "baremetal_hua":
-				parch = "hua"
-			case "c2.large.arm", "c2.large.anbox":
-				parch = "amp"
-			default:
-				arch = "x86_64"
-				parch = "x86_64"
-			}
-
-			preface := prefaces[action]
-			preface = preface[:len(preface)-1] // drop extra \n at the end
-			script := fmt.Sprintf(preface+body, action, state, arch, parch, mac)
-			if script != got {
-				t.Fatalf("%s bad iPXE script:\n%v", plan, diff.LineDiff(script, got))
-			}
-		}
+		})
 	}
 }
 

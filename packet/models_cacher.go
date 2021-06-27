@@ -10,6 +10,8 @@ import (
 
 // models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
 
+//go:generate mockgen -destination mock_cacher/cacher_mock.go github.com/packethost/cacher/protos/cacher CacherClient
+
 // DiscoveryCacher presents the structure for old data model
 type DiscoveryCacher struct {
 	*HardwareCacher
@@ -22,22 +24,23 @@ type HardwareCacher struct {
 	Name  string        `json:"name"`
 	State HardwareState `json:"state"`
 
-	BondingMode     BondingMode     `json:"bonding_mode"`
-	NetworkPorts    []Port          `json:"network_ports"`
-	Manufacturer    Manufacturer    `json:"manufacturer"`
-	PlanSlug        string          `json:"plan_slug"`
-	PlanVersionSlug string          `json:"plan_version_slug"`
-	Arch            string          `json:"arch"`
-	FacilityCode    string          `json:"facility_code"`
-	IPMI            IP              `json:"management"`
-	IPs             []IP            `json:"ip_addresses"`
-	PreinstallOS    OperatingSystem `json:"preinstalled_operating_system_version"`
-	PrivateSubnets  []string        `json:"private_subnets,omitempty"`
-	UEFI            bool            `json:"efi_boot"`
-	AllowPXE        bool            `json:"allow_pxe"`
-	AllowWorkflow   bool            `json:"allow_workflow"`
-	ServicesVersion ServicesVersion `json:"services"`
-	Instance        *Instance       `json:"instance"`
+	BondingMode       BondingMode     `json:"bonding_mode"`
+	NetworkPorts      []Port          `json:"network_ports"`
+	Manufacturer      Manufacturer    `json:"manufacturer"`
+	PlanSlug          string          `json:"plan_slug"`
+	PlanVersionSlug   string          `json:"plan_version_slug"`
+	Arch              string          `json:"arch"`
+	FacilityCode      string          `json:"facility_code"`
+	IPMI              IP              `json:"management"`
+	IPs               []IP            `json:"ip_addresses"`
+	PreinstallOS      OperatingSystem `json:"preinstalled_operating_system_version"`
+	PrivateSubnets    []string        `json:"private_subnets,omitempty"`
+	UEFI              bool            `json:"efi_boot"`
+	AllowPXE          bool            `json:"allow_pxe"`
+	AllowWorkflow     bool            `json:"allow_workflow"`
+	ServicesVersion   ServicesVersion `json:"services"`
+	Instance          *Instance       `json:"instance"`
+	ProvisionerEngine string          `json:"provisioner_engine"`
 }
 
 func (d DiscoveryCacher) Hardware() Hardware {
@@ -292,8 +295,8 @@ func (h HardwareCacher) HardwareFacilityCode() string {
 	return h.FacilityCode
 }
 
-func (h HardwareCacher) HardwareID() string {
-	return h.ID
+func (h HardwareCacher) HardwareID() HardwareID {
+	return HardwareID(h.ID)
 }
 
 func (h HardwareCacher) HardwareIPs() []IP {
@@ -306,6 +309,10 @@ func (h HardwareCacher) HardwareIPMI() IP {
 
 func (h HardwareCacher) HardwareManufacturer() string {
 	return h.Manufacturer.Slug
+}
+
+func (h HardwareCacher) HardwareProvisioner() string {
+	return h.ProvisionerEngine
 }
 
 func (h HardwareCacher) HardwarePlanSlug() string {

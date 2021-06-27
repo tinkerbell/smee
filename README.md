@@ -8,6 +8,10 @@ This services handles DHCP, PXE, tftp, and iPXE for provisions.
 This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
 This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
+## Running Boots
+
+As boots runs a DHCP server, it's often asked if it is safe to run without any network isolation; the answer is yes. While boots does run a DHCP server, it only allocates an IP address when it recognizes the mac address of the requesting device.
+
 ### Local Setup
 
 First, you need to make sure you have [git-lfs](https://github.com/git-lfs/git-lfs/wiki/Installation) installed:
@@ -41,5 +45,3 @@ Build/Run Boots
 You can use NixOS shell, which will have the Git-LFS, Go and others
 
 `nix-shell`
-
-Note: for mac users, you will need to comment out the line `pkgsCross.aarch64-multiplatform.buildPackages.gcc` in order for the build to work

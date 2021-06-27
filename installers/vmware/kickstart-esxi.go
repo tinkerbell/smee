@@ -363,6 +363,7 @@ sleep 20
 BOOTOPTIONS=$(/sbin/bootOption -o)
 echo $BOOTOPTIONS > /cmdline-bootoption
 echo $BOOTOPTIONS > /tmp/pre-bootoptions
+sleep 30
 `)
 
 var helpers = template.FuncMap{
@@ -377,7 +378,7 @@ func vmnic(j job.Job) string {
 }
 
 func rootpw(j job.Job) string {
-	return j.CryptedPassword()
+	return j.PasswordHash()
 }
 
 // We do not support anything other than ESXi 6.5 and above (os slug "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0" etc)

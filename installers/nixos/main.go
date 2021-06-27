@@ -54,9 +54,14 @@ func bootScript(paths map[string]string, j job.Job, s *ipxe.Script) {
 	key := j.OperatingSystem().Slug + "/" + j.PlanSlug()
 	init := paths[key]
 	if init == "" {
-		j.With("slug", j.OperatingSystem().Slug, "class", j.PlanSlug()).Error(errors.New("unknown os/class combo"))
-		s.Shell()
-		return
+		tag := j.OperatingSystem().ImageTag
+		if tag == "" {
+			j.With("slug", j.OperatingSystem().Slug, "class", j.PlanSlug()).Error(errors.New("unknown os/class combo and no OSV ImageTag set"))
+			s.Shell()
+			return
+		}
+		key = j.OperatingSystem().Slug + "/" + tag
+		init = "/nix/store/" + tag + "/init"
 	}
 
 	s.PhoneHome("provisioning.104.01")
@@ -80,7 +85,7 @@ func kernelParams(j job.Job, s *ipxe.Script, init string) {
 		s.Args("console=ttyS1,115200")
 	}
 	s.Args("loglevel=7")
-	if j.CryptedPassword() != "" {
-		s.Args("pwhash=" + j.CryptedPassword())
+	if j.PasswordHash() != "" {
+		s.Args("pwhash=" + j.PasswordHash())
 	}
 }

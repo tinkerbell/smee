@@ -20,25 +20,34 @@ var facility = func() string {
 
 func TestScript(t *testing.T) {
 	for typ, script := range type2Script {
-		t.Log(typ)
+		t.Run(typ, func(t *testing.T) {
 
-		split := strings.Split(typ, "/")
-		v, typ := split[0], split[1]
+			split := strings.Split(typ, "/")
+			v, typ := split[0], split[1]
+			tag := ""
+			if strings.Contains(typ, ":") {
+				split = strings.Split(typ, ":")
+				typ, tag = split[0], split[1]
+			}
 
-		m := job.NewMock(t, typ, facility)
-		m.SetOSSlug("nixos_" + v)
+			m := job.NewMock(t, typ, facility)
+			m.SetOSSlug("nixos_" + v)
+			if tag != "" {
+				m.SetOSImageTag(tag)
+			}
 
-		s := ipxe.Script{}
-		s.Echo("Packet.net Baremetal - iPXE boot")
-		s.Set("iface", "eth0").Or("shell")
-		s.Set("tinkerbell", "http://127.0.0.1")
-		s.Set("ipxe_cloud_config", "packet")
+			s := ipxe.Script{}
+			s.Echo("Packet.net Baremetal - iPXE boot")
+			s.Set("iface", "eth0").Or("shell")
+			s.Set("tinkerbell", "http://127.0.0.1")
+			s.Set("ipxe_cloud_config", "packet")
 
-		bootScript(oshwToInitPath, m.Job(), &s)
-		got := string(s.Bytes())
-		if script != got {
-			t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(script, got))
-		}
+			bootScript(oshwToInitPath, m.Job(), &s)
+			got := string(s.Bytes())
+			if script != got {
+				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(script, got))
+			}
+		})
 	}
 }
 
@@ -256,5 +265,21 @@ set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 shell
+`,
+	"20_09/c3.small.x86:nix-store-path-masquerading-as-version": `echo Packet.net Baremetal - iPXE boot
+set iface eth0 || shell
+set tinkerbell http://127.0.0.1
+set ipxe_cloud_config packet
+
+params
+param body Device connected to DHCP system
+param type provisioning.104.01
+imgfetch ${tinkerbell}/phone-home##params
+imgfree
+
+set base-url http://install.` + facility + `.packet.net/misc/tinkerbell/nixos/nixos_20_09/nix-store-path-masquerading-as-version
+kernel ${base-url}/kernel init=/nix/store/nix-store-path-masquerading-as-version/init initrd=initrd console=ttyS1,115200 loglevel=7
+initrd ${base-url}/initrd
+boot
 `,
 }

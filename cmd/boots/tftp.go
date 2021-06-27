@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/avast/retry-go"
+	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/conf"
@@ -48,26 +49,30 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	defer metrics.JobsInProgress.With(labels).Dec()
 
 	ip := tftpClientIP(c.RemoteAddr())
-	j, err := job.CreateFromIP(ip)
-	if err == nil {
-		return j.ServeTFTP(filename, ip.String())
-	}
-
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
-	if err != nil {
-		return nil, err
-	}
-
-	if !activeWorkflows {
-		return nil, err
-	}
-
-	err = errors.WithMessage(err, "retrieved job is empty")
-
 	filename = path.Base(filename)
-	l := mainlog.With("client", ip, "event", "open", "filename", filename)
-	l.With("error", err).Info()
+	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
 
+	j, err := job.CreateFromIP(ip)
+	if err != nil {
+		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
+		return serveFakeReader(l, filename)
+	}
+
+	// This gates serving PXE file by
+	// 1. the existence of a hardware record in tink server
+	// AND
+	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
+	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
+	// without a tink workflow present.
+	if !j.AllowPxe() {
+		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+		return serveFakeReader(l, filename)
+	}
+
+	return j.ServeTFTP(filename, ip.String())
+}
+
+func serveFakeReader(l log.Logger, filename string) (tftp.ReadCloser, error) {
 	switch filename {
 	case "test.1mb":
 		l.With("tftp_fake_read", true).Info()

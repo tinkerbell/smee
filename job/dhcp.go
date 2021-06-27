@@ -28,6 +28,12 @@ func IsSpecialOS(i *packet.Instance) bool {
 // ServeDHCP responds to DHCP packets
 func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
 
+	// If we are not the chosen provisioner for this piece of hardware
+	// do not respond to the DHCP request
+	if !j.areWeProvisioner() {
+		return false
+	}
+
 	// setup reply
 	reply := dhcp.NewReply(w, req)
 	if reply == nil {
@@ -83,6 +89,14 @@ func (j Job) isPXEAllowed() bool {
 		return false
 	}
 	return j.instance.AllowPXE
+}
+
+func (j Job) areWeProvisioner() bool {
+	if j.hardware.HardwareProvisioner() == "" {
+		return true
+	}
+
+	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
 func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isSNP bool) {

@@ -117,13 +117,15 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
 		return
 	}
-
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
-	if err != nil {
-		return
-	}
-
-	if !activeWorkflows {
+	// This gates serving PXE file by
+	// 1. the existence of a hardware record in tink server
+	// AND
+	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
+	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
+	// without a tink workflow present.
+	if !j.AllowPxe() {
+		w.WriteHeader(http.StatusNotFound)
+		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
 		return
 	}
 
@@ -145,13 +147,18 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
-	if err != nil {
-		return
-	}
-
-	if !activeWorkflows {
-		return
+	if j.CanWorkflow() {
+		activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			j.With("error", err).Info("failed to get workflows")
+			return
+		}
+		if !activeWorkflows {
+			w.WriteHeader(http.StatusNotFound)
+			j.Info("no active workflows")
+			return
+		}
 	}
 
 	j.AddHardware(w, req)
@@ -189,13 +196,18 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	activeWorkflows, err := job.HasActiveWorkflow(j.ID())
-	if err != nil {
-		return
-	}
-
-	if !activeWorkflows {
-		return
+	if j.CanWorkflow() {
+		activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			j.With("error", err).Info("failed to get workflows")
+			return
+		}
+		if !activeWorkflows {
+			w.WriteHeader(http.StatusNotFound)
+			j.Info("no active workflows")
+			return
+		}
 	}
 
 	j.ServeProblemEndpoint(w, req)

@@ -18,21 +18,21 @@ var facility = func() string {
 
 func TestScript(t *testing.T) {
 	for typ, script := range type2Script {
-		t.Log(typ)
+		t.Run(typ, func(t *testing.T) {
+			m := job.NewMock(t, typ, facility)
 
-		m := job.NewMock(t, typ, facility)
+			s := ipxe.Script{}
+			s.Echo("Packet.net Baremetal - iPXE boot")
+			s.Set("iface", "eth0").Or("shell")
+			s.Set("tinkerbell", "http://127.0.0.1")
+			s.Set("ipxe_cloud_config", "packet")
 
-		s := ipxe.Script{}
-		s.Echo("Packet.net Baremetal - iPXE boot")
-		s.Set("iface", "eth0").Or("shell")
-		s.Set("tinkerbell", "http://127.0.0.1")
-		s.Set("ipxe_cloud_config", "packet")
-
-		bootScript(m.Job(), &s)
-		got := string(s.Bytes())
-		if script != got {
-			t.Fatalf("%s bad iPxe script\nwant:\n%s\ngot:\n%s", typ, script, got)
-		}
+			bootScript(m.Job(), &s)
+			got := string(s.Bytes())
+			if script != got {
+				t.Fatalf("%s bad iPxe script\nwant:\n%s\ngot:\n%s", typ, script, got)
+			}
+		})
 	}
 }
 

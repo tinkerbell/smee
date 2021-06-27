@@ -45,6 +45,12 @@ type InterfaceTinkerbell struct {
 	*NetworkInterface
 }
 
+type HardwareID string
+
+func (hid HardwareID) String() string {
+	return string(hid)
+}
+
 // Hardware interface holds primary hardware methods
 type Hardware interface {
 	HardwareAllowPXE(mac net.HardwareAddr) bool
@@ -52,10 +58,11 @@ type Hardware interface {
 	HardwareArch(mac net.HardwareAddr) string
 	HardwareBondingMode() BondingMode
 	HardwareFacilityCode() string
-	HardwareID() string
+	HardwareID() HardwareID
 	HardwareIPs() []IP
 	Interfaces() []Port // TODO: to be updated
 	HardwareManufacturer() string
+	HardwareProvisioner() string
 	HardwarePlanSlug() string
 	HardwarePlanVersionSlug() string
 	HardwareState() HardwareState
@@ -110,8 +117,12 @@ type Instance struct {
 	UserData        string           `json:"userdata,omitempty"`
 	servicesVersion ServicesVersion
 
-	// Only returned in the first 24 hours
+	// Same as PasswordHash
+	// Duplicated here, because CryptedRootPassword is in cacher/legacy mode
+	// which is soon to go away as Tinkerbell/PasswordHash is the future
 	CryptedRootPassword string `json:"crypted_root_password,omitempty"`
+	// Only returned in the first 24 hours of a provision
+	PasswordHash string `json:"password_hash,omitempty"`
 
 	Tags []string `json:"tags,omitempty"`
 	// Project
@@ -290,7 +301,8 @@ type Metadata struct {
 		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
 		PrivateSubnets []string        `json:"private_subnets"`
 	} `json:"custom"`
-	Facility Facility `json:"facility"`
+	Facility          Facility `json:"facility"`
+	ProvisionerEngine string   `json:"provisioner_engine"`
 }
 
 // Facility represents the facilty in use
