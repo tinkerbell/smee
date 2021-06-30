@@ -1,0 +1,90 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "The journey of a TFTP request",
+  "steps": [
+    {
+      "title": "Introduction",
+      "description": "# The journey of a TFTP request\n\nHello and welcome!\n\nIn this code tour we will be following the path of a TFTP request as it enters and exits the Boots codebase.\nIn Boots, TFTP is used to serve iPXE binaries.\nThis allow a PXE-ing machine to go from a standard and limited PXE environment to a more fully featured iPXE environment.\nThe PXE-ing machine downloads an iPXE binary from Boots via TFTP and boots into it.\nFrom here a machine now has access to a fully featured iPXE environment where it can utilize things like HTTP.\n"
+    },
+    {
+      "file": "cmd/boots/main.go",
+      "description": "# Context\n\nIn order for Boots to received and respond to TFTP requests it must be listening for them.\nThis is the line where the TFTP server is started.\n",
+      "line": 93
+    },
+    {
+      "file": "cmd/boots/tftp.go",
+      "description": "# Context Continued...\n\nThe TFTP listener is instantiated here.\nIt will listen on the address and port defined in the package global variable: `tftpAddr`.\nThe `tftpHandler` is a struct that implements the `tftp.Handler` interface for responding to requests.\n",
+      "line": 32,
+      "selection": {
+        "start": {
+          "line": 21,
+          "character": 2
+        },
+        "end": {
+          "line": 21,
+          "character": 10
+        }
+      }
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Context Continued...\n\nThe HTTP listener is instantiated here.\nIt will listen on the address and port defined in the package global variable: `httpAddr`.\n",
+      "line": 100
+    },
+    {
+      "file": "cmd/boots/tftp.go",
+      "description": "# Handling requests\n\nThis is the method that handles serving files for TFTP.\nWhenever a TFTP GET request is received, this method is called.\nIt does 3 high-level things.\n\n1. Retrieve a hardware profile from Tink server or Cacher server.\n2. Gate TFTP GET request by `allow_pxe` in the hardware profile.\n3. Send the TFTP file.\n",
+      "line": 43
+    },
+    {
+      "file": "job/job.go",
+      "description": "# Handling requests - Step 1\n\n## Retrieve a hardware profile from Tink server or Cacher server\n\nFor TFTP requests, Boots retrieves a hardware profile from Tink server or Cacher server using the IP address in the request.\n",
+      "line": 103
+    },
+    {
+      "file": "job/fetch.go",
+      "description": "# Handling requests - Step 1\n\n## Retrieve a hardware profile from Tink server or Cacher server\n\nThis function wraps calls to Tink server or Cacher server with [`singleflight.Do`](https://pkg.go.dev/golang.org/x/sync/singleflight#Group.Do) to make sure that only one execution is in-flight for a given key at a time. The global var servers implements this functionality.\n",
+      "line": 25,
+      "selection": {
+        "start": {
+          "line": 11,
+          "character": 10
+        },
+        "end": {
+          "line": 11,
+          "character": 22
+        }
+      }
+    },
+    {
+      "file": "cmd/boots/tftp.go",
+      "description": "# Handling requests - Step 2\n\n## Gate TFTP GET request by `allow_pxe` in the hardware profile\n\nThis gates serving the iPXE file by\n\n1. the existence of a hardware record in tink server\nAND\n2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true\n\nThis allows serving custom ipxe scripts, starting up into OSIE or other installation environments\nwithout a tink workflow present.\n",
+      "line": 67,
+      "selection": {
+        "start": {
+          "line": 61,
+          "character": 2
+        },
+        "end": {
+          "line": 66,
+          "character": 37
+        }
+      }
+    },
+    {
+      "file": "tftp/tftp.go",
+      "description": "# Handling requests - Step 3\n\n## Send the TFTP file\n\nThe client request must be for one of the following files.\nOtherwise the client gets an error of `os.ErrNotExist`, unknown file.\n\n- `undionly.kpxe`\n- `snp-nolacp.efi`\n- `ipxe.efi`\n- `snp-hua.efi`\n\nThese files are compiled as part of the Boots build process.\nAfter they are built, they are embedded into the Boots binary.\nThey are then available to be served via TFTP.\n",
+      "line": 28,
+      "selection": {
+        "start": {
+          "line": 33,
+          "character": 22
+        },
+        "end": {
+          "line": 33,
+          "character": 36
+        }
+      }
+    }
+  ]
+}
