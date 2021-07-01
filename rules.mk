@@ -77,13 +77,19 @@ ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 # given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
 # and   $@=ipxe/ipxe/build/*/*
 # t       =                */*
-ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin/ipxe.lkrn: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
 	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
 	rm -rf $(@D)
 	mkdir -p $(@D)
 	tar -xzf $< -C $(@D)
 	cp ${ipxeconfigs} $(@D)
 	cd $(@D) && ../../build.sh $$t ${ipxev}
+
+.PHONY: ipxe/tests ipxe/test-%
+ipxe/tests: ipxe/test-sanboot
+# order of dependencies matters here
+ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
+	expect -f $^
 
 OSFLAG:= $(shell go env GOHOSTOS)
 # Build and generate embedded iPXE binaries based on OS
