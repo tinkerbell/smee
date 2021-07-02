@@ -9,7 +9,19 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-mkShell {
+let
+  custom_pkgs = import (_pkgs.fetchFromGitHub {
+    # go 1.16.3
+    owner = "NixOS";
+    repo = "nixpkgs";
+    #branch@date: nixpkgs-unstable@2021-04-19
+    rev = "c92ca95afb5043bc6faa0d526460584eccff2277";
+    sha256 = "14vmijjjypd4b3fcvxzi53n7i5g3l5x9ih0ci1j6h1m9j5fkh9iv";
+  }) { };
+
+  go_1_16_3 = custom_pkgs.go;
+
+in mkShell {
   buildInputs = [
     curl
     expect
@@ -17,7 +29,7 @@ mkShell {
     git
     git-lfs
     gnumake
-    go
+    go_1_16_3
     golangci-lint
     nixfmt
     nodePackages.prettier
@@ -30,3 +42,4 @@ mkShell {
   ] ++ lib.optionals stdenv.isLinux
     [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ];
 }
+
