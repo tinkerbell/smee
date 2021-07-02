@@ -17,7 +17,7 @@ var ipxeEFI []byte
 //go:embed ipxe/undionly.kpxe
 var undionly []byte
 
-//go:embed ipxe/snp.efi
+//go:embed ipxe/snp-nolacp.efi
 var snpNolacp []byte
 
 //go:embed ipxe/snp-hua.efi

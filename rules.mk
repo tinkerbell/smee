@@ -47,9 +47,8 @@ generated_files := \
 	
 .PHONY: $(generated_files)
 
-
 # build all the ipxe binaries
-build_all_ipxe: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+build_all_ipxe: tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
 
 # go generate
 go_generate:
@@ -61,21 +60,24 @@ $(generated_files): bin/goimports
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) bindata_by_os syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) build_all_ipxe go_generate syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
 
-ipxe/bin/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
-ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
-ipxe/bin/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
-ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
-	cp $^ $@
 # copy ipxe binaries into location available for go embed
-	cp $^ tftp/ipxe/
-# we dont build the snp-hua.efi binary. Its checked into git, so here we just copy it over
-	cp ipxe/bin/snp-hua.efi tftp/ipxe/
+tftp/ipxe/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
+tftp/ipxe/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
+tftp/ipxe/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
+tftp/ipxe/ipxe.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe:
+	mkdir -p tftp/ipxe
+	cp $^ $@
+
+tftp/ipxe/snp-hua.efi:
+	mkdir -p tftp/ipxe
+# we dont build the snp-hua.efi binary. It's checked into git, so here we just copy it over
+	cp ipxe/bin/snp-hua.efi $@
 
 ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 	mkdir -p $(@D)
@@ -85,28 +87,21 @@ ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 # given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
 # and   $@=ipxe/ipxe/build/*/*
 # t       =                */*
+OSFLAG:= $(shell go env GOHOSTOS)
 ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin/ipxe.lkrn: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+ifeq (${OSFLAG},darwin)
+	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin/ipxe.lkrn"
+else
 	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
 	rm -rf $(@D)
 	mkdir -p $(@D)
 	tar -xzf $< -C $(@D)
 	cp ${ipxeconfigs} $(@D)
 	cd $(@D) && ../../build.sh $$t ${ipxev}
+endif
 
 .PHONY: ipxe/tests ipxe/test-%
 ipxe/tests: ipxe/test-sanboot
 # order of dependencies matters here
 ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
 	expect -f $^
-
-OSFLAG:= $(shell go env GOHOSTOS)
-# Build and generate embedded iPXE binaries based on OS
-bindata_by_os:
-ifeq (${OSFLAG},darwin)
-	rm -rf bin/goimports
-	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make go_generate && make build_all_ipxe"
-	rm -rf bin/goimports
-else
-	@$(MAKE) go_generate
-	@$(MAKE) build_all_ipxe
-endif
