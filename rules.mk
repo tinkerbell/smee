@@ -40,7 +40,6 @@ $(toolsBins): tools.go
 	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
 	
 generated_files := \
-	ipxe/bindata.go \
 	packet/mock_cacher/cacher_mock.go \
 	packet/mock_workflow/workflow_mock.go \
 	syslog/facility_string.go \
@@ -48,7 +47,12 @@ generated_files := \
 	
 .PHONY: $(generated_files)
 
-ipxe/bindata.go: bin/go-bindata ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+
+# build all the ipxe binaries
+build_all_ipxe: ipxe/bin/ipxe.efi ipxe/bin/snp-hua.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe
+
+# go generate
+go_generate:
 $(filter %_string.go,$(generated_files)): bin/stringer
 $(filter %_mock.go,$(generated_files)): bin/mockgen
 $(generated_files): bin/goimports
@@ -57,7 +61,7 @@ $(generated_files): bin/goimports
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe/bindata.go syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) bindata_by_os syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 include ipxev.mk
@@ -68,6 +72,10 @@ ipxe/bin/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
 ipxe/bin/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
 ipxe/bin/ipxe.efi ipxe/bin/snp-nolacp.efi ipxe/bin/undionly.kpxe:
 	cp $^ $@
+# copy ipxe binaries into location available for go embed
+	cp $^ tftp/ipxe/
+# we dont build the snp-hua.efi binary. Its checked into git, so here we just copy it over
+	cp ipxe/bin/snp-hua.efi tftp/ipxe/
 
 ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 	mkdir -p $(@D)
@@ -95,9 +103,10 @@ OSFLAG:= $(shell go env GOHOSTOS)
 # Build and generate embedded iPXE binaries based on OS
 bindata_by_os:
 ifeq (${OSFLAG},darwin)
-	rm -rf bin/go-bindata bin/goimports
-	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make ipxe/bindata.go"
-	rm -rf bin/go-bindata bin/goimports
+	rm -rf bin/goimports
+	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make go_generate && make build_all_ipxe"
+	rm -rf bin/goimports
 else
-	@$(MAKE) ipxe/bindata.go
+	@$(MAKE) go_generate
+	@$(MAKE) build_all_ipxe
 endif
