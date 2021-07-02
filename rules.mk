@@ -88,9 +88,9 @@ ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 # and   $@=ipxe/ipxe/build/*/*
 # t       =                */*
 OSFLAG:= $(shell go env GOHOSTOS)
-ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin/ipxe.lkrn: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
+ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin-test/ipxe.lkrn: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
 ifeq (${OSFLAG},darwin)
-	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin/ipxe.lkrn"
+	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make -j2 ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin-test/ipxe.lkrn"
 else
 	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
 	rm -rf $(@D)
@@ -103,5 +103,5 @@ endif
 .PHONY: ipxe/tests ipxe/test-%
 ipxe/tests: ipxe/test-sanboot
 # order of dependencies matters here
-ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
+ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin-test/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
 	expect -f $^
