@@ -44,7 +44,7 @@ func TestSetPXEFilename(t *testing.T) {
 		{name: "active custom ipxe with allow pxe",
 			hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
 			filename: "undionly.kpxe"},
-		{name: "snp" hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true, snp: true,
+		{name: "snp", hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true, snp: true,
 			filename: "snp.efi"},
 		{name: "hua",
 			plan: "hua", filename: "snp-hua.efi"},
