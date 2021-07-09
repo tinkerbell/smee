@@ -15,9 +15,14 @@ sed -i '/#define OCSP_CHECK/ d' "$topdir/src/config/crypto.h"
 
 set -x
 case $build in
-bin/undionly.kpxe | bin/ipxe.lkrn)
+bin/undionly.kpxe)
 	rm "$topdir/src/config/local/isa.h"
 	cp "$topdir/src/config/local/general.undionly.h" "$topdir/src/config/local/general.h"
+	;;
+bin-test/ipxe.lkrn)
+	rm "$topdir/src/config/local/isa.h"
+	cp "$topdir/src/config/local/general.undionly.h" "$topdir/src/config/local/general.h"
+	build=bin/ipxe.lkrn
 	;;
 bin-x86_64-efi/ipxe.efi)
 	cp "$topdir/src/config/local/general.efi.h" "$topdir/src/config/local/general.h"

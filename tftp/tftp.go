@@ -1,6 +1,7 @@
 package tftp
 
 import (
+	_ "embed"
 	"io"
 	"net"
 	"os"
@@ -8,14 +9,25 @@ import (
 
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/ipxe"
 )
 
+//go:embed ipxe/ipxe.efi
+var ipxeEFI []byte
+
+//go:embed ipxe/undionly.kpxe
+var undionly []byte
+
+//go:embed ipxe/snp-nolacp.efi
+var snpNolacp []byte
+
+//go:embed ipxe/snp-hua.efi
+var snpHua []byte
+
 var tftpFiles = map[string][]byte{
-	"undionly.kpxe":  ipxe.MustAsset("bin/undionly.kpxe"),
-	"snp-nolacp.efi": ipxe.MustAsset("bin/snp-nolacp.efi"),
-	"ipxe.efi":       ipxe.MustAsset("bin/ipxe.efi"),
-	"snp-hua.efi":    ipxe.MustAsset("bin/snp-hua.efi"),
+	"undionly.kpxe":  undionly,
+	"snp-nolacp.efi": snpNolacp,
+	"ipxe.efi":       ipxeEFI,
+	"snp-hua.efi":    snpHua,
 }
 
 type tftpTransfer struct {
