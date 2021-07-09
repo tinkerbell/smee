@@ -30,6 +30,13 @@ func (j Job) Arch() string {
 	return ""
 }
 
+func (j Job) BootDriveHint() string {
+	if i := j.instance; i != nil {
+		return i.BootDriveHint
+	}
+	return ""
+}
+
 func (j Job) PArch() string {
 	var parch string
 

@@ -120,6 +120,10 @@ func (m *Mock) SetState(state string) {
 	h.State = packet.HardwareState(state)
 }
 
+func (m *Mock) SetBootDriveHint(drive string) {
+	m.instance.BootDriveHint = drive
+}
+
 func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, string) {
 	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
 	mac0 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
