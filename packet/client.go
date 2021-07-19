@@ -61,7 +61,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
-	default:
+	case "":
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
 			return nil, errors.New("FACILITY_CODE env must be set")
@@ -71,6 +71,8 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
+	default:
+		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 	}
 
 	return &Client{
