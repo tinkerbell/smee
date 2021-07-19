@@ -63,7 +63,6 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	}
 
 	labels := prometheus.Labels{"from": "dhcp"}
-	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
@@ -75,8 +74,8 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			MAC: mac.String(),
 		}
 
+		cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 		resp, err := cc.ByMAC(context.Background(), msg)
-
 		cacherTimer.ObserveDuration()
 		metrics.CacherRequestsInProgress.With(labels).Dec()
 
@@ -95,9 +94,11 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			Mac: mac.String(),
 		}
 
+		tinkTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 		resp, err := tc.ByMAC(context.Background(), msg)
+		tinkTimer.ObserveDuration()
 
-		cacherTimer.ObserveDuration()
+		// TODO: rename metric
 		metrics.CacherRequestsInProgress.With(labels).Dec()
 
 		if err != nil {
