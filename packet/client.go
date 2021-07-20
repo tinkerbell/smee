@@ -15,6 +15,7 @@ import (
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
 	tw "github.com/tinkerbell/tink/protos/workflow"
+	"gopkg.in/yaml.v3"
 )
 
 type hardwareGetter interface {
@@ -51,6 +52,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
+	// Tinkerbell V1 backend
 	case "1":
 		hg, err = tinkClient.TinkHardwareClient()
 		if err != nil {
@@ -61,6 +63,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
+	// classic Packet API / Cacher backend (default for empty envvar)
 	case "":
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
@@ -70,6 +73,28 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		hg, err = cacherClient.New(facility)
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
+		}
+	// standalone, use a yaml file for all hardware data
+	case "standalone":
+		saYamlFile := os.Getenv("BOOTS_STANDALONE_YAML")
+		if saYamlFile == "" {
+			return nil, errors.New("BOOTS_STANDALONE_YAML env must be set")
+		}
+		// set the baseURL from here so it gets returned in the client
+		// TODO(@tobert): maybe there's a way to pass a file:// in the first place?
+		baseURL, err = url.Parse("file://" + saYamlFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saYamlFile)
+		}
+		saData, err := ioutil.ReadFile(saYamlFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not read file %q", saYamlFile)
+		}
+		hwData := []DiscoverStandalone{}
+		err = yaml.Unmarshal(saData, &hwData)
+		hg = hwData // empty interface will get returned in the Client handle
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saYamlFile)
 		}
 	default:
 		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
