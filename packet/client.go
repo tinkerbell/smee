@@ -15,7 +15,6 @@ import (
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
 	tw "github.com/tinkerbell/tink/protos/workflow"
-	"gopkg.in/yaml.v3"
 )
 
 type hardwareGetter interface {
@@ -74,33 +73,33 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
-	// standalone, use a yaml file for all hardware data
+	// standalone, use a json file for all hardware data
 	case "standalone":
-		saYamlFile := os.Getenv("BOOTS_STANDALONE_YAML")
-		if saYamlFile == "" {
-			return nil, errors.New("BOOTS_STANDALONE_YAML env must be set")
+		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
+		if saFile == "" {
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
 		}
 		// set the baseURL from here so it gets returned in the client
 		// TODO(@tobert): maybe there's a way to pass a file:// in the first place?
-		baseURL, err = url.Parse("file://" + saYamlFile)
+		baseURL, err = url.Parse("file://" + saFile)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saYamlFile)
+			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saFile)
 		}
-		saData, err := ioutil.ReadFile(saYamlFile)
+		saData, err := ioutil.ReadFile(saFile)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not read file %q", saYamlFile)
+			return nil, errors.Wrapf(err, "could not read file %q", saFile)
 		}
-		dsDb := StandaloneYaml{}
-		err = yaml.Unmarshal(saData, &dsDb)
+		dsDb := []DiscoverStandalone{}
+		err = json.Unmarshal(saData, &dsDb)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saYamlFile)
+			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saFile)
 		}
 
-		// the "client" part is done - reading the yaml, now return a struct client
+		// the "client" part is done - reading the json, now return a struct client
 		// that is just the filename and parsed data structure
 		hg = StandaloneClient{
-			filename: saYamlFile,
-			db:       dsDb.Discovery,
+			filename: saFile,
+			db:       dsDb,
 		}
 	default:
 		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)

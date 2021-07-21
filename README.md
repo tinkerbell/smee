@@ -52,7 +52,7 @@ You can use NixOS shell, which will have the Git-LFS, Go and others
 export DATA_MODEL_VERSION=standalone
 export API_CONSUMER_TOKEN=none
 export API_AUTH_TOKEN=none
-export BOOTS_STANDALONE_YAML=./test/standalone-hardware.yaml
+export BOOTS_STANDALONE_JSON=./test/standalone-hardware.json
 
 # to run on your laptop as a regular user
 # DHCP won't work but useful for smoke testing and iterating on http/tftp/syslog

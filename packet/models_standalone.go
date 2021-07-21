@@ -7,24 +7,18 @@ import (
 
 // models_standalone.go contains a standalone backend for boots so it can run without
 // a packet or tinkerbell backend. Instead of using a scalable backend, hardware data
-// is loaded from a yaml file and stored in a list in memory.
+// is loaded from a json file and stored in a list in memory.
 
 // DiscoveryStandalone implements the Discovery interface for standalone operation
 type DiscoverStandalone struct {
 	*HardwareStandalone
-	mac net.HardwareAddr
 }
 
 // HardwareStandalone implements the Hardware interface for standalone operation
 type HardwareStandalone struct {
-	ID       string   `yaml:"id" json:"id"`
-	Network  Network  `yaml:"network" json:"network"`
-	Metadata Metadata `yaml:"metadata" json:"metadata"`
-}
-
-// StandaloneYaml is for the top level key in the yaml so the rest can be a list
-type StandaloneYaml struct {
-	Discovery []DiscoverStandalone `yaml:"discovery"`
+	ID       string   `json:"id"`
+	Network  Network  `json:"network"`
+	Metadata Metadata `json:"metadata"`
 }
 
 // StandaloneClient is a placeholder for accessing data in []DiscoveryStandalone
