@@ -83,7 +83,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		// TODO(@tobert): maybe there's a way to pass a file:// in the first place?
 		baseURL, err = url.Parse("file://" + saFile)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saFile)
+			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saFile, saFile)
 		}
 		saData, err := ioutil.ReadFile(saFile)
 		if err != nil {
