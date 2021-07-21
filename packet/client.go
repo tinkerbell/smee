@@ -90,7 +90,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not read file %q", saYamlFile)
 		}
-		dsDb := []DiscoverStandalone{}
+		dsDb := StandaloneYaml{}
 		err = yaml.Unmarshal(saData, &dsDb)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saYamlFile)
@@ -98,9 +98,9 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 
 		// the "client" part is done - reading the yaml, now return a struct client
 		// that is just the filename and parsed data structure
-		hg = &StandaloneClient{
+		hg = StandaloneClient{
 			filename: saYamlFile,
-			db:       dsDb,
+			db:       dsDb.Discovery,
 		}
 	default:
 		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)

@@ -17,9 +17,14 @@ type DiscoverStandalone struct {
 
 // HardwareStandalone implements the Hardware interface for standalone operation
 type HardwareStandalone struct {
-	ID       string   `json:"id"`
-	Network  Network  `json:"network"`
-	Metadata Metadata `json:"metadata"`
+	ID       string   `yaml:"id" json:"id"`
+	Network  Network  `yaml:"network" json:"network"`
+	Metadata Metadata `yaml:"metadata" json:"metadata"`
+}
+
+// StandaloneYaml is for the top level key in the yaml so the rest can be a list
+type StandaloneYaml struct {
+	Discovery []DiscoverStandalone `yaml:"discovery"`
 }
 
 // StandaloneClient is a placeholder for accessing data in []DiscoveryStandalone
