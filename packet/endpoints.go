@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/packethost/cacher/protos/cacher"
+	"github.com/tinkerbell/tink/pkg"
 	tpkg "github.com/tinkerbell/tink/pkg"
 	tink "github.com/tinkerbell/tink/protos/hardware"
 	tw "github.com/tinkerbell/tink/protos/workflow"
@@ -149,6 +153,74 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		return nil, err
 	}
 	return &res, nil
+}
+
+func (c *Client) CreateHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
+	if mac == nil {
+		return nil, errors.New("missing MAC address")
+	}
+
+	tc := c.hardwareClient.(tink.HardwareServiceClient)
+	var data = fmt.Sprintf(`{
+		"id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",
+		"metadata": {
+		  "facility": {
+			"facility_code": "onprem"
+		  },
+		  "instance": {},
+		  "state": ""
+		},
+		"network": {
+		  "interfaces": [
+			{
+			  "dhcp": {
+				"arch": "x86_64",
+				"ip": {
+				  "address": "192.168.1.5",
+				  "gateway": "192.168.1.1",
+				  "netmask": "255.255.255.248"
+				},
+				"mac": "%s",
+				"uefi": false
+			  },
+			  "netboot": {
+				"allow_pxe": true,
+				"allow_workflow": true
+			  }
+			}
+		  ]
+		}
+	  }
+	  `, mac.String())
+	log.Print(data)
+
+	s := struct {
+		ID string
+	}{}
+	if json.NewDecoder(strings.NewReader(data)).Decode(&s) != nil {
+		log.Fatalf("invalid json: %s", data)
+	} else if s.ID == "" {
+		log.Fatalf("invalid json, ID is required: %s", data)
+	}
+
+	var hw pkg.HardwareWrapper
+	err := json.Unmarshal([]byte(data), &hw)
+	if err != nil {
+		return nil, errors.New("failed to unmarshal json")
+	}
+
+	resp, err := tc.Push(context.Background(), &tink.PushRequest{Data: hw.Hardware})
+	if err != nil {
+		return nil, errors.New("failed to push hw")
+	}
+
+	log.Print(resp)
+
+	if giaddr == nil {
+		return nil, errors.New("missing MAC address")
+	}
+
+	return nil, nil
 }
 
 func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {

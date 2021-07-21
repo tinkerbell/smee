@@ -74,6 +74,17 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	j, err := job.CreateFromDHCP(mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
+
+		// CREATE HARDWARE DATA
+
+		_, err := job.CreateHWFromDHCP(mac, gi, circuitID)
+		if err != nil {
+			mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("failed to create hw")
+			metrics.JobsInProgress.With(labels).Dec()
+			timer.ObserveDuration()
+			return
+		}
+
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
 		return

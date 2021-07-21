@@ -3,7 +3,7 @@
 set -eu
 
 # Deps on ubuntu
-# apt-get -y --no-install-recommends install build-essential gcc-aarch64-linux-gnu git liblzma-dev
+sudo apt-get -y --no-install-recommends install build-essential gcc-aarch64-linux-gnu git liblzma-dev
 
 build=$1
 version=$2
@@ -33,7 +33,7 @@ bin-arm64-efi/snp.efi)
 	# http://lists.ipxe.org/pipermail/ipxe-devel/2018-August/006254.html
 	sed -i '/^WORKAROUND_CFLAGS/ s|^|#|' "$topdir/src/arch/arm64/Makefile"
 	if [[ -z ${CROSS_COMPILE:-} ]]; then
-		export CROSS_COMPILE=aarch64-unknown-linux-gnu-
+		export CROSS_COMPILE=aarch64-linux-gnu-
 	fi
 	;;
 *) echo "unknown target: $1" >&2 && exit 1 ;;

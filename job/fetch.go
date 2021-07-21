@@ -1,6 +1,7 @@
 package job
 
 import (
+	"log"
 	"net"
 
 	"github.com/golang/groupcache/singleflight"
@@ -20,6 +21,18 @@ func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID str
 		return nil, err
 	}
 	return v.(packet.Discovery), nil
+}
+
+func createHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (packet.Discovery, error) {
+	create := func() (interface{}, error) {
+		return client.CreateHardwareFromDHCP(mac, giaddr, circuitID)
+	}
+	log.Print("Creating hardware from dhcp")
+	_, err := servers.Do(mac.String(), create)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func discoverHardwareFromIP(ip net.IP) (packet.Discovery, error) {
