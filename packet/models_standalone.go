@@ -12,6 +12,7 @@ import (
 // TODO:
 //    * only supports one interface right now, multiple can be defined but might act weird
 //    * methods only return the first interface's information and ignore everything else
+//    * methods don't have godoc yet and since this is for test maybe never will?
 
 // DiscoveryStandalone implements the Discovery interface for standalone operation
 type DiscoverStandalone struct {
@@ -113,30 +114,35 @@ func (hs HardwareStandalone) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
 	}
 	return hs.Network.Interfaces[0].Netboot.AllowWorkflow
 }
+
 func (hs HardwareStandalone) HardwareArch(mac net.HardwareAddr) string {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Network.Interfaces[0].DHCP.Arch
 }
+
 func (hs HardwareStandalone) HardwareBondingMode() BondingMode {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Metadata.BondingMode
 }
+
 func (hs HardwareStandalone) HardwareFacilityCode() string {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Metadata.Facility.FacilityCode
 }
+
 func (hs HardwareStandalone) HardwareID() HardwareID {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return HardwareID(hs.ID)
 }
+
 func (hs HardwareStandalone) HardwareIPs() []IP {
 	out := make([]IP, len(hs.Network.Interfaces))
 	for i, v := range hs.Network.Interfaces {
@@ -144,51 +150,63 @@ func (hs HardwareStandalone) HardwareIPs() []IP {
 	}
 	return out
 }
+
 func (hs HardwareStandalone) Interfaces() []Port {
 	return []Port{} // stubbed out in tink too
 }
+
 func (hs HardwareStandalone) HardwareManufacturer() string {
 	return hs.Metadata.Manufacturer.Slug
 }
+
 func (hs HardwareStandalone) HardwareProvisioner() string {
 	return hs.Metadata.ProvisionerEngine
 }
+
 func (hs HardwareStandalone) HardwarePlanSlug() string {
 	return hs.Metadata.Facility.PlanSlug
 }
+
 func (hs HardwareStandalone) HardwarePlanVersionSlug() string {
 	return hs.Metadata.Facility.PlanVersionSlug
 }
+
 func (hs HardwareStandalone) HardwareState() HardwareState {
 	return hs.Metadata.State
 }
+
 func (hs HardwareStandalone) HardwareOSIEVersion() string {
 	return "" // stubbed out in tink too
 }
+
 func (hs HardwareStandalone) HardwareUEFI(mac net.HardwareAddr) bool {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Network.Interfaces[0].DHCP.UEFI
 }
+
 func (hs HardwareStandalone) OSIEBaseURL(mac net.HardwareAddr) string {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Network.Interfaces[0].Netboot.OSIE.BaseURL
 }
+
 func (hs HardwareStandalone) KernelPath(mac net.HardwareAddr) string {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Network.Interfaces[0].Netboot.OSIE.Kernel
 }
+
 func (hs HardwareStandalone) InitrdPath(mac net.HardwareAddr) string {
 	if len(hs.Network.Interfaces) < 1 {
 		panic("not enough interfaces in json-defined host")
 	}
 	return hs.Network.Interfaces[0].Netboot.OSIE.Initrd
 }
+
 func (hs HardwareStandalone) OperatingSystem() *OperatingSystem {
 	return hs.Metadata.Instance.OS
 }
