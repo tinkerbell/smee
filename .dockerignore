@@ -1,2 +1,4 @@
 *
 !cmd/boots/boots-*-*
+!cmd/boots/boots
+!test/
