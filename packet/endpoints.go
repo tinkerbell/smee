@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/packethost/cacher/protos/cacher"
 	"github.com/tinkerbell/tink/pkg"
 	tpkg "github.com/tinkerbell/tink/pkg"
@@ -160,9 +161,13 @@ func (c *Client) CreateHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, cir
 		return nil, errors.New("missing MAC address")
 	}
 
+	labels := prometheus.Labels{"from": "dhcp"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+
 	tc := c.hardwareClient.(tink.HardwareServiceClient)
+	uuid := uuid.New().String()
 	var data = fmt.Sprintf(`{
-		"id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",
+		"id": "%s",
 		"metadata": {
 		  "facility": {
 			"facility_code": "onprem"
@@ -191,9 +196,8 @@ func (c *Client) CreateHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, cir
 		  ]
 		}
 	  }
-	  `, mac.String())
+	  `, uuid, mac.String())
 	log.Print(data)
-
 	s := struct {
 		ID string
 	}{}
@@ -209,18 +213,51 @@ func (c *Client) CreateHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, cir
 		return nil, errors.New("failed to unmarshal json")
 	}
 
-	resp, err := tc.Push(context.Background(), &tink.PushRequest{Data: hw.Hardware})
+	_, err = tc.Push(context.Background(), &tink.PushRequest{Data: hw.Hardware})
+
+	cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Dec()
+
 	if err != nil {
-		return nil, errors.New("failed to push hw")
+		return nil, errors.Wrap(err, "failed to push hw")
 	}
 
-	log.Print(resp)
+	if data != "{}" {
+		metrics.CacherCacheHits.With(labels).Inc()
+		return NewDiscovery([]byte(data))
+	}
 
 	if giaddr == nil {
 		return nil, errors.New("missing MAC address")
 	}
 
-	return nil, nil
+	metrics.HardwareDiscovers.With(labels).Inc()
+	metrics.DiscoversInProgress.With(labels).Inc()
+	defer metrics.DiscoversInProgress.With(labels).Dec()
+	discoverTimer := prometheus.NewTimer(metrics.DiscoverDuration.With(labels))
+	defer discoverTimer.ObserveDuration()
+
+	req := struct {
+		MAC       string `json:"mac"`
+		GIADDR    string `json:"giaddr,omitempty"`
+		CIRCUITID string `json:"circuit_id,omitempty"`
+	}{
+		MAC:       mac.String(),
+		GIADDR:    giaddr.String(),
+		CIRCUITID: circuitID,
+	}
+
+	b, err := json.Marshal(&req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshalling api discovery")
+	}
+
+	var res DiscoveryCacher
+	if err := c.Post("/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {

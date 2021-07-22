@@ -90,14 +90,23 @@ func CreateFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job,
 	return j, nil
 }
 
-// CreateFromDHCP looks up hardware using the MAC from cacher to create a job
+// CreateHWFromDHCP creates hardware and retreives it using the MAC from cacher to create a job
 func CreateHWFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
-	_, err := createHardwareFromDHCP(mac, giaddr, circuitID)
+	j := Job{
+		mac:   mac,
+		start: time.Now(),
+	}
+
+	d, err := createHardwareFromDHCP(mac, giaddr, circuitID)
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "create from dhcp message")
 	}
 
-	return Job{}, nil
+	err = j.setup(d)
+	if err != nil {
+		return Job{}, err
+	}
+	return j, nil
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job

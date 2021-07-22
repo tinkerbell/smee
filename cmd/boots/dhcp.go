@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"runtime"
 
 	"github.com/avast/retry-go"
@@ -71,23 +72,28 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
 	}
 
-	j, err := job.CreateFromDHCP(mac, gi, circuitID)
+	var j = job.Job{}
+	j, err = job.CreateFromDHCP(mac, gi, circuitID)
 	if err != nil {
-		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
-
-		// CREATE HARDWARE DATA
-
-		_, err := job.CreateHWFromDHCP(mac, gi, circuitID)
-		if err != nil {
-			mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("failed to create hw")
-			metrics.JobsInProgress.With(labels).Dec()
-			timer.ObserveDuration()
-			return
-		}
-
+		// Cacher did not find any HW
+		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved hw is empty")
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
-		return
+
+		// Check if we want to use default workflows
+		if os.Getenv("ENABLE_DEFAULT_WORKFLOWS") != "1" {
+			// We don't want default workflows, so just return
+			return
+		} else {
+			// We want default workflows, so at first we will need to create a hardware
+			j, err = job.CreateHWFromDHCP(mac, gi, circuitID)
+			if err != nil {
+				mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("failed to create hw")
+				metrics.JobsInProgress.With(labels).Dec()
+				timer.ObserveDuration()
+				return
+			}
+		}
 	}
 	go func() {
 		if j.ServeDHCP(w, req) {
