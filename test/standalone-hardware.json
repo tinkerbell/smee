@@ -5,15 +5,15 @@
       "interfaces": [
         {
           "dhcp": {
-            "mac": "02:42:AC:11:00:02",
+            "mac": "02:00:00:00:00:ff",
             "ip": {
-              "address": "10.10.10.99",
-	      "netmask": "255.255.255.0",
-	      "gateway": "10.10.10.1",
-	      "family": "ipv4",
-	      "public": false,
-	      "management": false
-	    },
+              "address": "192.168.99.43",
+              "netmask": "255.255.255.0",
+              "gateway": "192.168.99.1",
+              "family": "ipv4",
+              "public": false,
+              "management": false
+            },
             "hostname": "boots-test-client",
             "lease_time": 60,
             "name_servers": [
