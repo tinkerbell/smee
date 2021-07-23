@@ -13,14 +13,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/packethost/cacher/protos/cacher"
-	"github.com/tinkerbell/tink/pkg"
-	tpkg "github.com/tinkerbell/tink/pkg"
-	tink "github.com/tinkerbell/tink/protos/hardware"
-	tw "github.com/tinkerbell/tink/protos/workflow"
-
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
+	"github.com/tinkerbell/tink/pkg"
+	tpkg "github.com/tinkerbell/tink/pkg"
+	tink "github.com/tinkerbell/tink/protos/hardware"
+	tt "github.com/tinkerbell/tink/protos/template"
+	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 const mimeJSON = "application/json"
@@ -57,6 +57,56 @@ func (c *Client) GetWorkflowsFromTink(hwID HardwareID) (result *tw.WorkflowConte
 
 	if err != nil {
 		return result, errors.Wrap(err, "error while fetching the workflow")
+	}
+
+	return result, nil
+}
+
+// GetTemplatesFromTink fetches a templates from tink
+func (c *Client) GetTemplateFromTink(templateName string) (result *tt.WorkflowTemplate, err error) {
+	if templateName == "" {
+		return result, errors.New("missing template name")
+	}
+
+	labels := prometheus.Labels{"from": "dhcp"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+	metrics.CacherRequestsInProgress.With(labels).Inc()
+	metrics.CacherTotal.With(labels).Inc()
+
+	result, err = c.templateClient.GetTemplate(context.Background(), &tt.GetRequest{GetBy: &tt.GetRequest_Name{
+		Name: templateName,
+	}})
+
+	cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Dec()
+
+	if err != nil {
+		return result, errors.Wrap(err, "error while fetching the template")
+	}
+
+	return result, nil
+}
+
+// CreateWorkflowForTink fetches the list of templates from tink
+func (c *Client) CreateWorkflowForTink(template string, hardware string) (result *tw.CreateResponse, err error) {
+	if template == "" || hardware == "" {
+		log.Print("Hardware:" + hardware)
+		log.Print("Template:" + template)
+		return result, errors.New("missing either template or hardware")
+	}
+
+	labels := prometheus.Labels{"from": "dhcp"}
+	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
+	metrics.CacherRequestsInProgress.With(labels).Inc()
+	metrics.CacherTotal.With(labels).Inc()
+
+	result, err = c.workflowClient.CreateWorkflow(context.Background(), &tw.CreateRequest{Template: template, Hardware: hardware})
+
+	cacherTimer.ObserveDuration()
+	metrics.CacherRequestsInProgress.With(labels).Dec()
+
+	if err != nil {
+		return result, errors.Wrap(err, "error while creating the workflow")
 	}
 
 	return result, nil

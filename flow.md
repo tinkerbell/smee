@@ -11,4 +11,8 @@ on dhcp received
 
 
 
+go run ./cmd/boots -dhcp-addr 0.0.0.0:67 -tftp-addr 192.168.1.1:69 -http-addr 192.168.1.1:80 -log-level DEBUG
+
+
+
 

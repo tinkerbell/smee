@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
+	tt "github.com/tinkerbell/tink/protos/template"
 	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -28,6 +29,7 @@ type Client struct {
 	authToken      string
 	hardwareClient hardwareGetter
 	workflowClient tw.WorkflowServiceClient
+	templateClient tt.TemplateServiceClient
 }
 
 func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
@@ -48,6 +50,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 
 	var hg hardwareGetter
 	var wg tw.WorkflowServiceClient
+	var tg tt.TemplateServiceClient
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
@@ -61,6 +64,12 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
+
+		tg, err = tinkClient.TinkTemplateClient()
+		if err != nil {
+			return nil, errors.Wrap(err, "connect to tink")
+		}
+
 	default:
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
@@ -80,6 +89,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		authToken:      authToken,
 		hardwareClient: hg,
 		workflowClient: wg,
+		templateClient: tg,
 	}, nil
 }
 

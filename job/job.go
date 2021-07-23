@@ -1,6 +1,7 @@
 package job
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"time"
@@ -71,6 +72,27 @@ func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
 	return false, nil
 }
 
+// GetTemplate fetches a template by name from tink. If the template exists, it returns the ID
+func GetTemplate(templateName string) (string, error) {
+	wt, err := client.GetTemplateFromTink(templateName)
+	if err != nil {
+		return "", errors.WithMessage(err, "getting default template failed")
+	}
+
+	return wt.Id, nil
+}
+
+// CreateWorkflow creates a workflow from a template ID and hardware mac address
+func CreateWorkflow(templateId string, mac net.HardwareAddr) (string, error) {
+	var hw = fmt.Sprintf(`{"device_1":"%s"}`, mac.String())
+	w, err := client.CreateWorkflowForTink(templateId, hw)
+	if err != nil {
+		return "", errors.WithMessage(err, "creating default workflow failed")
+	}
+
+	return w.Id, nil
+}
+
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job
 func CreateFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
 	j := Job{
@@ -90,7 +112,7 @@ func CreateFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job,
 	return j, nil
 }
 
-// CreateHWFromDHCP creates hardware and retreives it using the MAC from cacher to create a job
+// CreateWorkflowFromDHCP creates a workflow and
 func CreateHWFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
 	j := Job{
 		mac:   mac,
@@ -99,7 +121,7 @@ func CreateHWFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Jo
 
 	d, err := createHardwareFromDHCP(mac, giaddr, circuitID)
 	if err != nil {
-		return Job{}, errors.WithMessage(err, "create from dhcp message")
+		return Job{}, errors.WithMessage(err, "create HW from dhcp message")
 	}
 
 	err = j.setup(d)
