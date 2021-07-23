@@ -33,6 +33,9 @@ var (
 
 	// Eclypsium registration token, passed into osie
 	EclypsiumToken = env.Get("ECLYPSIUM_TOKEN")
+	// Hollow auth secrets, passed into osie
+	HollowClientId            = env.Get("HOLLOW_CLIENT_ID")
+	HollowClientRequestSecret = env.Get("HOLLOW_CLIENT_REQUEST_SECRET")
 )
 
 func mustPublicIPv4() net.IP {
