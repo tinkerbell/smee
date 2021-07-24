@@ -33,5 +33,3 @@ require (
 )
 
 replace github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35 => github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
-
-replace github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 => ../tink
