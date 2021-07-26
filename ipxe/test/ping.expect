@@ -1,0 +1,20 @@
+set timeout 30
+set kernel [lindex $argv 0]
+set tftpdir [lindex $argv 1]
+spawn qemu-system-x86_64 -nographic -m 512 -smp 1 \
+-kernel $kernel \
+-net nic,model=virtio \
+-net user,tftp=$tftpdir,bootfile=ping.pxe \
+
+expect {
+  "64 bytes from" {
+    send_user "\nPass\n"
+    exit 0
+  }
+  "ping: command not found" {
+    send_user "\nFail\n"
+    exit 1
+  }
+}
+
+exit 1

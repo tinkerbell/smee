@@ -22,3 +22,4 @@ See the `.h` files in the [ipxe/ipxe/](../ipxe/ipxe/) directory for the exact de
 - console syslog support
 - ISA_PROBE_ONLY (bios only)
 - Non-volatile option storage commands
+- [ping](https://ipxe.org/cmd/ping) command support

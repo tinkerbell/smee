@@ -104,7 +104,7 @@ else
 endif
 
 .PHONY: ipxe/tests ipxe/test-%
-ipxe/tests: ipxe/test-sanboot
+ipxe/tests: ipxe/test-sanboot ipxe/test-ping
 # order of dependencies matters here
 ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin-test/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
-	expect -f $^
+	expect -f $^ | sed "s|^|test-$*: |"
