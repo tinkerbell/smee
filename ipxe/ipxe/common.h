@@ -6,6 +6,7 @@
 #define NTP_CMD               /* NTP commands */
 #define NVO_CMD               /* Non-volatile option storage commands */
 #define PARAM_CMD             /* params and param commands, for POSTing to tink */
+#define PING_CMD              /* Ping command */
 #define REBOOT_CMD            /* Reboot command */
 #define SANBOOT_PROTO_HTTP    /* HTTP SAN protocol */
 #define VLAN_CMD              /* VLAN commands */
