@@ -39,54 +39,45 @@ func (ds DiscoverStandalone) Instance() *Instance {
 }
 
 func (ds DiscoverStandalone) MAC() net.HardwareAddr {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return ds.Network.Interfaces[0].DHCP.MAC.HardwareAddr()
+	return ds.getPrimaryInterface().DHCP.MAC.HardwareAddr()
 }
 
+// TODO: figure out where this gets used and how to return a useful value
 func (ds DiscoverStandalone) Mode() string {
-	return "testing"
+	return "hardware"
 }
 
 func (ds DiscoverStandalone) GetIP(addr net.HardwareAddr) IP {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return ds.Network.Interfaces[0].DHCP.IP
+	return ds.getPrimaryInterface().DHCP.IP
 }
 
 func (ds DiscoverStandalone) GetMAC(ip net.IP) net.HardwareAddr {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
+	for _, iface := range ds.Network.Interfaces {
+		if iface.DHCP.IP.Address.Equal(ip) {
+			return iface.DHCP.MAC.HardwareAddr()
+		}
 	}
-	return ds.Network.Interfaces[0].DHCP.MAC.HardwareAddr()
+
+	// no way to return error so return an empty interface
+	return ds.emptyInterface().DHCP.MAC.HardwareAddr()
 }
 
 func (ds DiscoverStandalone) DnsServers(mac net.HardwareAddr) []net.IP {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	out := make([]net.IP, len(ds.Network.Interfaces[0].DHCP.NameServers))
-	for i, v := range ds.Network.Interfaces[0].DHCP.NameServers {
+	iface := ds.getPrimaryInterface()
+	out := make([]net.IP, len(iface.DHCP.NameServers))
+	for i, v := range iface.DHCP.NameServers {
 		out[i] = net.ParseIP(v)
 	}
 	return out
 }
 
 func (ds DiscoverStandalone) LeaseTime(mac net.HardwareAddr) time.Duration {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
 	// TODO(@tobert) guessed that it's seconds, could be worng
-	return time.Duration(ds.Network.Interfaces[0].DHCP.LeaseTime) * time.Second
+	return time.Duration(ds.getPrimaryInterface().DHCP.LeaseTime) * time.Second
 }
 
 func (ds DiscoverStandalone) Hostname() (string, error) {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return ds.Network.Interfaces[0].DHCP.Hostname, nil
+	return ds.getPrimaryInterface().DHCP.Hostname, nil
 }
 
 func (ds DiscoverStandalone) Hardware() Hardware {
@@ -95,51 +86,30 @@ func (ds DiscoverStandalone) Hardware() Hardware {
 }
 
 func (ds DiscoverStandalone) SetMAC(mac net.HardwareAddr) {
-	if len(ds.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
 	// TODO: set the MAC, not sure this is useful?
 }
 
 func (hs HardwareStandalone) HardwareAllowPXE(mac net.HardwareAddr) bool {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].Netboot.AllowPXE
+	return hs.getPrimaryInterface().Netboot.AllowPXE
 }
 
 func (hs HardwareStandalone) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].Netboot.AllowWorkflow
+	return hs.getPrimaryInterface().Netboot.AllowWorkflow
 }
 
 func (hs HardwareStandalone) HardwareArch(mac net.HardwareAddr) string {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].DHCP.Arch
+	return hs.getPrimaryInterface().DHCP.Arch
 }
 
 func (hs HardwareStandalone) HardwareBondingMode() BondingMode {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
 	return hs.Metadata.BondingMode
 }
 
 func (hs HardwareStandalone) HardwareFacilityCode() string {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
 	return hs.Metadata.Facility.FacilityCode
 }
 
 func (hs HardwareStandalone) HardwareID() HardwareID {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
 	return HardwareID(hs.ID)
 }
 
@@ -180,33 +150,46 @@ func (hs HardwareStandalone) HardwareOSIEVersion() string {
 }
 
 func (hs HardwareStandalone) HardwareUEFI(mac net.HardwareAddr) bool {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].DHCP.UEFI
+	return hs.getPrimaryInterface().DHCP.UEFI
 }
 
 func (hs HardwareStandalone) OSIEBaseURL(mac net.HardwareAddr) string {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].Netboot.OSIE.BaseURL
+	return hs.getPrimaryInterface().Netboot.OSIE.BaseURL
 }
 
 func (hs HardwareStandalone) KernelPath(mac net.HardwareAddr) string {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].Netboot.OSIE.Kernel
+	return hs.getPrimaryInterface().Netboot.OSIE.Kernel
 }
 
 func (hs HardwareStandalone) InitrdPath(mac net.HardwareAddr) string {
-	if len(hs.Network.Interfaces) < 1 {
-		panic("not enough interfaces in json-defined host")
-	}
-	return hs.Network.Interfaces[0].Netboot.OSIE.Initrd
+	return hs.getPrimaryInterface().Netboot.OSIE.Initrd
 }
 
 func (hs HardwareStandalone) OperatingSystem() *OperatingSystem {
 	return hs.Metadata.Instance.OS
+}
+
+// getPrimaryInterface returns the first interface in the list of interfaces
+// and returns an empty interface with zeroed MAC & empty IP if that list is
+// empty. Other models have more sophisticated interface selection but this
+// model is mostly intended for test so this might behave in unexpected ways
+// with more complex configurations and need more logic added.
+func (hs HardwareStandalone) getPrimaryInterface() NetworkInterface {
+	if len(hs.Network.Interfaces) >= 1 {
+		return hs.Network.Interfaces[0]
+	} else {
+		return hs.emptyInterface()
+	}
+}
+
+func (hs HardwareStandalone) emptyInterface() NetworkInterface {
+	return NetworkInterface{
+		DHCP: DHCP{
+			MAC:         &MACAddr{},
+			IP:          IP{},
+			NameServers: []string{},
+			TimeServers: []string{},
+		},
+		Netboot: Netboot{},
+	}
 }
