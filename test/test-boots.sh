@@ -13,4 +13,3 @@ dhcpcd -d -4 --nobackground --noipv4ll -T
 
 # over time we can add some tests here, including stepping through tftp and http
 # requests to boots
-
