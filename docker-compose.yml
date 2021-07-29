@@ -1,3 +1,4 @@
+---
 # Provides a docker-compose configuration for local fast iteration when
 # hacking on boots alone.
 # TODO: figure out if NET_ADMIN capability is really necessary
@@ -21,7 +22,7 @@ networks:
 services:
   boots:
     build: .
-    #entrypoint: ["/usr/bin/boots", "--dhcp-addr", "0.0.0.0:67"]
+    # entrypoint: ["/usr/bin/boots", "--dhcp-addr", "0.0.0.0:67"]
     entrypoint: ["/start-boots.sh"]
     networks:
       boots-test:
@@ -51,4 +52,3 @@ services:
     mac_address: 02:00:00:00:00:ff
     cap_add:
       - NET_ADMIN
-
