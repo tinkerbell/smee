@@ -43,7 +43,6 @@
       ]
     },
     "metadata": {
-      "state": "unknown",
       "bonding_mode": 0,
       "manufacturer": {
         "id": "66b52554-144e-486f-a541-6f2a72fa9043",
@@ -80,9 +79,7 @@
         "private_subnets": [
           "192.168.192.0/24"
         ]
-      },
-      "facility": null,
-      "provisioner_engine": "standalone"
+      }
     }
   }
 ]
