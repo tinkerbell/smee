@@ -63,7 +63,6 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 	}
 
 	labels := prometheus.Labels{"from": "dhcp"}
-	cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
@@ -75,8 +74,8 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			MAC: mac.String(),
 		}
 
+		cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 		resp, err := cc.ByMAC(context.Background(), msg)
-
 		cacherTimer.ObserveDuration()
 		metrics.CacherRequestsInProgress.With(labels).Dec()
 
@@ -88,6 +87,8 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		if string(b) != "" {
 			metrics.CacherCacheHits.With(labels).Inc()
 			return NewDiscovery(b)
+		} else {
+			return c.ReportDiscovery(mac, giaddr, circuitID)
 		}
 	case "1":
 		tc := c.hardwareClient.(tink.HardwareServiceClient)
@@ -95,9 +96,11 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 			Mac: mac.String(),
 		}
 
+		tinkTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
 		resp, err := tc.ByMAC(context.Background(), msg)
+		tinkTimer.ObserveDuration()
 
-		cacherTimer.ObserveDuration()
+		// TODO: rename metric
 		metrics.CacherRequestsInProgress.With(labels).Dec()
 
 		if err != nil {
@@ -115,14 +118,30 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		}
 
 		return nil, errors.New("not found")
+	case "standalone":
+		sc := c.hardwareClient.(StandaloneClient)
+		for _, v := range sc.db {
+			if v.MAC().String() == mac.String() {
+				return v, nil
+			}
+		}
+		return nil, errors.Errorf("no entry for MAC %q in standalone data", mac.String())
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")
 	}
+}
 
+// ReportDiscovery is called when Cacher returns an empty response for the MAC
+// address. It does a POST to the Packet API /staff/cacher/hardware-discovery
+// endpoint.
+// This was split out from DiscoverHardwareFromDHCP to make the control flow
+// easier to understand.
+func (c *Client) ReportDiscovery(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
 	if giaddr == nil {
 		return nil, errors.New("missing MAC address")
 	}
 
+	labels := prometheus.Labels{"from": "dhcp"}
 	metrics.HardwareDiscovers.With(labels).Inc()
 	metrics.DiscoversInProgress.With(labels).Inc()
 	defer metrics.DiscoversInProgress.With(labels).Dec()
@@ -199,6 +218,15 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 		b, err = json.Marshal(&tpkg.HardwareWrapper{Hardware: resp}) // uses HardwareWrapper for its custom marshaler
 		if err != nil {
 			return nil, errors.New("marshalling tink hardware")
+		}
+	case "standalone":
+		sc := c.hardwareClient.(StandaloneClient)
+		for _, v := range sc.db {
+			for _, hip := range v.HardwareIPs() {
+				if hip.Address.Equal(ip) {
+					return v, nil
+				}
+			}
 		}
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")

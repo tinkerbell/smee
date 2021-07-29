@@ -51,6 +51,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
+	// Tinkerbell V1 backend
 	case "1":
 		hg, err = tinkClient.TinkHardwareClient()
 		if err != nil {
@@ -61,7 +62,8 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
-	default:
+	// classic Packet API / Cacher backend (default for empty envvar)
+	case "":
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
 			return nil, errors.New("FACILITY_CODE env must be set")
@@ -71,6 +73,36 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
+	// standalone, use a json file for all hardware data
+	case "standalone":
+		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
+		if saFile == "" {
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+		}
+		// set the baseURL from here so it gets returned in the client
+		// TODO(@tobert): maybe there's a way to pass a file:// in the first place?
+		baseURL, err = url.Parse("file://" + saFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saFile, saFile)
+		}
+		saData, err := ioutil.ReadFile(saFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not read file %q", saFile)
+		}
+		dsDb := []DiscoverStandalone{}
+		err = json.Unmarshal(saData, &dsDb)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saFile)
+		}
+
+		// the "client" part is done - reading the json, now return a struct client
+		// that is just the filename and parsed data structure
+		hg = StandaloneClient{
+			filename: saFile,
+			db:       dsDb,
+		}
+	default:
+		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 	}
 
 	return &Client{
