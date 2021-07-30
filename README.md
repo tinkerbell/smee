@@ -48,6 +48,26 @@ You can use NixOS shell, which will have the Git-LFS, Go and others
 
 ### Developing with Standalone Mode
 
+The quickest way to get started is `docker-compose up`. This will start boots in
+standalone mode using the example JSON in the `test/` directory. It also starts
+a client container that runs some tests.
+
+```sh
+docker-compose build # build containers
+docker-compose up    # start the network & services
+# it's fine to hit control-C twice for fast shutdown
+docker-compose down  # stop the network & clean up Docker processes
+```
+
+Alternatively you can run boots standalone manually. It requires a few
+environment variables for configuration.
+
+`test/standalone-hardware.json` should be safe enough for most developers to
+use on the command line locally without getting a call from your network
+administrator. That said, you might want to contact them before running a DHCP
+server on their network. Best to isolate it in Docker or a VM if you're not
+sure.
+
 ```sh
 export DATA_MODEL_VERSION=standalone
 export API_CONSUMER_TOKEN=none
