@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"runtime"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var listenAddr = conf.BOOTPBind
@@ -71,17 +74,29 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
 	}
 
-	j, err := job.CreateFromDHCP(mac, gi, circuitID)
+	tracer := otel.Tracer("DHCP")
+	ctx, span := tracer.Start(context.Background(), "job.CreateFromDHCP")
+	j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
+		span.SetStatus(codes.Error, err.Error())
+		span.End()
 		return
 	}
+	span.End()
+
 	go func() {
-		if j.ServeDHCP(w, req) {
+		ctx, span := tracer.Start(ctx, "ServeDHCP Reply")
+		ok := j.ServeDHCP(ctx, w, req)
+		if ok {
+			span.SetStatus(codes.Ok, "DHCPOFFER")
 			metrics.DHCPTotal.WithLabelValues("send", "DHCPOFFER", gi.String()).Inc()
+		} else {
+			span.SetStatus(codes.Error, "DHCPOFFER")
 		}
+		span.End()
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
 	}()

@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"net"
 	"os"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/packet"
 	tw "github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var client *packet.Client
@@ -41,6 +44,8 @@ type Job struct {
 
 	hardware packet.Hardware
 	instance *packet.Instance
+
+	ctx context.Context // used by otel for span propagation
 }
 
 // AllowPxe returns the value from the hardware data
@@ -72,22 +77,31 @@ func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
 }
 
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job
-func CreateFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
+func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
 	j := Job{
 		mac:   mac,
 		start: time.Now(),
+		ctx:   ctx,
 	}
 
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("discoverHardwareFromDHCP")
 	d, err := discoverHardwareFromDHCP(mac, giaddr, circuitID)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.End()
 		return Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
 
 	err = j.setup(d)
 	if err != nil {
-		return Job{}, err
+		span.SetStatus(codes.Error, err.Error())
+		j = Job{} // return an empty job on error
+	} else {
+		span.SetStatus(codes.Ok, "job.setup done")
 	}
-	return j, nil
+	span.End()
+	return j, err
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job

@@ -26,6 +26,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.0.0-RC2
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.0.0-RC2
 	go.opentelemetry.io/otel/sdk v1.0.0-RC2
+	go.opentelemetry.io/otel/trace v1.0.0-RC2 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect

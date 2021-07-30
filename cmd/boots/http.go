@@ -94,8 +94,7 @@ func ServeHTTP() {
 	installers.RegisterHTTPHandlers(mux)
 
 	// wrap the mux with an OpenTelemetry interceptor
-	// TODO: not sure what to say in the string here...
-	otelHandler := otelhttp.NewHandler(mux, "PLACEHOLDER_DONT_SHIP_ME")
+	otelHandler := otelhttp.NewHandler(mux, "boots-http")
 
 	// add X-Forwarded-For support if trusted proxies are configured
 	var xffHandler http.Handler
