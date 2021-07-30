@@ -5,16 +5,14 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-	"os"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
-	"go.opentelemetry.io/otel/exporters/stdout"
+	otlpgrpc "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -44,22 +42,20 @@ func initOtel() func() {
 	var exporter sdktrace.SpanExporter
 
 	if otlpEndpoint != "" {
-		driverOpts := []otlpgrpc.Option{otlpgrpc.WithEndpoint(otlpEndpoint)}
+		grpcOpts := []otlpgrpc.Option{otlpgrpc.WithEndpoint(otlpEndpoint)}
 		if otlpInsecure {
-			driverOpts = append(driverOpts, otlpgrpc.WithInsecure())
+			grpcOpts = append(grpcOpts, otlpgrpc.WithInsecure())
 		} else {
 			creds := credentials.NewClientTLSFromCert(nil, "")
-			driverOpts = append(driverOpts, otlpgrpc.WithTLSCredentials(creds))
+			grpcOpts = append(grpcOpts, otlpgrpc.WithTLSCredentials(creds))
 		}
 
-		driver := otlpgrpc.NewDriver(driverOpts...)
-		exporter, err = otlp.NewExporter(ctx, driver)
+		exporter, err = otlpgrpc.New(ctx, grpcOpts...)
 		if err != nil {
 			log.Fatalf("failed to configure OTLP exporter: %s", err)
 		}
 	} else if otlpEndpoint == "stdout" {
-		// `--otlp-endpoint stdout` will print traces to stdout
-		exporter, err = stdout.NewExporter(stdout.WithWriter(os.Stdout))
+		exporter, err = stdout.New()
 		if err != nil {
 			log.Fatalf("failed to configure stdout exporter: %s", err)
 		}
@@ -67,7 +63,7 @@ func initOtel() func() {
 		// this sets up the stdout exporter so all the plumbing comes up as usual
 		// but the data is discarded immediately, so that when there is no OTLP
 		// endpoint configured, there are no errors or interruption of service
-		exporter, err = stdout.NewExporter(stdout.WithWriter(ioutil.Discard))
+		exporter, err = stdout.New(stdout.WithWriter(ioutil.Discard))
 		if err != nil {
 			log.Fatalf("failed to configure stdout as null exporter: %s", err)
 		}
