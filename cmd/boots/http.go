@@ -22,6 +22,7 @@ import (
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -54,10 +55,18 @@ func serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
 	}
 }
 
-// ServeHTTP is a useless comment
+// otelFuncWrapper takes a route and an http handler function, wraps the function
+// with otelhttp, and returns the route again and http.Handler all set for mux.Handle()
+func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Request)) (string, http.Handler) {
+	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
+}
+
+// ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
+// server, which will block. App functionality is instrumented in Prometheus and
+// OpenTelemetry. Optionally configures X-Forwarded-For support.
 func ServeHTTP() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", serveJobFile)
+	mux.Handle(otelFuncWrapper("/", serveJobFile))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
 	mux.HandleFunc("/_packet/pprof/", pprof.Index)
@@ -66,11 +75,13 @@ func ServeHTTP() {
 	mux.HandleFunc("/_packet/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/_packet/pprof/trace", pprof.Trace)
 	mux.HandleFunc("/healthcheck", serveHealthchecker(GitRev, StartTime))
-	mux.HandleFunc("/phone-home", servePhoneHome)
-	mux.HandleFunc("/phone-home/key", job.ServePublicKey)
-	mux.HandleFunc("/problem", serveProblem)
+	mux.Handle(otelFuncWrapper("/phone-home", servePhoneHome))
+	mux.Handle(otelFuncWrapper("/phone-home/key", job.ServePublicKey))
+	mux.Handle(otelFuncWrapper("/problem", serveProblem))
+	mux.Handle(otelFuncWrapper("/hardware-components", serveHardware))
+
 	// Events endpoint used to forward customer generated custom events from a running device (instance) to packet API
-	mux.HandleFunc("/events", func(w http.ResponseWriter, req *http.Request) {
+	mux.Handle(otelFuncWrapper("/events", func(w http.ResponseWriter, req *http.Request) {
 		code, err := serveEvents(client, w, req)
 		if err == nil {
 			return
@@ -78,26 +89,31 @@ func ServeHTTP() {
 		if code != http.StatusOK {
 			mainlog.Error(err)
 		}
-	})
-	mux.HandleFunc("/hardware-components", serveHardware)
+	}))
+
 	installers.RegisterHTTPHandlers(mux)
 
-	var h http.Handler
+	// wrap the mux with an OpenTelemetry interceptor
+	// TODO: not sure what to say in the string here...
+	otelHandler := otelhttp.NewHandler(mux, "PLACEHOLDER_DONT_SHIP_ME")
+
+	// add X-Forwarded-For support if trusted proxies are configured
+	var xffHandler http.Handler
 	if len(conf.TrustedProxies) > 0 {
 		xffmw, _ := xff.New(xff.Options{
 			AllowedSubnets: conf.TrustedProxies,
 		})
 
-		h = xffmw.Handler(&httplog.Handler{
-			Handler: mux,
+		xffHandler = xffmw.Handler(&httplog.Handler{
+			Handler: otelHandler,
 		})
 	} else {
-		h = &httplog.Handler{
-			Handler: mux,
+		xffHandler = &httplog.Handler{
+			Handler: otelHandler,
 		}
 	}
 
-	if err := http.ListenAndServe(httpAddr, h); err != nil {
+	if err := http.ListenAndServe(httpAddr, xffHandler); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
 		mainlog.Fatal(err)
 	}
