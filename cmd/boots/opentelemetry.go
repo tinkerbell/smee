@@ -41,7 +41,12 @@ func initOtel() func() {
 	// might be OTLP, might be stdout (to dev null, to prevent errors when unconfigured)
 	var exporter sdktrace.SpanExporter
 
-	if otlpEndpoint != "" {
+	if otlpEndpoint == "stdout" {
+		exporter, err = stdout.New()
+		if err != nil {
+			log.Fatalf("failed to configure stdout exporter: %s", err)
+		}
+	} else if otlpEndpoint != "" {
 		grpcOpts := []otlpgrpc.Option{otlpgrpc.WithEndpoint(otlpEndpoint)}
 		if otlpInsecure {
 			grpcOpts = append(grpcOpts, otlpgrpc.WithInsecure())
@@ -53,11 +58,6 @@ func initOtel() func() {
 		exporter, err = otlpgrpc.New(ctx, grpcOpts...)
 		if err != nil {
 			log.Fatalf("failed to configure OTLP exporter: %s", err)
-		}
-	} else if otlpEndpoint == "stdout" {
-		exporter, err = stdout.New()
-		if err != nil {
-			log.Fatalf("failed to configure stdout exporter: %s", err)
 		}
 	} else {
 		// this sets up the stdout exporter so all the plumbing comes up as usual
