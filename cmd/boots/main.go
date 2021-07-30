@@ -47,6 +47,10 @@ func main() {
 	}
 	defer l.Close()
 	mainlog = l.Package("main")
+
+	otelShutdown := initOtel()
+	defer otelShutdown()
+
 	metrics.Init(l)
 	dhcp.Init(l)
 	conf.Init(l)
