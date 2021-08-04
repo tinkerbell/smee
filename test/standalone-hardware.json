@@ -29,10 +29,6 @@
           "netboot": {
             "allow_pxe": true,
             "allow_workflow": true,
-            "ipxe": {
-              "url": "http://localhost/foo",
-              "contents": "stufffff"
-            },
             "osie": {
               "base_url": "http://localhost/kernels?",
               "kernel": "5.0.1-fake-version",
