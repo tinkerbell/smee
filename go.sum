@@ -463,6 +463,8 @@ github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfc
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303/go.mod h1:b/3pqi4uYBWdTpatyUbL48rn1kUQ0dibH8N6MBAVn/g=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
+github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b h1:QdJmToBEuonTFFNrS2T3Fp7IWkFvrwpQLpfP2UNOt/c=
+github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b/go.mod h1:TEqu9woEuV94Qv+HTXaVxeb4DXVv2BWEki9VXKamUZ4=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
