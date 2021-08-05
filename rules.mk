@@ -36,11 +36,13 @@ PATH := ${GOBIN}:${PATH}
 export PATH
 endif
 
-toolsBins := $(addprefix bin/,$(shell sed -n '/^\s*_/ s|.*/\(.*\)"|\1|p' tools.go | tr '\n' ' '))
-tools: $(toolsBins)
-
-$(toolsBins): tools.go
-	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
+# parses tools.go and returns the tool name prefixed with bin/
+toolsBins := $(addprefix bin/,$(shell cat tools.go | grep _ | awk -F'"' '{print $$2}' | xargs -tI % basename %))
+# installs cli tools defined in tools.go
+$(toolsBins):
+	@echo Installing tools from tools.go
+	$(eval f := $(shell echo $@ | cut -d"/" -f2))
+	@cat tools.go | grep _ | grep $f | awk -F'"' '{print $$2}' | xargs -tI % go install %
 	
 generated_files := \
 	packet/mock_cacher/cacher_mock.go \
