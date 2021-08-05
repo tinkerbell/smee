@@ -44,6 +44,7 @@ func TestReadFile(t *testing.T) {
 				if tc.failCreateFromIP {
 					err = tc.err
 				}
+
 				return job.Job{}, err
 			})
 			var jb job.Job
@@ -52,6 +53,7 @@ func TestReadFile(t *testing.T) {
 			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(jb), "ServeTFTP", func(_ job.Job, _, _ string) (tftp.ReadCloser, error) {
 				r := ioutil.NopCloser(bytes.NewReader([]byte(fileContents)))
+
 				return r, nil
 			})
 

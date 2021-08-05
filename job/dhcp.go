@@ -22,6 +22,7 @@ func IsSpecialOS(i *packet.Instance) bool {
 	if i.OS.Slug != "" {
 		slug = i.OS.Slug
 	}
+
 	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
 }
 
@@ -43,14 +44,17 @@ func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
 	// configure DHCP
 	if !j.configureDHCP(reply.Packet(), req) {
 		j.Error(errors.New("unable to configure DHCP for yiaddr and DHCP options"))
+
 		return false
 	}
 
 	// send the DHCP response
 	if err := reply.Send(); err != nil {
 		j.Error(errors.WithMessage(err, "unable to send DHCP reply"))
+
 		return false
 	}
+
 	return true
 }
 
@@ -76,6 +80,7 @@ func (j Job) configureDHCP(rep, req *dhcp4.Packet) bool {
 
 		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
 	}
+
 	return true
 }
 
@@ -86,6 +91,7 @@ func (j Job) isPXEAllowed() bool {
 	if j.InstanceID() == "" {
 		return false
 	}
+
 	return j.instance.AllowPXE
 }
 
@@ -101,11 +107,13 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
+
 			return
 		}
 
 		if j.instance.State != "active" {
 			j.With("hardware.state", j.HardwareState(), "instance.state", j.instance.State).Info("device should NOT be trying to PXE boot")
+
 			return
 		}
 
@@ -114,6 +122,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		if !j.isPXEAllowed() && j.hardware.OperatingSystem().OsSlug != "custom_ipxe" {
 			err := errors.New("device should NOT be trying to PXE boot")
 			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.hardware.OperatingSystem().OsSlug).Info(err)
+
 			return
 		}
 		// custom_ipxe or rescue
@@ -153,6 +162,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 	if filename == "" {
 		err := errors.New("no filename is set")
 		j.Error(err)
+
 		return
 	}
 

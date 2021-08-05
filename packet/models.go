@@ -88,6 +88,7 @@ func NewDiscovery(b []byte) (Discovery, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
 		}
+
 		return d, nil
 	case "1":
 		d := &DiscoveryTinkerbellV1{}
@@ -95,6 +96,7 @@ func NewDiscovery(b []byte) (Discovery, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
 		}
+
 		return d, nil
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")
@@ -145,6 +147,7 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 			return &ip
 		}
 	}
+
 	return nil
 }
 
@@ -169,8 +172,10 @@ func (i *Instance) ServicesVersion() ServicesVersion {
 		if err != nil {
 			return ServicesVersion{}
 		}
+
 		return sv
 	}
+
 	return ServicesVersion{}
 }
 
@@ -239,6 +244,7 @@ func (p *Port) MAC() net.HardwareAddr {
 	if p.Data.MAC != nil && *p.Data.MAC != ZeroMAC {
 		return p.Data.MAC.HardwareAddr()
 	}
+
 	return nil
 }
 

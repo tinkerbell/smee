@@ -49,6 +49,7 @@ func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name stri
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		j.With("script", name).Error(errors.New("boot script not found"))
+
 		return
 	}
 
@@ -64,6 +65,7 @@ func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name stri
 
 	if _, err := w.Write(s.Bytes()); err != nil {
 		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
+
 		return
 	}
 }
@@ -72,18 +74,22 @@ func auto(j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
 		shell(j, s)
+
 		return
 	}
 	if f, ok := bySlug[j.hardware.OperatingSystem().Slug]; ok {
 		f(j, s)
+
 		return
 	}
 	if f, ok := byDistro[j.hardware.OperatingSystem().Distro]; ok {
 		f(j, s)
+
 		return
 	}
 	if defaultInstaller != nil {
 		defaultInstaller(j, s)
+
 		return
 	}
 	j.With("slug", j.hardware.OperatingSystem().Slug, "distro", j.hardware.OperatingSystem().Distro).Error(errors.New("unsupported slug/distro"))
