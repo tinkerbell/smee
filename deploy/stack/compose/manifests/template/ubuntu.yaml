@@ -1,0 +1,76 @@
+version: "0.1"
+name: debian_Focal
+global_timeout: 1800
+tasks:
+  - name: "os-installation"
+    worker: "{{.device_1}}"
+    volumes:
+      - /dev:/dev
+      - /dev/console:/dev/console
+      - /lib/firmware:/lib/firmware:ro
+    actions:
+      - name: "stream-ubuntu-image"
+        image: image2disk:v1.0.0
+        timeout: 600
+        environment:
+          DEST_DISK: /dev/sda
+          IMG_URL: "http://192.168.50.4:8080/focal-server-cloudimg-amd64.raw.gz"
+          COMPRESSED: true
+      - name: "install-openssl"
+        image: cexec:v1.0.0
+        timeout: 90
+        environment:
+          BLOCK_DEVICE: /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "apt -y update && apt -y install openssl"
+      - name: "create-user"
+        image: cexec:v1.0.0
+        timeout: 90
+        environment:
+          BLOCK_DEVICE: /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "useradd -p $(openssl passwd -1 tink) -s /bin/bash -d /home/tink/ -m -G sudo tink"
+      - name: "enable-ssh"
+        image: cexec:v1.0.0
+        timeout: 90
+        environment:
+          BLOCK_DEVICE: /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "ssh-keygen -A; systemctl enable ssh.service; sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config"
+      - name: "disable-apparmor"
+        image: cexec:v1.0.0
+        timeout: 90
+        environment:
+          BLOCK_DEVICE: /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "systemctl disable apparmor; systemctl disable snapd"
+      - name: "write-netplan"
+        image: writefile:v1.0.0
+        timeout: 90
+        environment:
+          DEST_DISK: /dev/sda1
+          FS_TYPE: ext4
+          DEST_PATH: /etc/netplan/config.yaml
+          CONTENTS: |
+            network:
+                version: 2
+                renderer: networkd
+                ethernets:
+                    enp0s3:
+                        dhcp4: true
+                    enp0s8:
+                        dhcp4: true
+                    ens33:
+                        dhcp4: true
+          UID: 0
+          GID: 0
+          MODE: 0644
+          DIRMODE: 0755
