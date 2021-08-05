@@ -44,6 +44,7 @@ func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) 
 	if !ok {
 		err := errors.Wrap(os.ErrNotExist, "unknown file")
 		l.With("event", "open", "error", err).Info()
+
 		return nil, err
 	}
 
@@ -54,6 +55,7 @@ func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) 
 	}
 
 	t.With("event", "open").Debug()
+
 	return t, nil
 }
 
@@ -64,12 +66,14 @@ func (t *tftpTransfer) Close() error {
 	t.With("event", "close", "duration", d, "unread", n).Info()
 
 	t.unread = nil
+
 	return nil
 }
 
 func (t *tftpTransfer) Read(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		t.With("event", "read", "read", 0, "unread", len(t.unread)).Info()
+
 		return
 	}
 
@@ -81,6 +85,7 @@ func (t *tftpTransfer) Read(p []byte) (n int, err error) {
 	}
 
 	t.With("event", "read", "read", n, "unread", len(t.unread)).Debug()
+
 	return
 }
 

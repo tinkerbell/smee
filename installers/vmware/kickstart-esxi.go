@@ -21,6 +21,7 @@ func serveKickstart(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
 		w.WriteHeader(http.StatusNotFound)
+
 		return
 	}
 	if err := genKickstart(j, w); err != nil {

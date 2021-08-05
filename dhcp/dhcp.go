@@ -17,6 +17,7 @@ func NewReply(w dhcp4.ReplyWriter, req *dhcp4.Packet) Reply {
 	case dhcp4.MessageTypeRequest:
 		return NewAck(w, req)
 	}
+
 	return nil
 }
 
@@ -28,6 +29,7 @@ type Ack struct {
 func NewAck(w dhcp4.ReplyWriter, req *dhcp4.Packet) *Ack {
 	ack := dhcp4.CreateAck(req)
 	includeOption82(req, ack)
+
 	return &Ack{ack, w}
 }
 
@@ -47,6 +49,7 @@ type Offer struct {
 func NewOffer(w dhcp4.ReplyWriter, req *dhcp4.Packet) *Offer {
 	offer := dhcp4.CreateOffer(req)
 	includeOption82(req, offer)
+
 	return &Offer{offer, w}
 }
 

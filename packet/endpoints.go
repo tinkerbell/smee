@@ -86,6 +86,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		b := []byte(resp.JSON)
 		if string(b) != "" {
 			metrics.CacherCacheHits.With(labels).Inc()
+
 			return NewDiscovery(b)
 		} else {
 			return c.ReportDiscovery(mac, giaddr, circuitID)
@@ -114,6 +115,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 
 		if string(b) != "{}" {
 			metrics.CacherCacheHits.With(labels).Inc()
+
 			return NewDiscovery(b)
 		}
 
@@ -125,6 +127,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 				return v, nil
 			}
 		}
+
 		return nil, errors.Errorf("no entry for MAC %q in standalone data", mac.String())
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")
@@ -167,6 +170,7 @@ func (c *Client) ReportDiscovery(mac net.HardwareAddr, giaddr net.IP, circuitID 
 	if err := c.Post("/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
 		return nil, err
 	}
+
 	return &res, nil
 }
 
@@ -244,6 +248,7 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 	if d.Instance() == nil {
 		return "", nil
 	}
+
 	return d.Instance().ID, nil
 }
 
@@ -264,6 +269,7 @@ func (c *Client) PostHardwareEvent(id string, body io.Reader) (string, error) {
 	if err := c.Post("/hardware/"+id+"/events", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
+
 	return res.ID, nil
 }
 func (c *Client) PostHardwarePhoneHome(id string) error {
@@ -279,6 +285,7 @@ func (c *Client) PostHardwareProblem(id HardwareID, body io.Reader) (string, err
 	if err := c.Post("/hardware/"+id.String()+"/problems", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
+
 	return res.ID, nil
 }
 
@@ -292,6 +299,7 @@ func (c *Client) PostInstanceEvent(id string, body io.Reader) (string, error) {
 	if err := c.Post("/devices/"+id+"/events", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
+
 	return res.ID, nil
 }
 func (c *Client) PostInstanceFail(id string, body io.Reader) error {
