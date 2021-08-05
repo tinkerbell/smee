@@ -13,6 +13,12 @@ gen: $(generated_files) ## Generate go generate'd files
 image: cmd/boots/boots-linux-amd64 ## Build docker image
 	docker build -t boots .
 
+stack-run: cmd/boots/boots-linux-amd64 ## Run the Tinkerbell stack
+	cd deploy/stack; docker-compose up --build -d
+
+stack-remove: ## Remove a running Tinkerbell stack
+	cd deploy/stack; docker-compose down -v --remove-orphans
+
 test: gen ## Run go test
 	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
 
