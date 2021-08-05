@@ -15,6 +15,7 @@ var facility = func() string {
 	if fac == "" {
 		fac = "ewr1"
 	}
+
 	return fac
 }()
 

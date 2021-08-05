@@ -29,6 +29,7 @@ func (m Mode) Slug() string {
 	if s, ok := modeSlugs[m]; ok {
 		return s
 	}
+
 	return "unknown"
 }
 
@@ -45,6 +46,7 @@ func (m Mode) String() string {
 	if s, ok := modeStrings[m]; ok {
 		return s
 	}
+
 	return "(unknown mode)"
 }
 
@@ -53,6 +55,7 @@ var modesBySlug = func() map[string]Mode {
 	for mode, slug := range modeSlugs {
 		modes[slug] = mode
 	}
+
 	return modes
 }()
 

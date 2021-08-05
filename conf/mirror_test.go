@@ -106,6 +106,7 @@ func Test_buildMirrorBaseURL(t *testing.T) {
 			got, err := buildMirrorBaseURL()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildMirrorBaseURL() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -251,6 +252,7 @@ func Test_buildMirrorURL(t *testing.T) {
 			got, err := buildMirrorURL()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildMirrorURL() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

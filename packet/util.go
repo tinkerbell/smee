@@ -44,6 +44,7 @@ func (m *MACAddr) UnmarshalText(text []byte) error {
 		return errors.Wrap(err, "parsing mac address")
 	}
 	copy(m[:], mac)
+
 	return nil
 }
 

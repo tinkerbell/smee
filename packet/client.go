@@ -122,6 +122,7 @@ func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *C
 	c := &http.Client{
 		Transport: t,
 	}
+
 	return &Client{
 		http:           c,
 		workflowClient: workflowClient,
@@ -137,6 +138,7 @@ func (c *Client) Do(req *http.Request, v interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "submit http request")
 	}
+
 	return unmarshalResponse(res, v)
 }
 
@@ -145,6 +147,7 @@ func (c *Client) Get(ref string, v interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "setup GET request")
 	}
+
 	return c.Do(req, v)
 }
 
@@ -156,6 +159,7 @@ func (c *Client) Patch(ref, mime string, body io.Reader, v interface{}) error {
 	if mime != "" {
 		req.Header.Set("Content-Type", mime)
 	}
+
 	return c.Do(req, v)
 }
 
@@ -167,6 +171,7 @@ func (c *Client) Post(ref, mime string, body io.Reader, v interface{}) error {
 	if mime != "" {
 		req.Header.Set("Content-Type", mime)
 	}
+
 	return c.Do(req, v)
 }
 
@@ -192,6 +197,7 @@ func unmarshalResponse(res *http.Response, result interface{}) error {
 			StatusCode: res.StatusCode,
 		}
 		e.unmarshalErrors(res.Body)
+
 		return errors.Wrap(e, "unmarshalling response")
 	}
 

@@ -113,6 +113,7 @@ func (m *message) String() string {
 	}
 
 	fields = append(fields, fmt.Sprintf("msg=%q", msgCleanup.Replace(string(m.msg))))
+
 	return strings.Join(fields, " ")
 }
 
@@ -145,6 +146,7 @@ func (m *message) parse() bool {
 	if !m.parseHeader() {
 		return false
 	}
+
 	return m.parseStructuredData()
 }
 
@@ -167,6 +169,7 @@ func (m *message) parseHeader() bool {
 func (m *message) parseStructuredData() bool {
 	if len(m.msg) >= 2 && m.msg[0] == '-' && m.msg[1] == ' ' {
 		m.msg = m.msg[2:]
+
 		return true
 	}
 
@@ -219,13 +222,16 @@ func (m *message) parseLegacyTag() {
 		}
 		if c == '[' {
 			m.app, b = b[:i], b[i:]
+
 			goto parsePid
 		}
 		m.app, b = b[:i], b[i:]
+
 		goto trimColon
 	}
 	m.app = nil
 	m.procid = nil
+
 	return
 
 parsePid:
@@ -249,6 +255,7 @@ func (m *message) parsePriority() bool {
 		if c == '>' {
 			m.priority = pri
 			m.msg = m.buf[1+i+1 : m.size]
+
 			return true
 		}
 		if c < '0' || c > '9' {
@@ -256,6 +263,7 @@ func (m *message) parsePriority() bool {
 		}
 		pri = pri*10 + c - '0'
 	}
+
 	return false
 }
 
@@ -276,6 +284,7 @@ func (m *message) parseTimestamp(b []byte) bool {
 		return false
 	}
 	m.time = t
+
 	return true
 }
 
@@ -290,6 +299,7 @@ func (m *message) parseVersion() bool {
 		return false // we only support version 1
 	}
 	m.msg = m.msg[2:]
+
 	return true
 }
 
@@ -322,5 +332,6 @@ func ignoreNil(b []byte) []byte {
 	if len(b) == 1 && b[0] == '-' {
 		return nil
 	}
+
 	return b
 }

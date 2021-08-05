@@ -75,6 +75,7 @@ func TestScriptKickstart(t *testing.T) {
 func loadKickstart(disk string, assert *require.Assertions) string {
 	data, err := ioutil.ReadFile("testdata/vmware_base.txt")
 	assert.Nil(err)
+
 	return strings.Replace(string(data), "<DISK>", disk, 1)
 }
 

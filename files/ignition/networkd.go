@@ -12,6 +12,7 @@ type NetworkUnits []*unit.Unit
 func (us *NetworkUnits) Add(name string) *unit.Unit {
 	u := unit.New(name)
 	*us = append(*us, u)
+
 	return u
 }
 
@@ -29,5 +30,6 @@ func (us NetworkUnits) MarshalJSON() ([]byte, error) {
 	v.Units = us
 
 	b, err := json.Marshal(&v)
+
 	return b, errors.Wrap(err, "marshaling network unit as json")
 }

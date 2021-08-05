@@ -68,6 +68,7 @@ func (ds DiscoverStandalone) DnsServers(mac net.HardwareAddr) []net.IP {
 	for i, v := range iface.DHCP.NameServers {
 		out[i] = net.ParseIP(v)
 	}
+
 	return out
 }
 
@@ -82,6 +83,7 @@ func (ds DiscoverStandalone) Hostname() (string, error) {
 
 func (ds DiscoverStandalone) Hardware() Hardware {
 	var h Hardware = ds.HardwareStandalone
+
 	return h
 }
 
@@ -118,6 +120,7 @@ func (hs HardwareStandalone) HardwareIPs() []IP {
 	for i, v := range hs.Network.Interfaces {
 		out[i] = v.DHCP.IP
 	}
+
 	return out
 }
 

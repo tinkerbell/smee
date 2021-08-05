@@ -85,5 +85,6 @@ func formatCIDR(ip net.IP, mask net.IPMask) string {
 		IP:   ip,
 		Mask: mask,
 	}
+
 	return n.String()
 }

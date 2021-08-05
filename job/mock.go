@@ -37,6 +37,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 	}
 
 	mockLog := log.Test(t, "job.Mock")
+
 	return Mock{
 		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
 		hardware: &packet.HardwareCacher{
@@ -59,6 +60,7 @@ func NewMockFromDiscovery(d packet.Discovery, mac net.HardwareAddr) Mock {
 	mockLog, _ := log.Init("job.Mock")
 	j := Job{Logger: mockLog, mac: mac}
 	j.setup(d)
+
 	return Mock(j)
 }
 
@@ -223,6 +225,7 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 			},
 		},
 	}
+
 	return d, []packet.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceId
 }
 
@@ -247,5 +250,6 @@ func MakeHardwareWithoutInstance() (*packet.DiscoveryCacher, packet.MACAddr) {
 			},
 		},
 	}
+
 	return d, mac
 }

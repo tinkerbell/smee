@@ -45,6 +45,7 @@ type HardwareCacher struct {
 
 func (d DiscoveryCacher) Hardware() Hardware {
 	var h Hardware = d.HardwareCacher
+
 	return h
 }
 
@@ -63,8 +64,10 @@ func (d DiscoveryCacher) LeaseTime(mac net.HardwareAddr) time.Duration {
 func (d DiscoveryCacher) MAC() net.HardwareAddr {
 	if d.mac == nil {
 		mac := d.PrimaryDataMAC()
+
 		return mac.HardwareAddr()
 	}
+
 	return d.mac
 }
 
@@ -74,6 +77,7 @@ func (d DiscoveryCacher) MacType(mac string) string {
 			return string(port.Type)
 		}
 	}
+
 	return "NOTFOUND"
 }
 
@@ -82,8 +86,10 @@ func (d DiscoveryCacher) MacIsType(mac string, portType string) bool {
 		if port.MAC().String() != mac {
 			continue
 		}
+
 		return string(port.Type) == portType
 	}
+
 	return false
 }
 
@@ -102,6 +108,7 @@ func (d DiscoveryCacher) Mode() string {
 	if d.DiscoveredIP(mac.String()) != nil {
 		return "discovered"
 	}
+
 	return ""
 }
 
@@ -123,6 +130,7 @@ func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) IP {
 	if ip != nil {
 		return *ip
 	}
+
 	return IP{}
 }
 
@@ -148,6 +156,7 @@ func (d DiscoveryCacher) InstanceIP(mac string) *IP {
 			return ip
 		}
 	}
+
 	return nil
 }
 
@@ -159,6 +168,7 @@ func (d DiscoveryCacher) HardwareIP(mac string) *IP {
 	if d.PrimaryDataMAC().HardwareAddr().String() != mac {
 		return nil
 	}
+
 	return d.hardwareIP()
 }
 
@@ -172,8 +182,10 @@ func (d DiscoveryCacher) hardwareIP() *IP {
 		if ip.Public {
 			continue
 		}
+
 		return &ip
 	}
+
 	return nil
 }
 
@@ -182,6 +194,7 @@ func (d DiscoveryCacher) ManagementIP(mac string) *IP {
 	if d.MacIsType(mac, "ipmi") && d.Name != "" {
 		return &d.IPMI
 	}
+
 	return nil
 }
 
@@ -190,6 +203,7 @@ func (d DiscoveryCacher) DiscoveredIP(mac string) *IP {
 	if d.MacIsType(mac, "ipmi") && d.Name == "" {
 		return &d.IPMI
 	}
+
 	return nil
 }
 
@@ -202,6 +216,7 @@ func (d DiscoveryCacher) PrimaryDataMAC() MACAddr {
 		}
 		if port.Name == "eth0" {
 			mac = *port.Data.MAC
+
 			break
 		}
 		if port.MAC().String() < mac.String() {
@@ -212,6 +227,7 @@ func (d DiscoveryCacher) PrimaryDataMAC() MACAddr {
 	if mac.IsOnes() {
 		return ZeroMAC
 	}
+
 	return mac
 }
 
@@ -222,6 +238,7 @@ func (d DiscoveryCacher) ManagementMAC() MACAddr {
 			return *port.Data.MAC
 		}
 	}
+
 	return ZeroMAC
 }
 
@@ -254,6 +271,7 @@ func (d *DiscoveryCacher) SetMAC(mac net.HardwareAddr) {
 
 func (h *HardwareCacher) Management() (address, netmask, gateway net.IP) {
 	ip := h.IPMI
+
 	return ip.Address, ip.Netmask, ip.Gateway
 }
 
@@ -268,6 +286,7 @@ func (h HardwareCacher) Interfaces() []Port {
 	if len(ports) == 0 {
 		return nil
 	}
+
 	return ports
 }
 
@@ -355,6 +374,7 @@ func (h *HardwareCacher) OperatingSystem() *OperatingSystem {
 	if i.OSV == (*OperatingSystem)(nil) {
 		i.OSV = &OperatingSystem{}
 	}
+
 	return i.OSV
 }
 
@@ -362,5 +382,6 @@ func (h *HardwareCacher) instance() *Instance {
 	if h.Instance == nil {
 		h.Instance = &Instance{}
 	}
+
 	return h.Instance
 }
