@@ -84,6 +84,7 @@ func TestDiscoverHardwareFromDHCP(t *testing.T) {
 			if test.err != nil || test.code != 0 {
 				assert.Error(t, err)
 				assert.Nil(t, d)
+
 				return
 			}
 
@@ -131,6 +132,7 @@ func TestGetWorkflowsFromTink(t *testing.T) {
 			w, err := c.GetWorkflowsFromTink(test.hwID)
 			if test.err != nil {
 				assert.Error(t, err)
+
 				return
 			}
 			assert.Equal(t, w, test.wcl)

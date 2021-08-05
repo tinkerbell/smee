@@ -14,6 +14,7 @@ import (
 func (j Job) CustomPXEDone() {
 	if j.InstanceID() == "" {
 		j.Info("CustomPXEDone called for nil instance")
+
 		return
 	}
 
@@ -30,11 +31,13 @@ func (j Job) CustomPXEDone() {
 func (j Job) DisablePXE() {
 	if j.instance == nil {
 		j.Error(errors.New("instance is nil"))
+
 		return
 	}
 
 	if err := client.UpdateInstance(j.instance.ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
 		j.Error(errors.WithMessage(err, "disabling PXE"))
+
 		return
 	}
 
@@ -52,12 +55,15 @@ func (j Job) PostHardwareProblem(slug string) bool {
 	b, err := json.Marshal(&v)
 	if err != nil {
 		j.With("problem", slug).Error(errors.WithMessage(err, "encoding hardware problem request"))
+
 		return false
 	}
 	if _, err := client.PostHardwareProblem(j.hardware.HardwareID(), bytes.NewReader(b)); err != nil {
 		j.With("problem", slug).Error(errors.WithMessage(err, "posting hardware problem"))
+
 		return false
 	}
+
 	return true
 }
 
@@ -72,6 +78,7 @@ func (j Job) phoneHome(body []byte) bool {
 	p, err := posterFromJSON(body)
 	if err != nil {
 		j.Error(errors.WithMessage(err, "parsing event"))
+
 		return false
 	}
 
@@ -92,6 +99,7 @@ func (j Job) phoneHome(body []byte) bool {
 	} else {
 		if j.HardwareState() != "preinstalling" {
 			j.With("state", j.HardwareState()).Info("ignoring hardware phone-home when state is not preinstalling")
+
 			return false
 		}
 		id = j.hardware.HardwareID().String()
@@ -101,6 +109,7 @@ func (j Job) phoneHome(body []byte) bool {
 
 	if err := post(id); err != nil {
 		j.With("kind", p.kind(), "type", typ).Error(err)
+
 		return false
 	}
 
@@ -119,11 +128,13 @@ func (j Job) phoneHome(body []byte) bool {
 func (j Job) postEvent(kind, body string, private bool) bool {
 	if j.InstanceID() == "" {
 		j.With("kind", kind).Error(errors.New("postEvent called for nil instance"))
+
 		return false
 	}
 	e, err := newEvent(kind, body, private)
 	if err != nil {
 		j.With("kind", kind).Error(errors.WithMessage(err, "encoding event"))
+
 		return false
 	}
 	if err := e.postInstance(j.instance.ID); err != nil {
@@ -135,6 +146,7 @@ func (j Job) postEvent(kind, body string, private bool) bool {
 	} else {
 		j.With("kind", e.kind()).Info("posted event")
 	}
+
 	return true
 }
 
@@ -159,6 +171,7 @@ func posterFromJSON(b []byte) (poster, error) {
 			if err != nil {
 				return &event{}, err
 			}
+
 			return &event{_kind: "phone-home", pass: pass}, nil
 		}
 	}
@@ -167,8 +180,10 @@ func posterFromJSON(b []byte) (poster, error) {
 		if err := json.Unmarshal(b, &f); err != nil {
 			return nil, errors.Wrap(err, "unmarshalling failure body")
 		}
+
 		return &f, nil
 	}
+
 	return &event{_kind: res.Type, json: b}, nil
 }
 
@@ -177,6 +192,7 @@ func newEvent(kind, body string, private bool) (event, error) {
 	if err != nil {
 		return event{}, errors.Wrap(err, "marshalling event")
 	}
+
 	return event{_kind: kind, json: b}, nil
 }
 
@@ -202,6 +218,7 @@ func (e *event) post(endpoint, id string) error {
 		} else {
 			var err error
 			e._id, err = client.PostHardwareEvent(id, bytes.NewReader(e.json))
+
 			return err
 		}
 	} else if endpoint == "instance" {
@@ -210,9 +227,11 @@ func (e *event) post(endpoint, id string) error {
 		} else {
 			var err error
 			e._id, err = client.PostInstanceEvent(id, bytes.NewReader(e.json))
+
 			return err
 		}
 	}
+
 	return errors.New("unknown endpoint: " + endpoint)
 }
 func (e *event) postInstance(id string) (err error) {

@@ -156,6 +156,7 @@ func kernelPath(j job.Job) string {
 	if j.KernelPath() != "" {
 		return j.KernelPath()
 	}
+
 	return "vmlinuz-${parch}"
 }
 
@@ -163,6 +164,7 @@ func initrdPath(j job.Job) string {
 	if j.InitrdPath() != "" {
 		return j.InitrdPath()
 	}
+
 	return "initramfs-${parch}"
 }
 
@@ -178,6 +180,7 @@ func osieBaseURL(j job.Job) string {
 	if isCustomOSIE(j) {
 		return osieURL + "/" + j.OSIEVersion()
 	}
+
 	return osieURL + "/current"
 }
 

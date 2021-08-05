@@ -58,6 +58,7 @@ func bootScript(paths map[string]string, j job.Job, s *ipxe.Script) {
 		if tag == "" {
 			j.With("slug", j.OperatingSystem().Slug, "class", j.PlanSlug()).Error(errors.New("unknown os/class combo and no OSV ImageTag set"))
 			s.Shell()
+
 			return
 		}
 		key = j.OperatingSystem().Slug + "/" + tag

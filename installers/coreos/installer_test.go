@@ -83,6 +83,7 @@ func replacer(l []string, replacements ...string) []string {
 	for i := 0; i < len(replacements); i = i + 2 {
 		script = strings.ReplaceAll(script, replacements[i], replacements[i+1])
 	}
+
 	return strings.Split(script, "\n")
 }
 

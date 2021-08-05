@@ -22,6 +22,7 @@ func (c *Config) ApplyTo(rep *dhcp4.Packet) bool {
 	for o, v := range c.opts {
 		rep.SetOption(o, v)
 	}
+
 	return true
 }
 
@@ -34,6 +35,7 @@ func (c *Config) Netmask() net.IP {
 	if !ok {
 		return nil
 	}
+
 	return nm
 }
 
@@ -42,6 +44,7 @@ func (c *Config) Gateway() net.IP {
 	if !ok {
 		return nil
 	}
+
 	return gw
 }
 
@@ -50,6 +53,7 @@ func (c *Config) Hostname() string {
 	if !ok {
 		return ""
 	}
+
 	return hn
 }
 
@@ -88,6 +92,7 @@ func (c *Config) SetDHCPServer(ip net.IP) {
 	v4 := ip.To4()
 	if v4 == nil {
 		dhcplog.With("address", ip).Error(errors.New("address is not an IPv4 address"))
+
 		return
 	}
 	c.opts.SetOption(dhcp4.OptionDHCPServerID, []byte(v4))
@@ -102,12 +107,14 @@ func (c *Config) SetDNSServers(ips []net.IP) {
 		v4 := ip.To4()
 		if v4 == nil {
 			dhcplog.With("address", ip).Info("skipping non IPv4 dns server address")
+
 			continue
 		}
 		b = append(b, v4...)
 	}
 	if len(b) == 0 {
 		dhcplog.Error(errors.New("no IPv4 dns server address supplied"))
+
 		return
 	}
 	c.opts.SetOption(dhcp4.OptionDomainServer, b)

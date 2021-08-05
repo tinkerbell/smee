@@ -91,9 +91,11 @@ func (r *Receiver) run() {
 			err = errors.Wrap(err, "error reading udp message")
 			if ne, ok := err.(net.Error); ok && ne.Temporary() {
 				sysloglog.Error(err)
+
 				continue
 			}
 			r.err = err
+
 			return
 		}
 		msg.time = time.Now().UTC()

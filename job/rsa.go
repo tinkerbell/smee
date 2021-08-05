@@ -43,6 +43,7 @@ func decryptPassword(b []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "decrypt submitted password")
 	}
+
 	return string(pass), nil
 }
 
@@ -51,6 +52,7 @@ func ServePublicKey(w http.ResponseWriter, req *http.Request) {
 	case "GET", "HEAD":
 		w.WriteHeader(http.StatusOK)
 		w.Write(rsaKeypair.pub)
+
 		return
 	default:
 		w.Header().Set("Allow", "GET, HEAD")
