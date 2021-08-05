@@ -63,22 +63,18 @@ Please read and understand the code of conduct found [here](https://github.com/t
 
 #### Build time dependencies
 
-All Boots build dependencies (except for the ones needed to cross compile ARM IPXE on mac) can be satisfied via nix in the `shell.nix` file.
+#### Nix
 
-1. Install Nix
+This repo's build environment can be reproduced using `nix` (except for gcc cross compiler on mac).
 
-   Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
-   In the top level directory of Boots run `nix-shell`
+##### Install Nix
 
-2. Load Dependencies
+Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
 
-   Drop into a nix shell to load all build dependencies.
-   In the top level directory of Boots run: `nix-shell`
+##### Load Dependencies
 
-3. Container image building
-
-   Docker is required to build the container images.
-   Install instructions can be found [here](https://docs.docker.com/engine/install/).
+Loading build dependencies is as simple as running `nix-shell` or using [lorri](https://github.com/nix-community/lorri).
+If you have `direnv` installed the included `.envrc` will make that step automatic.
 
 #### Runtime dependencies
 
