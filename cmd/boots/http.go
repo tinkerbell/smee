@@ -130,6 +130,7 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 	// This gates serving PXE file by
@@ -141,6 +142,7 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	if !j.AllowPxe() {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+
 		return
 	}
 
@@ -159,6 +161,7 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 
@@ -167,11 +170,13 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			j.With("error", err).Info("failed to get workflows")
+
 			return
 		}
 		if !activeWorkflows {
 			w.WriteHeader(http.StatusNotFound)
 			j.Info("no active workflows")
+
 			return
 		}
 	}
@@ -191,6 +196,7 @@ func servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 	j.ServePhoneHomeEndpoint(w, req)
@@ -208,6 +214,7 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 
@@ -216,11 +223,13 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			j.With("error", err).Info("failed to get workflows")
+
 			return
 		}
 		if !activeWorkflows {
 			w.WriteHeader(http.StatusNotFound)
 			j.Info("no active workflows")
+
 			return
 		}
 	}
@@ -232,6 +241,7 @@ func readClose(r io.ReadCloser) (b []byte, err error) {
 	b, err = ioutil.ReadAll(r)
 	err = errors.Wrap(err, "read data")
 	r.Close()
+
 	return
 }
 
@@ -245,28 +255,33 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.Wrap(err, "split host port")
 	}
 
 	ip := net.ParseIP(host)
 	if ip == nil {
 		w.WriteHeader(http.StatusOK)
+
 		return http.StatusOK, errors.New("no device found for client address")
 	}
 
 	deviceID, err := client.GetInstanceIDFromIP(ip)
 	if err != nil || deviceID == "" {
 		w.WriteHeader(http.StatusOK)
+
 		return http.StatusOK, errors.New("no device found for client address")
 	}
 
 	b, err := readClose(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, err
 	}
 	if len(b) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent body is empty")
 	}
 
@@ -277,6 +292,7 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	}
 	if err := json.Unmarshal(b, &res); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent cannot be generated from supplied json")
 	}
 
@@ -293,16 +309,19 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		// TODO(mmlb): this should be 500
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent cannot be encoded")
 	}
 
 	if _, err := client.PostInstanceEvent(deviceID, bytes.NewReader(payload)); err != nil {
 		// TODO(mmlb): this should be 500
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("failed to post userEvent")
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte{})
+
 	return http.StatusOK, nil
 }

@@ -60,6 +60,7 @@ func mustPublicIPv4() net.IP {
 		if v4 == nil || !v4.IsGlobalUnicast() {
 			continue
 		}
+
 		return v4
 	}
 	err = errors.New("unable to auto-detect public IPv4")
@@ -74,6 +75,7 @@ func mustPublicSyslogIPv4() net.IP {
 		err := errors.New("PUBLIC_SYSLOG_IP must be an IPv4 address")
 		panic(err)
 	}
+
 	return PublicIPv4
 }
 
@@ -85,6 +87,7 @@ func ParseIPv4s(str string) (ips []net.IP) {
 		}
 		ips = append(ips, ip)
 	}
+
 	return
 }
 
@@ -109,6 +112,7 @@ func getIgnoredMACs() map[string]struct{} {
 		ignore[oui] = struct{}{}
 
 	}
+
 	return ignore
 }
 
@@ -118,6 +122,7 @@ func ShouldIgnoreOUI(mac string) bool {
 	}
 	oui := strings.ToLower(mac[:8])
 	_, ok := ignoredOUIs[oui]
+
 	return ok
 }
 
@@ -140,6 +145,7 @@ func getIgnoredGIs() map[string]struct{} {
 		ignore[ip] = struct{}{}
 
 	}
+
 	return ignore
 }
 
@@ -148,6 +154,7 @@ func ShouldIgnoreGI(ip string) bool {
 		return false
 	}
 	_, ok := ignoredGIs[ip]
+
 	return ok
 }
 
@@ -174,5 +181,6 @@ func parseTrustedProxies() (result []string) {
 		}
 		result = append(result, cidr)
 	}
+
 	return result
 }

@@ -70,9 +70,11 @@ func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
 	for _, wf := range (*wcl).WorkflowContexts {
 		if wf.CurrentActionState == tw.State_STATE_PENDING || wf.CurrentActionState == tw.State_STATE_RUNNING {
 			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
+
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -100,8 +102,13 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	} else {
 		span.SetStatus(codes.Ok, "job.setup done")
 	}
+<<<<<<< HEAD
 	span.End()
 	return j, err
+=======
+
+	return j, nil
+>>>>>>> master
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job
@@ -110,6 +117,7 @@ func CreateFromRemoteAddr(ip string) (Job, error) {
 	if err != nil {
 		return Job{}, errors.Wrap(err, "splitting host:ip")
 	}
+
 	return CreateFromIP(net.ParseIP(host))
 }
 

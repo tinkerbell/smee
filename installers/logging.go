@@ -21,5 +21,6 @@ func Logger(os string) log.Logger {
 		logger = installerslog.Package("installers/" + os)
 		logger, _ = loggers.LoadOrStore(os, logger)
 	}
+
 	return logger.(log.Logger)
 }

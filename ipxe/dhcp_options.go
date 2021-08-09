@@ -108,6 +108,7 @@ func FormatOptions(opts dhcp4.OptionMap) []interface{} {
 		k, v := info.Format(&info, v)
 		fields = append(fields, k, v)
 	}
+
 	return fields
 }
 
@@ -118,6 +119,7 @@ func GetEncapsulatedOptions(opts dhcp4.OptionGetter) dhcp4.OptionMap {
 	if x, ok := opts.GetOption(EncapsulatedOptions); ok {
 		return ParseOptions(x)
 	}
+
 	return nil
 }
 
@@ -126,6 +128,7 @@ func HasFeature(opts dhcp4.OptionGetter, feature dhcp4.Option) bool {
 		return false
 	}
 	v, ok := opts.GetUint8(feature)
+
 	return ok && v == 1
 }
 
@@ -135,6 +138,7 @@ func ParseOptions(b []byte) dhcp4.OptionMap {
 		// clog.Warning(err)
 		return nil
 	}
+
 	return nested
 }
 
@@ -156,6 +160,7 @@ func formatFeature(info *optionInfo, b []byte) (string, string) {
 			return info.Name, "true"
 		}
 	}
+
 	return info.Name, fmt.Sprintf("%d", v)
 }
 
@@ -176,12 +181,14 @@ func formatOption(info *optionInfo, b []byte) (string, string) {
 		if len(b) == 1 && b[0] == 1 {
 			return info.Name, "true"
 		}
+
 		fallthrough
 	case "uint8", "int8":
 		if len(b) == 1 {
 			return info.Name, fmt.Sprintf("%d", b[0])
 		}
 	}
+
 	return info.Name, fmt.Sprintf("%v", b)
 }
 
@@ -189,6 +196,7 @@ func formatVersion(info *optionInfo, b []byte) (string, string) {
 	if len(b) != 3 {
 		return info.Name, string(b)
 	}
+
 	return info.Name, fmt.Sprintf("%d.%d.%d", b[0], b[1], b[2])
 }
 

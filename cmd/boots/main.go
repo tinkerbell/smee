@@ -86,6 +86,7 @@ func main() {
 		err = retry.Do(
 			func() error {
 				_, err := syslog.StartReceiver(1)
+
 				return err
 			},
 		)

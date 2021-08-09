@@ -1,0 +1,32 @@
+{
+  "id": "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a94",
+  "metadata": {
+    "facility": {
+      "facility_code": "onprem",
+      "plan_slug": "c2.medium.x86",
+      "plan_version_slug": ""
+    },
+    "instance": {},
+    "state": "provisioning"
+  },
+  "network": {
+    "interfaces": [
+      {
+        "dhcp": {
+          "arch": "x86_64",
+          "ip": {
+            "address": "192.168.50.43",
+            "netmask": "255.255.255.0",
+	    "gateway": "192.168.2.1"
+          },
+          "mac": "08:00:27:9E:F5:3A",
+          "uefi": false
+        },
+        "netboot": {
+          "allow_pxe": true,
+          "allow_workflow": true
+        }
+      }
+    ]
+  }
+}

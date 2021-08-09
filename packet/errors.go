@@ -14,6 +14,7 @@ func IsNotExist(err error) bool {
 	if e, ok := err.(*httpError); ok && e.StatusCode == http.StatusNotFound {
 		return true
 	}
+
 	return false
 }
 
@@ -33,6 +34,7 @@ func (e *httpError) Error() string {
 	for _, err := range e.Errors {
 		errs = append(errs, err.Error())
 	}
+
 	return fmt.Sprintf("HTTP %d: %s", e.StatusCode, strings.Join(errs, "; "))
 }
 
@@ -47,6 +49,7 @@ func (e *httpError) unmarshalErrors(r io.Reader) {
 	}
 	if err := json.NewDecoder(r).Decode(&v); err != nil {
 		e.Errors = []error{errors.Wrap(err, "unmarshalling errors body")}
+
 		return
 	}
 	if n := len(v.Errors); n > 0 {

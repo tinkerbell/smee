@@ -52,12 +52,14 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
 	if conf.ShouldIgnoreOUI(mac.String()) {
 		mainlog.With("mac", mac).Info("mac is in ignore list")
+
 		return
 	}
 
 	gi := req.GetGIAddr()
 	if conf.ShouldIgnoreGI(gi.String()) {
 		mainlog.With("giaddr", gi).Info("giaddr is in ignore list")
+
 		return
 	}
 
@@ -83,6 +85,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		timer.ObserveDuration()
 		span.SetStatus(codes.Error, err.Error())
 		span.End()
+
 		return
 	}
 	span.End()
@@ -114,5 +117,6 @@ func getCircuitID(req *dhcp4.Packet) (string, error) {
 			return circuitID, errors.New("option82 option1 out of bounds (check eightytwo[1])")
 		}
 	}
+
 	return circuitID, nil
 }

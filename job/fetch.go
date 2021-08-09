@@ -19,6 +19,7 @@ func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID str
 	if err != nil {
 		return nil, err
 	}
+
 	return v.(packet.Discovery), nil
 }
 
@@ -30,5 +31,6 @@ func discoverHardwareFromIP(ip net.IP) (packet.Discovery, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return v.(packet.Discovery), nil
 }
