@@ -59,7 +59,7 @@ func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Pack
 	// send the DHCP response
 	span.AddEvent("reply.Send()")
 	if err := reply.Send(); err != nil {
-		span.SetAttributes(attribute.KeyValue{Key: attribute.Key("send error"), Value: attribute.StringValue(err.Error())})
+		span.SetAttributes(attribute.String("send error", err.Error()))
 		j.Error(errors.WithMessage(err, "unable to send DHCP reply"))
 
 		return false
