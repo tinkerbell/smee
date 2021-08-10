@@ -35,7 +35,7 @@ type ComponentsResponse struct {
 }
 
 // GetWorkflowsFromTink fetches the list of workflows from tink
-func (c *Client) GetWorkflowsFromTink(hwID HardwareID) (result *tw.WorkflowContextList, err error) {
+func (c *Client) GetWorkflowsFromTink(ctx context.Context, hwID HardwareID) (result *tw.WorkflowContextList, err error) {
 	if hwID == "" {
 		return result, errors.New("missing hardware id")
 	}
@@ -45,7 +45,7 @@ func (c *Client) GetWorkflowsFromTink(hwID HardwareID) (result *tw.WorkflowConte
 	metrics.CacherRequestsInProgress.With(labels).Inc()
 	metrics.CacherTotal.With(labels).Inc()
 
-	result, err = c.workflowClient.GetWorkflowContextList(context.Background(), &tw.WorkflowContextRequest{WorkerId: hwID.String()})
+	result, err = c.workflowClient.GetWorkflowContextList(ctx, &tw.WorkflowContextRequest{WorkerId: hwID.String()})
 
 	cacherTimer.ObserveDuration()
 	metrics.CacherRequestsInProgress.With(labels).Dec()
@@ -57,7 +57,7 @@ func (c *Client) GetWorkflowsFromTink(hwID HardwareID) (result *tw.WorkflowConte
 	return result, nil
 }
 
-func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
+func (c *Client) DiscoverHardwareFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
 	if mac == nil {
 		return nil, errors.New("missing MAC address")
 	}
@@ -75,7 +75,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		}
 
 		cacherTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
-		resp, err := cc.ByMAC(context.Background(), msg)
+		resp, err := cc.ByMAC(ctx, msg)
 		cacherTimer.ObserveDuration()
 		metrics.CacherRequestsInProgress.With(labels).Dec()
 
@@ -89,7 +89,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 
 			return NewDiscovery(b)
 		} else {
-			return c.ReportDiscovery(mac, giaddr, circuitID)
+			return c.ReportDiscovery(ctx, mac, giaddr, circuitID)
 		}
 	case "1":
 		tc := c.hardwareClient.(tink.HardwareServiceClient)
@@ -98,7 +98,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 		}
 
 		tinkTimer := prometheus.NewTimer(metrics.CacherDuration.With(labels))
-		resp, err := tc.ByMAC(context.Background(), msg)
+		resp, err := tc.ByMAC(ctx, msg)
 		tinkTimer.ObserveDuration()
 
 		// TODO: rename metric
@@ -139,7 +139,7 @@ func (c *Client) DiscoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, c
 // endpoint.
 // This was split out from DiscoverHardwareFromDHCP to make the control flow
 // easier to understand.
-func (c *Client) ReportDiscovery(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
+func (c *Client) ReportDiscovery(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error) {
 	if giaddr == nil {
 		return nil, errors.New("missing MAC address")
 	}
@@ -167,14 +167,14 @@ func (c *Client) ReportDiscovery(mac net.HardwareAddr, giaddr net.IP, circuitID 
 	}
 
 	var res DiscoveryCacher
-	if err := c.Post("/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
+	if err := c.Post(ctx, "/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
 		return nil, err
 	}
 
 	return &res, nil
 }
 
-func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
+func (c *Client) DiscoverHardwareFromIP(ctx context.Context, ip net.IP) (Discovery, error) {
 	if ip.String() == net.IPv4zero.String() {
 		return nil, errors.New("missing ip address")
 	}
@@ -194,7 +194,7 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 			IP: ip.String(),
 		}
 
-		resp, err := cc.ByIP(context.Background(), msg)
+		resp, err := cc.ByIP(ctx, msg)
 
 		cacherTimer.ObserveDuration()
 		metrics.CacherRequestsInProgress.With(labels).Dec()
@@ -210,7 +210,7 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 			Ip: ip.String(),
 		}
 
-		resp, err := tc.ByIP(context.Background(), msg)
+		resp, err := tc.ByIP(ctx, msg)
 
 		cacherTimer.ObserveDuration()
 		metrics.CacherRequestsInProgress.With(labels).Dec()
@@ -240,8 +240,8 @@ func (c *Client) DiscoverHardwareFromIP(ip net.IP) (Discovery, error) {
 }
 
 // GetDeviceIDFromIP Looks up a device (instance) in cacher via ByIP
-func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
-	d, err := c.DiscoverHardwareFromIP(dip)
+func (c *Client) GetInstanceIDFromIP(ctx context.Context, dip net.IP) (string, error) {
+	d, err := c.DiscoverHardwareFromIP(ctx, dip)
 	if err != nil {
 		return "", err
 	}
@@ -253,59 +253,59 @@ func (c *Client) GetInstanceIDFromIP(dip net.IP) (string, error) {
 }
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API
-func (c *Client) PostHardwareComponent(hardwareID HardwareID, body io.Reader) (*ComponentsResponse, error) {
+func (c *Client) PostHardwareComponent(ctx context.Context, hardwareID HardwareID, body io.Reader) (*ComponentsResponse, error) {
 	var response ComponentsResponse
 
-	if err := c.Post("/hardware/"+hardwareID.String()+"/components", mimeJSON, body, &response); err != nil {
+	if err := c.Post(ctx, "/hardware/"+hardwareID.String()+"/components", mimeJSON, body, &response); err != nil {
 		return nil, err
 	}
 
 	return &response, nil
 }
-func (c *Client) PostHardwareEvent(id string, body io.Reader) (string, error) {
+func (c *Client) PostHardwareEvent(ctx context.Context, id string, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
 	}
-	if err := c.Post("/hardware/"+id+"/events", mimeJSON, body, &res); err != nil {
+	if err := c.Post(ctx, "/hardware/"+id+"/events", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
 
 	return res.ID, nil
 }
-func (c *Client) PostHardwarePhoneHome(id string) error {
-	return c.Post("/hardware/"+id+"/phone-home", "", nil, nil)
+func (c *Client) PostHardwarePhoneHome(ctx context.Context, id string) error {
+	return c.Post(ctx, "/hardware/"+id+"/phone-home", "", nil, nil)
 }
-func (c *Client) PostHardwareFail(id string, body io.Reader) error {
-	return c.Post("/hardware/"+id+"/fail", mimeJSON, body, nil)
+func (c *Client) PostHardwareFail(ctx context.Context, id string, body io.Reader) error {
+	return c.Post(ctx, "/hardware/"+id+"/fail", mimeJSON, body, nil)
 }
-func (c *Client) PostHardwareProblem(id HardwareID, body io.Reader) (string, error) {
+func (c *Client) PostHardwareProblem(ctx context.Context, id HardwareID, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
 	}
-	if err := c.Post("/hardware/"+id.String()+"/problems", mimeJSON, body, &res); err != nil {
+	if err := c.Post(ctx, "/hardware/"+id.String()+"/problems", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
 
 	return res.ID, nil
 }
 
-func (c *Client) PostInstancePhoneHome(id string) error {
-	return c.Post("/devices/"+id+"/phone-home", "", nil, nil)
+func (c *Client) PostInstancePhoneHome(ctx context.Context, id string) error {
+	return c.Post(ctx, "/devices/"+id+"/phone-home", "", nil, nil)
 }
-func (c *Client) PostInstanceEvent(id string, body io.Reader) (string, error) {
+func (c *Client) PostInstanceEvent(ctx context.Context, id string, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
 	}
-	if err := c.Post("/devices/"+id+"/events", mimeJSON, body, &res); err != nil {
+	if err := c.Post(ctx, "/devices/"+id+"/events", mimeJSON, body, &res); err != nil {
 		return "", err
 	}
 
 	return res.ID, nil
 }
-func (c *Client) PostInstanceFail(id string, body io.Reader) error {
-	return c.Post("/devices/"+id+"/fail", mimeJSON, body, nil)
+func (c *Client) PostInstanceFail(ctx context.Context, id string, body io.Reader) error {
+	return c.Post(ctx, "/devices/"+id+"/fail", mimeJSON, body, nil)
 }
-func (c *Client) PostInstancePassword(id, pass string) error {
+func (c *Client) PostInstancePassword(ctx context.Context, id, pass string) error {
 	var req = struct {
 		Password string `json:"password"`
 	}{
@@ -317,8 +317,8 @@ func (c *Client) PostInstancePassword(id, pass string) error {
 		return errors.Wrap(err, "marshalling instance password")
 	}
 
-	return c.Post("/devices/"+id+"/password", mimeJSON, bytes.NewReader(b), nil)
+	return c.Post(ctx, "/devices/"+id+"/password", mimeJSON, bytes.NewReader(b), nil)
 }
-func (c *Client) UpdateInstance(id string, body io.Reader) error {
-	return c.Patch("/devices/"+id, mimeJSON, body, nil)
+func (c *Client) UpdateInstance(ctx context.Context, id string, body io.Reader) error {
+	return c.Patch(ctx, "/devices/"+id, mimeJSON, body, nil)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -39,7 +40,7 @@ func TestReadFile(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			monkey.Patch(job.CreateFromIP, func(_ net.IP) (job.Job, error) {
+			monkey.Patch(job.CreateFromIP, func(_ context.Context, _ net.IP) (job.Job, error) {
 				var err error
 				if tc.failCreateFromIP {
 					err = tc.err

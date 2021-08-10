@@ -1,6 +1,8 @@
 package vmware
 
 import (
+	"context"
+
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
@@ -22,8 +24,11 @@ func bootScriptDefault(j job.Job, s *ipxe.Script) {
 	s.Shell()
 
 	// We don't need to actually provision anything
-	j.DisablePXE()
-	j.MarkDeviceActive()
+	// TODO(@tobert) passing context through to here would mean changing the
+	// signature for all installer functions and this is the only site that
+	// needs it, so these will not have trace context
+	j.DisablePXE(context.Background())
+	j.MarkDeviceActive(context.Background())
 }
 
 func bootScriptVmwareEsxi55(j job.Job, s *ipxe.Script) {

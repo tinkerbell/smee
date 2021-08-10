@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -92,7 +93,7 @@ func TestServeJobFile(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			monkey.Patch(job.CreateFromRemoteAddr, func(_ string) (job.Job, error) {
+			monkey.Patch(job.CreateFromRemoteAddr, func(_ context.Context, _ string) (job.Job, error) {
 				return job.Job{}, tc.err
 			})
 			var jb job.Job

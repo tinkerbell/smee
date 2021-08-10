@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -130,7 +131,8 @@ func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *C
 	}
 }
 
-func (c *Client) Do(req *http.Request, v interface{}) error {
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) error {
+	req = req.WithContext(ctx)
 	req.URL = c.baseURL.ResolveReference(req.URL)
 	c.addHeaders(req)
 
@@ -142,16 +144,16 @@ func (c *Client) Do(req *http.Request, v interface{}) error {
 	return unmarshalResponse(res, v)
 }
 
-func (c *Client) Get(ref string, v interface{}) error {
+func (c *Client) Get(ctx context.Context, ref string, v interface{}) error {
 	req, err := http.NewRequest("GET", ref, nil)
 	if err != nil {
 		return errors.Wrap(err, "setup GET request")
 	}
 
-	return c.Do(req, v)
+	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Patch(ref, mime string, body io.Reader, v interface{}) error {
+func (c *Client) Patch(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("PATCH", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup PATCH request")
@@ -160,10 +162,10 @@ func (c *Client) Patch(ref, mime string, body io.Reader, v interface{}) error {
 		req.Header.Set("Content-Type", mime)
 	}
 
-	return c.Do(req, v)
+	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Post(ref, mime string, body io.Reader, v interface{}) error {
+func (c *Client) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("POST", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup POST request")
@@ -172,7 +174,7 @@ func (c *Client) Post(ref, mime string, body io.Reader, v interface{}) error {
 		req.Header.Set("Content-Type", mime)
 	}
 
-	return c.Do(req, v)
+	return c.Do(ctx, req, v)
 }
 
 func (c *Client) addHeaders(req *http.Request) {

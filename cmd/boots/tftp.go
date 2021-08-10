@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"io"
 	"net"
@@ -52,7 +53,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	filename = path.Base(filename)
 	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
 
-	j, err := job.CreateFromIP(ip)
+	j, err := job.CreateFromIP(context.Background(), ip)
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
 
