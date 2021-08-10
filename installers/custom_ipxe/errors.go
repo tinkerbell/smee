@@ -1,4 +1,4 @@
-package ipxe
+package custom_ipxe
 
 import "errors"
 
