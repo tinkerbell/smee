@@ -89,6 +89,7 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.End()
+
 		return Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
 
