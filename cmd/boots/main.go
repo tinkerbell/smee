@@ -19,6 +19,7 @@ import (
 
 	_ "github.com/tinkerbell/boots/installers/coreos"
 	_ "github.com/tinkerbell/boots/installers/custom_ipxe"
+	_ "github.com/tinkerbell/boots/installers/ipxe"
 	_ "github.com/tinkerbell/boots/installers/nixos"
 	_ "github.com/tinkerbell/boots/installers/osie"
 	_ "github.com/tinkerbell/boots/installers/rancher"

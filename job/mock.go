@@ -111,6 +111,14 @@ func (m *Mock) SetOSImageTag(tag string) {
 	m.hardware.OperatingSystem().ImageTag = tag
 }
 
+func (m *Mock) SetOSInstaller(installer string) {
+	m.hardware.OperatingSystem().Installer = installer
+}
+
+func (m *Mock) SetOSInstallerData(installerData string) {
+	m.hardware.OperatingSystem().InstallerData = installerData
+}
+
 func (m *Mock) SetPassword(password string) {
 	m.instance.CryptedRootPassword = "insecure"
 	m.instance.PasswordHash = "insecure"
