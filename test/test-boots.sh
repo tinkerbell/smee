@@ -19,16 +19,21 @@ sleep $sleep_at_start
 # send -V PXEClient and option 93 set to 0 to get boots to accept this as a PXE
 # DHCP client
 busybox udhcpc -s /busybox-udhcpc-script.sh -V PXEClient -x 0x5d:0000
-# dhclient & dhcpcd don't seem to have a way to set option 93/0x5d though
-#dhclient -4 -d
-#dhcpcd -d -4 --nobackground --noipv4ll -T -i PXEClient
+
+# the busybox script writes the DHCP variables to /tmp/dhcpoffer-vars.sh
+. /tmp/dhcpoffer-vars.sh
 
 # get the OpenTelemetry traceparent via HTTP header
+# TODO(@tobert): replace this with the DHCP traceparent once I reimplement that
 TRACEPARENT=$(curl -sSIX GET http://192.168.99.42 2>/dev/null | awk '/Traceparent:/{print $2}')
 export TRACEPARENT
 
-# over time we can add some tests here, including stepping through tftp and http
-# requests to boots
+# boot_file is set by the DHCP envvars
+# try to fetch the boot file with traceparent
+# TODO(@tobert) coming soon...
+#echo "fetching ${boot_file}-${TRACEPARENT} over tftp..."
+#tftp 192.168.99.42 -c get "${boot_file}-${TRACEPARENT}"
+tftp 192.168.99.42 -c get $boot_file
 
 # sleep a long time so you can enter the container with
 # docker exec -ti boots_client_1 /bin/sh
