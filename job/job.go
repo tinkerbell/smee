@@ -100,6 +100,7 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 		span.SetStatus(codes.Ok, "job.setup done")
 	}
 	span.End()
+
 	return j, err
 }
 
