@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -128,9 +127,7 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	fmt.Println("Alive before CreateFromRemoteAddr")
 	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
-	fmt.Println("Alive after CreateFromRemoteAddr")
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
@@ -143,15 +140,12 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 	// without a tink workflow present.
-	fmt.Println("before AllowPXe")
 	if !j.AllowPxe() {
-		fmt.Println("after AllowPXe, in block")
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
 
 		return
 	}
-	fmt.Println("after AllowPXe, out block")
 
 	j.ServeFile(w, req)
 }
