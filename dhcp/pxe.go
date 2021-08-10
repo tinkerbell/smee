@@ -116,8 +116,10 @@ func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, pxeClien
 
 func copyGUID(rep, req *dhcp4.Packet) bool {
 	if guid, ok := req.GetOption(dhcp4.OptionUUIDGUID); ok {
+		// only accepts 16-byte client GUIDs and type 0x0000
+		// e.g. dhcpcd on Linux uses 36 bytes and type 0x00ff so it will be ignored
 		if len(guid) != 17 || guid[0] != 0 {
-			dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Error(errors.New("unsupported or malformed client GUID"))
+			dhcplog.With("guid", guid, "mac", req.GetCHAddr(), "xid", req.GetXID()).Error(errors.New("unsupported or malformed client GUID"))
 		} else {
 			rep.SetOption(dhcp4.OptionUUIDGUID, guid)
 
