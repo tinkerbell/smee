@@ -15,6 +15,7 @@ import (
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -63,6 +64,12 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 
+	tracer := otel.Tracer("DHCP")
+	ctx, span := tracer.Start(context.Background(), "dhcp.request")
+	span.SetAttributes(attribute.String("MAC", mac.String()))
+	span.SetAttributes(attribute.String("IP", gi.String()))
+	span.SetAttributes(attribute.String("MessageType", req.GetMessageType().String()))
+
 	metrics.DHCPTotal.WithLabelValues("recv", req.GetMessageType().String(), gi.String()).Inc()
 	labels := prometheus.Labels{"from": "dhcp", "op": req.GetMessageType().String()}
 	metrics.JobsTotal.With(labels).Inc()
@@ -75,9 +82,8 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	} else {
 		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
 	}
+	span.SetAttributes(attribute.String("CircuitID", circuitID))
 
-	tracer := otel.Tracer("DHCP")
-	ctx, span := tracer.Start(context.Background(), "job.CreateFromDHCP")
 	j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
