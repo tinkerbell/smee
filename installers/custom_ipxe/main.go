@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	job.RegisterInstaller("ipxe", ipxeScript)
+	job.RegisterInstaller("custom_ipxe", ipxeScript)
 	job.RegisterSlug("custom_ipxe", ipxeScript)
 }
 
@@ -24,7 +24,7 @@ func ipxeScript(j job.Job, s *ipxe.Script) {
 	var cfg *packet.InstallerData
 	var err error
 
-	if j.OperatingSystem().Installer == "ipxe" {
+	if j.OperatingSystem().Installer == "custom_ipxe" {
 		cfg = j.OperatingSystem().InstallerData
 		if cfg == nil {
 			s.Echo("Installer data not provided")

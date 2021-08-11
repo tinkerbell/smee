@@ -70,7 +70,7 @@ func TestIpxeScript(t *testing.T) {
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
 			script := ipxe.NewScript()
 
-			mockJob.SetOSInstaller("ipxe")
+			mockJob.SetOSInstaller("custom_ipxe")
 			mockJob.SetOSInstallerData(tc.installerData)
 
 			ipxeScript(mockJob.Job(), script)
