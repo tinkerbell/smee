@@ -50,7 +50,7 @@ func RegisterSlug(name string, builder BootScript) {
 
 func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name string) {
 	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.String("name", name))
+	span.SetAttributes(attribute.String("boots.script_name", name))
 
 	fn, ok := scripts[name]
 	if !ok {
