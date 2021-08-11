@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/packethost/pkg/log"
-	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/packet"
@@ -16,20 +15,16 @@ func init() {
 }
 
 func ipxeScript(j job.Job, s *ipxe.Script) {
-	logger := installers.Logger("custom_ipxe")
-	if j.InstanceID() != "" {
-		logger = logger.With("instance.id", j.InstanceID())
-	}
+	logger := j.Logger.With("installer", "custom_ipxe")
 
 	var cfg *packet.InstallerData
-	var err error
 
 	if j.OperatingSystem().Installer == "custom_ipxe" {
 		cfg = j.OperatingSystem().InstallerData
 		if cfg == nil {
 			s.Echo("Installer data not provided")
 			s.Shell()
-			logger.Error(err, "empty installer data")
+			logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
 
 			return
 		}
