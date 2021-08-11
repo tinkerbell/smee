@@ -28,12 +28,16 @@ func ipxeScript(j job.Job, s *ipxe.Script) {
 
 			return
 		}
+	} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
+		cfg = &packet.InstallerData{Script: j.UserData()}
+	} else if j.IPXEScriptURL() != "" {
+		cfg = &packet.InstallerData{Chain: j.IPXEScriptURL()}
 	} else {
-		if strings.HasPrefix(j.UserData(), "#!ipxe") {
-			cfg = &packet.InstallerData{Script: j.UserData()}
-		} else {
-			cfg = &packet.InstallerData{Chain: j.IPXEScriptURL()}
-		}
+		s.Echo("Unknown ipxe configuration")
+		s.Shell()
+		logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
+
+		return
 	}
 
 	ipxeScriptFromConfig(logger, cfg, j, s)

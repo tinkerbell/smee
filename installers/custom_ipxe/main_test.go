@@ -33,11 +33,13 @@ func TestMain(m *testing.M) {
 func TestIpxeScript(t *testing.T) {
 	var testCases = []struct {
 		name          string
+		installer     string
 		installerData *packet.InstallerData
 		want          string
 	}{
 		{
-			"invalid config",
+			"installer: invalid config",
+			"custom_ipxe",
 			nil,
 			`#!ipxe
 
@@ -47,6 +49,7 @@ func TestIpxeScript(t *testing.T) {
 		},
 		{
 			"valid config",
+			"custom_ipxe",
 			&packet.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
@@ -62,6 +65,71 @@ func TestIpxeScript(t *testing.T) {
 			chain --autofree http://url/path.ipxe
 			`,
 		},
+		{
+			"installer: valid config",
+			"",
+			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			`#!ipxe
+
+
+			params
+			param body Device connected to DHCP system
+			param type provisioning.104.01
+			imgfetch ${tinkerbell}/phone-home##params
+			imgfree
+
+			set packet_facility test.facility
+			set packet_plan test.slug
+			chain --autofree http://url/path.ipxe
+			`,
+		},
+		{
+			"instance: no config",
+			"",
+			nil,
+			`#!ipxe
+
+			echo Unknown ipxe configuration
+			shell
+			`,
+		},
+		{
+			"instance: ipxe script url",
+			"",
+			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			`#!ipxe
+
+
+			params
+			param body Device connected to DHCP system
+			param type provisioning.104.01
+			imgfetch ${tinkerbell}/phone-home##params
+			imgfree
+
+			set packet_facility test.facility
+			set packet_plan test.slug
+			chain --autofree http://url/path.ipxe
+			`,
+		},
+		{
+			"instance: userdata script",
+			"",
+			&packet.InstallerData{Script: "#!ipxe\necho userdata script"},
+			`#!ipxe
+
+
+			params
+			param body Device connected to DHCP system
+			param type provisioning.104.01
+			imgfetch ${tinkerbell}/phone-home##params
+			imgfree
+
+			set packet_facility test.facility
+			set packet_plan test.slug
+
+			echo userdata script
+			`,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -70,8 +138,13 @@ func TestIpxeScript(t *testing.T) {
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
 			script := ipxe.NewScript()
 
-			mockJob.SetOSInstaller("custom_ipxe")
-			mockJob.SetOSInstallerData(tc.installerData)
+			if tc.installer == "custom_ipxe" {
+				mockJob.SetOSInstaller("custom_ipxe")
+				mockJob.SetOSInstallerData(tc.installerData)
+			} else if tc.installerData != nil {
+				mockJob.SetIPXEScriptURL(tc.installerData.Chain)
+				mockJob.SetUserData(tc.installerData.Script)
+			}
 
 			ipxeScript(mockJob.Job(), script)
 

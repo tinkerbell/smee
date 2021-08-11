@@ -80,6 +80,10 @@ func (m *Mock) SetIPXEScriptURL(url string) {
 	m.instance.IPXEScriptURL = url
 }
 
+func (m *Mock) SetUserData(userdata string) {
+	m.instance.UserData = userdata
+}
+
 func (m *Mock) SetMAC(mac string) {
 	_m, err := net.ParseMAC(mac)
 	if err != nil {
