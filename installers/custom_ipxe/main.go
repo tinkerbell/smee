@@ -41,10 +41,10 @@ func ipxeScript(j job.Job, s *ipxe.Script) {
 		}
 	}
 
-	IpxeScriptFromConfig(logger, cfg, j, s)
+	ipxeScriptFromConfig(logger, cfg, j, s)
 }
 
-func IpxeScriptFromConfig(logger log.Logger, cfg *packet.InstallerData, j job.Job, s *ipxe.Script) {
+func ipxeScriptFromConfig(logger log.Logger, cfg *packet.InstallerData, j job.Job, s *ipxe.Script) {
 	if err := validateConfig(cfg); err != nil {
 		s.Echo(err.Error())
 		s.Shell()

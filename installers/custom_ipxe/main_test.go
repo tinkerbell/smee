@@ -155,7 +155,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
 			script := ipxe.NewScript()
 
-			IpxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), script)
+			ipxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), script)
 
 			assert.Equal(dedent(tc.want), string(script.Bytes()))
 		})
