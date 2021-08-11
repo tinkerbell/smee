@@ -2,6 +2,7 @@ package job
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 
@@ -87,7 +88,7 @@ func TestSetPXEFilename(t *testing.T) {
 				instance: instance,
 			}
 			rep := dhcp4.NewPacket(42)
-			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
+			j.setPXEFilename(context.Background(), &rep, tt.packet, tt.arm, tt.uefi)
 			filename := string(bytes.TrimRight(rep.File(), "\x00"))
 
 			if tt.filename != filename {

@@ -91,7 +91,7 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
+		j.setPXEFilename(ctx, rep, isPacket, isARM, isUEFI)
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -118,7 +118,7 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
+func (j Job) setPXEFilename(ctx context.Context, rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
@@ -181,5 +181,18 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 		return
 	}
 
+	// add the otel traceparent string to the filename
+	tp := traceparentFromContext(ctx)
+	filename = filename + "-" + tp
+
 	dhcp.SetFilename(rep, filename, conf.PublicIPv4, pxeClient)
+}
+
+// traceparentFromContext gets the otel SpanContext from the Go context
+// and uses that to manually construct a traceparent string to return.
+// This isn't the sanctioned way to generate a traceparent string but this way is
+// less complex and less code at the cost of not honoring version or trace flags.
+func traceparentFromContext(ctx context.Context) string {
+	sc := trace.SpanContextFromContext(ctx)
+	return "00-" + sc.TraceID().String() + "-" + sc.SpanID().String() + "-01"
 }
