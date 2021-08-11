@@ -1,13 +1,13 @@
 package custom_ipxe
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/packet"
 )
 
 func init() {
@@ -16,39 +16,37 @@ func init() {
 }
 
 func ipxeScript(j job.Job, s *ipxe.Script) {
-	logger := installers.Logger("ipxe")
+	logger := installers.Logger("custom_ipxe")
 	if j.InstanceID() != "" {
 		logger = logger.With("instance.id", j.InstanceID())
 	}
 
-	var cfg *Config
+	var cfg *packet.InstallerData
 	var err error
 
 	if j.OperatingSystem().Installer == "ipxe" {
-		cfg, err = ipxeConfigFromJob(j)
-		if err != nil {
-			s.Echo("Failed to decode installer data")
+		cfg = j.OperatingSystem().InstallerData
+		if cfg == nil {
+			s.Echo("Installer data not provided")
 			s.Shell()
-			logger.Error(err, "decoding installer data")
+			logger.Error(err, "empty installer data")
 
 			return
 		}
 	} else {
-		cfg = &Config{}
-
 		if strings.HasPrefix(j.UserData(), "#!ipxe") {
-			cfg.Script = j.UserData()
+			cfg = &packet.InstallerData{Script: j.UserData()}
 		} else {
-			cfg.Chain = j.IPXEScriptURL()
+			cfg = &packet.InstallerData{Chain: j.IPXEScriptURL()}
 		}
 	}
 
 	IpxeScriptFromConfig(logger, cfg, j, s)
 }
 
-func IpxeScriptFromConfig(logger log.Logger, cfg *Config, j job.Job, s *ipxe.Script) {
-	if err := cfg.validate(); err != nil {
-		s.Echo("Invalid ipxe configuration")
+func IpxeScriptFromConfig(logger log.Logger, cfg *packet.InstallerData, j job.Job, s *ipxe.Script) {
+	if err := validateConfig(cfg); err != nil {
+		s.Echo(err.Error())
 		s.Shell()
 		logger.Error(err, "validating ipxe config")
 
@@ -63,31 +61,10 @@ func IpxeScriptFromConfig(logger log.Logger, cfg *Config, j job.Job, s *ipxe.Scr
 		s.Chain(cfg.Chain)
 	} else if cfg.Script != "" {
 		s.AppendString(strings.TrimPrefix(cfg.Script, "#!ipxe"))
-	} else {
-		s.Echo("Unknown ipxe config path")
-		s.Shell()
 	}
 }
 
-func ipxeConfigFromJob(j job.Job) (*Config, error) {
-	data := j.OperatingSystem().InstallerData
-
-	cfg := &Config{}
-
-	err := json.NewDecoder(strings.NewReader(data)).Decode(&cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
-}
-
-type Config struct {
-	Chain  string `json:"chain,omitempty"`
-	Script string `json:"script,omitempty"`
-}
-
-func (c *Config) validate() error {
+func validateConfig(c *packet.InstallerData) error {
 	if c.Chain == "" && c.Script == "" {
 		return ErrEmptyIpxeConfig
 	}

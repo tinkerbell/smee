@@ -10,6 +10,7 @@ import (
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/packet"
 )
 
 var (
@@ -32,21 +33,21 @@ func TestMain(m *testing.M) {
 func TestIpxeScript(t *testing.T) {
 	var testCases = []struct {
 		name          string
-		installerData string
+		installerData *packet.InstallerData
 		want          string
 	}{
 		{
 			"invalid config",
-			"",
+			nil,
 			`#!ipxe
 
-			echo Failed to decode installer data
+			echo Installer data not provided
 			shell
 			`,
 		},
 		{
 			"valid config",
-			`{"chain": "http://url/path.ipxe"}`,
+			&packet.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -82,21 +83,21 @@ func TestIpxeScript(t *testing.T) {
 func TestIpxeScriptFromConfig(t *testing.T) {
 	var testCases = []struct {
 		name   string
-		config *Config
+		config *packet.InstallerData
 		want   string
 	}{
 		{
 			"invalid config",
-			&Config{},
+			&packet.InstallerData{},
 			`#!ipxe
 
-			echo Invalid ipxe configuration
+			echo ipxe config URL or Script must be defined
 			shell
 			`,
 		},
 		{
 			"valid chain",
-			&Config{Chain: "http://url/path.ipxe"},
+			&packet.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -113,7 +114,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		},
 		{
 			"valid script",
-			&Config{Script: "echo my test script"},
+			&packet.InstallerData{Script: "echo my test script"},
 			`#!ipxe
 
 
@@ -130,7 +131,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		},
 		{
 			"valid script with header",
-			&Config{Script: "#!ipxe\necho my test script"},
+			&packet.InstallerData{Script: "#!ipxe\necho my test script"},
 			`#!ipxe
 
 
@@ -161,60 +162,6 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 	}
 }
 
-func TestIpxeConfigFromJob(t *testing.T) {
-	var testCases = []struct {
-		name          string
-		installerData string
-		want          *Config
-		expectError   string
-	}{
-		{
-			"valid chain",
-			`{"chain": "http://url/path.ipxe"}`,
-			&Config{Chain: "http://url/path.ipxe"},
-			"",
-		},
-		{
-			"valid script",
-			`{"script": "echo script"}`,
-			&Config{Script: "echo script"},
-			"",
-		},
-		{
-			"empty json error",
-			``,
-			nil,
-			"EOF",
-		},
-		{
-			"invalid json error",
-			`{"error"`,
-			nil,
-			"unexpected EOF",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert := require.New(t)
-
-			mockJob := job.NewMock(t, "test.slug", "test.facility")
-
-			mockJob.SetOSInstallerData(tc.installerData)
-
-			cfg, err := ipxeConfigFromJob(mockJob.Job())
-
-			if tc.expectError == "" {
-				assert.Nil(err)
-			} else {
-				assert.EqualError(err, tc.expectError)
-			}
-
-			assert.Equal(tc.want, cfg)
-		})
-	}
-}
-
 func TestConfigValidate(t *testing.T) {
 	var testCases = []struct {
 		name   string
@@ -232,12 +179,12 @@ func TestConfigValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := require.New(t)
 
-			cfg := &Config{
+			cfg := &packet.InstallerData{
 				Chain:  tc.chain,
 				Script: tc.script,
 			}
 
-			got := cfg.validate()
+			got := validateConfig(cfg)
 
 			if tc.want == "" {
 				assert.Nil(got)
