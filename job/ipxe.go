@@ -10,6 +10,7 @@ import (
 
 var (
 	byDistro         = make(map[string]BootScript)
+	byInstaller      = make(map[string]BootScript)
 	bySlug           = make(map[string]BootScript)
 	defaultInstaller BootScript
 	scripts          = map[string]BootScript{
@@ -34,6 +35,14 @@ func RegisterDistro(name string, builder BootScript) {
 		joblog.Fatal(err, "distro", name)
 	}
 	byDistro[name] = builder
+}
+
+func RegisterInstaller(name string, builder BootScript) {
+	if _, ok := byInstaller[name]; ok {
+		err := errors.Errorf("installer %q already registered!", name)
+		joblog.Fatal(err, "installer", name)
+	}
+	byInstaller[name] = builder
 }
 
 func RegisterSlug(name string, builder BootScript) {
@@ -74,6 +83,11 @@ func auto(j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
 		shell(j, s)
+
+		return
+	}
+	if f, ok := byInstaller[j.hardware.OperatingSystem().Installer]; ok {
+		f(j, s)
 
 		return
 	}
