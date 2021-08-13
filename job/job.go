@@ -30,20 +30,32 @@ func SetProvisionerEngineName(engineName string) {
 	provisionerEngineName = engineName
 }
 
-// Job this comment is useless
+// Job holds per request data
 type Job struct {
 	log.Logger
-
-	mac net.HardwareAddr
-	ip  net.IP
-
-	start time.Time
-
-	mode Mode
-	dhcp dhcp.Config
-
+	mac      net.HardwareAddr
+	ip       net.IP
+	start    time.Time
+	mode     Mode
+	dhcp     dhcp.Config
 	hardware packet.Hardware
 	instance *packet.Instance
+}
+
+type Installers struct {
+	Default     BootScript
+	ByInstaller map[string]BootScript
+	ByDistro    map[string]BootScript
+	BySlug      map[string]BootScript
+}
+
+func NewInstallers() Installers {
+	return Installers{
+		Default:     nil,
+		ByInstaller: make(map[string]BootScript),
+		ByDistro:    make(map[string]BootScript),
+		BySlug:      make(map[string]BootScript),
+	}
 }
 
 // AllowPxe returns the value from the hardware data

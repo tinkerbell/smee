@@ -12,21 +12,19 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func init() {
-	installers.RegisterHTTPHandler("/vmware/ks-esxi.cfg", serveKickstart)
-}
+func ServeKickstart() func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
+		if err != nil {
+			installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
+			w.WriteHeader(http.StatusNotFound)
 
-func serveKickstart(w http.ResponseWriter, req *http.Request) {
-	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
-	if err != nil {
-		installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
-		w.WriteHeader(http.StatusNotFound)
-
-		return
-	}
-	if err := genKickstart(j, w); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		j.Error(err)
+			return
+		}
+		if err := genKickstart(j, w); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			j.Error(err)
+		}
 	}
 }
 

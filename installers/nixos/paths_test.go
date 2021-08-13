@@ -70,5 +70,5 @@ func TestBuildPaths(t *testing.T) {
 	assert.NoError(os.Setenv("nixos_19_03__x1_small_x86", "zm24a2hgwdd9wgbr012qwh53lf2g62nv-nixos-system-install-environment-19.03pre-git"))
 	assert.NoError(os.Setenv("nixos_19_03__x2_xlarge_x86", "hnc28768rvnh6m3cwn6h0xg6frxlnws8-nixos-system-install-environment-19.03pre-git"))
 
-	assert.Equal(oshwToInitPath, buildInitPaths())
+	assert.Equal(oshwToInitPath, BuildInitPaths())
 }
