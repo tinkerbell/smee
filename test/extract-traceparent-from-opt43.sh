@@ -5,11 +5,11 @@
 # which busybox helpfully gives us in a hex string as $opt43
 #
 # PXE_DISCOVERY_CONTROL is 060108 (option 6, 1 byte long, value 8)
-# traceparent is 451a (option 69, 26 bytes, value is tp)
+# traceparent is 451a (type 69, 26 bytes, value is tp)
 #
 # The DHCP spec says nothing about ordering and boots can be observed to serve
-# options in a different order on different runs, so the option has to be fully
-# parsed to get the right data.
+# the types in a different order on different runs, so the option has to be
+# fully parsed to get the right data.
 #
 # this would be way easier in perl/python but this needs to work in busybox
 # msh and with busybox shell tools
@@ -25,12 +25,12 @@ extract_traceparent_from_opt43 () {
   local offset=1 # cut(1) uses offsets starting at 1
 
   while [ $offset -lt $strlen ] ; do
-    # extract the option number, 1 byte
-    local opt_end=$((offset + 1))
-    local hopt=$(echo -n $hexdata | cut -c "${offset}-${opt_end}")
-    local opt=$(printf '%d' "0x$hopt")
+    # extract the type number, 1 byte
+    local type_end=$((offset + 1))
+    local htype=$(echo -n $hexdata | cut -c "${offset}-${type_end}")
+    local type=$(printf '%d' "0x$htype")
 
-    # extract the option value length, 1 byte
+    # extract the value length, 1 byte
     local len_start=$((offset + 2))
     local len_end=$((offset + 3))
     local hlen=$(echo -n $hexdata | cut -c "${len_start}-${len_end}")
@@ -38,7 +38,7 @@ extract_traceparent_from_opt43 () {
     local bov=$((offset + 4)) # beginning of value
     local eov=$((bov + len * 2 - 1)) # end of value
 
-    if [ $opt -eq 69 ] ; then
+    if [ $type -eq 69 ] ; then
       # set global to the full tp hex data
       opt43x69=$(echo -n $hexdata | cut -c "${bov}-${eov}")
 
@@ -53,7 +53,7 @@ extract_traceparent_from_opt43 () {
     fi
 
     # add to the offset:
-    # 4 characters for opt and len e.g. 0601 (option 6, length 1)
+    # 4 characters for type and len e.g. 0601 (type 6, length 1)
     # len (is bytes) * 2 (bc hex) = chars of offset e.g. 08 (value is 8, 2 chars in hex)
     offset=$((4 + offset + len * 2))
     local next=$(echo -n $hexdata |cut -c "${offset}-$((offset + 1))")
