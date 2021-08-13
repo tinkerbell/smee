@@ -12,6 +12,7 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/packet"
 	tw "github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -84,7 +85,12 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	}
 
 	span := trace.SpanFromContext(ctx)
-	span.AddEvent("discoverHardwareFromDHCP")
+	span.AddEvent("discoverHardwareFromDHCP",
+		trace.WithAttributes(attribute.String("MAC", mac.String())),
+		trace.WithAttributes(attribute.String("IP", giaddr.String())),
+		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
+	)
+
 	d, err := discoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
