@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var listenAddr = conf.BOOTPBind
@@ -64,12 +65,6 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 
-	tracer := otel.Tracer("DHCP")
-	ctx, span := tracer.Start(context.Background(), "dhcp.request")
-	span.SetAttributes(attribute.String("MAC", mac.String()))
-	span.SetAttributes(attribute.String("IP", gi.String()))
-	span.SetAttributes(attribute.String("MessageType", req.GetMessageType().String()))
-
 	metrics.DHCPTotal.WithLabelValues("recv", req.GetMessageType().String(), gi.String()).Inc()
 	labels := prometheus.Labels{"from": "dhcp", "op": req.GetMessageType().String()}
 	metrics.JobsTotal.With(labels).Inc()
@@ -82,7 +77,14 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	} else {
 		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
 	}
-	span.SetAttributes(attribute.String("CircuitID", circuitID))
+
+	tracer := otel.Tracer("DHCP")
+	ctx, span := tracer.Start(context.Background(), "ServeDHCP",
+		trace.WithAttributes(attribute.String("MAC", mac.String())),
+		trace.WithAttributes(attribute.String("IP", gi.String())),
+		trace.WithAttributes(attribute.String("MessageType", req.GetMessageType().String())),
+		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
+	)
 
 	j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
