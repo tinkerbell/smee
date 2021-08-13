@@ -18,6 +18,7 @@ import (
 	"github.com/tinkerbell/boots/metrics"
 	tftp "github.com/tinkerbell/tftp-go"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -60,6 +61,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 
 	// clients can send traceparent over TFTP by appending the traceparent string
 	// to the end of the filename they really want
+	longfile := filename // hang onto this to report in traces
 	ctx, shortfile := extractTraceparentFromFilename(context.Background(), filename, l)
 	if shortfile != filename {
 		l = l.With("filename", shortfile) // flip to the short filename in logs
@@ -67,7 +69,12 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 		filename = shortfile
 	}
 	tracer := otel.Tracer("TFTP")
-	ctx, span := tracer.Start(ctx, "TFTP get", trace.WithSpanKind(trace.SpanKindServer))
+	ctx, span := tracer.Start(ctx, "TFTP get",
+		trace.WithSpanKind(trace.SpanKindServer),
+		trace.WithAttributes(attribute.String("filename", filename)),
+		trace.WithAttributes(attribute.String("requested-filename", longfile)),
+		trace.WithAttributes(attribute.String("IP", ip.String())),
+	)
 
 	span.AddEvent("job.CreateFromIP")
 
@@ -94,7 +101,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 		return serveFakeReader(l, filename)
 	}
 
-	span.SetStatus(codes.Ok, "tftp request ok: "+filename)
+	span.SetStatus(codes.Ok, filename)
 	span.End()
 
 	return j.ServeTFTP(filename, ip.String())
