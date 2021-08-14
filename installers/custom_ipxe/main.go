@@ -8,6 +8,7 @@ import (
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/packet"
+	"github.com/vincent-petithory/dataurl"
 )
 
 type Installer struct{}
@@ -29,6 +30,9 @@ func (i Installer) BootScript() job.BootScript {
 			}
 		} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
 			cfg = &packet.InstallerData{Script: j.UserData()}
+		} else if dataURL, err := dataurl.DecodeString(j.IPXEScriptURL()); err == nil {
+			// I assume err is returned unless there is a real data URL, but we might need different logic to ensure the URL was actually a data URL and not just empty
+			cfg = &packet.InstallerData{Script: string(dataURL.Data)}
 		} else if j.IPXEScriptURL() != "" {
 			cfg = &packet.InstallerData{Chain: j.IPXEScriptURL()}
 		} else {

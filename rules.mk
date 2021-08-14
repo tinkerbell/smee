@@ -86,7 +86,7 @@ ipxe/ipxe/snp-hua.efi:
 ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
 	mkdir -p $(@D)
 	curl -fL https://github.com/ipxe/ipxe/archive/${ipxev}.tar.gz > $@
-	echo "${ipxeh}  $@" | sha512sum -c
+	echo "${ipxeh}  $@" | shasum -a 512 -c
 
 # given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
 # and   $@=ipxe/ipxe/build/*/*

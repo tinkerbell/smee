@@ -22,6 +22,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd
 	github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303
+	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
 	go.opentelemetry.io/otel v1.0.0-RC2
 	go.opentelemetry.io/otel/trace v1.0.0-RC2

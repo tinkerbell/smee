@@ -131,6 +131,26 @@ func TestIpxeScript(t *testing.T) {
 			echo userdata script
 			`,
 		},
+		{
+			"installer: ipxe data url",
+			"custom_ipxe",
+			// base64 encoding reads: "echo my data uri script" (no newline)
+			&packet.InstallerData{Chain: "data:text/plain;charset=utf-8;base64,ZWNobyBteSBkYXRhIHVyaSBzY3JpcHQ="},
+			`#!ipxe
+
+
+			params
+			param body Device connected to DHCP system
+			param type provisioning.104.01
+			imgfetch ${tinkerbell}/phone-home##params
+			imgfree
+
+			set packet_facility test.facility
+			set packet_plan test.slug
+			
+			echo my data uri script
+			`,
+		},
 	}
 
 	for _, tc := range testCases {
