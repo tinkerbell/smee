@@ -20,7 +20,11 @@ sleep $sleep_at_start
 # DHCP client
 busybox udhcpc -s /busybox-udhcpc-script.sh -V PXEClient -x 0x5d:0000
 
+# set boot_file variable ahead of sourcing dhcpoffer-vars.sh to please the linter
+boot_file=""
+
 # the busybox script writes the DHCP variables to /tmp/dhcpoffer-vars.sh
+# shellcheck disable=SC1091
 . /tmp/dhcpoffer-vars.sh
 
 # get the OpenTelemetry traceparent via HTTP header
@@ -33,7 +37,7 @@ export TRACEPARENT
 # TODO(@tobert) coming soon...
 #echo "fetching ${boot_file}-${TRACEPARENT} over tftp..."
 #tftp 192.168.99.42 -c get "${boot_file}-${TRACEPARENT}"
-tftp 192.168.99.42 -c get $boot_file
+tftp 192.168.99.42 -c get "$boot_file"
 
 # sleep a long time so you can enter the container with
 # docker exec -ti boots_client_1 /bin/sh
