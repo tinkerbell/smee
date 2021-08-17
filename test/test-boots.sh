@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=dash disable=SC1091,SC2154
 
 # useful for debugging sometimes
 # tcpdump -ni eth0 &
@@ -35,9 +36,8 @@ busybox udhcpc \
 # busybox udhcpc helpfully returns options in hex
 # option43 ordering is not guaranteed, at least not in this implementation
 . extract-traceparent-from-opt43.sh   # load a function to do the parsing
-extract_traceparent_from_opt43 $opt43 # parse the value, sets TRACEPARENT
+extract_traceparent_from_opt43 "$opt43" # parse the value, exports TRACEPARENT
 echo "got traceparent $TRACEPARENT from opt43 value $opt43"
-export TRACEPARENT
 # write it to the shell profile.d for easy loading
 echo "export TRACEPARENT=$TRACEPARENT" > /etc/profile.d/boots-traceparent.sh
 
