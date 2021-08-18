@@ -17,7 +17,7 @@ func init() {
 }
 
 func serveKickstart(w http.ResponseWriter, req *http.Request) {
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
 		w.WriteHeader(http.StatusNotFound)

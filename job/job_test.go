@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -244,7 +245,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 			cMock.EXPECT().GetWorkflowContextList(gomock.Any(), gomock.Any()).Return(test.wcl, nil)
 			c := packet.NewMockClient(u, cMock)
 			SetClient(c)
-			s, err := HasActiveWorkflow("Hardware-fake-bde9-812726eff314")
+			s, err := HasActiveWorkflow(context.Background(), "Hardware-fake-bde9-812726eff314")
 			if err != nil {
 				t.Fatal("error occured while testing")
 			}

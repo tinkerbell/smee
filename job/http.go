@@ -16,7 +16,7 @@ func (j Job) ServeFile(w http.ResponseWriter, req *http.Request) {
 	base := path.Base(req.URL.Path)
 
 	if name := strings.TrimSuffix(base, ".ipxe"); len(name) < len(base) {
-		j.serveBootScript(w, req, name)
+		j.serveBootScript(req.Context(), w, name)
 
 		return
 	}
@@ -64,7 +64,7 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	j.phoneHome(b)
+	j.phoneHome(req.Context(), b)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte{})
@@ -87,7 +87,7 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 
 		return
 	}
-	if !j.PostHardwareProblem(v.Problem) {
+	if !j.PostHardwareProblem(req.Context(), v.Problem) {
 		w.WriteHeader(http.StatusBadGateway)
 
 		return

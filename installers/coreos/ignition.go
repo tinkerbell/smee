@@ -40,7 +40,7 @@ func buildSystemdUnits(j job.Job) (su ignition.SystemdUnits) {
 
 func serveIgnitionConfig(distro string) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+		j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 		if err != nil {
 			installers.Logger(distro).With("client", req.RemoteAddr).Error(err)
 			w.WriteHeader(http.StatusNotFound)

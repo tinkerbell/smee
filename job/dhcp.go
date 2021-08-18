@@ -1,6 +1,8 @@
 package job
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
@@ -9,6 +11,7 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func IsSpecialOS(i *packet.Instance) bool {
@@ -26,45 +29,50 @@ func IsSpecialOS(i *packet.Instance) bool {
 	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
 }
 
-// ServeDHCP responds to DHCP packets
-func (j Job) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
+// ServeDHCP responds to DHCP packets. Returns true if it replied. Returns false
+// if it did not reply, often for good reason. If it was an error, error will be
+// set.
+func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) (bool, error) {
+	span := trace.SpanFromContext(ctx)
 
 	// If we are not the chosen provisioner for this piece of hardware
 	// do not respond to the DHCP request
 	if !j.areWeProvisioner() {
-		return false
+		return false, nil
 	}
 
 	// setup reply
+	span.AddEvent("dhcp.NewReply")
+	// only DISCOVER and REQUEST get replies; reply is nil for ignored reqs
 	reply := dhcp.NewReply(w, req)
 	if reply == nil {
-		return false
+		return false, nil // ignore the request
 	}
 
 	// configure DHCP
-	if !j.configureDHCP(reply.Packet(), req) {
-		j.Error(errors.New("unable to configure DHCP for yiaddr and DHCP options"))
-
-		return false
+	if !j.configureDHCP(ctx, reply.Packet(), req) {
+		return false, errors.New("unable to configure DHCP for yiaddr and DHCP options")
 	}
 
 	// send the DHCP response
+	span.AddEvent("reply.Send()")
 	if err := reply.Send(); err != nil {
-		j.Error(errors.WithMessage(err, "unable to send DHCP reply"))
-
-		return false
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
 
-func (j Job) configureDHCP(rep, req *dhcp4.Packet) bool {
+func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
+	span := trace.SpanFromContext(ctx)
 	if !j.dhcp.ApplyTo(rep) {
 		return false
 	}
+
 	if dhcp.SetupPXE(rep, req) {
 		isARM := dhcp.IsARM(req)
 		if dhcp.Arch(req) != j.Arch() {
+			span.AddEvent(fmt.Sprintf("arch mismatch: got %q and expected %q", dhcp.Arch(req), j.Arch()))
 			j.With("dhcp", dhcp.Arch(req), "job", j.Arch()).Info("arch mismatch, using dhcp")
 		}
 
@@ -79,6 +87,8 @@ func (j Job) configureDHCP(rep, req *dhcp4.Packet) bool {
 		}
 
 		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
+	} else {
+		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
 
 	return true
