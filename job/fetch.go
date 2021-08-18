@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"net"
 
 	"github.com/golang/groupcache/singleflight"
@@ -11,9 +12,9 @@ var (
 	servers singleflight.Group
 )
 
-func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (packet.Discovery, error) {
+func discoverHardwareFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (packet.Discovery, error) {
 	fetch := func() (interface{}, error) {
-		return client.DiscoverHardwareFromDHCP(mac, giaddr, circuitID)
+		return client.DiscoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
 	}
 	v, err := servers.Do(mac.String(), fetch)
 	if err != nil {
@@ -23,9 +24,9 @@ func discoverHardwareFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID str
 	return v.(packet.Discovery), nil
 }
 
-func discoverHardwareFromIP(ip net.IP) (packet.Discovery, error) {
+func discoverHardwareFromIP(ctx context.Context, ip net.IP) (packet.Discovery, error) {
 	fetch := func() (interface{}, error) {
-		return client.DiscoverHardwareFromIP(ip)
+		return client.DiscoverHardwareFromIP(ctx, ip)
 	}
 	v, err := servers.Do(ip.String(), fetch)
 	if err != nil {

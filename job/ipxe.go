@@ -1,11 +1,15 @@
 package job
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -53,11 +57,16 @@ func RegisterSlug(name string, builder BootScript) {
 	bySlug[name] = builder
 }
 
-func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name string) {
+func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name string) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("name", name))
+
 	fn, ok := scripts[name]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		j.With("script", name).Error(errors.New("boot script not found"))
+		err := errors.Errorf("boot script %q not found", name)
+		j.With("script", name).Error(err)
+		span.SetStatus(codes.Error, err.Error())
 
 		return
 	}
@@ -71,9 +80,12 @@ func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name stri
 	s.Echo("Packet.net Baremetal - iPXE boot")
 
 	fn(j, s)
+	src := s.Bytes()
+	span.SetAttributes(attribute.String("ipxe-script", string(src)))
 
-	if _, err := w.Write(s.Bytes()); err != nil {
+	if _, err := w.Write(src); err != nil {
 		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
+		span.SetStatus(codes.Error, err.Error())
 
 		return
 	}
