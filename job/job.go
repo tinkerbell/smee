@@ -84,7 +84,6 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	}
 
 	span := trace.SpanFromContext(ctx)
-	defer span.End()
 	span.AddEvent("discoverHardwareFromDHCP")
 	d, err := discoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
 	if err != nil {
@@ -97,8 +96,6 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		j = Job{} // return an empty job on error
-	} else {
-		span.SetStatus(codes.Ok, "job.setup done")
 	}
 
 	return j, err
