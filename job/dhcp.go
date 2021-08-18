@@ -37,8 +37,6 @@ func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Pack
 	// If we are not the chosen provisioner for this piece of hardware
 	// do not respond to the DHCP request
 	if !j.areWeProvisioner() {
-		span.AddEvent("not a provisioner for this DHCP client")
-
 		return false
 	}
 
