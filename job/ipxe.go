@@ -64,9 +64,9 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	fn, ok := scripts[name]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		j.With("script", name).Error(errors.Errorf("boot script not found"))
-
-		span.SetStatus(codes.Error, "boot script name not found")
+		err := errors.Errorf("boot script %q not found", name)
+		j.With("script", name).Error(err)
+		span.SetStatus(codes.Error, err.Error())
 
 		return
 	}
