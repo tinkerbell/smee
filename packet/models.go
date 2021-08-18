@@ -221,11 +221,19 @@ type IP struct {
 
 // OperatingSystem holds details for the operating system
 type OperatingSystem struct {
-	Slug     string `json:"slug"`
-	Distro   string `json:"distro"`
-	Version  string `json:"version"`
-	ImageTag string `json:"image_tag"`
-	OsSlug   string `json:"os_slug"`
+	Slug          string         `json:"slug"`
+	Distro        string         `json:"distro"`
+	Version       string         `json:"version"`
+	ImageTag      string         `json:"image_tag"`
+	OsSlug        string         `json:"os_slug"`
+	Installer     string         `json:"installer,omitempty"`
+	InstallerData *InstallerData `json:"installer_data,omitempty"`
+}
+
+// InstallerData holds a number of fields that may be used by an installer.
+type InstallerData struct {
+	Chain  string `json:"chain,omitempty"`
+	Script string `json:"script,omitempty"`
 }
 
 // Port represents a network port
