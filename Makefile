@@ -4,7 +4,7 @@ all: help
 
 boots: cmd/boots/boots ## Compile boots for host OS and Architecture
 
-ipxe: build_all_ipxe ## Build all iPXE binaries 
+ipxe: $(generated_ipxe_files) ## Build all iPXE binaries 
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 	

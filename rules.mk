@@ -44,28 +44,28 @@ $(toolsBins):
 	$(eval f := $(shell echo $@ | cut -d"/" -f2))
 	@cat tools.go | grep _ | grep $f | awk -F'"' '{print $$2}' | xargs -tI % go install %
 	
-generated_files := \
+generated_go_files := \
 	packet/mock_cacher/cacher_mock.go \
 	packet/mock_workflow/workflow_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
 	
-.PHONY: $(generated_files)
+.PHONY: $(generated_go_files)
 
 # build all the ipxe binaries
-build_all_ipxe: tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
+generated_ipxe_files := tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
 
 # go generate
 go_generate:
-$(filter %_string.go,$(generated_files)): bin/stringer
-$(filter %_mock.go,$(generated_files)): bin/mockgen
-$(generated_files): bin/goimports
+$(filter %_string.go,$(generated_go_files)): bin/stringer
+$(filter %_mock.go,$(generated_go_files)): bin/mockgen
+$(generated_go_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) build_all_ipxe go_generate syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe go_generate syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 include ipxev.mk
