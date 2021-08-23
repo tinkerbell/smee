@@ -37,12 +37,11 @@ export PATH
 endif
 
 # parses tools.go and returns the tool name prefixed with bin/
-toolsBins := $(addprefix bin/,$(shell cat tools.go | grep _ | awk -F'"' '{print $$2}' | xargs -tI % basename %))
+toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go)))
+
 # installs cli tools defined in tools.go
-$(toolsBins):
-	@echo Installing tools from tools.go
-	$(eval f := $(shell echo $@ | cut -d"/" -f2))
-	@cat tools.go | grep _ | grep $f | awk -F'"' '{print $$2}' | xargs -tI % go install %
+$(toolsBins): go.sum tools.go
+	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
 	
 generated_go_files := \
 	packet/mock_cacher/cacher_mock.go \
