@@ -19,7 +19,7 @@ stack-run: cmd/boots/boots-linux-amd64 ## Run the Tinkerbell stack
 stack-remove: ## Remove a running Tinkerbell stack
 	cd deploy/stack; docker-compose down -v --remove-orphans
 
-test: gen ## Run go test
+test: gen ipxe ## Run go test
 	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
 
 test-ipxe: ipxe/tests ## Run iPXE feature tests
