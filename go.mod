@@ -3,7 +3,6 @@ module github.com/tinkerbell/boots
 go 1.16
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/davecgh/go-spew v1.1.1
