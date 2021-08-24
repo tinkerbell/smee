@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -62,7 +63,10 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	// clients can send traceparent over TFTP by appending the traceparent string
 	// to the end of the filename they really want
 	longfile := filename // hang onto this to report in traces
-	ctx, shortfile := extractTraceparentFromFilename(context.Background(), filename, l)
+	ctx, shortfile, err := extractTraceparentFromFilename(context.Background(), filename)
+	if err != nil {
+		l.Info(err)
+	}
 	if shortfile != filename {
 		l = l.With("filename", shortfile) // flip to the short filename in logs
 		l.Info("client requested filename '", filename, "' with a traceparent attached and has been shortened to '", shortfile, "'")
@@ -112,22 +116,18 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 // and a new SpanContext is contstructed and added to the context.Context that is returned.
 // The filename is shortened to just the original filename so the rest of boots tftp can
 // carry on as usual.
-func extractTraceparentFromFilename(ctx context.Context, filename string, l log.Logger) (context.Context, string) {
+func extractTraceparentFromFilename(ctx context.Context, filename string) (context.Context, string, error) {
 	// traceparentRe captures 4 items, the original filename, the trace id, span id, and trace flags
 	parts := traceparentRe.FindStringSubmatch(filename)
 	if len(parts) == 5 {
 		traceId, err := trace.TraceIDFromHex(parts[2])
 		if err != nil {
-			l.Info("parsing OpenTelemetry trace id %q failed: %s", parts[2], err)
-
-			return ctx, filename
+			return ctx, filename, fmt.Errorf("parsing OpenTelemetry trace id %q failed: %s", parts[2], err)
 		}
 
 		spanId, err := trace.SpanIDFromHex(parts[3])
 		if err != nil {
-			l.Info("parsing OpenTelemetry span id %q failed: %s", parts[3], err)
-
-			return ctx, filename
+			return ctx, filename, fmt.Errorf("parsing OpenTelemetry span id %q failed: %s", parts[3], err)
 		}
 
 		// create a span context with the parent trace id & span id
@@ -139,10 +139,10 @@ func extractTraceparentFromFilename(ctx context.Context, filename string, l log.
 		})
 
 		// inject it into the context.Context and return it along with the original filename
-		return trace.ContextWithSpanContext(ctx, spanCtx), parts[1]
+		return trace.ContextWithSpanContext(ctx, spanCtx), parts[1], nil
 	} else {
 		// no traceparent found, return everything as it was
-		return ctx, filename
+		return ctx, filename, nil
 	}
 }
 
