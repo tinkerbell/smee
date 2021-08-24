@@ -57,7 +57,7 @@ func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Pack
 	// send the DHCP response
 	span.AddEvent("reply.Send()")
 	if err := reply.Send(); err != nil {
-    return false, err
+		return false, err
 	}
 
 	return true, nil
