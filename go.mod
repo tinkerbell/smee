@@ -3,7 +3,6 @@ module github.com/tinkerbell/boots
 go 1.16
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/davecgh/go-spew v1.1.1
@@ -21,13 +20,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/tftp-go v0.0.0-20200825172122-d9200358b6cd
 	github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303
-	github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b // indirect
+	github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
 	go.opentelemetry.io/otel v1.0.0-RC2
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.0.0-RC2
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.0.0-RC2
-	go.opentelemetry.io/otel/sdk v1.0.0-RC2
-	go.opentelemetry.io/otel/trace v1.0.0-RC2 // indirect
+	go.opentelemetry.io/otel/trace v1.0.0-RC2
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
