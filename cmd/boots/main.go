@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"time"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
@@ -16,7 +18,6 @@ import (
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/boots/tftp"
-	"github.com/tobert/otel-init-go/otelinit"
 
 	_ "github.com/tinkerbell/boots/installers/coreos"
 	_ "github.com/tinkerbell/boots/installers/custom_ipxe"
@@ -49,8 +50,9 @@ func main() {
 	defer l.Close()
 	mainlog = l.Package("main")
 
-	otelShutdown := otelinit.InitOpenTelemetry("boots")
-	defer otelShutdown()
+	ctx := context.Background()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "boots")
+	defer otelShutdown(ctx)
 
 	metrics.Init(l)
 	dhcp.Init(l)
