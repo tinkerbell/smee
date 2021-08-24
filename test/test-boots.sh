@@ -21,11 +21,11 @@ sleep $sleep_at_start
 #              first 8 octets should be zeroes to make boots happy (Intel PXE does this)
 #              ID: 4a525bd43517df7f8b4799c18d (randomly generated and hard-coded here)
 busybox udhcpc \
-    -q \
-    -s /busybox-udhcpc-script.sh \
-    -V PXEClient \
-    -x 0x5d:0000 \
-    -x 0x61:000000004a525bd43517df7f8b4799c18d
+	-q \
+	-s /busybox-udhcpc-script.sh \
+	-V PXEClient \
+	-x 0x5d:0000 \
+	-x 0x61:000000004a525bd43517df7f8b4799c18d
 
 # set boot_file variable ahead of sourcing dhcpoffer-vars.sh to please the linter
 boot_file=""
@@ -39,11 +39,11 @@ boot_file=""
 # id and length which is always 0x451a
 # busybox udhcpc helpfully returns options in hex
 # option43 ordering is not guaranteed, at least not in this implementation
-. extract-traceparent-from-opt43.sh   # load a function to do the parsing
+. extract-traceparent-from-opt43.sh     # load a function to do the parsing
 extract_traceparent_from_opt43 "$opt43" # parse the value, exports TRACEPARENT
 echo "got traceparent $TRACEPARENT from opt43 value $opt43"
 # write it to the shell profile.d for easy loading
-echo "export TRACEPARENT=$TRACEPARENT" > /etc/profile.d/boots-traceparent.sh
+echo "export TRACEPARENT=$TRACEPARENT" >/etc/profile.d/boots-traceparent.sh
 
 # fetch / from the server with the traceparent set
 tp_header="Traceparent: $TRACEPARENT"
