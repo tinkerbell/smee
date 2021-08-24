@@ -94,7 +94,6 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	d, err := discoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		span.End()
 
 		return Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
@@ -103,10 +102,7 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		j = Job{} // return an empty job on error
-	} else {
-		span.SetStatus(codes.Ok, "job.setup done")
 	}
-	span.End()
 
 	return j, err
 }

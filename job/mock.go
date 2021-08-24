@@ -80,6 +80,10 @@ func (m *Mock) SetIPXEScriptURL(url string) {
 	m.instance.IPXEScriptURL = url
 }
 
+func (m *Mock) SetUserData(userdata string) {
+	m.instance.UserData = userdata
+}
+
 func (m *Mock) SetMAC(mac string) {
 	_m, err := net.ParseMAC(mac)
 	if err != nil {
@@ -109,6 +113,14 @@ func (m *Mock) SetOSVersion(version string) {
 
 func (m *Mock) SetOSImageTag(tag string) {
 	m.hardware.OperatingSystem().ImageTag = tag
+}
+
+func (m *Mock) SetOSInstaller(installer string) {
+	m.hardware.OperatingSystem().Installer = installer
+}
+
+func (m *Mock) SetOSInstallerData(installerData *packet.InstallerData) {
+	m.hardware.OperatingSystem().InstallerData = installerData
 }
 
 func (m *Mock) SetPassword(password string) {

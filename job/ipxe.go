@@ -14,6 +14,7 @@ import (
 
 var (
 	byDistro         = make(map[string]BootScript)
+	byInstaller      = make(map[string]BootScript)
 	bySlug           = make(map[string]BootScript)
 	defaultInstaller BootScript
 	scripts          = map[string]BootScript{
@@ -40,6 +41,14 @@ func RegisterDistro(name string, builder BootScript) {
 	byDistro[name] = builder
 }
 
+func RegisterInstaller(name string, builder BootScript) {
+	if _, ok := byInstaller[name]; ok {
+		err := errors.Errorf("installer %q already registered!", name)
+		joblog.Fatal(err, "installer", name)
+	}
+	byInstaller[name] = builder
+}
+
 func RegisterSlug(name string, builder BootScript) {
 	if _, ok := bySlug[name]; ok {
 		err := errors.Errorf("slug %q already registered!", name)
@@ -55,9 +64,9 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	fn, ok := scripts[name]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		j.With("script", name).Error(errors.Errorf("boot script not found"))
-
-		span.SetStatus(codes.Error, "boot script name not found")
+		err := errors.Errorf("boot script %q not found", name)
+		j.With("script", name).Error(err)
+		span.SetStatus(codes.Error, err.Error())
 
 		return
 	}
@@ -86,6 +95,11 @@ func auto(j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
 		shell(j, s)
+
+		return
+	}
+	if f, ok := byInstaller[j.hardware.OperatingSystem().Installer]; ok {
+		f(j, s)
 
 		return
 	}

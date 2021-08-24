@@ -27,7 +27,11 @@ busybox udhcpc \
     -x 0x5d:0000 \
     -x 0x61:000000004a525bd43517df7f8b4799c18d
 
+# set boot_file variable ahead of sourcing dhcpoffer-vars.sh to please the linter
+boot_file=""
+
 # the busybox script writes the DHCP variables to /tmp/dhcpoffer-vars.sh
+# shellcheck disable=SC1091
 . /tmp/dhcpoffer-vars.sh
 
 # boots sets 2 values in option 43, check out dhcp/pxe.go

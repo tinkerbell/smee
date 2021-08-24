@@ -11,7 +11,6 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -30,42 +29,38 @@ func IsSpecialOS(i *packet.Instance) bool {
 	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
 }
 
-// ServeDHCP responds to DHCP packets
-func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) bool {
+// ServeDHCP responds to DHCP packets. Returns true if it replied. Returns false
+// if it did not reply, often for good reason. If it was an error, error will be
+// set.
+func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) (bool, error) {
 	span := trace.SpanFromContext(ctx)
 
 	// If we are not the chosen provisioner for this piece of hardware
 	// do not respond to the DHCP request
 	if !j.areWeProvisioner() {
-		span.AddEvent("not a provisioner for this DHCP client")
-
-		return false
+		return false, nil
 	}
 
 	// setup reply
 	span.AddEvent("dhcp.NewReply")
+	// only DISCOVER and REQUEST get replies; reply is nil for ignored reqs
 	reply := dhcp.NewReply(w, req)
 	if reply == nil {
-		return false
+		return false, nil // ignore the request
 	}
 
 	// configure DHCP
 	if !j.configureDHCP(ctx, reply.Packet(), req) {
-		j.Error(errors.New("unable to configure DHCP for yiaddr and DHCP options"))
-
-		return false
+		return false, errors.New("unable to configure DHCP for yiaddr and DHCP options")
 	}
 
 	// send the DHCP response
 	span.AddEvent("reply.Send()")
 	if err := reply.Send(); err != nil {
-		span.SetAttributes(attribute.String("send error", err.Error()))
-		j.Error(errors.WithMessage(err, "unable to send DHCP reply"))
-
-		return false
+    return false, err
 	}
 
-	return true
+	return true, nil
 }
 
 func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {

@@ -100,12 +100,17 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 
 	go func() {
 		ctx, span := tracer.Start(ctx, "ServeDHCP Reply")
-		ok := j.ServeDHCP(ctx, w, req)
+		ok, err := j.ServeDHCP(ctx, w, req)
 		if ok {
-			span.SetStatus(codes.Ok, "DHCPOFFER")
+			span.SetStatus(codes.Ok, "DHCPOFFER sent")
 			metrics.DHCPTotal.WithLabelValues("send", "DHCPOFFER", gi.String()).Inc()
 		} else {
-			span.SetStatus(codes.Error, "DHCPOFFER")
+			if err != nil {
+				j.Error(err)
+				span.SetStatus(codes.Error, err.Error())
+			} else {
+				span.SetStatus(codes.Ok, "no offer made")
+			}
 		}
 		span.End()
 		metrics.JobsInProgress.With(labels).Dec()
