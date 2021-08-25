@@ -1,6 +1,7 @@
 package osie
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tinkerbell/boots/conf"
@@ -14,14 +15,14 @@ func init() {
 	job.RegisterDistro("discovery", bootScripts["discover"])
 }
 
-var bootScripts = map[string]func(job.Job, *ipxe.Script){
-	"rescue": func(j job.Job, s *ipxe.Script) {
+var bootScripts = map[string]func(context.Context, job.Job, *ipxe.Script){
+	"rescue": func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
 		bootScript("rescue", j, s)
 	},
 	// install should have been name osie... oh well too late now
-	"install": func(j job.Job, s *ipxe.Script) {
+	"install": func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		typ := "provisioning.104.01"
 		if j.HardwareState() == "deprovisioning" {
 			typ = "deprovisioning.304.1"
@@ -35,7 +36,7 @@ var bootScripts = map[string]func(job.Job, *ipxe.Script){
 		s.Set("state", j.HardwareState())
 		bootScript("install", j, s)
 	},
-	"discover": func(j job.Job, s *ipxe.Script) {
+	"discover": func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "discover")
 		s.Set("state", j.HardwareState())
 		bootScript("discover", j, s)

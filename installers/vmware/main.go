@@ -20,34 +20,29 @@ func init() {
 	job.RegisterDistro("vmware", bootScriptDefault)
 }
 
-func bootScriptDefault(j job.Job, s *ipxe.Script) {
+func bootScriptDefault(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.Shell()
-
-	// We don't need to actually provision anything
-	// TODO(@tobert) passing context through to here would mean changing the
-	// signature for all installer functions and this is the only site that
-	// needs it, so these will not have trace context
-	j.DisablePXE(context.Background())
-	j.MarkDeviceActive(context.Background())
+	j.DisablePXE(ctx)
+	j.MarkDeviceActive(ctx)
 }
 
-func bootScriptVmwareEsxi55(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi55(ctx context.Context, j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-5.5.0.update03")
 }
 
-func bootScriptVmwareEsxi60(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi60(ctx context.Context, j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.0.0.update03")
 }
 
-func bootScriptVmwareEsxi65(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi65(ctx context.Context, j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.5.0")
 }
 
-func bootScriptVmwareEsxi67(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi67(ctx context.Context, j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.7.0")
 }
 
-func bootScriptVmwareEsxi70(j job.Job, s *ipxe.Script) {
+func bootScriptVmwareEsxi70(ctx context.Context, j job.Job, s *ipxe.Script) {
 	bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
 }
 

@@ -23,7 +23,7 @@ var (
 	}
 )
 
-type BootScript func(Job, *ipxe.Script)
+type BootScript func(context.Context, Job, *ipxe.Script)
 
 func RegisterDefaultInstaller(bootScript BootScript) {
 	if defaultInstaller != nil {
@@ -79,7 +79,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 
 	s.Echo("Packet.net Baremetal - iPXE boot")
 
-	fn(j, s)
+	fn(ctx, j, s)
 	src := s.Bytes()
 	span.SetAttributes(attribute.String("ipxe-script", string(src)))
 
@@ -91,37 +91,37 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	}
 }
 
-func auto(j Job, s *ipxe.Script) {
+func auto(ctx context.Context, j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
-		shell(j, s)
+		shell(ctx, j, s)
 
 		return
 	}
 	if f, ok := byInstaller[j.hardware.OperatingSystem().Installer]; ok {
-		f(j, s)
+		f(ctx, j, s)
 
 		return
 	}
 	if f, ok := bySlug[j.hardware.OperatingSystem().Slug]; ok {
-		f(j, s)
+		f(ctx, j, s)
 
 		return
 	}
 	if f, ok := byDistro[j.hardware.OperatingSystem().Distro]; ok {
-		f(j, s)
+		f(ctx, j, s)
 
 		return
 	}
 	if defaultInstaller != nil {
-		defaultInstaller(j, s)
+		defaultInstaller(ctx, j, s)
 
 		return
 	}
 	j.With("slug", j.hardware.OperatingSystem().Slug, "distro", j.hardware.OperatingSystem().Distro).Error(errors.New("unsupported slug/distro"))
-	shell(j, s)
+	shell(ctx, j, s)
 }
 
-func shell(j Job, s *ipxe.Script) {
+func shell(ctx context.Context, j Job, s *ipxe.Script) {
 	s.Shell()
 }

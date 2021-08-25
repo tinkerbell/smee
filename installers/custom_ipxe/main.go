@@ -1,6 +1,7 @@
 package custom_ipxe
 
 import (
+	"context"
 	"strings"
 
 	"github.com/packethost/pkg/log"
@@ -14,7 +15,7 @@ func init() {
 	job.RegisterSlug("custom_ipxe", ipxeScript)
 }
 
-func ipxeScript(j job.Job, s *ipxe.Script) {
+func ipxeScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 	logger := j.Logger.With("installer", "custom_ipxe")
 
 	var cfg *packet.InstallerData

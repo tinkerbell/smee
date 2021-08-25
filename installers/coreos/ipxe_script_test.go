@@ -1,6 +1,7 @@
 package coreos
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -32,7 +33,7 @@ func TestScript(t *testing.T) {
 				s.Set("tinkerbell", "http://127.0.0.1")
 				s.Set("ipxe_cloud_config", "packet")
 
-				bootScript(m.Job(), &s)
+				bootScript(context.Background(), m.Job(), &s)
 				got := string(s.Bytes())
 				script = strings.Replace(script, "coreos", distro, -1)
 				if script != got {

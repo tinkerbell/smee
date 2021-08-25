@@ -1,6 +1,7 @@
 package nixos
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -45,7 +46,7 @@ func buildInitPaths() map[string]string {
 
 func init() {
 	oshwToInitPath := buildInitPaths()
-	job.RegisterDistro("nixos", func(j job.Job, s *ipxe.Script) {
+	job.RegisterDistro("nixos", func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		bootScript(oshwToInitPath, j, s)
 	})
 }

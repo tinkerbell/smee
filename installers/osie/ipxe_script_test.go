@@ -1,6 +1,7 @@
 package osie
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -58,7 +59,7 @@ func TestScript(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					bootScripts[action](m.Job(), &s)
+					bootScripts[action](context.Background(), m.Job(), &s)
 					got := string(s.Bytes())
 
 					arch := "aarch64"

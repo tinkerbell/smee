@@ -1,6 +1,8 @@
 package coreos
 
 import (
+	"context"
+
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
@@ -15,7 +17,7 @@ func init() {
 // http://storage.googleapis.com/alpha.release.core-os.net/amd64-usr/current
 // http://storage.googleapis.com/users.developer.core-os.net/mischief/boards/amd64-usr/962.0.0+2016-02-23-2254
 
-func bootScript(j job.Job, s *ipxe.Script) {
+func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.MirrorURL)
 	s.Kernel("${base-url}/" + kernelPath(j))

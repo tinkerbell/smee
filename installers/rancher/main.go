@@ -1,6 +1,8 @@
 package rancher
 
 import (
+	"context"
+
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -9,7 +11,7 @@ func init() {
 	job.RegisterDistro("rancher", bootScript)
 }
 
-func bootScript(j job.Job, s *ipxe.Script) {
+func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", "http://releases.rancher.com/os/packet")
 	s.Kernel("${base-url}/vmlinuz")
