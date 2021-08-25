@@ -113,6 +113,8 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/equinix-labs/otel-init-go v0.0.0-20210824021231-ac348065c413 h1:CXYSrrVB0PblkZwkhLLF4I257ctecOPnGhgnmCw/iPk=
 github.com/equinix-labs/otel-init-go v0.0.0-20210824021231-ac348065c413/go.mod h1:Zprvqw70JGsTRLbj6bCtndooCAgg4mY4H2MF3KC/AS0=
+github.com/equinix-labs/otel-init-go v0.0.1 h1:v+XdagFMmmZHsOF6TLQArOt6CkuxiwXsIQnn3A/sCYQ=
+github.com/equinix-labs/otel-init-go v0.0.1/go.mod h1:Zprvqw70JGsTRLbj6bCtndooCAgg4mY4H2MF3KC/AS0=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.8.0/go.mod h1:3l45GVGkyrnYNl9HoIjnp2NnNWvh6hLAqD8yTfGjnw8=
 github.com/felixge/httpsnoop v1.0.2 h1:+nS9g82KMXccJ/wp0zyRW9ZBHFETmMGtkk+2CTTrW4o=
