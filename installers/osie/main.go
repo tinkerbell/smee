@@ -75,10 +75,9 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.
 	s.Args("packet_state=${state}")
 
 	// only add traceparent if tracing is enabled
-	spanCtx := trace.SpanContextFromContext(ctx)
-	if spanCtx.IsSampled() {
-		// manually assemble a traceparent string
-		s.Args("traceparent=00-" + spanCtx.TraceID().String() + "-" + spanCtx.SpanID().String() + "-" + spanCtx.TraceFlags().String())
+	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {
+		// manually assemble a traceparent string because the "right" way is clunkier
+		s.Args("traceparent=00-" + sc.TraceID().String() + "-" + sc.SpanID().String() + "-" + sc.TraceFlags().String())
 	}
 
 	// Only provide the Hollow secrets for deprovisions
