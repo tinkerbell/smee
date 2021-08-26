@@ -7,6 +7,7 @@ import (
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func init() {
@@ -19,7 +20,7 @@ var bootScripts = map[string]func(context.Context, job.Job, *ipxe.Script){
 	"rescue": func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
-		bootScript("rescue", j, s)
+		bootScript(ctx, "rescue", j, s)
 	},
 	// install should have been name osie... oh well too late now
 	"install": func(ctx context.Context, j job.Job, s *ipxe.Script) {
@@ -34,23 +35,23 @@ var bootScripts = map[string]func(context.Context, job.Job, *ipxe.Script){
 			s.Set("action", "install")
 		}
 		s.Set("state", j.HardwareState())
-		bootScript("install", j, s)
+		bootScript(ctx, "install", j, s)
 	},
 	"discover": func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "discover")
 		s.Set("state", j.HardwareState())
-		bootScript("discover", j, s)
+		bootScript(ctx, "discover", j, s)
 	},
 }
 
-func bootScript(action string, j job.Job, s *ipxe.Script) {
+func bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 
-	kernelParams(action, j.HardwareState(), j, s)
+	kernelParams(ctx, action, j.HardwareState(), j, s)
 
 	s.Initrd("${base-url}/" + initrdPath(j))
 
@@ -62,7 +63,7 @@ func bootScript(action string, j job.Job, s *ipxe.Script) {
 	s.Boot()
 }
 
-func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
+func kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -72,6 +73,13 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
+
+	// only add traceparent if tracing is enabled
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if spanCtx.IsSampled() {
+		// manually assemble a traceparent string
+		s.Args("traceparent=00-" + spanCtx.TraceID().String() + "-" + spanCtx.SpanID().String() + "-" + spanCtx.TraceFlags().String())
+	}
 
 	// Only provide the Hollow secrets for deprovisions
 	if j.HardwareState() == "deprovisioning" && conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
