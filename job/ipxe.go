@@ -79,6 +79,9 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 
 	s.Echo("Packet.net Baremetal - iPXE boot")
 
+	// the trace id is enough to find otel traces in most systems
+	s.Echo("Debug Trace ID: " + span.SpanContext().TraceID().String())
+
 	fn(ctx, j, s)
 	src := s.Bytes()
 	span.SetAttributes(attribute.String("ipxe-script", string(src)))
