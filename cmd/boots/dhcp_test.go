@@ -1,18 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 
-	"bou.ke/monkey"
-	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/dhcp4-go"
 	"github.com/packethost/pkg/log"
-	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 )
 
@@ -76,43 +69,4 @@ func TestMain(m *testing.M) {
 	mainlog = l.Package("main")
 	metrics.Init(l)
 	os.Exit(m.Run())
-}
-
-func TestServeJobFile(t *testing.T) {
-	tests := map[string]struct {
-		expectedResp       []byte
-		expectedStatusCode int
-		allowPxe           bool
-		err                error
-	}{
-		"success":                   {expectedResp: []byte("success"), expectedStatusCode: http.StatusOK, allowPxe: true},
-		"fail createFromRemoteAddr": {expectedStatusCode: http.StatusNotFound, err: fmt.Errorf("failed")},
-		"fail allowPxe is false":    {expectedStatusCode: http.StatusNotFound},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			monkey.Patch(job.CreateFromRemoteAddr, func(_ string) (job.Job, error) {
-				return job.Job{}, tc.err
-			})
-			var jb job.Job
-			monkey.PatchInstanceMethod(reflect.TypeOf(jb), "AllowPxe", func(_ job.Job) bool {
-				return tc.allowPxe
-			})
-			monkey.PatchInstanceMethod(reflect.TypeOf(jb), "ServeFile", func(_ job.Job, w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(tc.expectedStatusCode)
-				_, _ = w.Write(tc.expectedResp)
-			})
-
-			w := httptest.NewRecorder()
-			req := http.Request{RemoteAddr: "127.0.0.1:80"}
-			serveJobFile(w, &req)
-			if diff := cmp.Diff(tc.expectedResp, w.Body.Bytes()); diff != "" {
-				t.Fatal(diff)
-			}
-			if tc.expectedStatusCode != w.Result().StatusCode {
-				t.Fatalf("expected: %v, got: %v", tc.expectedStatusCode, w.Result().StatusCode)
-			}
-		})
-	}
 }

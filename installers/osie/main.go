@@ -72,6 +72,12 @@ func kernelParams(action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
 
+	// Only provide the Hollow secrets for deprovisions
+	if j.HardwareState() == "deprovisioning" && conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
+		s.Args("hollow_client_id=" + conf.HollowClientId)
+		s.Args("hollow_client_request_secret=" + conf.HollowClientRequestSecret)
+	}
+
 	// Don't bother including eclypsium_token if none is provided
 	if conf.EclypsiumToken != "" && j.HardwareState() == "deprovisioning" {
 		s.Args("eclypsium_token=" + conf.EclypsiumToken)
@@ -150,6 +156,7 @@ func kernelPath(j job.Job) string {
 	if j.KernelPath() != "" {
 		return j.KernelPath()
 	}
+
 	return "vmlinuz-${parch}"
 }
 
@@ -157,6 +164,7 @@ func initrdPath(j job.Job) string {
 	if j.InitrdPath() != "" {
 		return j.InitrdPath()
 	}
+
 	return "initramfs-${parch}"
 }
 
@@ -172,6 +180,7 @@ func osieBaseURL(j job.Job) string {
 	if isCustomOSIE(j) {
 		return osieURL + "/" + j.OSIEVersion()
 	}
+
 	return osieURL + "/current"
 }
 

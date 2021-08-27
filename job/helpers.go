@@ -20,6 +20,7 @@ func (j Job) IsUEFI() bool {
 	if h := j.hardware; h != nil {
 		return h.HardwareUEFI(j.mac)
 	}
+
 	return false
 }
 
@@ -27,6 +28,15 @@ func (j Job) Arch() string {
 	if h := j.hardware; h != nil {
 		return h.HardwareArch(j.mac)
 	}
+
+	return ""
+}
+
+func (j Job) BootDriveHint() string {
+	if i := j.instance; i != nil {
+		return i.BootDriveHint
+	}
+
 	return ""
 }
 
@@ -49,6 +59,7 @@ func (j Job) PArch() string {
 	if parch != "" {
 		return parch
 	}
+
 	return j.Arch()
 }
 
@@ -56,6 +67,7 @@ func (j Job) InstanceID() string {
 	if i := j.instance; i != nil {
 		return i.ID
 	}
+
 	return ""
 }
 
@@ -64,6 +76,7 @@ func (j Job) UserData() string {
 	if i := j.instance; i != nil {
 		return i.UserData
 	}
+
 	return ""
 }
 
@@ -72,6 +85,7 @@ func (j Job) IPXEScriptURL() string {
 	if i := j.instance; i != nil {
 		return i.IPXEScriptURL
 	}
+
 	return ""
 }
 
@@ -79,6 +93,7 @@ func (j Job) InstanceIPs() []packet.IP {
 	if i := j.instance; i != nil {
 		return i.IPs
 	}
+
 	return nil
 }
 
@@ -92,6 +107,7 @@ func (j Job) PasswordHash() string {
 	if j.instance.CryptedRootPassword != "" {
 		return j.instance.CryptedRootPassword
 	}
+
 	return j.instance.PasswordHash
 }
 
@@ -100,8 +116,10 @@ func (j Job) OperatingSystem() *packet.OperatingSystem {
 		if i.Rescue {
 			return rescueOS
 		}
+
 		return j.hardware.OperatingSystem()
 	}
+
 	return nil
 }
 
@@ -113,6 +131,7 @@ func (j Job) Interfaces() []packet.Port {
 	if h := j.hardware; h != nil {
 		return h.Interfaces()
 	}
+
 	return nil
 }
 
@@ -120,6 +139,7 @@ func (j Job) InterfaceName(i int) string {
 	if ifaces := j.Interfaces(); len(ifaces) > i {
 		return ifaces[i].Name
 	}
+
 	return ""
 }
 
@@ -127,6 +147,7 @@ func (j Job) InterfaceMAC(i int) net.HardwareAddr {
 	if ifaces := j.Interfaces(); len(ifaces) > i {
 		return ifaces[i].MAC()
 	}
+
 	return nil
 }
 
@@ -134,6 +155,7 @@ func (j Job) HardwareID() packet.HardwareID {
 	if h := j.hardware; h != nil {
 		return h.HardwareID()
 	}
+
 	return ""
 }
 
@@ -141,6 +163,7 @@ func (j Job) FacilityCode() string {
 	if h := j.hardware; h != nil {
 		return h.HardwareFacilityCode()
 	}
+
 	return ""
 }
 
@@ -148,6 +171,7 @@ func (j Job) PlanSlug() string {
 	if h := j.hardware; h != nil {
 		return h.HardwarePlanSlug()
 	}
+
 	return ""
 }
 
@@ -155,6 +179,7 @@ func (j Job) PlanVersionSlug() string {
 	if h := j.hardware; h != nil {
 		return h.HardwarePlanVersionSlug()
 	}
+
 	return ""
 }
 
@@ -162,6 +187,7 @@ func (j Job) Manufacturer() string {
 	if h := j.hardware; h != nil {
 		return h.HardwareManufacturer()
 	}
+
 	return ""
 }
 
@@ -175,6 +201,7 @@ func (j Job) HardwareState() string {
 	if h := j.hardware; h != nil && h.HardwareID() != "" {
 		return string(h.HardwareState())
 	}
+
 	return ""
 }
 
@@ -203,6 +230,7 @@ func (j Job) OSIEBaseURL() string {
 	if h := j.hardware; h != nil {
 		return j.hardware.OSIEBaseURL(j.mac)
 	}
+
 	return ""
 }
 
@@ -210,6 +238,7 @@ func (j Job) KernelPath() string {
 	if h := j.hardware; h != nil {
 		return j.hardware.KernelPath(j.mac)
 	}
+
 	return ""
 }
 
@@ -217,5 +246,6 @@ func (j Job) InitrdPath() string {
 	if h := j.hardware; h != nil {
 		return j.hardware.InitrdPath(j.mac)
 	}
+
 	return ""
 }

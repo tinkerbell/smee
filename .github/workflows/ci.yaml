@@ -35,7 +35,7 @@ jobs:
       - name: go vet
         run: go mod tidy && go vet ./...
       - name: golangci-lint brought to you by Nix
-        run: nix-shell --run 'GOROOT= golangci-lint run -v -D errcheck'
+        run: nix-shell --run 'GOROOT= golangci-lint run -v'
       - name: go test
         run: go test -v ./... -gcflags=-l
       - name: Run iPXE tests

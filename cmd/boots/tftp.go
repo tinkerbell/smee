@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"io"
 	"net"
@@ -52,9 +53,10 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	filename = path.Base(filename)
 	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
 
-	j, err := job.CreateFromIP(ip)
+	j, err := job.CreateFromIP(context.Background(), ip)
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
+
 		return serveFakeReader(l, filename)
 	}
 
@@ -66,6 +68,7 @@ func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, erro
 	// without a tink workflow present.
 	if !j.AllowPxe() {
 		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+
 		return serveFakeReader(l, filename)
 	}
 
@@ -76,12 +79,15 @@ func serveFakeReader(l log.Logger, filename string) (tftp.ReadCloser, error) {
 	switch filename {
 	case "test.1mb":
 		l.With("tftp_fake_read", true).Info()
+
 		return &fakeReader{1 * 1024 * 1024}, nil
 	case "test.8mb":
 		l.With("tftp_fake_read", true).Info()
+
 		return &fakeReader{8 * 1024 * 1024}, nil
 	}
 	l.With("error", errors.Wrap(os.ErrPermission, "access_violation")).Info()
+
 	return nil, os.ErrPermission
 }
 
@@ -89,6 +95,7 @@ func (tftpHandler) WriteFile(c tftp.Conn, filename string) (tftp.WriteCloser, er
 	ip := tftpClientIP(c.RemoteAddr())
 	err := errors.Wrap(os.ErrPermission, "access_violation")
 	mainlog.With("client", ip, "event", "create", "filename", filename, "error", err).Info()
+
 	return nil, os.ErrPermission
 }
 
@@ -106,6 +113,7 @@ func tftpClientIP(addr net.Addr) net.IP {
 	if err != nil {
 		err = errors.Wrap(err, "parse host:port")
 		mainlog.Error(err)
+
 		return nil
 	}
 	l := mainlog.With("host", host)
@@ -115,9 +123,11 @@ func tftpClientIP(addr net.Addr) net.IP {
 		if v4 := ip.To4(); v4 != nil {
 			ip = v4
 		}
+
 		return ip
 	}
 	l.Info("returning nil")
+
 	return nil
 }
 
@@ -148,5 +158,6 @@ func (r *fakeReader) Read(p []byte) (n int, err error) {
 	if r.N == 0 {
 		err = io.EOF
 	}
+
 	return
 }

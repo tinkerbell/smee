@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -51,6 +52,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	var err error
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
+	// Tinkerbell V1 backend
 	case "1":
 		hg, err = tinkClient.TinkHardwareClient()
 		if err != nil {
@@ -61,7 +63,8 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to tink")
 		}
-	default:
+	// classic Packet API / Cacher backend (default for empty envvar)
+	case "":
 		facility := os.Getenv("FACILITY_CODE")
 		if facility == "" {
 			return nil, errors.New("FACILITY_CODE env must be set")
@@ -71,6 +74,36 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "connect to cacher")
 		}
+	// standalone, use a json file for all hardware data
+	case "standalone":
+		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
+		if saFile == "" {
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+		}
+		// set the baseURL from here so it gets returned in the client
+		// TODO(@tobert): maybe there's a way to pass a file:// in the first place?
+		baseURL, err = url.Parse("file://" + saFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to convert path %q to a URL as 'file://%s'", saFile, saFile)
+		}
+		saData, err := ioutil.ReadFile(saFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not read file %q", saFile)
+		}
+		dsDb := []DiscoverStandalone{}
+		err = json.Unmarshal(saData, &dsDb)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse configuration file %q", saFile)
+		}
+
+		// the "client" part is done - reading the json, now return a struct client
+		// that is just the filename and parsed data structure
+		hg = StandaloneClient{
+			filename: saFile,
+			db:       dsDb,
+		}
+	default:
+		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 	}
 
 	return &Client{
@@ -90,6 +123,7 @@ func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *C
 	c := &http.Client{
 		Transport: t,
 	}
+
 	return &Client{
 		http:           c,
 		workflowClient: workflowClient,
@@ -97,7 +131,8 @@ func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *C
 	}
 }
 
-func (c *Client) Do(req *http.Request, v interface{}) error {
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) error {
+	req = req.WithContext(ctx)
 	req.URL = c.baseURL.ResolveReference(req.URL)
 	c.addHeaders(req)
 
@@ -105,18 +140,20 @@ func (c *Client) Do(req *http.Request, v interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "submit http request")
 	}
+
 	return unmarshalResponse(res, v)
 }
 
-func (c *Client) Get(ref string, v interface{}) error {
+func (c *Client) Get(ctx context.Context, ref string, v interface{}) error {
 	req, err := http.NewRequest("GET", ref, nil)
 	if err != nil {
 		return errors.Wrap(err, "setup GET request")
 	}
-	return c.Do(req, v)
+
+	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Patch(ref, mime string, body io.Reader, v interface{}) error {
+func (c *Client) Patch(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("PATCH", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup PATCH request")
@@ -124,10 +161,11 @@ func (c *Client) Patch(ref, mime string, body io.Reader, v interface{}) error {
 	if mime != "" {
 		req.Header.Set("Content-Type", mime)
 	}
-	return c.Do(req, v)
+
+	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Post(ref, mime string, body io.Reader, v interface{}) error {
+func (c *Client) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("POST", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup POST request")
@@ -135,7 +173,8 @@ func (c *Client) Post(ref, mime string, body io.Reader, v interface{}) error {
 	if mime != "" {
 		req.Header.Set("Content-Type", mime)
 	}
-	return c.Do(req, v)
+
+	return c.Do(ctx, req, v)
 }
 
 func (c *Client) addHeaders(req *http.Request) {
@@ -160,6 +199,7 @@ func unmarshalResponse(res *http.Response, result interface{}) error {
 			StatusCode: res.StatusCode,
 		}
 		e.unmarshalErrors(res.Body)
+
 		return errors.Wrap(e, "unmarshalling response")
 	}
 

@@ -17,6 +17,9 @@ CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
+SOURCE_DATE_EPOCH := $(shell git log -1 --pretty=%ct)
+export SOURCE_DATE_EPOCH
+
 crossbinaries := cmd/boots/boots-linux-386 cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64 cmd/boots/boots-linux-armv6 cmd/boots/boots-linux-armv7
 cmd/boots/boots-linux-386:   FLAGS=GOARCH=386
 cmd/boots/boots-linux-amd64: FLAGS=GOARCH=amd64
@@ -33,34 +36,35 @@ PATH := ${GOBIN}:${PATH}
 export PATH
 endif
 
-toolsBins := $(addprefix bin/,$(shell sed -n '/^\s*_/ s|.*/\(.*\)"|\1|p' tools.go | tr '\n' ' '))
-tools: $(toolsBins)
+# parses tools.go and returns the tool name prefixed with bin/
+toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go)))
 
-$(toolsBins): tools.go
-	go install $$(sed -n -e 's|^\s*_\s*"\(.*\)"$$|\1| p' tools.go | grep '$(@F)')
+# installs cli tools defined in tools.go
+$(toolsBins): go.sum tools.go
+	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
 	
-generated_files := \
+generated_go_files := \
 	packet/mock_cacher/cacher_mock.go \
 	packet/mock_workflow/workflow_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
 	
-.PHONY: $(generated_files)
+.PHONY: $(generated_go_files)
 
 # build all the ipxe binaries
-build_all_ipxe: tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
+generated_ipxe_files := tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
 
 # go generate
 go_generate:
-$(filter %_string.go,$(generated_files)): bin/stringer
-$(filter %_mock.go,$(generated_files)): bin/mockgen
-$(generated_files): bin/goimports
+$(filter %_string.go,$(generated_go_files)): bin/stringer
+$(filter %_mock.go,$(generated_go_files)): bin/mockgen
+$(generated_go_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) build_all_ipxe go_generate syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe go_generate syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 include ipxev.mk
@@ -101,7 +105,7 @@ else
 endif
 
 .PHONY: ipxe/tests ipxe/test-%
-ipxe/tests: ipxe/test-sanboot
+ipxe/tests: ipxe/test-sanboot ipxe/test-ping
 # order of dependencies matters here
 ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin-test/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
-	expect -f $^
+	expect -f $^ | sed "s|^|test-$*: |"

@@ -1,0 +1,66 @@
+---
+# Provides a docker-compose configuration for local fast iteration when
+# hacking on boots alone.
+# TODO: figure out if NET_ADMIN capability is really necessary
+
+version: "3.8"
+
+# use a custom network configuration to enable macvlan mode and set explicit
+# IPs and MACs as well as support mainstream DHCP clients for easier testing
+# standalone-hardware.json references these IPs and MACs so we can write
+# (simpler) assertions against behavior on the client side.
+networks:
+  boots-test:
+    # enables a more realistic L2 network for the containers
+    driver: macvlan
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.99.0/24
+          gateway: 192.168.99.1
+
+services:
+  boots:
+    build: .
+    # entrypoint: ["/usr/bin/boots", "--dhcp-addr", "0.0.0.0:67"]
+    entrypoint: ["/start-boots.sh"]
+    networks:
+      boots-test:
+        ipv4_address: 192.168.99.42
+    mac_address: 02:00:00:00:00:01
+    environment:
+      DATA_MODEL_VERSION: standalone
+      API_CONSUMER_TOKEN: none
+      API_AUTH_TOKEN: none
+      FACILITY_CODE: onprem
+      BOOTS_STANDALONE_JSON: /test-standalone-hardware.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    volumes:
+      - ./test/standalone-hardware.json:/test-standalone-hardware.json
+      - ./test/start-boots.sh:/start-boots.sh
+    cap_add:
+      - NET_ADMIN
+  # eventually want to add more client containers, including one that boots will
+  # not recognize so we can validate it won't serve content to IPs it's not
+  # managing
+  client:
+    depends_on:
+      - boots
+    build: test
+    networks:
+      boots-test:
+        ipv4_address: 192.168.99.43
+    mac_address: 02:00:00:00:00:ff
+    cap_add:
+      - NET_ADMIN
+  otel-collector:
+    image: otel/opentelemetry-collector:0.24.0
+    networks:
+      boots-test:
+        ipv4_address: 192.168.99.44
+    volumes:
+      - ./test/otel-collector.yaml:/etc/otel-collector.yaml
+    command: --config /etc/otel-collector.yaml
+    ports:
+      - "4317:4317"

@@ -57,6 +57,7 @@ func kernelPath(j job.Job) string {
 	if j.IsARM() {
 		return distro + "-arm.vmlinuz"
 	}
+
 	return distro + "_production_pxe.vmlinuz"
 }
 
@@ -65,5 +66,6 @@ func initrdPath(j job.Job) string {
 	if j.IsARM() {
 		return distro + "-arm.cpio.gz"
 	}
+
 	return distro + "_production_pxe_image.cpio.gz"
 }

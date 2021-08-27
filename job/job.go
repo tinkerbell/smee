@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"net"
 	"os"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/packet"
 	tw "github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var client *packet.Client
@@ -57,57 +60,66 @@ func (j Job) ProvisionerEngineName() string {
 
 // HasActiveWorkflow fetches workflows for the given hardware and returns
 // the status true if there is a pending (active) workflow
-func HasActiveWorkflow(hwID packet.HardwareID) (bool, error) {
-	wcl, err := client.GetWorkflowsFromTink(hwID)
+func HasActiveWorkflow(ctx context.Context, hwID packet.HardwareID) (bool, error) {
+	wcl, err := client.GetWorkflowsFromTink(ctx, hwID)
 	if err != nil {
 		return false, err
 	}
 	for _, wf := range (*wcl).WorkflowContexts {
 		if wf.CurrentActionState == tw.State_STATE_PENDING || wf.CurrentActionState == tw.State_STATE_RUNNING {
 			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
+
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job
-func CreateFromDHCP(mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
+func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
 	j := Job{
 		mac:   mac,
 		start: time.Now(),
 	}
 
-	d, err := discoverHardwareFromDHCP(mac, giaddr, circuitID)
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("discoverHardwareFromDHCP")
+	d, err := discoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+
 		return Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
 
 	err = j.setup(d)
 	if err != nil {
-		return Job{}, err
+		span.SetStatus(codes.Error, err.Error())
+		j = Job{} // return an empty job on error
 	}
-	return j, nil
+
+	return j, err
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job
-func CreateFromRemoteAddr(ip string) (Job, error) {
+func CreateFromRemoteAddr(ctx context.Context, ip string) (Job, error) {
 	host, _, err := net.SplitHostPort(ip)
 	if err != nil {
 		return Job{}, errors.Wrap(err, "splitting host:ip")
 	}
-	return CreateFromIP(net.ParseIP(host))
+
+	return CreateFromIP(ctx, net.ParseIP(host))
 }
 
 // CreateFromIP looksup hardware using the IP from cacher to create a job
-func CreateFromIP(ip net.IP) (Job, error) {
+func CreateFromIP(ctx context.Context, ip net.IP) (Job, error) {
 	j := Job{
 		ip:    ip,
 		start: time.Now(),
 	}
 
 	joblog.With("ip", ip).Info("discovering from ip")
-	d, err := discoverHardwareFromIP(ip)
+	d, err := discoverHardwareFromIP(ctx, ip)
 	if err != nil {
 		return Job{}, errors.WithMessage(err, "discovering from ip address")
 	}
@@ -138,9 +150,9 @@ func CreateFromIP(ip net.IP) (Job, error) {
 }
 
 // MarkDeviceActive marks the device active
-func (j Job) MarkDeviceActive() {
+func (j Job) MarkDeviceActive(ctx context.Context) {
 	if id := j.InstanceID(); id != "" {
-		if err := client.PostInstancePhoneHome(id); err != nil {
+		if err := client.PostInstancePhoneHome(ctx, id); err != nil {
 			j.Error(err)
 		}
 	}

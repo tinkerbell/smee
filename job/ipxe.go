@@ -1,15 +1,20 @@
 package job
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	byDistro         = make(map[string]BootScript)
+	byInstaller      = make(map[string]BootScript)
 	bySlug           = make(map[string]BootScript)
 	defaultInstaller BootScript
 	scripts          = map[string]BootScript{
@@ -36,6 +41,14 @@ func RegisterDistro(name string, builder BootScript) {
 	byDistro[name] = builder
 }
 
+func RegisterInstaller(name string, builder BootScript) {
+	if _, ok := byInstaller[name]; ok {
+		err := errors.Errorf("installer %q already registered!", name)
+		joblog.Fatal(err, "installer", name)
+	}
+	byInstaller[name] = builder
+}
+
 func RegisterSlug(name string, builder BootScript) {
 	if _, ok := bySlug[name]; ok {
 		err := errors.Errorf("slug %q already registered!", name)
@@ -44,11 +57,17 @@ func RegisterSlug(name string, builder BootScript) {
 	bySlug[name] = builder
 }
 
-func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name string) {
+func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name string) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("name", name))
+
 	fn, ok := scripts[name]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		j.With("script", name).Error(errors.New("boot script not found"))
+		err := errors.Errorf("boot script %q not found", name)
+		j.With("script", name).Error(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return
 	}
 
@@ -61,9 +80,13 @@ func (j Job) serveBootScript(w http.ResponseWriter, req *http.Request, name stri
 	s.Echo("Packet.net Baremetal - iPXE boot")
 
 	fn(j, s)
+	src := s.Bytes()
+	span.SetAttributes(attribute.String("ipxe-script", string(src)))
 
-	if _, err := w.Write(s.Bytes()); err != nil {
+	if _, err := w.Write(src); err != nil {
 		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
+		span.SetStatus(codes.Error, err.Error())
+
 		return
 	}
 }
@@ -72,18 +95,27 @@ func auto(j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
 		shell(j, s)
+
+		return
+	}
+	if f, ok := byInstaller[j.hardware.OperatingSystem().Installer]; ok {
+		f(j, s)
+
 		return
 	}
 	if f, ok := bySlug[j.hardware.OperatingSystem().Slug]; ok {
 		f(j, s)
+
 		return
 	}
 	if f, ok := byDistro[j.hardware.OperatingSystem().Distro]; ok {
 		f(j, s)
+
 		return
 	}
 	if defaultInstaller != nil {
 		defaultInstaller(j, s)
+
 		return
 	}
 	j.With("slug", j.hardware.OperatingSystem().Slug, "distro", j.hardware.OperatingSystem().Distro).Error(errors.New("unsupported slug/distro"))

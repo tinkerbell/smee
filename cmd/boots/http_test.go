@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -17,11 +18,11 @@ type tclient struct {
 	postErr error
 }
 
-func (c tclient) GetInstanceIDFromIP(ip net.IP) (string, error) {
+func (c tclient) GetInstanceIDFromIP(ctx context.Context, ip net.IP) (string, error) {
 	return c.id, c.getErr
 }
 
-func (c tclient) PostInstanceEvent(string, io.Reader) (string, error) {
+func (c tclient) PostInstanceEvent(context.Context, string, io.Reader) (string, error) {
 	return "", c.postErr
 }
 

@@ -27,6 +27,7 @@ func TestDetermineDisk(t *testing.T) {
 func TestScriptKickstart(t *testing.T) {
 	manufacturers := []string{"supermicro", "dell"}
 	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0"}
+	drive_hints := []string{"", "ST3120814A,mptsas,local"}
 	assert := require.New(t)
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
 	conf.PublicFQDN = "boots-test.example.com"
@@ -35,20 +36,34 @@ func TestScriptKickstart(t *testing.T) {
 		t.Run(man, func(t *testing.T) {
 			for _, ver := range versions {
 				t.Run(ver, func(t *testing.T) {
-					for typ, disk := range kickstartTypes {
-						t.Run(typ, func(t *testing.T) {
-							m := job.NewMock(t, typ, facility)
-							m.SetManufacturer(man)
-							m.SetOSSlug(ver)
-							m.SetIP(net.ParseIP("127.0.0.1"))
-							m.SetPassword("password")
-							m.SetMAC("00:00:ba:dd:be:ef")
+					for _, driveHint := range drive_hints {
+						t.Run(driveHint, func(t *testing.T) {
+							for typ, disk := range kickstartTypes {
+								t.Run(typ, func(t *testing.T) {
+									m := job.NewMock(t, typ, facility)
+									m.SetManufacturer(man)
+									m.SetOSSlug(ver)
+									m.SetIP(net.ParseIP("127.0.0.1"))
+									m.SetPassword("password")
+									m.SetMAC("00:00:ba:dd:be:ef")
+									// Set the hint
+									if driveHint != "" {
+										m.SetBootDriveHint(driveHint)
+									}
+									// expect the hint
+									//   currently limited to storage plans
+									//   remove '&&.*"s")' to apply across all plans
+									if driveHint != "" && strings.HasPrefix(typ, "s") {
+										disk = "--firstdisk=" + driveHint
+									}
 
-							var w strings.Builder
-							genKickstart(m.Job(), &w)
-							got := w.String()
-							script := loadKickstart(disk, assert)
-							assert.Equal(script, got, diff.LineDiff(script, got))
+									var w strings.Builder
+									genKickstart(m.Job(), &w)
+									got := w.String()
+									script := loadKickstart(disk, assert)
+									assert.Equal(script, got, diff.LineDiff(script, got))
+								})
+							}
 						})
 					}
 				})
@@ -60,6 +75,7 @@ func TestScriptKickstart(t *testing.T) {
 func loadKickstart(disk string, assert *require.Assertions) string {
 	data, err := ioutil.ReadFile("testdata/vmware_base.txt")
 	assert.Nil(err)
+
 	return strings.Replace(string(data), "<DISK>", disk, 1)
 }
 

@@ -3,6 +3,7 @@ package vmware
 import (
 	"io"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -16,10 +17,11 @@ func init() {
 }
 
 func serveKickstart(w http.ResponseWriter, req *http.Request) {
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
 		w.WriteHeader(http.StatusNotFound)
+
 		return
 	}
 	if err := genKickstart(j, w); err != nil {
@@ -384,6 +386,10 @@ func rootpw(j job.Job) string {
 // We do not support anything other than ESXi 6.5 and above (os slug "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0" etc)
 // full list of drive settings is listed https://packet.atlassian.net/browse/SWE-2385
 func determineDisk(j job.Job) string {
+	// currently limited to storage plans remove '&&.*"s")' to apply across all plans
+	if j.BootDriveHint() != "" && strings.HasPrefix(j.PlanSlug(), "s") {
+		return "--firstdisk=" + j.BootDriveHint()
+	}
 	switch j.PlanSlug() {
 	case "c1.small.x86",
 		"s1.large.x86",

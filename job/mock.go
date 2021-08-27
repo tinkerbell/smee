@@ -37,6 +37,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 	}
 
 	mockLog := log.Test(t, "job.Mock")
+
 	return Mock{
 		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
 		hardware: &packet.HardwareCacher{
@@ -59,6 +60,7 @@ func NewMockFromDiscovery(d packet.Discovery, mac net.HardwareAddr) Mock {
 	mockLog, _ := log.Init("job.Mock")
 	j := Job{Logger: mockLog, mac: mac}
 	j.setup(d)
+
 	return Mock(j)
 }
 
@@ -76,6 +78,10 @@ func (m *Mock) SetIP(ip net.IP) {
 
 func (m *Mock) SetIPXEScriptURL(url string) {
 	m.instance.IPXEScriptURL = url
+}
+
+func (m *Mock) SetUserData(userdata string) {
+	m.instance.UserData = userdata
 }
 
 func (m *Mock) SetMAC(mac string) {
@@ -109,6 +115,14 @@ func (m *Mock) SetOSImageTag(tag string) {
 	m.hardware.OperatingSystem().ImageTag = tag
 }
 
+func (m *Mock) SetOSInstaller(installer string) {
+	m.hardware.OperatingSystem().Installer = installer
+}
+
+func (m *Mock) SetOSInstallerData(installerData *packet.InstallerData) {
+	m.hardware.OperatingSystem().InstallerData = installerData
+}
+
 func (m *Mock) SetPassword(password string) {
 	m.instance.CryptedRootPassword = "insecure"
 	m.instance.PasswordHash = "insecure"
@@ -118,6 +132,10 @@ func (m *Mock) SetState(state string) {
 	hp := m.hardware
 	h := hp.(*packet.HardwareCacher)
 	h.State = packet.HardwareState(state)
+}
+
+func (m *Mock) SetBootDriveHint(drive string) {
+	m.instance.BootDriveHint = drive
 }
 
 func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, string) {
@@ -219,6 +237,7 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 			},
 		},
 	}
+
 	return d, []packet.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceId
 }
 
@@ -243,5 +262,6 @@ func MakeHardwareWithoutInstance() (*packet.DiscoveryCacher, packet.MACAddr) {
 			},
 		},
 	}
+
 	return d, mac
 }

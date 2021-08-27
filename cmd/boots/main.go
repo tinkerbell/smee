@@ -16,6 +16,7 @@ import (
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/boots/tftp"
+	"github.com/tobert/otel-init-go/otelinit"
 
 	_ "github.com/tinkerbell/boots/installers/coreos"
 	_ "github.com/tinkerbell/boots/installers/custom_ipxe"
@@ -47,6 +48,10 @@ func main() {
 	}
 	defer l.Close()
 	mainlog = l.Package("main")
+
+	otelShutdown := otelinit.InitOpenTelemetry("boots")
+	defer otelShutdown()
+
 	metrics.Init(l)
 	dhcp.Init(l)
 	conf.Init(l)
@@ -81,6 +86,7 @@ func main() {
 		err = retry.Do(
 			func() error {
 				_, err := syslog.StartReceiver(1)
+
 				return err
 			},
 		)
