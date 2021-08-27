@@ -116,7 +116,7 @@ func (d DiscoveryTinkerbellV1) Hostname() (string, error) {
 	return d.Instance().Hostname, nil
 }
 
-func (d DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
+func (d *DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 
