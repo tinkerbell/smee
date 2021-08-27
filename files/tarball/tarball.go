@@ -18,8 +18,7 @@ type File struct {
 func (f *File) Close() (err error) {
 	err = f.t.flush()
 	f.t = nil
-
-	return err
+	return
 }
 
 func (f File) Write(b []byte) (int, error) {
