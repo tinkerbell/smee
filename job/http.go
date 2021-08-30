@@ -12,11 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (j Job) ServeFile(w http.ResponseWriter, req *http.Request) {
+func (j Job) ServeFile(w http.ResponseWriter, req *http.Request, i Installers) {
 	base := path.Base(req.URL.Path)
 
 	if name := strings.TrimSuffix(base, ".ipxe"); len(name) < len(base) {
-		j.serveBootScript(req.Context(), w, name)
+		j.serveBootScript(req.Context(), w, name, i)
 
 		return
 	}
