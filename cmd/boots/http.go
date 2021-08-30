@@ -20,7 +20,8 @@ import (
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
-	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/installers/coreos"
+	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -62,12 +63,17 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
 }
 
+type jobHandler struct {
+	i job.Installers
+}
+
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func ServeHTTP() {
+func ServeHTTP(i job.Installers) {
 	mux := http.NewServeMux()
-	mux.Handle(otelFuncWrapper("/", serveJobFile))
+	s := jobHandler{i: i}
+	mux.Handle(otelFuncWrapper("/", s.serveJobFile))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
 	mux.HandleFunc("/_packet/pprof/", pprof.Index)
@@ -91,8 +97,20 @@ func ServeHTTP() {
 			mainlog.Error(err)
 		}
 	}))
+	mux.HandleFunc("/hardware-components", serveHardware)
 
-	installers.RegisterHTTPHandlers(mux)
+	var httpHandlers = make(map[string]http.HandlerFunc)
+	// register coreos/flatcar endpoints
+	httpHandlers[coreos.IgnitionPathCoreos] = coreos.ServeIgnitionConfig("coreos")
+	httpHandlers[coreos.IgnitionPathFlatcar] = coreos.ServeIgnitionConfig("flatcar")
+	httpHandlers[coreos.OEMPath] = coreos.ServeOEM()
+	// register vmware endpoints
+	httpHandlers[vmware.KickstartPath] = vmware.ServeKickstart()
+
+	// register Installer handlers
+	for path, fn := range httpHandlers {
+		mux.Handle(path, otelhttp.WithRouteTag(path, http.HandlerFunc(fn)))
+	}
 
 	// wrap the mux with an OpenTelemetry interceptor
 	otelHandler := otelhttp.NewHandler(mux, "boots-http")
@@ -119,7 +137,7 @@ func ServeHTTP() {
 	}
 }
 
-func serveJobFile(w http.ResponseWriter, req *http.Request) {
+func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	labels := prometheus.Labels{"from": "http", "op": "file"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
@@ -147,7 +165,7 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	j.ServeFile(w, req)
+	j.ServeFile(w, req, h.i)
 }
 
 func serveHardware(w http.ResponseWriter, req *http.Request) {

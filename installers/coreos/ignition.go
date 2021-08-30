@@ -10,11 +10,6 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func init() {
-	installers.RegisterHTTPHandler("/coreos/ignition.json", serveIgnitionConfig("coreos"))
-	installers.RegisterHTTPHandler("/flatcar/ignition.json", serveIgnitionConfig("flatcar"))
-}
-
 func buildNetworkUnits(j job.Job) (nu ignition.NetworkUnits) {
 	configureBondDevUnit(j, nu.Add("00-bond.netdev"))
 	configureNetworkUnit(j, nu.Add("00-bond.network"))
@@ -38,7 +33,7 @@ func buildSystemdUnits(j job.Job) (su ignition.SystemdUnits) {
 	return
 }
 
-func serveIgnitionConfig(distro string) func(w http.ResponseWriter, req *http.Request) {
+func ServeIgnitionConfig(distro string) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 		if err != nil {

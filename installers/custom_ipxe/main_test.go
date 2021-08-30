@@ -145,10 +145,10 @@ func TestIpxeScript(t *testing.T) {
 				mockJob.SetIPXEScriptURL(tc.installerData.Chain)
 				mockJob.SetUserData(tc.installerData.Script)
 			}
+			i := Installer{}
+			bs := i.BootScript()(mockJob.Job(), *script)
 
-			ipxeScript(mockJob.Job(), script)
-
-			assert.Equal(dedent(tc.want), string(script.Bytes()))
+			assert.Equal(dedent(tc.want), string(bs.Bytes()))
 		})
 	}
 }
@@ -228,9 +228,9 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
 			script := ipxe.NewScript()
 
-			ipxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), script)
+			bs := ipxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), *script)
 
-			assert.Equal(dedent(tc.want), string(script.Bytes()))
+			assert.Equal(dedent(tc.want), string(bs.Bytes()))
 		})
 	}
 }
