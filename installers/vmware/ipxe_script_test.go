@@ -30,8 +30,8 @@ func TestScriptPerType(t *testing.T) {
 					m.SetMAC("00:00:ba:dd:be:ef")
 
 					s := ipxe.Script{}
-					bootScript(m.Job(), &s)
-					got := string(s.Bytes())
+					bs := bootScript(m.Job(), s)
+					got := string(bs.Bytes())
 
 					want := fmt.Sprintf(script, version)
 					if !strings.Contains(want, version) {
@@ -121,8 +121,8 @@ boot
 `,
 }
 
-var versions = map[string]func(job.Job, *ipxe.Script){
-	"esxi-5.5.0.update03": bootScriptVmwareEsxi55,
-	"esxi-6.0.0.update03": bootScriptVmwareEsxi60,
-	"esxi-6.5.0":          bootScriptVmwareEsxi65,
+var versions = map[string]func(job.Job, ipxe.Script) ipxe.Script{
+	"esxi-5.5.0.update03": Installer{}.BootScriptVmwareEsxi55(),
+	"esxi-6.0.0.update03": Installer{}.BootScriptVmwareEsxi60(),
+	"esxi-6.5.0":          Installer{}.BootScriptVmwareEsxi65(),
 }
