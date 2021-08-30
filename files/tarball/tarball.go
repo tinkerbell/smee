@@ -18,6 +18,7 @@ type File struct {
 func (f *File) Close() (err error) {
 	err = f.t.flush()
 	f.t = nil
+
 	return
 }
 
