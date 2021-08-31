@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"io"
@@ -19,9 +20,11 @@ import (
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
-	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/installers/coreos"
+	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -54,10 +57,23 @@ func serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
 	}
 }
 
-// ServeHTTP is a useless comment
-func ServeHTTP() {
+// otelFuncWrapper takes a route and an http handler function, wraps the function
+// with otelhttp, and returns the route again and http.Handler all set for mux.Handle()
+func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Request)) (string, http.Handler) {
+	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
+}
+
+type jobHandler struct {
+	i job.Installers
+}
+
+// ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
+// server, which will block. App functionality is instrumented in Prometheus and
+// OpenTelemetry. Optionally configures X-Forwarded-For support.
+func ServeHTTP(i job.Installers) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", serveJobFile)
+	s := jobHandler{i: i}
+	mux.Handle(otelFuncWrapper("/", s.serveJobFile))
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
 	mux.HandleFunc("/_packet/pprof/", pprof.Index)
@@ -66,11 +82,13 @@ func ServeHTTP() {
 	mux.HandleFunc("/_packet/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/_packet/pprof/trace", pprof.Trace)
 	mux.HandleFunc("/healthcheck", serveHealthchecker(GitRev, StartTime))
-	mux.HandleFunc("/phone-home", servePhoneHome)
-	mux.HandleFunc("/phone-home/key", job.ServePublicKey)
-	mux.HandleFunc("/problem", serveProblem)
+	mux.Handle(otelFuncWrapper("/phone-home", servePhoneHome))
+	mux.Handle(otelFuncWrapper("/phone-home/key", job.ServePublicKey))
+	mux.Handle(otelFuncWrapper("/problem", serveProblem))
+	mux.Handle(otelFuncWrapper("/hardware-components", serveHardware))
+
 	// Events endpoint used to forward customer generated custom events from a running device (instance) to packet API
-	mux.HandleFunc("/events", func(w http.ResponseWriter, req *http.Request) {
+	mux.Handle(otelFuncWrapper("/events", func(w http.ResponseWriter, req *http.Request) {
 		code, err := serveEvents(client, w, req)
 		if err == nil {
 			return
@@ -78,32 +96,47 @@ func ServeHTTP() {
 		if code != http.StatusOK {
 			mainlog.Error(err)
 		}
-	})
-	mux.HandleFunc("/hardware-components", serveHardware)
-	installers.RegisterHTTPHandlers(mux)
+	}))
 
-	var h http.Handler
+	var httpHandlers = make(map[string]http.HandlerFunc)
+	// register coreos/flatcar endpoints
+	httpHandlers[coreos.IgnitionPathCoreos] = coreos.ServeIgnitionConfig("coreos")
+	httpHandlers[coreos.IgnitionPathFlatcar] = coreos.ServeIgnitionConfig("flatcar")
+	httpHandlers[coreos.OEMPath] = coreos.ServeOEM()
+	// register vmware endpoints
+	httpHandlers[vmware.KickstartPath] = vmware.ServeKickstart()
+
+	// register Installer handlers
+	for path, fn := range httpHandlers {
+		mux.Handle(path, otelhttp.WithRouteTag(path, http.HandlerFunc(fn)))
+	}
+
+	// wrap the mux with an OpenTelemetry interceptor
+	otelHandler := otelhttp.NewHandler(mux, "boots-http")
+
+	// add X-Forwarded-For support if trusted proxies are configured
+	var xffHandler http.Handler
 	if len(conf.TrustedProxies) > 0 {
 		xffmw, _ := xff.New(xff.Options{
 			AllowedSubnets: conf.TrustedProxies,
 		})
 
-		h = xffmw.Handler(&httplog.Handler{
-			Handler: mux,
+		xffHandler = xffmw.Handler(&httplog.Handler{
+			Handler: otelHandler,
 		})
 	} else {
-		h = &httplog.Handler{
-			Handler: mux,
+		xffHandler = &httplog.Handler{
+			Handler: otelHandler,
 		}
 	}
 
-	if err := http.ListenAndServe(httpAddr, h); err != nil {
+	if err := http.ListenAndServe(httpAddr, xffHandler); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
 		mainlog.Fatal(err)
 	}
 }
 
-func serveJobFile(w http.ResponseWriter, req *http.Request) {
+func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	labels := prometheus.Labels{"from": "http", "op": "file"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
@@ -111,10 +144,11 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 	// This gates serving PXE file by
@@ -126,13 +160,15 @@ func serveJobFile(w http.ResponseWriter, req *http.Request) {
 	if !j.AllowPxe() {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+
 		return
 	}
 
-	j.ServeFile(w, req)
+	j.ServeFile(w, req, h.i)
 }
 
 func serveHardware(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	labels := prometheus.Labels{"from": "http", "op": "hardware-components"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
@@ -140,23 +176,26 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 
 	if j.CanWorkflow() {
-		activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
+		activeWorkflows, err := job.HasActiveWorkflow(ctx, j.HardwareID())
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			j.With("error", err).Info("failed to get workflows")
+
 			return
 		}
 		if !activeWorkflows {
 			w.WriteHeader(http.StatusNotFound)
 			j.Info("no active workflows")
+
 			return
 		}
 	}
@@ -172,16 +211,18 @@ func servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 	j.ServePhoneHomeEndpoint(w, req)
 }
 
 func serveProblem(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	labels := prometheus.Labels{"from": "http", "op": "problem"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
@@ -189,23 +230,26 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.RemoteAddr)
+	j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+
 		return
 	}
 
 	if j.CanWorkflow() {
-		activeWorkflows, err := job.HasActiveWorkflow(j.HardwareID())
+		activeWorkflows, err := job.HasActiveWorkflow(ctx, j.HardwareID())
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			j.With("error", err).Info("failed to get workflows")
+
 			return
 		}
 		if !activeWorkflows {
 			w.WriteHeader(http.StatusNotFound)
 			j.Info("no active workflows")
+
 			return
 		}
 	}
@@ -217,12 +261,13 @@ func readClose(r io.ReadCloser) (b []byte, err error) {
 	b, err = ioutil.ReadAll(r)
 	err = errors.Wrap(err, "read data")
 	r.Close()
+
 	return
 }
 
 type eventsServer interface {
-	GetInstanceIDFromIP(net.IP) (string, error)
-	PostInstanceEvent(string, io.Reader) (string, error)
+	GetInstanceIDFromIP(context.Context, net.IP) (string, error)
+	PostInstanceEvent(context.Context, string, io.Reader) (string, error)
 }
 
 // Forward user generated events to Packet API
@@ -230,28 +275,33 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.Wrap(err, "split host port")
 	}
 
 	ip := net.ParseIP(host)
 	if ip == nil {
 		w.WriteHeader(http.StatusOK)
+
 		return http.StatusOK, errors.New("no device found for client address")
 	}
 
-	deviceID, err := client.GetInstanceIDFromIP(ip)
+	deviceID, err := client.GetInstanceIDFromIP(req.Context(), ip)
 	if err != nil || deviceID == "" {
 		w.WriteHeader(http.StatusOK)
+
 		return http.StatusOK, errors.New("no device found for client address")
 	}
 
 	b, err := readClose(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, err
 	}
 	if len(b) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent body is empty")
 	}
 
@@ -262,6 +312,7 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	}
 	if err := json.Unmarshal(b, &res); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent cannot be generated from supplied json")
 	}
 
@@ -278,16 +329,19 @@ func serveEvents(client eventsServer, w http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		// TODO(mmlb): this should be 500
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("userEvent cannot be encoded")
 	}
 
-	if _, err := client.PostInstanceEvent(deviceID, bytes.NewReader(payload)); err != nil {
+	if _, err := client.PostInstanceEvent(req.Context(), deviceID, bytes.NewReader(payload)); err != nil {
 		// TODO(mmlb): this should be 500
 		w.WriteHeader(http.StatusBadRequest)
+
 		return http.StatusBadRequest, errors.New("failed to post userEvent")
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte{})
+
 	return http.StatusOK, nil
 }

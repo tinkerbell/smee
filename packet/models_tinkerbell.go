@@ -36,11 +36,13 @@ func (d DiscoveryTinkerbellV1) LeaseTime(mac net.HardwareAddr) time.Duration {
 		return conf.DHCPLeaseTime
 	}
 	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", leaseTime))
+
 	return duration
 }
 
 func (d DiscoveryTinkerbellV1) Hardware() Hardware {
 	var h Hardware = d.HardwareTinkerbellV1
+
 	return h
 }
 
@@ -49,6 +51,7 @@ func (d DiscoveryTinkerbellV1) DnsServers(mac net.HardwareAddr) []net.IP {
 	if len(dnsServers) == 0 {
 		return conf.DNSServers
 	}
+
 	return conf.ParseIPv4s(strings.Join(dnsServers, ","))
 }
 
@@ -83,6 +86,7 @@ func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
 			return i
 		}
 	}
+
 	return NetworkInterface{}
 }
 
@@ -94,6 +98,7 @@ func (n Network) InterfaceByIp(ip net.IP) NetworkInterface {
 			return i
 		}
 	}
+
 	return NetworkInterface{}
 }
 
@@ -107,10 +112,11 @@ func (d DiscoveryTinkerbellV1) Hostname() (string, error) {
 	if d.Instance() == nil {
 		return "", nil
 	}
+
 	return d.Instance().Hostname, nil
 }
 
-func (d DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
+func (d *DiscoveryTinkerbellV1) SetMAC(mac net.HardwareAddr) {
 	d.mac = mac
 }
 
@@ -180,6 +186,7 @@ func (h HardwareTinkerbellV1) HardwareUEFI(mac net.HardwareAddr) bool {
 func (h HardwareTinkerbellV1) Interfaces() []Port {
 	// TODO: to be updated
 	var ports []Port
+
 	return ports
 }
 
@@ -200,6 +207,7 @@ func (h *HardwareTinkerbellV1) OperatingSystem() *OperatingSystem {
 	if i.OS == nil {
 		i.OS = &OperatingSystem{}
 	}
+
 	return i.OS
 }
 
@@ -207,5 +215,6 @@ func (h *HardwareTinkerbellV1) instance() *Instance {
 	if h.Metadata.Instance == nil {
 		h.Metadata.Instance = &Instance{}
 	}
+
 	return h.Metadata.Instance
 }

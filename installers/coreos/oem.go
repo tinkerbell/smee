@@ -11,55 +11,53 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func init() {
-	installers.RegisterHTTPHandler("/coreos/oem.tgz", serveOEM)
-}
+func ServeOEM() func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		var isARM bool
+		if j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr); err == nil {
+			isARM = j.IsARM()
+		} else {
+			installers.Logger("coreos").With("client", req.RemoteAddr).Info(err, "retrieved job is empty")
+		}
 
-func serveOEM(w http.ResponseWriter, req *http.Request) {
-	var isARM bool
-	if j, err := job.CreateFromRemoteAddr(req.RemoteAddr); err == nil {
-		isARM = j.IsARM()
-	} else {
-		installers.Logger("coreos").With("client", req.RemoteAddr).Info(err, "retrieved job is empty")
+		tw := tarball.New(w)
+		defer tw.Close()
+
+		args := []string{
+			"bonding.max_bonds=0",
+			"systemd.setenv=phone_home_url=http://" + conf.PublicIPv4.String() + "/phone-home",
+			"coreos.autologin",
+		}
+
+		var console string
+		if isARM {
+			console = "console=ttyAMA0,115200"
+		} else {
+			args = append(args, "vga=773")
+			console = "console=tty0 console=ttyS1,115200n8"
+		}
+
+		// grub.cfg
+		f := tw.NewFile("grub.cfg", 0644, tar.TypeReg)
+		f.Writef("set linux_append=%q\n", strings.Join(args, " "))
+		f.Writef("set linux_console=%q\n", console)
+		f.Writef("set oem_id=packet\n")
+		f.Close()
+
+		// cloud-config.yml
+		f = tw.NewFile("cloud-config.yml", 0644, tar.TypeReg)
+		f.WriteString(cloudConfig)
+		f.Close()
+
+		// bin/phone-home.sh
+		f = tw.NewFile("bin/phone-home.sh", 0755, tar.TypeReg)
+		f.WriteString(phoneHome)
+		f.Close()
+
+		f = tw.NewFile("phone-home.service", 0644, tar.TypeReg)
+		f.WriteString(phoneHomeService)
+		f.Close()
 	}
-
-	tw := tarball.New(w)
-	defer tw.Close()
-
-	args := []string{
-		"bonding.max_bonds=0",
-		"systemd.setenv=phone_home_url=http://" + conf.PublicIPv4.String() + "/phone-home",
-		"coreos.autologin",
-	}
-
-	var console string
-	if isARM {
-		console = "console=ttyAMA0,115200"
-	} else {
-		args = append(args, "vga=773")
-		console = "console=tty0 console=ttyS1,115200n8"
-	}
-
-	// grub.cfg
-	f := tw.NewFile("grub.cfg", 0644, tar.TypeReg)
-	f.Writef("set linux_append=%q\n", strings.Join(args, " "))
-	f.Writef("set linux_console=%q\n", console)
-	f.Writef("set oem_id=packet\n")
-	f.Close()
-
-	// cloud-config.yml
-	f = tw.NewFile("cloud-config.yml", 0644, tar.TypeReg)
-	f.WriteString(cloudConfig)
-	f.Close()
-
-	// bin/phone-home.sh
-	f = tw.NewFile("bin/phone-home.sh", 0755, tar.TypeReg)
-	f.WriteString(phoneHome)
-	f.Close()
-
-	f = tw.NewFile("phone-home.service", 0644, tar.TypeReg)
-	f.WriteString(phoneHomeService)
-	f.Close()
 }
 
 const cloudConfig = `#cloud-config

@@ -15,9 +15,10 @@ type File struct {
 	t *Tarball
 }
 
-func (f File) Close() (err error) {
+func (f *File) Close() (err error) {
 	err = f.t.flush()
 	f.t = nil
+
 	return
 }
 
@@ -35,6 +36,7 @@ func (f File) Writef(format string, args ...interface{}) {
 
 func (f File) WriteString(s string) (int, error) {
 	l, err := f.t.buf.WriteString(s)
+
 	return l, errors.Wrap(err, "write string to file")
 }
 
@@ -75,6 +77,7 @@ func (t *Tarball) Close() error {
 	if errTar != nil {
 		return errors.Wrap(errTar, "flushing and closing tar writer")
 	}
+
 	return errors.Wrap(errGZ, "flushing and closing gzip writer")
 }
 
@@ -87,5 +90,6 @@ func (t *Tarball) flush() error {
 	t.tw.WriteHeader(&t.hdr)
 
 	_, err := t.tw.Write(t.buf.Bytes())
+
 	return errors.Wrap(err, "flush tarball")
 }

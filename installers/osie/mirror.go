@@ -31,12 +31,14 @@ func buildOSIEURL() (*url.URL, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid OSIE_PATH: %s", s)
 		}
+
 		return u, nil
 	}
 	u, err := base.Parse(defaultOSIEPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid default osie path: %s", defaultOSIEPath)
 	}
+
 	return u, nil
 }
 
@@ -45,6 +47,7 @@ func mustBuildOSIEURL() *url.URL {
 	if err != nil {
 		panic(err)
 	}
+
 	return u
 }
 
@@ -61,5 +64,6 @@ func getParam(key string) string {
 	if value == "" {
 		installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
 	}
+
 	return value
 }

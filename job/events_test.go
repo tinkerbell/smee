@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -58,7 +59,7 @@ func TestPhoneHome(t *testing.T) {
 				},
 				instance: instance,
 			}
-			bad := !j.phoneHome([]byte(test.event))
+			bad := !j.phoneHome(context.Background(), []byte(test.event))
 			if bad != test.bad {
 				t.Fatalf("mismatch in expected return from phoneHome, want:%t, got:%t", test.bad, bad)
 			}

@@ -1,4 +1,7 @@
-FROM alpine:3.12
+# run `make image` to build the binary + container
+# if you're using `make boots` this Dockerfile will not find the binary
+# and you probably want `make cmd/boots/boots-linux-amd64`
+FROM alpine:3.13
 
 ARG TARGETARCH
 ARG TARGETVARIANT

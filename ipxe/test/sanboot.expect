@@ -1,0 +1,18 @@
+set timeout 30
+set kernel [lindex $argv 0]
+set tftpdir [lindex $argv 1]
+spawn qemu-system-x86_64 -nographic -m 512 -smp 1 \
+-kernel $kernel \
+-net nic,model=virtio \
+-net user,tftp=$tftpdir,bootfile=sanboot.pxe \
+
+expect {
+  "ISOLINUX" {
+    exit 0
+  }
+  "Operation not supported" {
+    exit 1
+  }
+}
+
+exit 1

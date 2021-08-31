@@ -1,0 +1,81 @@
+[
+  {
+    "id": "f9f56dff-098a-4c5f-a51c-19ad35de85d1",
+    "network": {
+      "interfaces": [
+        {
+          "dhcp": {
+            "mac": "02:00:00:00:00:ff",
+            "ip": {
+              "address": "192.168.99.43",
+              "netmask": "255.255.255.0",
+              "gateway": "192.168.99.1",
+              "family": "ipv4",
+              "public": false,
+              "management": false
+            },
+            "hostname": "boots-test-client",
+            "lease_time": 60,
+            "name_servers": [
+              "8.8.8.8"
+            ],
+            "time_servers": [
+              "127.0.0.1"
+            ],
+            "arch": "x86_64",
+            "uefi": false,
+            "iface_name": "eth0"
+          },
+          "netboot": {
+            "allow_pxe": true,
+            "allow_workflow": true,
+            "osie": {
+              "base_url": "http://localhost/kernels?",
+              "kernel": "5.0.1-fake-version",
+              "initrd": "initramfs.cpio.gz"
+            }
+          }
+        }
+      ]
+    },
+    "metadata": {
+      "bonding_mode": 0,
+      "manufacturer": {
+        "id": "66b52554-144e-486f-a541-6f2a72fa9043",
+        "slug": "fake systems incorporated"
+      },
+      "instance": {
+        "id": "f9f56dff-098a-4c5f-a51c-19ad35de85d1",
+        "state": "provisioning",
+        "hostname": "boots-test-client",
+        "allow_pxe": true,
+        "rescue": false,
+        "operating_system": {
+          "slug": "FakeOS",
+          "distro": "Fake Linux",
+          "version": "1",
+          "image_tag": "c7f0d804222d91e0ad2edd00158dbbeb",
+          "os_slug": "FakeOS 1.0"
+        },
+        "operating_system_version": {
+          "slug": "FakeOS",
+          "distro": "Fake Linux",
+          "version": "1",
+          "image_tag": "c7f0d804222d91e0ad2edd00158dbbeb",
+          "os_slug": "FakeOS 1.0"
+        },
+        "always_pxe": true,
+        "ipxe_script_url": "http://localhost/scripts",
+        "ips": [
+          "10.10.10.99"
+        ],
+        "userdata": "lol hi"
+      },
+      "custom": {
+        "private_subnets": [
+          "192.168.192.0/24"
+        ]
+      }
+    }
+  }
+]

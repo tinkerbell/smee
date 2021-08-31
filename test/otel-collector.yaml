@@ -1,0 +1,44 @@
+# opentelemetry-collector is a proxy for telemetry events.
+#
+# This configuration is set up for use in boots development.
+# With collector in debug mode every trace is printed to the console
+# so you can see traces without any complex tooling. There are also
+# examples below for how to send to Lightstep and Honeycomb.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+
+processors:
+  batch:
+
+exporters:
+  # set to debug and your traces will get printed to the console spammily
+  logging:
+    logLevel: debug
+  # Lightstep: set & export LIGHTSTEP_TOKEN and enable below
+  otlp/1:
+    endpoint: "ingest.lightstep.com:443"
+    headers:
+      "lightstep-access-token": "${LIGHTSTEP_TOKEN}"
+  # Honeycomb: set & export HONEYCOMB_TEAM to the auth token, and set/export
+  # HONEYCOMB_DATASET to the dataset name you want to use, then enable below
+  otlp/2:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "${HONEYCOMB_TEAM}"
+      "x-honeycomb-dataset": "${HONEYCOMB_DATASET}"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      # only enable logging by default
+      exporters: [logging]
+      # Lightstep:
+      # exporters: [logging, otlp/1]
+      # Honeycomb:
+      # exporters: [logging, otlp/2]

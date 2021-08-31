@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -80,10 +81,11 @@ func TestDiscoverHardwareFromDHCP(t *testing.T) {
 				hardwareClient: cMock,
 			}
 			m, _ := net.ParseMAC("00:00:ba:dd:be:ef")
-			d, err := c.DiscoverHardwareFromDHCP(m, net.ParseIP("127.0.0.1"), "")
+			d, err := c.DiscoverHardwareFromDHCP(context.Background(), m, net.ParseIP("127.0.0.1"), "")
 			if test.err != nil || test.code != 0 {
 				assert.Error(t, err)
 				assert.Nil(t, d)
+
 				return
 			}
 
@@ -128,9 +130,10 @@ func TestGetWorkflowsFromTink(t *testing.T) {
 			cMock.EXPECT().GetWorkflowContextList(gomock.Any(), gomock.Any()).Return(test.wcl, test.err)
 
 			c := NewMockClient(u, cMock)
-			w, err := c.GetWorkflowsFromTink(test.hwID)
+			w, err := c.GetWorkflowsFromTink(context.Background(), test.hwID)
 			if test.err != nil {
 				assert.Error(t, err)
+
 				return
 			}
 			assert.Equal(t, w, test.wcl)

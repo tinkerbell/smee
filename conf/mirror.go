@@ -36,12 +36,14 @@ func buildMirrorURL() (*url.URL, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid MIRROR_PATH %s", s)
 		}
+
 		return u, nil
 	}
 	u, err := base.Parse(defaultMirrorPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid default mirror path %q", defaultMirrorPath)
 	}
+
 	return u, nil
 }
 
@@ -54,6 +56,7 @@ func buildMirrorBaseURL() (*url.URL, error) {
 		if u.Path != "" && u.Path != "/" {
 			return nil, errors.Errorf("MIRROR_BASE_URL must not include a path component: %s", u.Path)
 		}
+
 		return u, nil
 	}
 	if s, ok := os.LookupEnv("MIRROR_HOST"); ok {
@@ -64,6 +67,7 @@ func buildMirrorBaseURL() (*url.URL, error) {
 		if u.Path != "" && u.Path != "/" {
 			return nil, errors.New("MIRROR_HOST must not include a path component")
 		}
+
 		return u, nil
 	}
 	mirror := fmt.Sprintf("http://install.%s.packet.net", FacilityCode)
@@ -71,6 +75,7 @@ func buildMirrorBaseURL() (*url.URL, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid default mirror host: %s", mirror)
 	}
+
 	return u, nil
 }
 
@@ -79,6 +84,7 @@ func mustBuildMirrorURL() *url.URL {
 	if err != nil {
 		panic(err)
 	}
+
 	return u
 }
 
@@ -87,5 +93,6 @@ func mustBuildMirrorBaseURL() *url.URL {
 	if err != nil {
 		panic(err)
 	}
+
 	return u
 }

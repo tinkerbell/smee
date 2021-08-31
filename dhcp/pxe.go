@@ -54,6 +54,7 @@ func ProcessorArchType(req *dhcp4.Packet) string {
 	if !ok || int(v) >= len(procArchTypes) {
 		return ""
 	}
+
 	return procArchTypes[v]
 }
 
@@ -87,6 +88,7 @@ func IsPXE(req *dhcp4.Packet) bool {
 		return ok
 	}
 	class, ok := req.GetString(dhcp4.OptionClassID)
+
 	return ok && strings.HasPrefix(class, "PXEClient")
 }
 
@@ -98,6 +100,7 @@ func SetupPXE(rep, req *dhcp4.Packet) bool {
 		dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Info("no client GUID provided")
 	}
 	rep.SetOption(dhcp4.OptionVendorSpecific, pxeVendorOptions)
+
 	return true
 }
 
@@ -121,8 +124,10 @@ func copyGUID(rep, req *dhcp4.Packet) bool {
 			dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Error(errors.New("unsupported or malformed client GUID"))
 		} else {
 			rep.SetOption(dhcp4.OptionUUIDGUID, guid)
+
 			return true
 		}
 	}
+
 	return false
 }

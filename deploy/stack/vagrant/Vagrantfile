@@ -1,0 +1,43 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+PROVISIONER_IP = "192.168.50.4"
+MACHINE1_IP = "192.168.50.43"
+
+unless Vagrant.has_plugin?("vagrant-docker-compose")
+  system("vagrant plugin install vagrant-docker-compose")
+  puts "Dependencies installed, please try the command again."
+  exit
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.define "provisioner" do |provisioner|
+    provisioner.vm.box = "generic/ubuntu2004"
+    provisioner.vm.synced_folder '../../../', '/vagrant'
+    provisioner.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+    provisioner.vm.network "private_network", ip: PROVISIONER_IP
+
+    provisioner.vm.provision :docker
+    # vagrant plugin install vagrant-docker-compose
+    provisioner.vm.provision :docker_compose, compose_version: "1.29.1", yml: "/vagrant/deploy/stack/docker-compose.yml", run: "always", env: {"TINKERBELL_HOST_IP": PROVISIONER_IP, "TINKERBELL_CLIENT_IP": MACHINE1_IP, "REPO_TOP_LEVEL": "/vagrant/deploy/stack"}
+  end
+
+  config.vm.define :machine1, autostart: false do |machine1|
+    machine1.vm.box = 'jtyr/pxe'
+    machine1.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+      v.gui = true
+      v.customize ['modifyvm', :id, '--nic1', 'hostonly', '--nic2', 'nat', '--boot1', 'disk', '--boot2', 'net']
+      v.customize ['setextradata', :id, 'GUI/ScaleFactor', '3.0']
+      v.check_guest_additions = false
+    end
+    machine1.ssh.insert_key = false
+    machine1.vm.boot_timeout = 10
+    machine1.vm.synced_folder '.', '/vagrant', disabled: true
+    machine1.vm.network "private_network", ip: MACHINE1_IP,  mac: "0800279EF53A", adapter: 1
+  end
+end

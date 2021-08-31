@@ -1,0 +1,50 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "The journey of an HTTP request",
+  "steps": [
+    {
+      "title": "Introduction",
+      "description": "# The journey of a HTTP request\n\nHello and welcome!\n\nIn this code tour we will be following the path of an HTTP request as it enters and exits the Boots codebase.\nIn Boots, HTTP is used to serve iPXE scripts.\nThis is normally the final interaction a machine has with Boots before boot loading into the Operating System Installation Environment (OSIE).\n"
+    },
+    {
+      "file": "cmd/boots/main.go",
+      "description": "# Context\n\nIn order for Boots to received and respond to HTTP requests it must be listening for them.\nThis is the line where the HTTP server is started.\n",
+      "line": 98
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Handling requests\n\nThis is the http endpoint that handles serving the iPXE script file.\nWhenever a HTTP GET request is received, the `serveJobFile` method is called.\n",
+      "line": 60
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Handling requests\n\nThis is the method that handles serving the ipxe script file.\nWhenever an HTTP GET request is received, this method is called.\nIt does 3 high-level things.\n\n1. Retrieve a hardware profile from Tink server or Cacher server.\n2. Gate the HTTP GET request by `allow_pxe` in the hardware profile.\n3. Send the ipxe script file.\n",
+      "line": 106
+    },
+    {
+      "file": "job/job.go",
+      "description": "# Handling requests - Step 1\n\n## Retrieve a hardware profile from Tink server or Cacher server\n\nFor HTTP requests, Boots retrieves a hardware profile from Tink server or Cacher server using the IP address in the request.\n`CreateFromRemoteAddr` is a wrapper around `CreateFromIP` that just removes the port.\n",
+      "line": 94
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Handling requests - Step 2\n\n## Gate HTTP GET request by `allow_pxe` in the hardware profile\n\nThis gates serving the iPXE file by\n\n1. the existence of a hardware record in tink server\nAND\n2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true\n\nThis allows serving custom ipxe scripts, starting up into OSIE or other installation environments\nwithout a tink workflow present.\n",
+      "line": 126
+    },
+    {
+      "file": "cmd/boots/http.go",
+      "description": "# Handling requests - Step 3\n\n## Send the ipxe script file\n\nBoots will now serve an iPXE script.\n",
+      "line": 132
+    },
+    {
+      "file": "job/ipxe.go",
+      "description": "# Handling requests - Step 3\n\n## Send the ipxe script file\n\nBoots only serves 2 iPXE scripts.\n\n1. `auto.ipxe`\n2. `shell.ipxe`\n\nThe `auto.ipxe` script is dynamically generated based on data in the hardware profile that is retrieved from Tink server or Cacher server.\n\nThe `shell.ipxe` script will just drop into an iPXE shell.\n",
+      "line": 15
+    },
+    {
+      "file": "job/ipxe.go",
+      "description": "# Handling requests - Step 3\n\n## Send the ipxe script file\n\nThe `auto.ipxe` script is dynamically generated.\n\nThe contents of the `auto.ipxe` script is determined by walking the following logic.\n\n1. If `metadata.instance.operating_system.slug` in the hardware profile has a value that matches a registered \"Boots Installer\", this iPXE script from this Installer is served via the name `auto.ipxe`.\n2. If `metadata.instance.operating_system.distro` in the hardware profile has a value that matches a registered \"Boots Installer\", this iPXE script from this Installer is served via the name `auto.ipxe`.\n3. If neither of steps 1 or 2 are satisfied, then the default iPXE script (OSIE) is served via the name `auto.ipxe`.\n",
+      "line": 71
+    }
+  ]
+}

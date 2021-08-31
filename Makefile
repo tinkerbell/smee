@@ -4,7 +4,7 @@ all: help
 
 boots: cmd/boots/boots ## Compile boots for host OS and Architecture
 
-bindata: bindata_by_os ## Build and generate embedded iPXE binaries
+ipxe: $(generated_ipxe_files) ## Build all iPXE binaries 
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 	
@@ -13,8 +13,16 @@ gen: $(generated_files) ## Generate go generate'd files
 image: cmd/boots/boots-linux-amd64 ## Build docker image
 	docker build -t boots .
 
-test: gen ## Run go test
-	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -gcflags=-l ${TEST_ARGS} ./...
+stack-run: cmd/boots/boots-linux-amd64 ## Run the Tinkerbell stack
+	cd deploy/stack; docker-compose up --build -d
+
+stack-remove: ## Remove a running Tinkerbell stack
+	cd deploy/stack; docker-compose down -v --remove-orphans
+
+test: gen ipxe ## Run go test
+	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic ${TEST_ARGS} ./...
+
+test-ipxe: ipxe/tests ## Run iPXE feature tests
 
 coverage: test ## Show test coverage
 	go tool cover -func=coverage.txt

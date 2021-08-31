@@ -1,6 +1,7 @@
 package tftp
 
 import (
+	_ "embed"
 	"io"
 	"net"
 	"os"
@@ -8,15 +9,29 @@ import (
 
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/ipxe"
 )
 
+//go:embed ipxe/ipxe.efi
+var ipxeEFI []byte
+
+//go:embed ipxe/undionly.kpxe
+var undionly []byte
+
+//go:embed ipxe/snp-nolacp.efi
+var snpNolacp []byte
+
+//go:embed ipxe/snp-hua.efi
+var snpHua []byte
+
+//go:embed ipxe/snp.efi
+var snpOnly []byte
+
 var tftpFiles = map[string][]byte{
-	"undionly.kpxe":  ipxe.MustAsset("bin/undionly.kpxe"),
-	"snp-nolacp.efi": ipxe.MustAsset("bin/snp-nolacp.efi"),
-	"ipxe.efi":       ipxe.MustAsset("bin/ipxe.efi"),
-	"snp-hua.efi":    ipxe.MustAsset("bin/snp-hua.efi"),
-	"snp.efi":        ipxe.MustAsset("bin/snp.efi"),
+	"ipxe.efi":       ipxeEFI,
+	"snp.efi":        snpOnly,
+	"snp-hua.efi":    snpHua,
+	"snp-nolacp.efi": snpNolacp,
+	"undionly.kpxe":  undionly,
 }
 
 type tftpTransfer struct {
@@ -33,6 +48,7 @@ func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) 
 	if !ok {
 		err := errors.Wrap(os.ErrNotExist, "unknown file")
 		l.With("event", "open", "error", err).Info()
+
 		return nil, err
 	}
 
@@ -43,6 +59,7 @@ func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) 
 	}
 
 	t.With("event", "open").Debug()
+
 	return t, nil
 }
 
@@ -53,12 +70,14 @@ func (t *tftpTransfer) Close() error {
 	t.With("event", "close", "duration", d, "unread", n).Info()
 
 	t.unread = nil
+
 	return nil
 }
 
 func (t *tftpTransfer) Read(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		t.With("event", "read", "read", 0, "unread", len(t.unread)).Info()
+
 		return
 	}
 
@@ -70,6 +89,7 @@ func (t *tftpTransfer) Read(p []byte) (n int, err error) {
 	}
 
 	t.With("event", "read", "read", n, "unread", len(t.unread)).Debug()
+
 	return
 }
 

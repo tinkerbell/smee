@@ -88,6 +88,7 @@ func NewDiscovery(b []byte) (Discovery, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
 		}
+
 		return d, nil
 	case "1":
 		d := &DiscoveryTinkerbellV1{}
@@ -95,6 +96,7 @@ func NewDiscovery(b []byte) (Discovery, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unmarshal json for discovery")
 		}
+
 		return d, nil
 	default:
 		return nil, errors.New("unknown DATA_MODEL_VERSION")
@@ -129,6 +131,8 @@ type Instance struct {
 	SSHKeys []string `json:"ssh_keys,omitempty"`
 	// CustomData
 	NetworkReady bool `json:"network_ready,omitempty"`
+	// BootDriveHint defines what the VMware installer should pass as the argument to "--firstdisk=".
+	BootDriveHint string `json:"boot_drive_hint,omitempty"`
 }
 
 // Device Full device result from /devices endpoint
@@ -143,6 +147,7 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 			return &ip
 		}
 	}
+
 	return nil
 }
 
@@ -167,8 +172,10 @@ func (i *Instance) ServicesVersion() ServicesVersion {
 		if err != nil {
 			return ServicesVersion{}
 		}
+
 		return sv
 	}
+
 	return ServicesVersion{}
 }
 
@@ -214,11 +221,19 @@ type IP struct {
 
 // OperatingSystem holds details for the operating system
 type OperatingSystem struct {
-	Slug     string `json:"slug"`
-	Distro   string `json:"distro"`
-	Version  string `json:"version"`
-	ImageTag string `json:"image_tag"`
-	OsSlug   string `json:"os_slug"`
+	Slug          string         `json:"slug"`
+	Distro        string         `json:"distro"`
+	Version       string         `json:"version"`
+	ImageTag      string         `json:"image_tag"`
+	OsSlug        string         `json:"os_slug"`
+	Installer     string         `json:"installer,omitempty"`
+	InstallerData *InstallerData `json:"installer_data,omitempty"`
+}
+
+// InstallerData holds a number of fields that may be used by an installer.
+type InstallerData struct {
+	Chain  string `json:"chain,omitempty"`
+	Script string `json:"script,omitempty"`
 }
 
 // Port represents a network port
@@ -237,6 +252,7 @@ func (p *Port) MAC() net.HardwareAddr {
 	if p.Data.MAC != nil && *p.Data.MAC != ZeroMAC {
 		return p.Data.MAC.HardwareAddr()
 	}
+
 	return nil
 }
 

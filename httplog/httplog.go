@@ -48,6 +48,7 @@ func (w *ResponseWriter) Write(b []byte) (int, error) {
 		w.StatusCode = 200
 	}
 	n, err := w.ResponseWriter.Write(b)
+
 	return n, errors.Wrap(err, "writing response")
 }
 
@@ -76,6 +77,7 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	if res != nil {
 		httplog.With("event", "cr", "method", method, "uri", uri, "duration", d, "status", res.StatusCode).Info()
 	}
+
 	return
 }
 
@@ -84,5 +86,6 @@ func clientIP(str string) string {
 	if err != nil {
 		return "?"
 	}
+
 	return host
 }

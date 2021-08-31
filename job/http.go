@@ -12,11 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (j Job) ServeFile(w http.ResponseWriter, req *http.Request) {
+func (j Job) ServeFile(w http.ResponseWriter, req *http.Request, i Installers) {
 	base := path.Base(req.URL.Path)
 
 	if name := strings.TrimSuffix(base, ".ipxe"); len(name) < len(base) {
-		j.serveBootScript(w, req, name)
+		j.serveBootScript(req.Context(), w, name, i)
+
 		return
 	}
 
@@ -36,6 +37,7 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			j.Error(errors.WithMessage(err, "reading phone-home body"))
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 	case "application/x-www-form-urlencoded":
@@ -43,6 +45,7 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 		if err := req.ParseForm(); err != nil {
 			j.Error(errors.Wrap(err, "parsing http form"))
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 
@@ -57,10 +60,11 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 	default:
 		// Any other content types equal a bad request
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 
-	j.phoneHome(b)
+	j.phoneHome(req.Context(), b)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte{})
@@ -71,6 +75,7 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		j.Error(errors.WithMessage(err, "reading problem body"))
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
 	var v struct {
@@ -79,10 +84,12 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 	if err := json.Unmarshal(b, &v); err != nil {
 		j.Error(errors.Wrap(err, "parsing problem body as json"))
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
-	if !j.PostHardwareProblem(v.Problem) {
+	if !j.PostHardwareProblem(req.Context(), v.Problem) {
 		w.WriteHeader(http.StatusBadGateway)
+
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -92,5 +99,6 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 func readClose(r io.ReadCloser) (b []byte, err error) {
 	b, err = ioutil.ReadAll(r)
 	r.Close()
+
 	return b, errors.Wrap(err, "reading file")
 }

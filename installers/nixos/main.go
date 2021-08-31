@@ -10,7 +10,11 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func buildInitPaths() map[string]string {
+type Installer struct {
+	Paths map[string]string
+}
+
+func BuildInitPaths() map[string]string {
 	paths := map[string]string{}
 
 	for _, env := range os.Environ() {
@@ -43,37 +47,34 @@ func buildInitPaths() map[string]string {
 	return paths
 }
 
-func init() {
-	oshwToInitPath := buildInitPaths()
-	job.RegisterDistro("nixos", func(j job.Job, s *ipxe.Script) {
-		bootScript(oshwToInitPath, j, s)
-	})
-}
+func (i Installer) BootScript() job.BootScript {
+	return func(j job.Job, s ipxe.Script) ipxe.Script {
+		key := j.OperatingSystem().Slug + "/" + j.PlanSlug()
+		init := i.Paths[key]
+		if init == "" {
+			tag := j.OperatingSystem().ImageTag
+			if tag == "" {
+				j.With("slug", j.OperatingSystem().Slug, "class", j.PlanSlug()).Error(errors.New("unknown os/class combo and no OSV ImageTag set"))
 
-func bootScript(paths map[string]string, j job.Job, s *ipxe.Script) {
-	key := j.OperatingSystem().Slug + "/" + j.PlanSlug()
-	init := paths[key]
-	if init == "" {
-		tag := j.OperatingSystem().ImageTag
-		if tag == "" {
-			j.With("slug", j.OperatingSystem().Slug, "class", j.PlanSlug()).Error(errors.New("unknown os/class combo and no OSV ImageTag set"))
-			s.Shell()
-			return
+				return *s.Shell()
+			}
+			key = j.OperatingSystem().Slug + "/" + tag
+			init = "/nix/store/" + tag + "/init"
 		}
-		key = j.OperatingSystem().Slug + "/" + tag
-		init = "/nix/store/" + tag + "/init"
+
+		s.PhoneHome("provisioning.104.01")
+		s.Set("base-url", conf.MirrorBase+"/misc/tinkerbell/nixos/"+key)
+		s.Kernel("${base-url}/kernel")
+		ks := kernelParams(j, s, init)
+
+		ks.Initrd("${base-url}/initrd")
+		ks.Boot()
+
+		return ks
 	}
-
-	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", conf.MirrorBase+"/misc/tinkerbell/nixos/"+key)
-	s.Kernel("${base-url}/kernel")
-	kernelParams(j, s, init)
-
-	s.Initrd("${base-url}/initrd")
-	s.Boot()
 }
 
-func kernelParams(j job.Job, s *ipxe.Script, init string) {
+func kernelParams(j job.Job, s ipxe.Script, init string) ipxe.Script {
 	s.Args("init=" + init)
 	s.Args("initrd=initrd")
 	if j.IsARM() {
@@ -88,4 +89,6 @@ func kernelParams(j job.Job, s *ipxe.Script, init string) {
 	if j.PasswordHash() != "" {
 		s.Args("pwhash=" + j.PasswordHash())
 	}
+
+	return s
 }
