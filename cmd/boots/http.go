@@ -97,7 +97,6 @@ func ServeHTTP(i job.Installers) {
 			mainlog.Error(err)
 		}
 	}))
-	mux.HandleFunc("/hardware-components", serveHardware)
 
 	var httpHandlers = make(map[string]http.HandlerFunc)
 	// register coreos/flatcar endpoints
