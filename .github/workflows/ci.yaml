@@ -52,7 +52,7 @@ jobs:
           echo ::set-output name=tags::quay.io/tinkerbell/boots:latest,quay.io/tinkerbell/boots:sha-${GITHUB_SHA::8}
       - name: Login to quay.io
         uses: docker/login-action@v1
-        if: ${{ startsWith(github.ref, 'refs/heads/master') }}
+        if: ${{ startsWith(github.ref, 'refs/heads/main') }}
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
@@ -63,6 +63,6 @@ jobs:
           context: ./
           file: ./Dockerfile
           cache-from: type=registry,ref=quay.io/tinkerbell/boots:latest
-          push: ${{ startsWith(github.ref, 'refs/heads/master') }}
+          push: ${{ startsWith(github.ref, 'refs/heads/main') }}
           tags: ${{ steps.docker-image-tag.outputs.tags }}
           platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
