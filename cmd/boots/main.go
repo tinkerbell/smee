@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	client                *packet.Client
+	client                packet.Client
 	apiBaseURL            = env.URL("API_BASE_URL", "https://api.packet.net")
 	provisionerEngineName = env.Get("PROVISIONER_ENGINE_NAME", "packet")
 

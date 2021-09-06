@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,8 +22,30 @@ import (
 type hardwareGetter interface {
 }
 
-// Client has all the fields corresponding to connection
-type Client struct {
+type Client interface {
+	GetWorkflowsFromTink(context.Context, HardwareID) (*tw.WorkflowContextList, error)
+	DiscoverHardwareFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error)
+	ReportDiscovery(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Discovery, error)
+
+	DiscoverHardwareFromIP(ctx context.Context, ip net.IP) (Discovery, error)
+	PostHardwareComponent(ctx context.Context, hardwareID HardwareID, body io.Reader) (*ComponentsResponse, error)
+	PostHardwareEvent(ctx context.Context, id string, body io.Reader) (string, error)
+	PostHardwarePhoneHome(ctx context.Context, id string) error
+	PostHardwareFail(ctx context.Context, id string, body io.Reader) error
+	PostHardwareProblem(ctx context.Context, id HardwareID, body io.Reader) (string, error)
+
+	GetInstanceIDFromIP(ctx context.Context, dip net.IP) (string, error)
+	PostInstancePhoneHome(context.Context, string) error
+	PostInstanceEvent(ctx context.Context, id string, body io.Reader) (string, error)
+	PostInstanceFail(ctx context.Context, id string, body io.Reader) error
+	PostInstancePassword(ctx context.Context, id, pass string) error
+	UpdateInstance(ctx context.Context, id string, body io.Reader) error
+}
+
+var _ Client = &client{}
+
+// client has all the fields corresponding to connection
+type client struct {
 	http           *http.Client
 	baseURL        *url.URL
 	consumerToken  string
@@ -31,7 +54,7 @@ type Client struct {
 	workflowClient tw.WorkflowServiceClient
 }
 
-func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, error) {
+func NewClient(consumerToken, authToken string, baseURL *url.URL) (Client, error) {
 	t, ok := http.DefaultTransport.(*http.Transport)
 	if !ok {
 		return nil, errors.New("unexpected type for http.DefaultTransport")
@@ -106,7 +129,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 		return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 	}
 
-	return &Client{
+	return &client{
 		http:           c,
 		baseURL:        baseURL,
 		consumerToken:  consumerToken,
@@ -116,7 +139,7 @@ func NewClient(consumerToken, authToken string, baseURL *url.URL) (*Client, erro
 	}, nil
 }
 
-func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *Client {
+func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *client {
 	t := &httplog.Transport{
 		RoundTripper: http.DefaultTransport,
 	}
@@ -124,14 +147,14 @@ func NewMockClient(baseURL *url.URL, workflowClient tw.WorkflowServiceClient) *C
 		Transport: t,
 	}
 
-	return &Client{
+	return &client{
 		http:           c,
 		workflowClient: workflowClient,
 		baseURL:        baseURL,
 	}
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) error {
+func (c *client) Do(ctx context.Context, req *http.Request, v interface{}) error {
 	req = req.WithContext(ctx)
 	req.URL = c.baseURL.ResolveReference(req.URL)
 	c.addHeaders(req)
@@ -144,7 +167,7 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) error
 	return unmarshalResponse(res, v)
 }
 
-func (c *Client) Get(ctx context.Context, ref string, v interface{}) error {
+func (c *client) Get(ctx context.Context, ref string, v interface{}) error {
 	req, err := http.NewRequest("GET", ref, nil)
 	if err != nil {
 		return errors.Wrap(err, "setup GET request")
@@ -153,7 +176,7 @@ func (c *Client) Get(ctx context.Context, ref string, v interface{}) error {
 	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Patch(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+func (c *client) Patch(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("PATCH", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup PATCH request")
@@ -165,7 +188,7 @@ func (c *Client) Patch(ctx context.Context, ref, mime string, body io.Reader, v 
 	return c.Do(ctx, req, v)
 }
 
-func (c *Client) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+func (c *client) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
 	req, err := http.NewRequest("POST", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup POST request")
@@ -177,7 +200,7 @@ func (c *Client) Post(ctx context.Context, ref, mime string, body io.Reader, v i
 	return c.Do(ctx, req, v)
 }
 
-func (c *Client) addHeaders(req *http.Request) {
+func (c *client) addHeaders(req *http.Request) {
 	h := req.Header
 	h.Set("X-Packet-Staff", "1")
 
