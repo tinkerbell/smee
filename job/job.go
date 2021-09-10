@@ -16,11 +16,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var client *packet.Client
+var client packet.Client
 var provisionerEngineName string
 
 // SetClient sets the client used to interact with the api.
-func SetClient(c *packet.Client) {
+func SetClient(c packet.Client) {
 	client = c
 }
 

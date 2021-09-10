@@ -75,7 +75,7 @@ func TestDiscoverHardwareFromDHCP(t *testing.T) {
 			cMock := cacherMock.NewMockCacherClient(ctrl)
 			cMock.EXPECT().ByMAC(gomock.Any(), gomock.Any()).Return(&cacher.Hardware{JSON: test.gResponse}, test.err)
 
-			c := &Client{
+			c := &client{
 				baseURL:        u,
 				http:           s.Client(),
 				hardwareClient: cMock,
