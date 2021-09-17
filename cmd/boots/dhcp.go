@@ -83,7 +83,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 
 	circuitID, err := getCircuitID(req)
 	if err != nil {
-		mainlog.With("mac", mac, "err", err).Info("error parsing option82")
+		mainlog.With("mac", mac).Error(err, "error parsing option82")
 	} else {
 		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
 	}
@@ -98,7 +98,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 
 	ctx, j, err := d.jobmanager.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
-		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
+		mainlog.With("type", req.GetMessageType(), "mac", mac).Error(err, "retrieved job is empty")
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
 		span.SetStatus(codes.Error, err.Error())

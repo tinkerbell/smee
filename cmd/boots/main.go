@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/cacher"
+	"github.com/tinkerbell/boots/client/kubernetes"
 	"github.com/tinkerbell/boots/client/packet"
 	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/client/tinkerbell"
@@ -79,6 +80,10 @@ type config struct {
 	logLevel string
 	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE
 	extraKernelArgs string
+	// kubeConfig is the path to a kubernetes config file
+	kubeconfig string
+	// kubeAPI is the Kubernetes API URL
+	kubeAPI string
 }
 
 func main() {
@@ -113,11 +118,7 @@ func main() {
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	workflowFinder, err := getWorkflowFinder()
-	if err != nil {
-		mainlog.Fatal(err)
-	}
-	finder, err := getHardwareFinder()
+	workflowFinder, finder, err := getFinders(l, cfg)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
@@ -220,15 +221,52 @@ func main() {
 	}
 }
 
-// getWorkflowFinder returns a no-op workflow finder if tinkerbell is not the backend
-func getWorkflowFinder() (client.WorkflowFinder, error) {
-	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
-	switch dataModelVersion {
+func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
+	var hf client.HardwareFinder
+	var wf client.WorkflowFinder = &client.NoOpWorkflowFinder{}
+	var err error
+
+	switch os.Getenv("DATA_MODEL_VERSION") {
+	case "":
+		hf, err = cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"))
+		if err != nil {
+			return nil, nil, err
+		}
 	case "1":
-		return tinkerbell.NewWorkflowFinder()
+		hf, err = tinkerbell.NewHardwareFinder()
+		if err != nil {
+			return nil, nil, err
+		}
+		wf, err = tinkerbell.NewWorkflowFinder()
+		if err != nil {
+			return nil, nil, err
+		}
+	case "standalone":
+		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
+		if saFile == "" {
+			return nil, nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+		}
+		hf, err = standalone.NewHardwareFinder(saFile)
+		if err != nil {
+			return nil, nil, err
+		}
+		// standalone uses Tinkerbell workflows
+		wf, err = tinkerbell.NewWorkflowFinder()
+		if err != nil {
+			return nil, nil, err
+		}
+	case "kubernetes":
+		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig)
+		if err != nil {
+			return nil, nil, err
+		}
+		wf = kf
+		hf = kf
+		// Start the client-side cache
+		go kf.Start(context.Background())
 	}
 
-	return &tinkerbell.NoOpWorkflowFinder{}, nil
+	return wf, hf, nil
 }
 
 func getReporter(l log.Logger) (client.Reporter, error) {
@@ -249,25 +287,6 @@ func getReporter(l log.Logger) (client.Reporter, error) {
 	default:
 		return client.NewNoOpReporter(l), nil
 	}
-}
-
-func getHardwareFinder() (client.HardwareFinder, error) {
-	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
-	switch dataModelVersion {
-	case "":
-		return cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"))
-	case "1":
-		return tinkerbell.NewHardwareFinder()
-	case "standalone":
-		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
-		if saFile == "" {
-			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
-		}
-
-		return standalone.NewHardwareFinder(saFile)
-	}
-
-	return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 }
 
 // defaultLogger is zap logr implementation.
@@ -351,6 +370,8 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
 	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
+	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
+	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
 
 	return &ffcli.Command{
 		Name:       name,

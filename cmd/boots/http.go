@@ -148,7 +148,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	ctx, j, err := h.jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+		mainlog.With("client", req.RemoteAddr).Error(err, "no job found for client address")
 
 		return
 	}

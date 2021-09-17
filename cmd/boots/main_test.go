@@ -78,6 +78,8 @@ FLAGS
   -ipxe-remote-tftp-addr  remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
   -ipxe-tftp-addr         local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
   -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
+  -kubeconfig             The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
+  -kubernetes             The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
   -log-level              log level. (default "info")
   -syslog-addr            IP and port to listen on for syslog messages. (default "%[1]v:514")
 `, defaultIP)
