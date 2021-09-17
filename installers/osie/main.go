@@ -141,7 +141,7 @@ func kernelParams(action, state string, j job.Job, s ipxe.Script) ipxe.Script {
 		}
 	} else {
 		s.Args("console=tty0")
-		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" || j.PlanSlug() == "f3.medium.x86" || j.PlanSlug() == "f3.large.x86" {
+		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" {
 			console = "ttyS0"
 		} else {
 			console = "ttyS1"
