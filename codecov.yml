@@ -1,11 +1,21 @@
 ---
 coverage:
+  precision: 0 # xx%
+  round: down # round down
+  range: 39..75 # red -> yellow (this range) -> green
+
   status:
     project:
       default:
-        # basic
-        target: 40%
-        range: 30...50
+        against: auto # auto compares coverage to the previous base commit
+        target: auto # automatically calculate coverage target - should increase
+        threshold: 2% # allow for 2% reduction without failing
+    patch:
+      default:
+        against: parent
+        target: auto
+    changes: false
+
 ignore:
   - "vendor"
   - "ipxe/"

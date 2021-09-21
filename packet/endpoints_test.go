@@ -29,6 +29,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestDiscoverHardwareFromDHCP(t *testing.T) {
+	logger, _ := log.Init("tests")
+
 	for _, test := range []struct {
 		name      string
 		err       error
@@ -75,10 +77,11 @@ func TestDiscoverHardwareFromDHCP(t *testing.T) {
 			cMock := cacherMock.NewMockCacherClient(ctrl)
 			cMock.EXPECT().ByMAC(gomock.Any(), gomock.Any()).Return(&cacher.Hardware{JSON: test.gResponse}, test.err)
 
-			c := &Client{
+			c := &client{
 				baseURL:        u,
 				http:           s.Client(),
 				hardwareClient: cMock,
+				logger:         logger,
 			}
 			m, _ := net.ParseMAC("00:00:ba:dd:be:ef")
 			d, err := c.DiscoverHardwareFromDHCP(context.Background(), m, net.ParseIP("127.0.0.1"), "")

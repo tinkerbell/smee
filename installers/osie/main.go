@@ -10,20 +10,19 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func init() {
-	job.RegisterDefaultInstaller(bootScripts["install"])
-	job.RegisterDistro("alpine", bootScripts["rescue"])
-	job.RegisterDistro("discovery", bootScripts["discover"])
-}
+type Installer struct{}
 
-var bootScripts = map[string]func(context.Context, job.Job, *ipxe.Script){
-	"rescue": func(ctx context.Context, j job.Job, s *ipxe.Script) {
+func (i Installer) Rescue() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
-		bootScript(ctx, "rescue", j, s)
-	},
-	// install should have been name osie... oh well too late now
-	"install": func(ctx context.Context, j job.Job, s *ipxe.Script) {
+
+		return bootScript(ctx, "rescue", j, s)
+	}
+}
+
+func (i Installer) Install() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		typ := "provisioning.104.01"
 		if j.HardwareState() == "deprovisioning" {
 			typ = "deprovisioning.304.1"
@@ -35,35 +34,42 @@ var bootScripts = map[string]func(context.Context, job.Job, *ipxe.Script){
 			s.Set("action", "install")
 		}
 		s.Set("state", j.HardwareState())
-		bootScript(ctx, "install", j, s)
-	},
-	"discover": func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		s.Set("action", "discover")
-		s.Set("state", j.HardwareState())
-		bootScript(ctx, "discover", j, s)
-	},
+
+		return bootScript(ctx, "install", j, s)
+	}
 }
 
-func bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
+func (i Installer) Discover() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		s.Set("action", "discover")
+		s.Set("state", j.HardwareState())
+
+		return bootScript(ctx, "discover", j, s)
+	}
+}
+
+func bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 
-	kernelParams(ctx, action, j.HardwareState(), j, s)
+	ks := kernelParams(ctx, action, j.HardwareState(), j, s)
 
-	s.Initrd("${base-url}/" + initrdPath(j))
+	ks.Initrd("${base-url}/" + initrdPath(j))
 
 	if j.PArch() == "hua" || j.PArch() == "2a2" {
 		// Workaround for Huawei firmware crash
-		s.Sleep(15)
+		ks.Sleep(15)
 	}
 
-	s.Boot()
+	ks.Boot()
+
+	return ks
 }
 
-func kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
+func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -143,13 +149,15 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.
 		}
 	} else {
 		s.Args("console=tty0")
-		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" || j.PlanSlug() == "f3.medium.x86" || j.PlanSlug() == "f3.large.x86" {
+		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" {
 			console = "ttyS0"
 		} else {
 			console = "ttyS1"
 		}
 	}
 	s.Args("console=" + console + ",115200")
+
+	return s
 }
 
 func alpineMirror(j job.Job) string {

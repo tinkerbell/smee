@@ -58,9 +58,18 @@ func TestScript(t *testing.T) {
 					s.Set("tinkerbell", "http://127.0.0.1")
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
-
-					bootScripts[action](context.Background(), m.Job(), &s)
-					got := string(s.Bytes())
+					o := Installer{}
+					ctx := context.Background()
+					var bs ipxe.Script
+					switch action {
+					case "rescue":
+						bs = o.Rescue()(ctx, m.Job(), s)
+					case "install":
+						bs = o.Install()(ctx, m.Job(), s)
+					case "discover":
+						bs = o.Discover()(ctx, m.Job(), s)
+					}
+					got := string(bs.Bytes())
 
 					arch := "aarch64"
 					var parch string

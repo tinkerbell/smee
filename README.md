@@ -1,11 +1,12 @@
 # Boots
 
-[![Build Status](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/boots/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amaster)
+[![Build Status](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/boots/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 
-This services handles DHCP, PXE, tftp, and iPXE for provisions.
+This service handles DHCP, PXE, tftp, and iPXE for provisions in the Tinkerbell project.
+For more information about the Tinkerbell project, see: [tinkerbell.org](https://tinkerbell.org).
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
+This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
 This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
 ## Running Boots

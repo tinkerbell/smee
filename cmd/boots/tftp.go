@@ -45,10 +45,9 @@ func ServeTFTP() {
 	}
 }
 
-type tftpHandler struct {
-}
+type tftpHandler struct{}
 
-func (tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, error) {
+func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, error) {
 	labels := prometheus.Labels{"from": "tftp", "op": "read"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()

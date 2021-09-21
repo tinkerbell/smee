@@ -28,9 +28,9 @@ func TestScript(t *testing.T) {
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
-
-			bootScript(context.Background(), m.Job(), &s)
-			got := string(s.Bytes())
+			r := Installer{}
+			bs := r.BootScript()(context.Background(), m.Job(), s)
+			got := string(bs.Bytes())
 			if script != got {
 				t.Fatalf("%s bad iPxe script\nwant:\n%s\ngot:\n%s", typ, script, got)
 			}

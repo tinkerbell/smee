@@ -15,7 +15,7 @@ type File struct {
 	t *Tarball
 }
 
-func (f File) Close() (err error) {
+func (f *File) Close() (err error) {
 	err = f.t.flush()
 	f.t = nil
 
