@@ -24,10 +24,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var (
-	tftpAddr      = conf.TFTPBind
-	traceparentRe = regexp.MustCompile("^(.*)-[[:xdigit:]]{2}-([[:xdigit:]]{32})-([[:xdigit:]]{16})-([[:xdigit:]]{2})")
-)
+var tftpAddr = conf.TFTPBind
 
 func init() {
 	flag.StringVar(&tftpAddr, "tftp-addr", tftpAddr, "IP and port to listen on for TFTP.")
@@ -117,6 +114,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 // carry on as usual.
 func extractTraceparentFromFilename(ctx context.Context, filename string) (context.Context, string, error) {
 	// traceparentRe captures 4 items, the original filename, the trace id, span id, and trace flags
+	traceparentRe := regexp.MustCompile("^(.*)-[[:xdigit:]]{2}-([[:xdigit:]]{32})-([[:xdigit:]]{16})-([[:xdigit:]]{2})")
 	parts := traceparentRe.FindStringSubmatch(filename)
 	if len(parts) == 5 {
 		traceId, err := trace.TraceIDFromHex(parts[2])
