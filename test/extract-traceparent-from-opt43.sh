@@ -12,8 +12,8 @@
 # the types in a different order on different runs, so the option has to be
 # fully parsed to get the right data.
 #
-# this would be way easier in perl/python but this needs to work in busybox
-# msh and with busybox shell tools
+# this would be way easier in perl/python but this needs to work in dash
+# and with busybox shell tools
 #
 # takes 1 argument, usually $opt43
 # sets $opt43x69 to the hex traceparent
@@ -42,8 +42,8 @@ extract_traceparent_from_opt43() {
 
 		# calculate value offsets
 		local bov eov
-		local bov=$((offset + 4))        # beginning of value
-		local eov=$((bov + len * 2 - 1)) # end of value
+		bov=$((offset + 4))        # beginning of value
+		eov=$((bov + len * 2 - 1)) # end of value
 
 		if [ "$type" -eq 69 ]; then
 			# set global to the full tp hex data
