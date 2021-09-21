@@ -166,6 +166,8 @@ func (c *client) ReportDiscovery(ctx context.Context, mac net.HardwareAddr, giad
 		return nil, errors.Wrap(err, "unmarshalling api discovery")
 	}
 
+	c.logger.With("giaddr", req.GIADDR, "mac", req.MAC).Debug("hardware discovery by mac")
+
 	var res DiscoveryCacher
 	if err := c.Post(ctx, "/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
 		return nil, err
