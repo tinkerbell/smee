@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"net"
 	"os"
 	"path"
+	"regexp"
 
 	"github.com/avast/retry-go"
 	"github.com/packethost/pkg/log"
@@ -16,11 +18,13 @@ import (
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	tftp "github.com/tinkerbell/tftp-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
-var (
-	tftpAddr = conf.TFTPBind
-)
+var tftpAddr = conf.TFTPBind
 
 func init() {
 	flag.StringVar(&tftpAddr, "tftp-addr", tftpAddr, "IP and port to listen on for TFTP.")
@@ -52,9 +56,33 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 	filename = path.Base(filename)
 	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
 
-	j, err := job.CreateFromIP(context.Background(), ip)
+	// clients can send traceparent over TFTP by appending the traceparent string
+	// to the end of the filename they really want
+	longfile := filename // hang onto this to report in traces
+	ctx, shortfile, err := extractTraceparentFromFilename(context.Background(), filename)
+	if err != nil {
+		l.Info(err)
+	}
+	if shortfile != filename {
+		l = l.With("filename", shortfile) // flip to the short filename in logs
+		l.Info("client requested filename '", filename, "' with a traceparent attached and has been shortened to '", shortfile, "'")
+		filename = shortfile
+	}
+	tracer := otel.Tracer("TFTP")
+	ctx, span := tracer.Start(ctx, "TFTP get",
+		trace.WithSpanKind(trace.SpanKindServer),
+		trace.WithAttributes(attribute.String("filename", filename)),
+		trace.WithAttributes(attribute.String("requested-filename", longfile)),
+		trace.WithAttributes(attribute.String("IP", ip.String())),
+	)
+
+	span.AddEvent("job.CreateFromIP")
+
+	j, err := job.CreateFromIP(ctx, ip)
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
+		span.SetStatus(codes.Error, "no existing job: "+err.Error())
+		span.End()
 
 		return serveFakeReader(l, filename)
 	}
@@ -67,11 +95,52 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 	// without a tink workflow present.
 	if !j.AllowPxe() {
 		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+		span.SetStatus(codes.Error, "allow_pxe is false")
+		span.End()
 
 		return serveFakeReader(l, filename)
 	}
 
+	span.SetStatus(codes.Ok, filename)
+	span.End()
+
 	return j.ServeTFTP(filename, ip.String())
+}
+
+// extractTraceparentFromFilename takes a context and filename and checks the filename for
+// a traceparent tacked onto the end of it. If there is a match, the traceparent is extracted
+// and a new SpanContext is contstructed and added to the context.Context that is returned.
+// The filename is shortened to just the original filename so the rest of boots tftp can
+// carry on as usual.
+func extractTraceparentFromFilename(ctx context.Context, filename string) (context.Context, string, error) {
+	// traceparentRe captures 4 items, the original filename, the trace id, span id, and trace flags
+	traceparentRe := regexp.MustCompile("^(.*)-[[:xdigit:]]{2}-([[:xdigit:]]{32})-([[:xdigit:]]{16})-([[:xdigit:]]{2})")
+	parts := traceparentRe.FindStringSubmatch(filename)
+	if len(parts) == 5 {
+		traceId, err := trace.TraceIDFromHex(parts[2])
+		if err != nil {
+			return ctx, filename, fmt.Errorf("parsing OpenTelemetry trace id %q failed: %s", parts[2], err)
+		}
+
+		spanId, err := trace.SpanIDFromHex(parts[3])
+		if err != nil {
+			return ctx, filename, fmt.Errorf("parsing OpenTelemetry span id %q failed: %s", parts[3], err)
+		}
+
+		// create a span context with the parent trace id & span id
+		spanCtx := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID:    traceId,
+			SpanID:     spanId,
+			Remote:     true,
+			TraceFlags: trace.FlagsSampled, // TODO: use the parts[4] value instead
+		})
+
+		// inject it into the context.Context and return it along with the original filename
+		return trace.ContextWithSpanContext(ctx, spanCtx), parts[1], nil
+	} else {
+		// no traceparent found, return everything as it was
+		return ctx, filename, nil
+	}
 }
 
 func serveFakeReader(l log.Logger, filename string) (tftp.ReadCloser, error) {

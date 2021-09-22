@@ -1,6 +1,7 @@
 package custom_ipxe
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -30,7 +31,7 @@ func TestScript(t *testing.T) {
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
 			ci := Installer{}
-			bs := ci.BootScript()(m.Job(), s)
+			bs := ci.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
 			if script != got {
 				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(script, got))

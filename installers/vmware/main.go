@@ -14,52 +14,48 @@ const (
 
 type Installer struct{}
 
-func (i Installer) BootScriptDefault() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) BootScriptDefault() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Shell()
 
-		// We don't need to actually provision anything
-		// TODO(@tobert) passing context through to here would mean changing the
-		// signature for all installer functions and this is the only site that
-		// needs it, so these will not have trace context
-		j.DisablePXE(context.Background())
-		j.MarkDeviceActive(context.Background())
+		j.DisablePXE(ctx)
+		j.MarkDeviceActive(ctx)
 
 		return s
 	}
 }
 
-func (i Installer) BootScriptVmwareEsxi55() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(j, s, "/vmware/esxi-5.5.0.update03")
+func (i Installer) BootScriptVmwareEsxi55() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-5.5.0.update03")
 	}
 }
 
-func (i Installer) BootScriptVmwareEsxi60() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.0.0.update03")
+func (i Installer) BootScriptVmwareEsxi60() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.0.0.update03")
 	}
 }
 
-func (i Installer) BootScriptVmwareEsxi65() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.5.0")
+func (i Installer) BootScriptVmwareEsxi65() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.5.0")
 	}
 }
 
-func (i Installer) BootScriptVmwareEsxi67() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(j, s, "/vmware/esxi-6.7.0")
+func (i Installer) BootScriptVmwareEsxi67() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.7.0")
 	}
 }
 
-func (i Installer) BootScriptVmwareEsxi70() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(j, s, "/vmware/esxi-7.0.0")
+func (i Installer) BootScriptVmwareEsxi70() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-7.0.0")
 	}
 }
 
-func bootScriptVmwareEsxi(j job.Job, s ipxe.Script, basePath string) ipxe.Script {
+func bootScriptVmwareEsxi(ctx context.Context, j job.Job, s ipxe.Script, basePath string) ipxe.Script {
 	s.DHCP()
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.MirrorBaseUrl+basePath)

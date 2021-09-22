@@ -1,6 +1,7 @@
 package osie
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -58,14 +59,15 @@ func TestScript(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 					o := Installer{}
+					ctx := context.Background()
 					var bs ipxe.Script
 					switch action {
 					case "rescue":
-						bs = o.Rescue()(m.Job(), s)
+						bs = o.Rescue()(ctx, m.Job(), s)
 					case "install":
-						bs = o.Install()(m.Job(), s)
+						bs = o.Install()(ctx, m.Job(), s)
 					case "discover":
-						bs = o.Discover()(m.Job(), s)
+						bs = o.Discover()(ctx, m.Job(), s)
 					}
 					got := string(bs.Bytes())
 

@@ -1,6 +1,7 @@
 package custom_ipxe
 
 import (
+	"context"
 	"strings"
 
 	"github.com/packethost/pkg/log"
@@ -11,8 +12,8 @@ import (
 
 type Installer struct{}
 
-func (i Installer) BootScript() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) BootScript() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		logger := j.Logger.With("installer", "custom_ipxe")
 
 		var cfg *packet.InstallerData

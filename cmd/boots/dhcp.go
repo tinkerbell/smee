@@ -15,7 +15,9 @@ import (
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var listenAddr = conf.BOOTPBind
@@ -77,7 +79,13 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	}
 
 	tracer := otel.Tracer("DHCP")
-	ctx, span := tracer.Start(context.Background(), "job.CreateFromDHCP")
+	ctx, span := tracer.Start(context.Background(), "ServeDHCP",
+		trace.WithAttributes(attribute.String("MAC", mac.String())),
+		trace.WithAttributes(attribute.String("IP", gi.String())),
+		trace.WithAttributes(attribute.String("MessageType", req.GetMessageType().String())),
+		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
+	)
+
 	j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")

@@ -1,6 +1,7 @@
 package nixos
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -43,7 +44,7 @@ func TestScript(t *testing.T) {
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
 			n := Installer{Paths: oshwToInitPath}
-			bs := n.BootScript()(m.Job(), s)
+			bs := n.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
 			if script != got {
 				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(script, got))

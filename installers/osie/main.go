@@ -1,26 +1,28 @@
 package osie
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Installer struct{}
 
-func (i Installer) Rescue() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) Rescue() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
 
-		return bootScript("rescue", j, s)
+		return bootScript(ctx, "rescue", j, s)
 	}
 }
 
-func (i Installer) Install() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) Install() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		typ := "provisioning.104.01"
 		if j.HardwareState() == "deprovisioning" {
 			typ = "deprovisioning.304.1"
@@ -33,27 +35,27 @@ func (i Installer) Install() func(j job.Job, s ipxe.Script) ipxe.Script {
 		}
 		s.Set("state", j.HardwareState())
 
-		return bootScript("install", j, s)
+		return bootScript(ctx, "install", j, s)
 	}
 }
 
-func (i Installer) Discover() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) Discover() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Set("action", "discover")
 		s.Set("state", j.HardwareState())
 
-		return bootScript("discover", j, s)
+		return bootScript(ctx, "discover", j, s)
 	}
 }
 
-func bootScript(action string, j job.Job, s ipxe.Script) ipxe.Script {
+func bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 
-	ks := kernelParams(action, j.HardwareState(), j, s)
+	ks := kernelParams(ctx, action, j.HardwareState(), j, s)
 
 	ks.Initrd("${base-url}/" + initrdPath(j))
 
@@ -67,7 +69,7 @@ func bootScript(action string, j job.Job, s ipxe.Script) ipxe.Script {
 	return ks
 }
 
-func kernelParams(action, state string, j job.Job, s ipxe.Script) ipxe.Script {
+func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -77,6 +79,12 @@ func kernelParams(action, state string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
+
+	// only add traceparent if tracing is enabled
+	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {
+		// manually assemble a traceparent string because the "right" way is clunkier
+		s.Args("traceparent=00-" + sc.TraceID().String() + "-" + sc.SpanID().String() + "-" + sc.TraceFlags().String())
+	}
 
 	// Only provide the Hollow secrets for deprovisions
 	if j.HardwareState() == "deprovisioning" && conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {

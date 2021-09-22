@@ -1,6 +1,7 @@
 package custom_ipxe
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"testing"
@@ -146,7 +147,7 @@ func TestIpxeScript(t *testing.T) {
 				mockJob.SetUserData(tc.installerData.Script)
 			}
 			i := Installer{}
-			bs := i.BootScript()(mockJob.Job(), *script)
+			bs := i.BootScript()(context.Background(), mockJob.Job(), *script)
 
 			assert.Equal(dedent(tc.want), string(bs.Bytes()))
 		})

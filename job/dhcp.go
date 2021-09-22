@@ -69,7 +69,7 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 		return false
 	}
 
-	if dhcp.SetupPXE(rep, req) {
+	if dhcp.SetupPXE(ctx, rep, req) {
 		isARM := dhcp.IsARM(req)
 		if dhcp.Arch(req) != j.Arch() {
 			span.AddEvent(fmt.Sprintf("arch mismatch: got %q and expected %q", dhcp.Arch(req), j.Arch()))

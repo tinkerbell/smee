@@ -1,6 +1,8 @@
 package coreos
 
 import (
+	"context"
+
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
@@ -18,8 +20,8 @@ const (
 
 type Installer struct{}
 
-func (i Installer) BootScript() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) BootScript() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.PhoneHome("provisioning.104.01")
 		s.Set("base-url", conf.MirrorURL)
 		s.Kernel("${base-url}/" + kernelPath(j))

@@ -1,6 +1,7 @@
 package nixos
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -48,7 +49,7 @@ func BuildInitPaths() map[string]string {
 }
 
 func (i Installer) BootScript() job.BootScript {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		key := j.OperatingSystem().Slug + "/" + j.PlanSlug()
 		init := i.Paths[key]
 		if init == "" {

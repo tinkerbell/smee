@@ -1,6 +1,7 @@
 package vmware
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -30,7 +31,7 @@ func TestScriptPerType(t *testing.T) {
 					m.SetMAC("00:00:ba:dd:be:ef")
 
 					s := ipxe.Script{}
-					bs := bootScript(m.Job(), s)
+					bs := bootScript(context.Background(), m.Job(), s)
 					got := string(bs.Bytes())
 
 					want := fmt.Sprintf(script, version)
@@ -121,7 +122,7 @@ boot
 `,
 }
 
-var versions = map[string]func(job.Job, ipxe.Script) ipxe.Script{
+var versions = map[string]job.BootScript{
 	"esxi-5.5.0.update03": Installer{}.BootScriptVmwareEsxi55(),
 	"esxi-6.0.0.update03": Installer{}.BootScriptVmwareEsxi60(),
 	"esxi-6.5.0":          Installer{}.BootScriptVmwareEsxi65(),

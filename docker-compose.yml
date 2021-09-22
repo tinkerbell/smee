@@ -33,6 +33,13 @@ services:
       API_CONSUMER_TOKEN: none
       API_AUTH_TOKEN: none
       FACILITY_CODE: onprem
+      MIRROR_HOST: 192.168.99.99
+      PUBLIC_FQDN: 192.168.99.100
+      DOCKER_REGISTRY: 192.168.99.101:5000
+      REGISTRY_USERNAME: admin
+      REGISTRY_PASSWORD: secret
+      TINKERBELL_GRPC_AUTHORITY: tinkerbell.tinkerbell:42113
+      TINKERBELL_CERT_URL: http://tinkerbell.tinkerbell:42114/cert
       BOOTS_STANDALONE_JSON: /test-standalone-hardware.json
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"

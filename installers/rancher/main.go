@@ -1,14 +1,16 @@
 package rancher
 
 import (
+	"context"
+
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
 
 type Installer struct{}
 
-func (i Installer) BootScript() func(j job.Job, s ipxe.Script) ipxe.Script {
-	return func(j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) BootScript() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.PhoneHome("provisioning.104.01")
 		s.Set("base-url", "http://releases.rancher.com/os/packet")
 		s.Kernel("${base-url}/vmlinuz")

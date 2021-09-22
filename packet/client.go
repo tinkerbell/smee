@@ -18,6 +18,7 @@ import (
 	"github.com/tinkerbell/boots/httplog"
 	tinkClient "github.com/tinkerbell/tink/client"
 	tw "github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type hardwareGetter interface {
@@ -60,15 +61,19 @@ func NewClient(logger log.Logger, consumerToken, authToken string, baseURL *url.
 	t, ok := http.DefaultTransport.(*http.Transport)
 	if !ok {
 		return nil, errors.New("unexpected type for http.DefaultTransport")
-
 	}
 
+	// copy the default transport with all the default options
 	transport := t.Clone()
 	transport.MaxIdleConnsPerHost = env.Int("BOOTS_HTTP_HOST_CONNECTIONS", runtime.GOMAXPROCS(0)/2)
 
+	// wrap the default http transport with otelhttp which will generate traces
+	// and inject headers
+	otelRt := otelhttp.NewTransport(transport)
+
 	c := &http.Client{
 		Transport: &httplog.Transport{
-			RoundTripper: transport,
+			RoundTripper: otelRt,
 		},
 	}
 

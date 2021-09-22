@@ -109,6 +109,8 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20201210154907-fd9021fe5dad/go.m
 github.com/envoyproxy/go-control-plane v0.9.9-0.20210217033140-668b12f5399d/go.mod h1:cXg6YxExXjJnVBQHBLXeUAgxn2UodCpnH306RInaBQk=
 github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.mod h1:hliV/p42l8fGbc6Y9bQ70uLwIvmJyVE5k4iMKlh8wCQ=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
+github.com/equinix-labs/otel-init-go v0.0.1 h1:v+XdagFMmmZHsOF6TLQArOt6CkuxiwXsIQnn3A/sCYQ=
+github.com/equinix-labs/otel-init-go v0.0.1/go.mod h1:Zprvqw70JGsTRLbj6bCtndooCAgg4mY4H2MF3KC/AS0=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.8.0/go.mod h1:3l45GVGkyrnYNl9HoIjnp2NnNWvh6hLAqD8yTfGjnw8=
 github.com/felixge/httpsnoop v1.0.2 h1:+nS9g82KMXccJ/wp0zyRW9ZBHFETmMGtkk+2CTTrW4o=
@@ -461,8 +463,6 @@ github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfc
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303/go.mod h1:b/3pqi4uYBWdTpatyUbL48rn1kUQ0dibH8N6MBAVn/g=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b h1:QdJmToBEuonTFFNrS2T3Fp7IWkFvrwpQLpfP2UNOt/c=
-github.com/tobert/otel-init-go v0.0.0-20210804183951-47b83e855e3b/go.mod h1:TEqu9woEuV94Qv+HTXaVxeb4DXVv2BWEki9VXKamUZ4=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
