@@ -231,10 +231,16 @@ fi
 # Kickstart firstboot supplemental config URL
 if [ "$kickstartfburl" != "null" ]; then
 	echo "Using supplemental kickstart firstboot URL: $kickstartfburl"
-	wget -q $kickstartfburl -O /tmp/ks-firstboot-sup.sh
-	echo "========Begin execution of supplemental firstboot kickstart"
-	chmod +x /tmp/ks-firstboot-sup.sh && /tmp/ks-firstboot-sup.sh
-	echo "========End execution of supplemental firstboot kickstart"
+	if wget -q "$kickstartfburl" -O /tmp/ks-firstboot-sup.sh
+		echo "========Begin execution of supplemental firstboot kickstart"
+		chmod +x /tmp/ks-firstboot-sup.sh && /tmp/ks-firstboot-sup.sh
+		echo "========End execution of supplemental firstboot kickstart"
+	else
+		echo "ERROR: Custom kickstart firstboot URL '$kickstartfburl' is NOT accessible!"
+		exit 1
+	fi
+else
+	echo "Skipping supplemental kickstart firstboot URL"
 fi
 
 # Kickstart firstboot supplemental shell commands
