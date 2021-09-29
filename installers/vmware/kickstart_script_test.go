@@ -56,6 +56,9 @@ func TestScriptKickstart(t *testing.T) {
 									if driveHint != "" && strings.HasPrefix(typ, "s") {
 										disk = "--firstdisk=" + driveHint
 									}
+									if driveHint != "" && strings.HasPrefix(typ, "w") {
+										disk = "--firstdisk=" + driveHint
+									}
 
 									var w strings.Builder
 									genKickstart(m.Job(), &w)

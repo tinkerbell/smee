@@ -388,6 +388,9 @@ func determineDisk(j job.Job) string {
 	if j.BootDriveHint() != "" && strings.HasPrefix(j.PlanSlug(), "s") {
 		return "--firstdisk=" + j.BootDriveHint()
 	}
+	if j.BootDriveHint() != "" && strings.HasPrefix(j.PlanSlug(), "w") {
+		return "--firstdisk=" + j.BootDriveHint()
+	}
 	switch j.PlanSlug() {
 	case "c1.small.x86",
 		"s1.large.x86",
