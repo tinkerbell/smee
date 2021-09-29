@@ -302,10 +302,14 @@ kickstartpishellcmd=$(custom_data "['kickstart']['postinstall_shell_cmd']")
 # Kickstart postinstall supplemental config URL
 if [ "$kickstartpiurl" != "null" ]; then
 	echo "Using supplemental kickstart postinstall URL: $kickstartpiurl"
-	wget -q $kickstartpiurl -O /tmp/ks-postinstall-sup.sh
-	echo "========Begin execution of supplemental postinstall kickstart"
-	chmod +x /tmp/ks-postinstall-sup.sh && /tmp/ks-postinstall-sup.sh
-	echo "========End execution of supplemental postinstall kickstart"
+	if wget -q "$kickstartpiurl" -O /tmp/ks-postinstall-sup.sh
+		echo "========Begin execution of supplemental postinstall kickstart"
+		chmod +x /tmp/ks-postinstall-sup.sh && /tmp/ks-postinstall-sup.sh
+		echo "========End execution of supplemental postinstall kickstart"
+	else
+		echo "ERROR: Custom kickstart postinstall URL '$kickstartpiurl' is NOT accessible!"
+		exit 1
+	fi
 else
 	echo "Skipping supplemental kickstart postinstall URL"
 fi
