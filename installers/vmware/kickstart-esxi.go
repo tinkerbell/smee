@@ -231,7 +231,7 @@ fi
 # Kickstart firstboot supplemental config URL
 if [ "$kickstartfburl" != "null" ]; then
 	echo "Using supplemental kickstart firstboot URL: $kickstartfburl"
-	if wget -q "$kickstartfburl" -O /tmp/ks-firstboot-sup.sh
+	if wget -q "$kickstartfburl" -O /tmp/ks-firstboot-sup.sh; then
 		echo "========Begin execution of supplemental firstboot kickstart"
 		chmod +x /tmp/ks-firstboot-sup.sh && /tmp/ks-firstboot-sup.sh
 		echo "========End execution of supplemental firstboot kickstart"
@@ -308,7 +308,7 @@ kickstartpishellcmd=$(custom_data "['kickstart']['postinstall_shell_cmd']")
 # Kickstart postinstall supplemental config URL
 if [ "$kickstartpiurl" != "null" ]; then
 	echo "Using supplemental kickstart postinstall URL: $kickstartpiurl"
-	if wget -q "$kickstartpiurl" -O /tmp/ks-postinstall-sup.sh
+	if wget -q "$kickstartpiurl" -O /tmp/ks-postinstall-sup.sh; then
 		echo "========Begin execution of supplemental postinstall kickstart"
 		chmod +x /tmp/ks-postinstall-sup.sh && /tmp/ks-postinstall-sup.sh
 		echo "========End execution of supplemental postinstall kickstart"
