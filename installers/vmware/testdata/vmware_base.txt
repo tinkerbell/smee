@@ -197,13 +197,12 @@ fi
 # Kickstart firstboot supplemental config URL
 if [ "$kickstartfburl" != "null" ]; then
 	echo "Using supplemental kickstart firstboot URL: $kickstartfburl"
-	if wget -q -s $kickstartfburl; then
-		wget -q $kickstartfburl -O /tmp/ks-firstboot-sup.sh
+	if wget -q "$kickstartfburl" -O /tmp/ks-firstboot-sup.sh; then
 		echo "========Begin execution of supplemental firstboot kickstart"
 		chmod +x /tmp/ks-firstboot-sup.sh && /tmp/ks-firstboot-sup.sh
 		echo "========End execution of supplemental firstboot kickstart"
 	else
-		echo "ERROR: Custom kickstart firstboot URL is NOT accessible!"
+		echo "ERROR: Custom kickstart firstboot URL '$kickstartfburl' is NOT accessible!"
 		exit 1
 	fi
 else
@@ -274,18 +273,17 @@ kickstartpishellcmd=$(custom_data "['kickstart']['postinstall_shell_cmd']")
 
 # Kickstart postinstall supplemental config URL
 if [ "$kickstartpiurl" != "null" ]; then
-        echo "Using supplemental kickstart postinstall URL: $kickstartpiurl"
-        if wget -q -s $kickstartpiurl; then
-                wget -q $kickstartpiurl -O /tmp/ks-postinstall-sup.sh
-                echo "========Begin execution of supplemental postinstall kickstart"
-                chmod +x /tmp/ks-postinstall-sup.sh && /tmp/ks-postinstall-sup.sh
-                echo "========End execution of supplemental postinstall kickstart"
-        else
-                echo "ERROR: Custom kickstart postinstall URL is NOT accessible!"
-                exit 1
-        fi
+	echo "Using supplemental kickstart postinstall URL: $kickstartpiurl"
+	if wget -q "$kickstartpiurl" -O /tmp/ks-postinstall-sup.sh; then
+		echo "========Begin execution of supplemental postinstall kickstart"
+		chmod +x /tmp/ks-postinstall-sup.sh && /tmp/ks-postinstall-sup.sh
+		echo "========End execution of supplemental postinstall kickstart"
+	else
+		echo "ERROR: Custom kickstart postinstall URL '$kickstartpiurl' is NOT accessible!"
+		exit 1
+	fi
 else
-        echo "Skipping supplemental kickstart postinstall URL"
+	echo "Skipping supplemental kickstart postinstall URL"
 fi
 
 # Kickstart postinstall supplemental shell commands
