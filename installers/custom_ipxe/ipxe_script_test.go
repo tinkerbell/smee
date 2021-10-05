@@ -26,7 +26,7 @@ func TestScript(t *testing.T) {
 			m.SetIPXEScriptURL("http://127.0.0.1/fake_ipxe_url")
 
 			s := ipxe.Script{}
-			s.Echo("Packet.net Baremetal - iPXE boot")
+			s.Echo("Tinkerbell Boots iPXE")
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
@@ -41,7 +41,7 @@ func TestScript(t *testing.T) {
 }
 
 var type2Script = map[string]string{
-	"baremetal_0": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_0": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -56,7 +56,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_0
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_1": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_1": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -71,7 +71,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_1
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_2": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_2": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -86,7 +86,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_2
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_3": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_3": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -101,7 +101,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_3
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_2a": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_2a": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -116,7 +116,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_2a
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_2a2": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_2a2": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -131,7 +131,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_2a2
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_2a4": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_2a4": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -146,7 +146,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_2a4
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_2a5": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_2a5": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -161,7 +161,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_2a5
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"baremetal_hua": `echo Packet.net Baremetal - iPXE boot
+	"baremetal_hua": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -176,7 +176,7 @@ set packet_facility ` + facility + `
 set packet_plan baremetal_hua
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
-	"c2.large.arm": `echo Packet.net Baremetal - iPXE boot
+	"c2.large.arm": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
