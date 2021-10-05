@@ -39,7 +39,7 @@ func TestScript(t *testing.T) {
 			}
 
 			s := ipxe.Script{}
-			s.Echo("Packet.net Baremetal - iPXE boot")
+			s.Echo("Tinkerbell Boots iPXE")
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
@@ -54,7 +54,7 @@ func TestScript(t *testing.T) {
 }
 
 var type2Script = map[string]string{
-	"17_03/t1.small.x86": `echo Packet.net Baremetal - iPXE boot
+	"17_03/t1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -70,7 +70,7 @@ kernel ${base-url}/kernel init=/nix/store/a8nhjab9brxw80lnvrpxj37wkgmxa0bl-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"17_03/c1.small.x86": `echo Packet.net Baremetal - iPXE boot
+	"17_03/c1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -86,7 +86,7 @@ kernel ${base-url}/kernel init=/nix/store/a8nhjab9brxw80lnvrpxj37wkgmxa0bl-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"17_03/m1.xlarge.x86": `echo Packet.net Baremetal - iPXE boot
+	"17_03/m1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -102,7 +102,7 @@ kernel ${base-url}/kernel init=/nix/store/a8nhjab9brxw80lnvrpxj37wkgmxa0bl-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"17_03/c1.xlarge.x86": `echo Packet.net Baremetal - iPXE boot
+	"17_03/c1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -118,7 +118,7 @@ kernel ${base-url}/kernel init=/nix/store/a8nhjab9brxw80lnvrpxj37wkgmxa0bl-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/t1.small.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/t1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -134,7 +134,7 @@ kernel ${base-url}/kernel init=/nix/store/9zpihimwsjysscvidjs1dfa0zwfnxim0-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/c1.small.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/c1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -150,7 +150,7 @@ kernel ${base-url}/kernel init=/nix/store/hq6hni37qjql1206j7hkhqf1x017w8qz-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/c2.medium.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/c2.medium.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -166,7 +166,7 @@ kernel ${base-url}/kernel init=/nix/store/46mmhc2jv2wkkda90dqks1p2054irszy-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/m1.xlarge.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/m1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -182,7 +182,7 @@ kernel ${base-url}/kernel init=/nix/store/59v36skcl0ymsq61phx5yxifn89ddi9n-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/m2.xlarge.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/m2.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -198,7 +198,7 @@ kernel ${base-url}/kernel init=/nix/store/zizskvd3hb9arcn7lswqy1j81p538q1w-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/c1.xlarge.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/c1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -214,7 +214,7 @@ kernel ${base-url}/kernel init=/nix/store/x8lvlh5c5rdfaf25w50fpdylkcwd3ihy-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/c1.large.arm": `echo Packet.net Baremetal - iPXE boot
+	"18_03/c1.large.arm": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -230,7 +230,7 @@ kernel ${base-url}/kernel init=/nix/store/gbhizlyjj5gc3fayvw79dsii6ac5yb74-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/s1.large.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/s1.large.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -246,7 +246,7 @@ kernel ${base-url}/kernel init=/nix/store/nnic31dppmzamq7l3sn3iyjks55qsrn5-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/x1.small.x86": `echo Packet.net Baremetal - iPXE boot
+	"18_03/x1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -262,13 +262,13 @@ kernel ${base-url}/kernel init=/nix/store/bd42lgd9rmz4xmq3zgs8j31rf0g7fn4q-nixos
 initrd ${base-url}/initrd
 boot
 `,
-	"18_03/xx.nano.s390": `echo Packet.net Baremetal - iPXE boot
+	"18_03/xx.nano.s390": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
 shell
 `,
-	"20_09/c3.small.x86:nix-store-path-masquerading-as-version": `echo Packet.net Baremetal - iPXE boot
+	"20_09/c3.small.x86:nix-store-path-masquerading-as-version": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet

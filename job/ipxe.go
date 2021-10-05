@@ -70,7 +70,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	s.Set("syslog_host", conf.PublicSyslogFQDN)
 	s.Set("ipxe_cloud_config", "packet")
 
-	s.Echo("Packet.net Baremetal - iPXE boot")
+	s.Echo("Tinkerbell Boots iPXE")
 
 	// the trace id is enough to find otel traces in most systems
 	if sc := span.SpanContext(); sc.IsSampled() {
