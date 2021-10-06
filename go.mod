@@ -12,6 +12,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.5
+	github.com/hexops/gotextdiff v1.0.3
 	github.com/packethost/cacher v0.0.0-20200825140532-0b62e6726807
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
 	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0

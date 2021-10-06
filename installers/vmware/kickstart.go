@@ -3,7 +3,6 @@ package vmware
 import (
 	"io"
 	"net/http"
-	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -28,8 +27,12 @@ func ServeKickstart() func(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func genKickstart(job job.Job, writer io.Writer) error {
-	return errors.Wrap(tmpl.Execute(writer, job), "generating kickstart template")
+func genKickstart(j job.Job, writer io.Writer) error {
+	return errors.Wrap(tmpl.Execute(writer, j), "generating kickstart template")
+}
+
+func mustParseNew(name, text string) *template.Template {
+	return template.Must(template.New(name).Funcs(helpers).Parse(text))
 }
 
 var tmpl = mustParseNew("kickstart", `
@@ -38,7 +41,7 @@ vmaccepteula
 # Set the root password for the DCUI and Tech Support Mode
 rootpw --iscrypted {{ rootpw . }}
 # The install media is in the CD-ROM drive
-install {{ disk . }} --overwritevmfs
+install --first-disk={{ firstDisk . }} --overwritevmfs
 # Set the network to DHCP on the proper network adapter based on its type
 network --bootproto=dhcp --device={{ vmnic . }}
 reboot
@@ -367,7 +370,7 @@ sleep 30
 var helpers = template.FuncMap{
 	"vmnic":     vmnic,
 	"rootpw":    rootpw,
-	"disk":      determineDisk,
+	"firstDisk": firstDisk,
 	"tink_host": func() string { return conf.PublicFQDN },
 }
 
@@ -379,66 +382,56 @@ func rootpw(j job.Job) string {
 	return j.PasswordHash()
 }
 
-// We do not support anything other than ESXi 6.5 and above (os slug "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0" etc)
-// full list of drive settings is listed https://packet.atlassian.net/browse/SWE-2385
-func determineDisk(j job.Job) string {
-	// currently limited to storage plans remove '&&.*"s")' to apply across all plans
-	if j.BootDriveHint() != "" && strings.HasPrefix(j.PlanSlug(), "s") {
-		return "--firstdisk=" + j.BootDriveHint()
+// firstDisk returns which disk to install onto - normally provided via metadata.
+func firstDisk(j job.Job) string {
+	// Metadata service did not return a boot drive to use :(
+	if j.BootDriveHint() == "" {
+		return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
 	}
-	if j.BootDriveHint() != "" && strings.HasPrefix(j.PlanSlug(), "w") {
-		return "--firstdisk=" + j.BootDriveHint()
+
+	pClass := ""
+	if j.PlanSlug() != "" {
+		pClass = j.PlanSlug()[0:1]
 	}
-	switch j.PlanSlug() {
-	case "c1.small.x86",
-		"s1.large.x86",
-		"t1.small.x86",
-		"x1.small.x86":
-		return "--firstdisk=vmw_ahci"
-	case "c2.medium.x86",
-		"g2.large.x86",
-		"m2.xlarge.x86",
-		"n2.xlarge.x86",
-		"n2.xlarge.google",
-		"x2.xlarge.x86":
-		return "--firstdisk=vmw_ahci,lsi_mr3,lsi_msgpt3"
-	case "c3.medium.x86",
-		"c3.small.x86",
-		"m3.large.x86",
-		"s3.xlarge.x86":
-		if j.PlanVersionSlug() == "c3.medium.x86.01" {
-			return "--firstdisk=Micron_5100_MTFD,vmw_ahci"
-		} else if j.PlanVersionSlug() == "s3.xlarge.x86.01" {
-			return "--firstdisk=KXG50ZNV256G_TOSHIBA,vmw_ahci"
-		}
 
-		return "--firstdisk=vmw_ahci,lsi_mr3,lsi_msgpt3"
-	case "m1.xlarge.x86":
-		if j.PlanVersionSlug() == "baremetal_2_04" {
-			return "--firstdisk=vmw_ahci"
-		}
-
-		return "--firstdisk=lsi_mr3,lsi_msgpt3,vmw_ahci"
-	case "c1.xlarge.x86":
-		return "--firstdisk=lsi_mr3,vmw_ahci"
+	// To facilitate an incremental roll-out of this feature, we are currently only whitelisting a handful of configurations
+	// TODO: Remove this logic once disk metadata is plumbed through globally
+	switch pClass {
+	case "s", "w":
+		return j.BootDriveHint()
 	default:
-		// These 3 we don't support as we can't get access to them to test on
-		// "x2.graphcore.x86",
-		// "d1f.optane.x86",
-		// "d1p.optane.x86",
-		// The "2a*" and hua are arm that we don't support
-		// "baremetal_2a4",
-		// "baremetal_hua",
-		// "baremetal_2a3",
-		// "baremetal_2a4",
-		// "baremetal_2a5",
-		// "c2.large.arm",
-		// this was an experimental c2.medium
-		// "baremetal_5":
-		return "--firstdisk"
+		// fallback to hardcoded values
+		return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
 	}
 }
 
-func mustParseNew(name, text string) *template.Template {
-	return template.Must(template.New(name).Funcs(helpers).Parse(text))
+// equinixPlanDisk is an Equinix-specific fallback used to return the first disk if it wasn't provided via metadata
+// TODO: Remove this function once the metadata is plumbed through everywhere.
+func equinixPlanDisk(slug string, version string) string {
+	switch slug {
+	case "c1.small.x86", "s1.large.x86", "t1.small.x86", "x1.small.x86":
+		return "vmw_ahci"
+	case "c2.medium.x86", "g2.large.x86", "m2.xlarge.x86", "n2.xlarge.x86", "n2.xlarge.google", "x2.xlarge.x86":
+		return "vmw_ahci,lsi_mr3,lsi_msgpt3"
+	case "c3.medium.x86", "c3.small.x86", "m3.large.x86", "s3.xlarge.x86":
+		switch version {
+		case "c3.medium.x86.01":
+			return "Micron_5100_MTFD,vmw_ahci"
+		case "s3.xlarge.x86.01":
+			return "KXG50ZNV256G_TOSHIBA,vmw_ahci"
+		default:
+			return "mw_ahci,lsi_mr3,lsi_msgpt3"
+		}
+	case "m1.xlarge.x86":
+		if version == "baremetal_2_04" {
+			return "vmw_ahci"
+		}
+
+		return "lsi_mr3,lsi_msgpt3,vmw_ahci"
+
+	case "c1.xlarge.x86":
+		return "lsi_mr3,vmw_ahci"
+	default:
+		return ""
+	}
 }
