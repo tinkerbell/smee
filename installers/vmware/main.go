@@ -27,35 +27,35 @@ func (i Installer) BootScriptDefault() job.BootScript {
 
 func (i Installer) BootScriptVmwareEsxi55() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-5.5.0.update03")
+		return script(j, s, "/vmware/esxi-5.5.0.update03")
 	}
 }
 
 func (i Installer) BootScriptVmwareEsxi60() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.0.0.update03")
+		return script(j, s, "/vmware/esxi-6.0.0.update03")
 	}
 }
 
 func (i Installer) BootScriptVmwareEsxi65() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.5.0")
+		return script(j, s, "/vmware/esxi-6.5.0")
 	}
 }
 
 func (i Installer) BootScriptVmwareEsxi67() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-6.7.0")
+		return script(j, s, "/vmware/esxi-6.7.0")
 	}
 }
 
 func (i Installer) BootScriptVmwareEsxi70() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		return bootScriptVmwareEsxi(ctx, j, s, "/vmware/esxi-7.0.0")
+		return script(j, s, "/vmware/esxi-7.0.0")
 	}
 }
 
-func bootScriptVmwareEsxi(ctx context.Context, j job.Job, s ipxe.Script, basePath string) ipxe.Script {
+func script(j job.Job, s ipxe.Script, basePath string) ipxe.Script {
 	s.DHCP()
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.MirrorBaseUrl+basePath)

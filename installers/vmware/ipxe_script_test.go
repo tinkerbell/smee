@@ -26,7 +26,6 @@ func TestScriptPerType(t *testing.T) {
 		t.Run(typ, func(t *testing.T) {
 			for version, bootScript := range versions {
 				t.Run(version, func(t *testing.T) {
-
 					m := job.NewMock(t, typ, facility)
 					m.SetMAC("00:00:ba:dd:be:ef")
 
