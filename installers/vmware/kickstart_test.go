@@ -10,7 +10,6 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	"github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 )
@@ -90,9 +89,13 @@ func TestScriptKickstart(t *testing.T) {
 		{slug: "x2.xlarge.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 	}
 
-	assert := require.New(t)
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
 	conf.PublicFQDN = "boots-test.example.com"
+
+	td, err := ioutil.ReadFile("testdata/vmware_base.txt")
+	if err != nil {
+		t.Fatalf("readfile: %v", err)
+	}
 
 	for _, man := range manufacturers {
 		t.Run(man, func(t *testing.T) {
@@ -110,14 +113,11 @@ func TestScriptKickstart(t *testing.T) {
 
 							var w strings.Builder
 							genKickstart(m.Job(), &w)
+
 							got := w.String()
-
-							data, err := ioutil.ReadFile("testdata/vmware_base.txt")
-							assert.Nil(err)
-							want := strings.Replace(string(data), "<DISK>", fmt.Sprintf("--first-disk=%s", dc.want), 1)
-
+							want := strings.Replace(string(td), "<DISK>", fmt.Sprintf("--first-disk=%s", dc.want), 1)
 							if got != want {
-								// Generate a unified diff for easy debugging (nicer output than cmp.Diff)
+								// Generate a unified diff with friendlier output than cmp.Diff
 								edits := myers.ComputeEdits(span.URI("want"), want, got)
 								change := gotextdiff.ToUnified("want", "got", want, edits)
 								t.Errorf("unexpected diff:\n%s", change)
