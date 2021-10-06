@@ -22,9 +22,9 @@ func TestFirstDisk(t *testing.T) {
 		want    string
 	}{
 		{slug: "", hint: "", want: ""},
-		{slug: "", hint: "hint", want: ""},
+		{slug: "", hint: "hint", want: "hint"},
 		{slug: "baremetal_5", want: ""},
-		{slug: "baremetal_5", hint: "hint", want: ""},
+		{slug: "baremetal_5", hint: "hint", want: "hint"},
 		{slug: "c1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "c1.xlarge.x86", hint: "hint", want: "lsi_mr3,vmw_ahci"},
 		{slug: "c2.medium.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
@@ -38,6 +38,7 @@ func TestFirstDisk(t *testing.T) {
 		{slug: "w1.large.x86", hint: "hint", want: "hint"},
 		{slug: "t1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "x1.small.x86", hint: "hint", want: "vmw_ahci"},
+		{slug: "arbitrary_name", hint: "hint", want: "hint"},
 		{slug: "x2.xlarge.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 	}
 
@@ -64,9 +65,9 @@ func TestScriptKickstart(t *testing.T) {
 		want    string
 	}{
 		{slug: "", hint: "", want: ""},
-		{slug: "", hint: "hint", want: ""},
+		{slug: "", hint: "hint", want: "hint"},
 		{slug: "baremetal_5", want: ""},
-		{slug: "baremetal_5", hint: "hint", want: ""},
+		{slug: "baremetal_5", hint: "hint", want: "hint"},
 		{slug: "c1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "c1.xlarge.x86", hint: "hint", want: "lsi_mr3,vmw_ahci"},
 		{slug: "c2.medium.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
@@ -83,7 +84,7 @@ func TestScriptKickstart(t *testing.T) {
 		{slug: "s3.xlarge.x86", hint: "", want: "mw_ahci,lsi_mr3,lsi_msgpt3"},
 		{slug: "w1.large.x86", hint: "", want: ""},
 		{slug: "w1.large.x86", hint: "hint", want: "hint"},
-		{slug: "arbitrary_name", hint: "hint", want: ""},
+		{slug: "arbitrary_name", hint: "hint", want: "hint"},
 		{slug: "t1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "x1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "x2.xlarge.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
@@ -102,7 +103,7 @@ func TestScriptKickstart(t *testing.T) {
 			for _, ver := range versions {
 				t.Run(ver, func(t *testing.T) {
 					for _, dc := range diskConfigs {
-						t.Run(fmt.Sprintf("%s+%q", dc.slug, dc.hint), func(t *testing.T) {
+						t.Run(fmt.Sprintf("%q+%q", dc.slug, dc.hint), func(t *testing.T) {
 							m := job.NewMock(t, dc.slug, facility)
 							m.SetManufacturer(man)
 							m.SetOSSlug(ver)
