@@ -90,7 +90,6 @@ func TestScriptKickstart(t *testing.T) {
 		{slug: "x2.xlarge.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 	}
 
-	driveHints := []string{"", "hint"}
 	assert := require.New(t)
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
 	conf.PublicFQDN = "boots-test.example.com"
@@ -99,33 +98,29 @@ func TestScriptKickstart(t *testing.T) {
 		t.Run(man, func(t *testing.T) {
 			for _, ver := range versions {
 				t.Run(ver, func(t *testing.T) {
-					for _, driveHint := range driveHints {
-						t.Run(driveHint, func(t *testing.T) {
-							for _, dc := range diskConfigs {
-								t.Run(fmt.Sprintf("%s+%q", dc.slug, dc.hint), func(t *testing.T) {
-									m := job.NewMock(t, dc.slug, facility)
-									m.SetManufacturer(man)
-									m.SetOSSlug(ver)
-									m.SetIP(net.ParseIP("127.0.0.1"))
-									m.SetPassword("password")
-									m.SetMAC("00:00:ba:dd:be:ef")
-									m.SetBootDriveHint(dc.hint)
+					for _, dc := range diskConfigs {
+						t.Run(fmt.Sprintf("%s+%q", dc.slug, dc.hint), func(t *testing.T) {
+							m := job.NewMock(t, dc.slug, facility)
+							m.SetManufacturer(man)
+							m.SetOSSlug(ver)
+							m.SetIP(net.ParseIP("127.0.0.1"))
+							m.SetPassword("password")
+							m.SetMAC("00:00:ba:dd:be:ef")
+							m.SetBootDriveHint(dc.hint)
 
-									var w strings.Builder
-									genKickstart(m.Job(), &w)
-									got := w.String()
+							var w strings.Builder
+							genKickstart(m.Job(), &w)
+							got := w.String()
 
-									data, err := ioutil.ReadFile("testdata/vmware_base.txt")
-									assert.Nil(err)
-									want := strings.Replace(string(data), "<DISK>", fmt.Sprintf("--first-disk=%s", dc.want), 1)
+							data, err := ioutil.ReadFile("testdata/vmware_base.txt")
+							assert.Nil(err)
+							want := strings.Replace(string(data), "<DISK>", fmt.Sprintf("--first-disk=%s", dc.want), 1)
 
-									if got != want {
-										// Generate a unified diff for easy debugging (nicer output than cmp.Diff)
-										edits := myers.ComputeEdits(span.URI("want"), want, got)
-										change := gotextdiff.ToUnified("want", "got", want, edits)
-										t.Errorf("unexpected diff:\n%s", change)
-									}
-								})
+							if got != want {
+								// Generate a unified diff for easy debugging (nicer output than cmp.Diff)
+								edits := myers.ComputeEdits(span.URI("want"), want, got)
+								change := gotextdiff.ToUnified("want", "got", want, edits)
+								t.Errorf("unexpected diff:\n%s", change)
 							}
 						})
 					}
