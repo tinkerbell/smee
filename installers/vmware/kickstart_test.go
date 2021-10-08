@@ -71,6 +71,7 @@ func TestScriptKickstart(t *testing.T) {
 		{slug: "c1.small.x86", hint: "hint", want: "vmw_ahci"},
 		{slug: "c1.xlarge.x86", hint: "hint", want: "lsi_mr3,vmw_ahci"},
 		{slug: "c2.medium.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
+		{slug: "c3.medium.x86", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 		{slug: "g2.large.x86", hint: "hint", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 		{slug: "m1.xlarge.x86", hint: "hint", want: "lsi_mr3,lsi_msgpt3,vmw_ahci"},
 		{slug: "m1.xlarge.x86:baremetal_2_04", hint: "hint", want: "vmw_ahci"},
@@ -81,7 +82,7 @@ func TestScriptKickstart(t *testing.T) {
 		{slug: "s1.large.x86", hint: "hint", want: "hint"},
 		{slug: "s3.xlarge.x86:s3.xlarge.x86.01", hint: "hint", want: "hint"},
 		{slug: "s3.xlarge.x86:s3.xlarge.x86.01", hint: "", want: "KXG50ZNV256G_TOSHIBA,vmw_ahci"},
-		{slug: "s3.xlarge.x86", hint: "", want: "mw_ahci,lsi_mr3,lsi_msgpt3"},
+		{slug: "s3.xlarge.x86", hint: "", want: "vmw_ahci,lsi_mr3,lsi_msgpt3"},
 		{slug: "w1.large.x86", hint: "", want: ""},
 		{slug: "w1.large.x86", hint: "hint", want: "hint"},
 		{slug: "arbitrary_name", hint: "hint", want: "hint"},
@@ -92,11 +93,6 @@ func TestScriptKickstart(t *testing.T) {
 
 	conf.PublicIPv4 = net.ParseIP("127.0.0.1")
 	conf.PublicFQDN = "boots-test.example.com"
-
-	td, err := ioutil.ReadFile("testdata/vmware_base.txt")
-	if err != nil {
-		t.Fatalf("readfile: %v", err)
-	}
 
 	for _, man := range manufacturers {
 		t.Run(man, func(t *testing.T) {
@@ -116,12 +112,18 @@ func TestScriptKickstart(t *testing.T) {
 							genKickstart(m.Job(), &w)
 
 							got := w.String()
-							want := strings.Replace(string(td), "<DISK>", fmt.Sprintf("--first-disk=%s", dc.want), 1)
+
+							bs, err := ioutil.ReadFile(fmt.Sprintf("testdata/ks_%s.txt", dc.want))
+							if err != nil {
+								t.Fatalf("readfile: %v", err)
+							}
+							want := string(bs)
+
 							if got != want {
 								// Generate a unified diff with friendlier output than cmp.Diff
 								edits := myers.ComputeEdits(span.URI("want"), want, got)
 								change := gotextdiff.ToUnified("want", "got", want, edits)
-								t.Errorf("unexpected diff:\n%s", change)
+								t.Errorf("unexpected diff for expected disk %q:\n%s", dc.want, change)
 							}
 						})
 					}
