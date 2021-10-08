@@ -56,7 +56,7 @@ func TestFirstDisk(t *testing.T) {
 
 func TestScriptKickstart(t *testing.T) {
 	manufacturers := []string{"supermicro", "dell"}
-	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0"}
+	versions := []string{"vmware_esxi_6_0", "vmware_esxi_6_5", "vmware_esxi_6_7", "vmware_esxi_7_0", "vmware_esxi_7_0U2a"}
 
 	diskConfigs := []struct {
 		slug    string
