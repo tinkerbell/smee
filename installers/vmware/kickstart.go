@@ -384,24 +384,27 @@ func rootpw(j job.Job) string {
 
 // firstDisk returns which disk to install onto - normally provided via metadata.
 func firstDisk(j job.Job) string {
-	// Metadata service did not return a boot drive to use :(
+	// The metadata service did not return a boot drive, so use the hard-coded version
 	if j.BootDriveHint() == "" {
 		return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
 	}
 
-	pClass := ""
-	if j.PlanSlug() != "" {
-		pClass = j.PlanSlug()[0:1]
+	if j.PlanSlug() == "" {
+		return j.BootDriveHint()
 	}
 
-	// To facilitate an incremental roll-out of this feature, we are currently only whitelisting a handful of configurations
-	// TODO: Remove this logic once disk metadata is plumbed through globally
-	switch pClass {
+	// TODO: Remove temporary Equinix-specific logic for whitelisting which plans to respect boot drive hints for
+	switch j.PlanSlug()[0:1] {
 	case "s", "w":
 		return j.BootDriveHint()
 	default:
-		// fallback to hardcoded values
-		return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
+		disk := equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
+		if disk != "" {
+			return disk
+		}
+
+		// Plan did not match our hard-coded list, let's try the boot drive hint (probably empty)
+		return j.BootDriveHint()
 	}
 }
 
