@@ -137,6 +137,7 @@ func registerInstallers() job.Installers {
 	i.RegisterSlug("vmware_esxi_6_5", v.BootScriptVmwareEsxi65())
 	i.RegisterSlug("vmware_esxi_6_7", v.BootScriptVmwareEsxi67())
 	i.RegisterSlug("vmware_esxi_7_0", v.BootScriptVmwareEsxi70())
+	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScriptVmwareEsxi70U2a())
 	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScriptVmwareEsxi65())
 	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScriptVmwareEsxi67())
 	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScriptVmwareEsxi70())

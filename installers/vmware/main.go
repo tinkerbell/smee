@@ -55,6 +55,12 @@ func (i Installer) BootScriptVmwareEsxi70() job.BootScript {
 	}
 }
 
+func (i Installer) BootScriptVmwareEsxi70U2a() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		return script(j, s, "/vmware/esxi-7.0U2a")
+	}
+}
+
 func script(j job.Job, s ipxe.Script, basePath string) ipxe.Script {
 	s.DHCP()
 	s.PhoneHome("provisioning.104.01")
