@@ -1,49 +1,12 @@
-package vmware
 
-import (
-	"io"
-	"net/http"
-	"text/template"
-
-	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/job"
-)
-
-func ServeKickstart() func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
-		if err != nil {
-			installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
-			w.WriteHeader(http.StatusNotFound)
-
-			return
-		}
-		if err := genKickstart(j, w); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			j.Error(err)
-		}
-	}
-}
-
-func genKickstart(j job.Job, writer io.Writer) error {
-	return errors.Wrap(tmpl.Execute(writer, j), "generating kickstart template")
-}
-
-func mustParseNew(name, text string) *template.Template {
-	return template.Must(template.New(name).Funcs(helpers).Parse(text))
-}
-
-var tmpl = mustParseNew("kickstart", `
 # Accept the VMware End User License Agreement
 vmaccepteula
 # Set the root password for the DCUI and Tech Support Mode
-rootpw --iscrypted {{ rootpw . }}
+rootpw --iscrypted insecure
 # The install media is in the CD-ROM drive
-install --firstdisk={{ firstDisk . }} --overwritevmfs
+install --firstdisk=vmw_ahci --overwritevmfs
 # Set the network to DHCP on the proper network adapter based on its type
-network --bootproto=dhcp --device={{ vmnic . }}
+network --bootproto=dhcp --device=00:00:ba:dd:be:ef
 reboot
 
 %firstboot --interpreter=busybox
@@ -281,11 +244,11 @@ esxcli system settings kernel set -s tty2Port -v com2
 chmod +x /tmp/customize.sh
 sh /tmp/customize.sh > /var/log/firstboot-customize.log
 # Phone home to Packet for device activation
-echo "Tinkerbell: {{ tink_host }}" > /tmp/firstboot-packet.log
+echo "Tinkerbell: boots-test.example.com" > /tmp/firstboot-packet.log
 echo "UUID: $uuid" >> /tmp/firstboot-packet.log
 BODY='{"instance_id":"$uuid"}'
 BODY_LEN=$( echo -n ${BODY} | wc -c )
-echo -ne "POST /phone-home HTTP/1.0\r\nHost: {{ tink_host }}\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 {{ tink_host }} 80 > /tmp/firstboot-phone-home.log
+echo -ne "POST /phone-home HTTP/1.0\r\nHost: boots-test.example.com\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 boots-test.example.com 80 > /tmp/firstboot-phone-home.log
 reboot
 
 %post --interpreter=busybox
@@ -347,10 +310,10 @@ echo "nameserver 147.75.207.207" > /etc/resolv.conf
 chmod +x /tmp/customize-pi.sh
 sh /tmp/customize-pi.sh > /tmp/customize-pi.log
 sleep 60
-echo "Tinkerbell: {{ tink_host }}" > /tmp/post-packet.log
+echo "Tinkerbell: boots-test.example.com" > /tmp/post-packet.log
 BODY='{"type":"provisioning.109"}'
 BODY_LEN=$( echo -n ${BODY} | wc -c )
-echo -ne "POST /phone-home HTTP/1.0\r\nHost: {{ tink_host }}\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 {{ tink_host }} 80 > /tmp/post-phone-home.log
+echo -ne "POST /phone-home HTTP/1.0\r\nHost: boots-test.example.com\r\nContent-Type: application/json\r\nContent-Length: ${BODY_LEN}\r\n\r\n${BODY}" | nc -i 3 boots-test.example.com 80 > /tmp/post-phone-home.log
 
 %post --interpreter=busybox --ignorefailure=true
 echo "Packet installation postinstall executed" > /packet-pi-ks.log
@@ -365,76 +328,3 @@ BOOTOPTIONS=$(/sbin/bootOption -o)
 echo $BOOTOPTIONS > /cmdline-bootoption
 echo $BOOTOPTIONS > /tmp/pre-bootoptions
 sleep 30
-`)
-
-var helpers = template.FuncMap{
-	"vmnic":     vmnic,
-	"rootpw":    rootpw,
-	"firstDisk": firstDisk,
-	"tink_host": func() string { return conf.PublicFQDN },
-}
-
-func vmnic(j job.Job) string {
-	return j.PrimaryNIC().String()
-}
-
-func rootpw(j job.Job) string {
-	return j.PasswordHash()
-}
-
-// firstDisk returns which disk to install onto - normally provided via metadata.
-func firstDisk(j job.Job) string {
-	// The metadata service did not return a boot drive, so use the hard-coded version
-	if j.BootDriveHint() == "" {
-		return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
-	}
-
-	if j.PlanSlug() == "" {
-		return j.BootDriveHint()
-	}
-
-	// TODO: Remove temporary Equinix-specific logic for whitelisting which plans to respect boot drive hints for
-	switch j.PlanSlug()[0:1] {
-	case "s", "w":
-		return j.BootDriveHint()
-	default:
-		disk := equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
-		if disk != "" {
-			return disk
-		}
-
-		// Plan did not match our hard-coded list, let's try the boot drive hint (probably empty)
-		return j.BootDriveHint()
-	}
-}
-
-// equinixPlanDisk is an Equinix-specific fallback used to return the first disk if it wasn't provided via metadata
-// TODO: Remove this function once the metadata is plumbed through everywhere.
-func equinixPlanDisk(slug string, version string) string {
-	switch slug {
-	case "c1.small.x86", "s1.large.x86", "t1.small.x86", "x1.small.x86":
-		return "vmw_ahci"
-	case "c2.medium.x86", "g2.large.x86", "m2.xlarge.x86", "n2.xlarge.x86", "n2.xlarge.google", "x2.xlarge.x86":
-		return "vmw_ahci,lsi_mr3,lsi_msgpt3"
-	case "c3.medium.x86", "c3.small.x86", "m3.large.x86", "s3.xlarge.x86":
-		switch version {
-		case "c3.medium.x86.01":
-			return "Micron_5100_MTFD,vmw_ahci"
-		case "s3.xlarge.x86.01":
-			return "KXG50ZNV256G_TOSHIBA,vmw_ahci"
-		default:
-			return "vmw_ahci,lsi_mr3,lsi_msgpt3"
-		}
-	case "m1.xlarge.x86":
-		if version == "baremetal_2_04" {
-			return "vmw_ahci"
-		}
-
-		return "lsi_mr3,lsi_msgpt3,vmw_ahci"
-
-	case "c1.xlarge.x86":
-		return "lsi_mr3,vmw_ahci"
-	default:
-		return ""
-	}
-}
