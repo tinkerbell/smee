@@ -7,19 +7,20 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/ipxe"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // from https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml
 var procArchTypes = []string{
-	"x86 BIOS",
+	"x86 BIOS", // #0 x86_64
 	"NEC/PC98 (DEPRECATED)",
 	"Itanium",
 	"DEC Alpha (DEPRECATED)",
 	"Arc x86 (DEPRECATED)",
 	"Intel Lean Client (DEPRECATED)",
 	"x86 UEFI",
-	"x64 UEFI",
+	"x64 UEFI", // #7 x86_64
 	"EFI Xscale (DEPRECATED)",
 	"EBC",
 	"ARM 32-bit UEFI",
@@ -28,10 +29,10 @@ var procArchTypes = []string{
 	"PowerPC ePAPR",
 	"POWER OPAL v3",
 	"x86 uefi boot from http",
-	"x64 uefi boot from http",
+	"x64 uefi boot from http", // #16 x86_64
 	"ebc boot from http",
 	"arm uefi 32 boot from http",
-	"arm uefi 64 boot from http",
+	"arm uefi 64 boot from http", // #19 aarch64
 	"pc/at bios boot from http",
 	"arm 32 uboot",
 	"arm 64 uboot",
@@ -59,9 +60,9 @@ func ProcessorArchType(req *dhcp4.Packet) string {
 func Arch(req *dhcp4.Packet) string {
 	arch := ProcessorArchType(req)
 	switch arch {
-	case "x86 BIOS", "x64 UEFI":
+	case "x86 BIOS", "x64 UEFI", "x64 uefi boot from http":
 		return "x86_64"
-	case "ARM 64-bit UEFI":
+	case "ARM 64-bit UEFI", "arm uefi 64 boot from http":
 		return "aarch64"
 	default:
 		return arch
@@ -83,14 +84,24 @@ func IsPXE(req *dhcp4.Packet) bool {
 	}
 	class, ok := req.GetString(dhcp4.OptionClassID)
 
-	return ok && strings.HasPrefix(class, "PXEClient")
+	return ok && (strings.HasPrefix(class, "PXEClient") || strings.HasPrefix(class, "HTTPClient"))
+}
+
+func IsHTTPClient(req *dhcp4.Packet) bool {
+	if ipxe.IsIPXE(req) {
+		return true
+	}
+
+	classID, ok := req.GetString(dhcp4.OptionClassID)
+
+	return ok && strings.HasPrefix(classID, "HTTPClient")
 }
 
 func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
+	if !IsPXE(req) {
+		return false // not a PXE client
+	}
 	if !copyGUID(rep, req) {
-		if class, ok := req.GetString(dhcp4.OptionClassID); !ok || !strings.HasPrefix(class, "PXEClient") {
-			return false // not a PXE client
-		}
 		dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Info("no client GUID provided")
 	}
 
@@ -123,18 +134,23 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	return true
 }
 
-func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, pxeClient bool) {
+func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpServerFQDN string, httpClient bool) {
+	rep.SetSIAddr(nextServer) // next-server: IP address of the TFTP Server.
+
+	if httpClient {
+		filename = "http://" + httpServerFQDN + "/" + filename
+		rep.SetString(dhcp4.OptionClassID, "HTTPClient")
+	} else {
+		rep.SetString(dhcp4.OptionClassID, "PXEClient")
+	}
+
 	file := rep.File()
 	if len(filename) > len(file) {
 		err := errors.New("filename too long, would be truncated")
 		// req CHaddr and XID == req's
 		dhcplog.With("mac", rep.GetCHAddr(), "xid", rep.GetXID(), "filename", filename).Fatal(err)
 	}
-	if pxeClient {
-		rep.SetString(dhcp4.OptionClassID, "PXEClient")
-	}
-	rep.SetSIAddr(nextServer) // next-server: IP address of the TFTP/HTTP Server.
-	copy(file, filename)      // filename: Executable (or iPXE script) to boot from.
+	copy(file, filename) // filename: Executable (or iPXE script) to boot from.
 }
 
 func copyGUID(rep, req *dhcp4.Packet) bool {
