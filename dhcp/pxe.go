@@ -94,14 +94,6 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 		dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Info("no client GUID provided")
 	}
 
-	// PXEClients will prefer response with ClassID=PXEClient.
-	// Otherwise will fall back after timeout, but lets be fast.
-	// See Intel's Preboot Execution Environment (PXE) Specification (1999):
-	//   - Section 2.2.2 paragraph 2
-	//   - Table 2-3
-	// and surroundings
-	rep.SetString(dhcp4.OptionClassID, "PXEClient")
-
 	/*
 		Intel's Preboot Execution Environment (PXE) Specification (1999):
 
@@ -120,6 +112,7 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 		Options 64-127 are "boot server specific" so that's why we put traceparent
 		propagation in opt43/slot69.
 	*/
+
 	pxeVendorOptions := dhcp4.OptionMap{
 		6:  []byte{0x8}, // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
 		69: binaryTpFromContext(ctx),
@@ -130,12 +123,15 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	return true
 }
 
-func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP) {
+func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, pxeClient bool) {
 	file := rep.File()
 	if len(filename) > len(file) {
 		err := errors.New("filename too long, would be truncated")
 		// req CHaddr and XID == req's
 		dhcplog.With("mac", rep.GetCHAddr(), "xid", rep.GetXID(), "filename", filename).Fatal(err)
+	}
+	if pxeClient {
+		rep.SetString(dhcp4.OptionClassID, "PXEClient")
 	}
 	rep.SetSIAddr(nextServer) // next-server: IP address of the TFTP/HTTP Server.
 	copy(file, filename)      // filename: Executable (or iPXE script) to boot from.
