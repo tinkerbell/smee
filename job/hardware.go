@@ -27,7 +27,7 @@ type ComponentsResponse struct {
 func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 	b, err := readClose(req.Body)
 	if err != nil {
-		j.Logger.Error(errors.Wrap(err, "reading hardware component body"))
+		joblog.Error(errors.Wrap(err, "reading hardware component body"))
 		w.WriteHeader(http.StatusBadRequest)
 
 		return
@@ -36,7 +36,7 @@ func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 	var response ComponentsResponse
 
 	if err := json.Unmarshal(b, &response); err != nil {
-		j.Logger.Error(errors.Wrap(err, "parsing hardware component as json"))
+		joblog.Error(errors.Wrap(err, "parsing hardware component as json"))
 		w.WriteHeader(http.StatusBadRequest)
 
 		return
@@ -44,14 +44,14 @@ func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 
 	jsonBody, err := json.Marshal(response)
 	if err != nil {
-		j.Logger.Error(errors.Wrap(err, "marshalling componenents as json"))
+		joblog.Error(errors.Wrap(err, "marshalling componenents as json"))
 		w.WriteHeader(http.StatusBadRequest)
 
 		return
 	}
 
 	if _, err := client.PostHardwareComponent(req.Context(), j.hardware.HardwareID(), bytes.NewReader(jsonBody)); err != nil {
-		j.Logger.Error(errors.Wrap(err, "posting componenents"))
+		joblog.Error(errors.Wrap(err, "posting componenents"))
 		w.WriteHeader(http.StatusBadRequest)
 
 		return

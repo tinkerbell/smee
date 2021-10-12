@@ -70,43 +70,23 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	}
 
 	if dhcp.SetupPXE(ctx, rep, req) {
-		arch := "x86"
-		firmware := "bios"
-
 		isARM := dhcp.IsARM(req)
 		if dhcp.Arch(req) != j.Arch() {
 			span.AddEvent(fmt.Sprintf("arch mismatch: got %q and expected %q", dhcp.Arch(req), j.Arch()))
 			j.With("dhcp", dhcp.Arch(req), "job", j.Arch()).Info("arch mismatch, using dhcp")
-		}
-		if isARM {
-			arch = "arm"
-			if parch := j.PArch(); parch == "2a2" || parch == "hua" {
-				arch = "hua"
-			}
 		}
 
 		isUEFI := dhcp.IsUEFI(req)
 		if isUEFI != j.IsUEFI() {
 			j.With("dhcp", isUEFI, "job", j.IsUEFI()).Info("uefi mismatch, using dhcp")
 		}
-		if isUEFI {
-			firmware = "uefi"
-		}
 
-		isOuriPXE := ipxe.IsOuriPXE(req)
-		if isOuriPXE {
+		isPacket := ipxe.IsPacketIPXE(req)
+		if isPacket {
 			ipxe.Setup(rep)
 		}
 
-		filename := j.getPXEFilename(arch, firmware, isOuriPXE)
-		if filename == "" {
-			err := errors.New("no filename is set")
-			j.Error(err)
-
-			return false
-		}
-		dhcp.SetFilename(rep, filename, conf.PublicIPv4)
-
+		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -133,33 +113,68 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) getPXEFilename(arch, firmware string, isOuriPXE bool) string {
-	if !j.isPXEAllowed() {
-		if j.instance != nil && j.instance.State == "active" {
-			// We set a filename because if a machine is actually trying to PXE and nothing is sent it may hang for
-			// a while waiting for any possible ProxyDHCP packets and it would delay booting from disks.
-			// This short cuts all that when we know we want to be booting from disk.
-			return "/pxe-is-not-allowed"
+func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
+	if j.HardwareState() == "in_use" {
+		if j.InstanceID() == "" {
+			j.Error(errors.New("setPXEFilename called on a job with no instance"))
+
+			return
 		}
 
-		return ""
+		if j.instance.State != "active" {
+			j.With("hardware.state", j.HardwareState(), "instance.state", j.instance.State).Info("device should NOT be trying to PXE boot")
+
+			return
+		}
+
+		// ignore custom_ipxe because we always do dhcp for it and we'll want to do /nonexistent filename so
+		// nics don't timeout.... but why though?
+		if !j.isPXEAllowed() && j.hardware.OperatingSystem().OsSlug != "custom_ipxe" {
+			err := errors.New("device should NOT be trying to PXE boot")
+			j.With("hardware.state", j.HardwareState(), "allow_pxe", j.isPXEAllowed(), "os", j.hardware.OperatingSystem().OsSlug).Info(err)
+
+			return
+		}
+		// custom_ipxe or rescue
 	}
 
 	var filename string
-	if !isOuriPXE {
-		switch {
-		case arch == "hua":
+	var pxeClient bool
+	if !isPacket {
+		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "snp-hua.efi"
-		case arch == "arm" && firmware == "uefi":
+		} else if isARM {
 			filename = "snp-nolacp.efi"
-		case arch == "x86" && firmware == "uefi":
+		} else if isUEFI {
 			filename = "ipxe.efi"
-		case arch == "x86" && firmware == "bios":
+		} else {
 			filename = "undionly.kpxe"
 		}
+	} else if !j.isPXEAllowed() {
+		// Always honor allow_pxe.
+		// We set a filename because if a machine is actually trying to PXE and nothing is sent it may hang for
+		// a while waiting for any possible ProxyDHCP packets and it would delay booting to disks and phoning-home.
+		//
+		// Why we wait until here instead of sending the file name early on? I don't know. We should not need to
+		// send our iPXE, boot into it, and then send /nonexistent afaik.
+		//
+		// TODO(mmlb) try to move this logic to much earlier in the function, maybe all the way as the first thing even.
+
+		os := j.OperatingSystem()
+		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
+		pxeClient = true
+		filename = "/nonexistent"
 	} else {
+		pxeClient = true
 		filename = "http://" + conf.PublicFQDN + "/auto.ipxe"
 	}
 
-	return filename
+	if filename == "" {
+		err := errors.New("no filename is set")
+		j.Error(err)
+
+		return
+	}
+
+	dhcp.SetFilename(rep, filename, conf.PublicIPv4, pxeClient)
 }
