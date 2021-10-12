@@ -41,7 +41,11 @@ vmaccepteula
 # Set the root password for the DCUI and Tech Support Mode
 rootpw --iscrypted {{ rootpw . }}
 # The install media is in the CD-ROM drive
+{{- if (firstDisk .) }}
 install --firstdisk={{ firstDisk . }} --overwritevmfs
+{{- else }}
+install --firstdisk --overwritevmfs
+{{- end }}
 # Set the network to DHCP on the proper network adapter based on its type
 network --bootproto=dhcp --device={{ vmnic . }}
 reboot
