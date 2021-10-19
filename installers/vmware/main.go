@@ -62,7 +62,6 @@ func (i Installer) BootScriptVmwareEsxi70U2a() job.BootScript {
 }
 
 func script(j job.Job, s ipxe.Script, basePath string) ipxe.Script {
-	s.DHCP()
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.MirrorBaseUrl+basePath)
 	if j.IsUEFI() {

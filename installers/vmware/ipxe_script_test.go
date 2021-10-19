@@ -47,8 +47,7 @@ func TestScriptPerType(t *testing.T) {
 }
 
 var type2pxe = map[string]string{
-	"baremetal_0": `dhcp
-
+	"baremetal_0": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -59,8 +58,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
-	"baremetal_1": `dhcp
-
+	"baremetal_1": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -71,8 +69,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
-	"baremetal_2": `dhcp
-
+	"baremetal_2": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -83,8 +80,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
-	"baremetal_3": `dhcp
-
+	"baremetal_3": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -95,8 +91,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
-	"baremetal_s": `dhcp
-
+	"baremetal_s": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -107,8 +102,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
-	"c2.medium.x86": `dhcp
-
+	"c2.medium.x86": `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
