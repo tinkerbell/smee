@@ -160,8 +160,13 @@ func CreateFromIP(ctx context.Context, ip net.IP) (Job, error) {
 	hwID := hd.HardwareID()
 
 	joblog.With("hardwareID", hwID).Info("fetching workflows for hardware")
+	activeWorkflows, err := HasActiveWorkflow(ctx, hwID)
 	if err != nil {
 		return Job{}, err
+	}
+
+	if !activeWorkflows {
+		return Job{}, errors.Errorf("no active workflow found for hardware %s", hwID)
 	}
 
 	return j, nil
