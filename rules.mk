@@ -52,7 +52,7 @@ generated_go_files := \
 .PHONY: $(generated_go_files)
 
 # build all the ipxe binaries
-generated_ipxe_files := tftp/ipxe/ipxe.efi tftp/ipxe/snp-hua.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe tftp/ipxe/snp-hua.efi
+generated_ipxe_files := ipxe/ipxe/ipxe.efi ipxe/ipxe/snp-hua.efi ipxe/ipxe/snp-nolacp.efi ipxe/ipxe/undionly.kpxe ipxe/ipxe/snp-hua.efi
 
 # go generate
 go_generate:
@@ -71,15 +71,15 @@ include ipxev.mk
 ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
 
 # copy ipxe binaries into location available for go embed
-tftp/ipxe/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
-tftp/ipxe/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
-tftp/ipxe/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
-tftp/ipxe/ipxe.efi tftp/ipxe/snp-nolacp.efi tftp/ipxe/undionly.kpxe:
-	mkdir -p tftp/ipxe
+ipxe/ipxe/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
+ipxe/ipxe/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
+ipxe/ipxe/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
+ipxe/ipxe/ipxe.efi ipxe/ipxe/snp-nolacp.efi ipxe/ipxe/undionly.kpxe:
+	mkdir -p ipxe/ipxe
 	cp $^ $@
 
-tftp/ipxe/snp-hua.efi:
-	mkdir -p tftp/ipxe
+ipxe/ipxe/snp-hua.efi:
+	mkdir -p ipxe/ipxe
 # we dont build the snp-hua.efi binary. It's checked into git, so here we just copy it over
 	cp ipxe/bin/snp-hua.efi $@
 

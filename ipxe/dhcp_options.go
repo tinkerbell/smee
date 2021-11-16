@@ -75,6 +75,7 @@ func IsPacketIPXE(req *dhcp4.Packet) bool {
 	// TODO: make this actually check for iPXE and use ipxe' build system's ability to set name.
 	// This way we could set to something like "Packet iPXE" and then just look for that in the identifier sent in dhcp.
 	// This also means we won't lose ipxe's version number for logging and such.
+	// see https://ipxe.org/appnote/userclass
 	if om := GetEncapsulatedOptions(req); om != nil {
 		if ov, ok := om.GetOption(OptionVersion); ok {
 			return ok && bytes.Equal(ov, packetVersion)
