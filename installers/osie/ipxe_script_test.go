@@ -85,7 +85,7 @@ func TestScript(t *testing.T) {
 						parch = "qcom"
 					case "baremetal_hua":
 						parch = "hua"
-					case "c2.large.arm", "c2.large.anbox":
+					case "c2.large.arm", "c2.large.anbox", "c3.large.arm":
 						parch = "amp"
 					default:
 						arch = "x86_64"
