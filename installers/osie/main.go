@@ -117,8 +117,10 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 	s.Args("facility=" + j.FacilityCode())
 
 	switch j.PlanSlug() {
-	case "c2.large.arm", "c2.large.anbox":
+	case "c2.large.arm", "c2.large.anbox", "c3.large.arm":
 		s.Args("iommu.passthrough=1")
+	default:
+		s.Args("intel_iommu=on iommu=pt")
 	}
 
 	if action == "install" {
