@@ -26,7 +26,7 @@ var provisionerEngineName string
 
 func Init(l log.Logger) {
 	joblog = l.Package("http")
-	ipxeFilesHandler = http.FileServer(http.FS(ipxe.Files))
+	ipxeFilesHandler = http.FileServer(http.FS(ipxe.Files()))
 	initRSA()
 }
 

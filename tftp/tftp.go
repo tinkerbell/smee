@@ -19,7 +19,7 @@ type tftpTransfer struct {
 func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) {
 	l := tftplog.With("mac", mac, "client", client, "filename", filename)
 
-	content, err := ipxe.Files.ReadFile(filename)
+	content, err := ipxe.ReadFile(filename)
 	if err != nil {
 		l.With("event", "open", "error", err).Info()
 
