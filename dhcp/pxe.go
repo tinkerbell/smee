@@ -60,9 +60,9 @@ func ProcessorArchType(req *dhcp4.Packet) string {
 func Arch(req *dhcp4.Packet) string {
 	arch := ProcessorArchType(req)
 	switch arch {
-	case "x86 BIOS", "x64 UEFI":
+	case "x86 BIOS", "x64 UEFI", "x64 uefi boot from http":
 		return "x86_64"
-	case "ARM 64-bit UEFI":
+	case "ARM 64-bit UEFI", "arm uefi 64 boot from http":
 		return "aarch64"
 	default:
 		return arch
@@ -84,7 +84,7 @@ func IsPXE(req *dhcp4.Packet) bool {
 	}
 	class, ok := req.GetString(dhcp4.OptionClassID)
 
-	return ok && strings.HasPrefix(class, "PXEClient")
+	return ok && (strings.HasPrefix(class, "PXEClient") || strings.HasPrefix(class, "HTTPClient"))
 }
 
 // IsHTTPClient returns a boolean of whether the client supports HTTP fetching.
