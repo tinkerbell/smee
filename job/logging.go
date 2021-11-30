@@ -2,16 +2,7 @@ package job
 
 import (
 	"context"
-
-	"github.com/packethost/pkg/log"
 )
-
-var joblog log.Logger
-
-func Init(l log.Logger) {
-	joblog = l.Package("job")
-	initRSA()
-}
 
 func (j Job) Fatal(err error, args ...interface{}) {
 	j.Logger.AddCallerSkip(1).Error(err, args...)

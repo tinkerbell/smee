@@ -17,8 +17,14 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+var joblog log.Logger
 var client packet.Client
 var provisionerEngineName string
+
+func Init(l log.Logger) {
+	joblog = l.Package("job")
+	initRSA()
+}
 
 // SetClient sets the client used to interact with the api.
 func SetClient(c packet.Client) {
