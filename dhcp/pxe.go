@@ -136,11 +136,23 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	return true
 }
 
-func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, pxeClient bool) {
+func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, pxeClient, httpClient bool, httpServerFQDN string) {
 	rep.SetSIAddr(nextServer) // next-server: IP address of the TFTP/HTTP Server.
 
 	if pxeClient {
+		// even though we are in a function that is only being called by PXE clients we can't set PXEClient by default
+		// some buggy (arm only?) firmware ignores the boot file if PXEClient is sent back
+		//
+		// its ok though, the spec says clients should *prefer* response with PXEClient set but fall back to regular
+		// DHCP responses that have a filename option set after TIMEOUT waiting for PXEClient
+		// See Intel's Preboot Execution Environment (PXE) Specification (1999):
+		//   - Section 2.2.2 paragraph 2
+		//   - Table 2-3
+		// and surroundings
 		rep.SetString(dhcp4.OptionClassID, "PXEClient")
+	} else if httpClient {
+		filename = "http://" + httpServerFQDN + "/" + filename
+		rep.SetString(dhcp4.OptionClassID, "HTTPClient")
 	}
 
 	file := rep.File()

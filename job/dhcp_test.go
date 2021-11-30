@@ -15,17 +15,18 @@ func TestSetPXEFilename(t *testing.T) {
 	conf.PublicFQDN = "boots-testing.packet.net"
 
 	var setPXEFilenameTests = []struct {
-		name     string
-		hState   string
-		id       string
-		iState   string
-		slug     string
-		plan     string
-		allowPXE bool
-		packet   bool
-		arm      bool
-		uefi     bool
-		filename string
+		name       string
+		hState     string
+		id         string
+		iState     string
+		slug       string
+		plan       string
+		allowPXE   bool
+		packet     bool
+		arm        bool
+		uefi       bool
+		httpClient bool
+		filename   string
 	}{
 		{name: "just in_use",
 			hState: "in_use"},
@@ -51,6 +52,9 @@ func TestSetPXEFilename(t *testing.T) {
 			arm: true, filename: "ipxe/snp-nolacp.efi"},
 		{name: "x86 uefi",
 			uefi: true, filename: "ipxe/ipxe.efi"},
+		{name: "x86 uefi http client",
+			uefi: true, allowPXE: true, httpClient: true,
+			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi"},
 		{name: "all defaults",
 			filename: "ipxe/undionly.kpxe"},
 		{name: "packet iPXE",
@@ -87,7 +91,7 @@ func TestSetPXEFilename(t *testing.T) {
 				instance: instance,
 			}
 			rep := dhcp4.NewPacket(42)
-			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
+			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)
 			filename := string(bytes.TrimRight(rep.File(), "\x00"))
 
 			if tt.filename != filename {
