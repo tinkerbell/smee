@@ -21,8 +21,9 @@ func (j Job) ServeFile(w http.ResponseWriter, req *http.Request, i Installers) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNotFound)
-	j.With("file", base).Info("file not found")
+	// serve iPXE to HTTP clients.
+	// NB this must handle HEAD/GET and return Content-Length for odd clients like the Seeed Studio Odyssey X86J4105 board.
+	ipxeFilesHandler.ServeHTTP(w, req)
 }
 
 func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
