@@ -9,7 +9,7 @@ import (
 var joblog log.Logger
 
 func Init(l log.Logger) {
-	joblog = l.Package("http")
+	joblog = l.Package("job")
 	initRSA()
 }
 
