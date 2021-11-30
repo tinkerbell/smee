@@ -7,6 +7,7 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/ipxe"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -84,6 +85,18 @@ func IsPXE(req *dhcp4.Packet) bool {
 	class, ok := req.GetString(dhcp4.OptionClassID)
 
 	return ok && strings.HasPrefix(class, "PXEClient")
+}
+
+// IsHTTPClient returns a boolean of whether the client supports HTTP fetching.
+func IsHTTPClient(req *dhcp4.Packet) bool {
+	if ipxe.IsIPXE(req) {
+		// assume every iPXE client supports HTTP
+		return true
+	}
+
+	classID, ok := req.GetString(dhcp4.OptionClassID)
+
+	return ok && strings.HasPrefix(classID, "HTTPClient")
 }
 
 func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
