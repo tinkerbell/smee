@@ -87,10 +87,10 @@ func IsPXE(req *dhcp4.Packet) bool {
 }
 
 func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
+	if !IsPXE(req) {
+		return false // not a PXE client
+	}
 	if !copyGUID(rep, req) {
-		if class, ok := req.GetString(dhcp4.OptionClassID); !ok || !strings.HasPrefix(class, "PXEClient") {
-			return false // not a PXE client
-		}
 		dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Info("no client GUID provided")
 	}
 
