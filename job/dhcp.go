@@ -142,13 +142,13 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 	var pxeClient bool
 	if !isPacket {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
-			filename = "snp-hua.efi"
+			filename = "ipxe/snp-hua.efi"
 		} else if isARM {
-			filename = "snp-nolacp.efi"
+			filename = "ipxe/snp-nolacp.efi"
 		} else if isUEFI {
-			filename = "ipxe.efi"
+			filename = "ipxe/ipxe.efi"
 		} else {
-			filename = "undionly.kpxe"
+			filename = "ipxe/undionly.kpxe"
 		}
 	} else if !j.isPXEAllowed() {
 		// Always honor allow_pxe.
