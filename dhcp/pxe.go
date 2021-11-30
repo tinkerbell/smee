@@ -12,14 +12,14 @@ import (
 
 // from https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml
 var procArchTypes = []string{
-	"x86 BIOS",
+	"x86 BIOS", // #0 x86_64
 	"NEC/PC98 (DEPRECATED)",
 	"Itanium",
 	"DEC Alpha (DEPRECATED)",
 	"Arc x86 (DEPRECATED)",
 	"Intel Lean Client (DEPRECATED)",
 	"x86 UEFI",
-	"x64 UEFI",
+	"x64 UEFI", // #7 x86_64
 	"EFI Xscale (DEPRECATED)",
 	"EBC",
 	"ARM 32-bit UEFI",
@@ -28,10 +28,10 @@ var procArchTypes = []string{
 	"PowerPC ePAPR",
 	"POWER OPAL v3",
 	"x86 uefi boot from http",
-	"x64 uefi boot from http",
+	"x64 uefi boot from http", // #16 x86_64
 	"ebc boot from http",
 	"arm uefi 32 boot from http",
-	"arm uefi 64 boot from http",
+	"arm uefi 64 boot from http", // #19 aarch64
 	"pc/at bios boot from http",
 	"arm 32 uboot",
 	"arm 64 uboot",
