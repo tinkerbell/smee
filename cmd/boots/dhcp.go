@@ -79,14 +79,14 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	}
 
 	tracer := otel.Tracer("DHCP")
-	ctx, span := tracer.Start(context.Background(), "ServeDHCP",
+	ctx, span := tracer.Start(context.Background(), "DHCP Reply",
 		trace.WithAttributes(attribute.String("MAC", mac.String())),
 		trace.WithAttributes(attribute.String("IP", gi.String())),
 		trace.WithAttributes(attribute.String("MessageType", req.GetMessageType().String())),
 		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
 	)
 
-	j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
+	ctx, j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
 		metrics.JobsInProgress.With(labels).Dec()

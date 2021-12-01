@@ -100,8 +100,11 @@ func HasActiveWorkflow(ctx context.Context, hwID packet.HardwareID) (bool, error
 	return false, nil
 }
 
-// CreateFromDHCP looks up hardware using the MAC from cacher to create a job
-func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (Job, error) {
+// CreateFromDHCP looks up hardware using the MAC from cacher to create a job.
+// OpenTelemetry: If a hardware record is available and has an in-band traceparent
+// specified, the returned context will have that trace set as its parent and the
+// spans will be linked.
+func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (context.Context, Job, error) {
 	j := Job{
 		mac:   mac,
 		start: time.Now(),
@@ -118,16 +121,16 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 
-		return Job{}, errors.WithMessage(err, "discover from dhcp message")
+		return ctx, Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
 
-	err = j.setup(ctx, d)
+	ctx, err = j.setup(ctx, d)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		j = Job{} // return an empty job on error
 	}
 
-	return j, err
+	return ctx, j, err
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job
@@ -158,7 +161,7 @@ func CreateFromIP(ctx context.Context, ip net.IP) (Job, error) {
 	}
 	j.mac = mac
 
-	err = j.setup(ctx, d)
+	_, err = j.setup(ctx, d)
 	if err != nil {
 		return Job{}, err
 	}
@@ -187,7 +190,7 @@ func (j Job) MarkDeviceActive(ctx context.Context) {
 	}
 }
 
-func (j *Job) setup(ctx context.Context, d packet.Discovery) error {
+func (j *Job) setup(ctx context.Context, d packet.Discovery) (context.Context, error) {
 	dh := d.Hardware()
 
 	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
@@ -215,7 +218,7 @@ func (j *Job) setup(ctx context.Context, d packet.Discovery) error {
 
 	ip := d.GetIP(j.mac)
 	if ip.Address == nil {
-		return errors.New("could not find IP address")
+		return ctx, errors.New("could not find IP address")
 	}
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
 	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))
@@ -224,11 +227,11 @@ func (j *Job) setup(ctx context.Context, d packet.Discovery) error {
 
 	hostname, err := d.Hostname()
 	if err != nil {
-		return err
+		return ctx, err
 	}
 	if hostname != "" {
 		j.dhcp.SetHostname(hostname)
 	}
 
-	return nil
+	return ctx, nil
 }

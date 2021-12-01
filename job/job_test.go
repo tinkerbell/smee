@@ -177,7 +177,7 @@ func TestSetupFails(t *testing.T) {
 	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
 	j := &Job{}
 
-	err := j.setup(context.Background(), d)
+	_, err := j.setup(context.Background(), d)
 	if err == nil {
 		t.Fatal("expected an error but got nil")
 	}
