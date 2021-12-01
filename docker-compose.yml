@@ -62,7 +62,7 @@ services:
     cap_add:
       - NET_ADMIN
   otel-collector:
-    image: otel/opentelemetry-collector:0.24.0
+    image: otel/opentelemetry-collector-contrib:0.38.0
     networks:
       boots-test:
         ipv4_address: 192.168.99.44
