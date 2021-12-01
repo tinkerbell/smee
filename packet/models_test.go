@@ -1746,7 +1746,8 @@ const (
   "services": {},
   "state": "in_use",
   "type": "server",
-  "vlan_id": null
+  "vlan_id": null,
+  "traceparent": "00-deadbeefcafedeadbeefcafedeadbeef-123456789abcdef0-01"
 }
 `
 )
