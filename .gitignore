@@ -6,8 +6,7 @@
 /cmd/boots/boots
 /cmd/boots/boots-*-*
 coverage.txt
-ipxe/ipxe/*.efi
-ipxe/ipxe/*.kpxe
+tftp/ipxe/
 !deploy/stack/.env
 .vagrant
 deploy/stack/state/webroot/misc/osie/current/*

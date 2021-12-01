@@ -53,10 +53,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 	defer metrics.JobsInProgress.With(labels).Dec()
 
 	ip := tftpClientIP(c.RemoteAddr())
-	filename = path.Clean(filename)
-	if path.IsAbs(filename) {
-		filename = filename[1:]
-	}
+	filename = path.Base(filename)
 	l := mainlog.With("client", ip.String(), "event", "open", "filename", filename)
 
 	// clients can send traceparent over TFTP by appending the traceparent string

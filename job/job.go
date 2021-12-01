@@ -3,7 +3,6 @@ package job
 import (
 	"context"
 	"net"
-	"net/http"
 	"os"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
 	tw "github.com/tinkerbell/tink/protos/workflow"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,16 +17,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var joblog log.Logger
-var ipxeFilesHandler http.Handler
 var client packet.Client
 var provisionerEngineName string
-
-func Init(l log.Logger) {
-	joblog = l.Package("http")
-	ipxeFilesHandler = http.FileServer(http.FS(ipxe.Files))
-	initRSA()
-}
 
 // SetClient sets the client used to interact with the api.
 func SetClient(c packet.Client) {

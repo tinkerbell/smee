@@ -86,7 +86,7 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isPacket, isARM, isUEFI, dhcp.IsHTTPClient(req))
+		j.setPXEFilename(rep, isPacket, isARM, isUEFI)
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -113,7 +113,7 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPClient bool) {
+func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
@@ -139,15 +139,16 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	}
 
 	var filename string
+	var pxeClient bool
 	if !isPacket {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
-			filename = "ipxe/snp-hua.efi"
+			filename = "snp-hua.efi"
 		} else if isARM {
-			filename = "ipxe/snp-nolacp.efi"
+			filename = "snp-nolacp.efi"
 		} else if isUEFI {
-			filename = "ipxe/ipxe.efi"
+			filename = "ipxe.efi"
 		} else {
-			filename = "ipxe/undionly.kpxe"
+			filename = "undionly.kpxe"
 		}
 	} else if !j.isPXEAllowed() {
 		// Always honor allow_pxe.
@@ -161,10 +162,11 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 
 		os := j.OperatingSystem()
 		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
+		pxeClient = true
 		filename = "/nonexistent"
 	} else {
-		isHTTPClient = true
-		filename = "auto.ipxe"
+		pxeClient = true
+		filename = "http://" + conf.PublicFQDN + "/auto.ipxe"
 	}
 
 	if filename == "" {
@@ -174,5 +176,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, conf.PublicIPv4, conf.PublicFQDN, isHTTPClient)
+	dhcp.SetFilename(rep, filename, conf.PublicIPv4, pxeClient)
 }
