@@ -1,12 +1,16 @@
 package tftp
 
 import (
+	"context"
 	"io"
 	"net"
 	"time"
 
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/ipxe"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type tftpTransfer struct {
@@ -16,15 +20,19 @@ type tftpTransfer struct {
 }
 
 // Open sets up a tftp transfer object that implements tftpgo.ReadCloser
-func Open(mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) {
+func Open(ctx context.Context, mac net.HardwareAddr, filename, client string) (*tftpTransfer, error) {
 	l := tftplog.With("mac", mac, "client", client, "filename", filename)
+	span := trace.SpanFromContext(ctx)
 
 	content, err := ipxe.Files.ReadFile(filename)
 	if err != nil {
 		l.With("event", "open", "error", err).Info()
+		span.SetStatus(codes.Error, "unknown file")
 
 		return nil, err
 	}
+
+	span.SetAttributes(attribute.Int("bytes", len(content)))
 
 	t := &tftpTransfer{
 		Logger: l,
