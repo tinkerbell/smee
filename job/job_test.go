@@ -58,7 +58,7 @@ func TestSetupDiscover(t *testing.T) {
 	}
 
 	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(d)
+	j.setup(context.Background(), d)
 
 	dh := d.Hardware()
 	h := dh.(*packet.HardwareCacher)
@@ -117,7 +117,7 @@ func TestSetupManagement(t *testing.T) {
 	h := dh.(*packet.HardwareCacher)
 
 	j := &Job{mac: macIPMI.HardwareAddr()}
-	j.setup(d)
+	j.setup(context.Background(), d)
 
 	mode := d.Mode()
 
@@ -149,7 +149,7 @@ func TestSetupInstance(t *testing.T) {
 	d, macs, _ = MakeHardwareWithInstance()
 
 	j := &Job{mac: macs[1].HardwareAddr()}
-	j.setup(d)
+	j.setup(context.Background(), d)
 
 	mode := d.Mode()
 
@@ -177,7 +177,7 @@ func TestSetupFails(t *testing.T) {
 	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
 	j := &Job{}
 
-	err := j.setup(d)
+	err := j.setup(context.Background(), d)
 	if err == nil {
 		t.Fatal("expected an error but got nil")
 	}
@@ -257,7 +257,7 @@ func TestHasActiveWorkflow(t *testing.T) {
 func TestSetupWithoutInstance(t *testing.T) {
 	d, mac := MakeHardwareWithoutInstance()
 	j := &Job{mac: mac.HardwareAddr()}
-	j.setup(d)
+	j.setup(context.Background(), d)
 
 	hostname, _ := d.Hostname()
 	if hostname != j.dhcp.Hostname() {

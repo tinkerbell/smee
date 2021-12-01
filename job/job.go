@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
@@ -120,7 +121,7 @@ func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, ci
 		return Job{}, errors.WithMessage(err, "discover from dhcp message")
 	}
 
-	err = j.setup(d)
+	err = j.setup(ctx, d)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		j = Job{} // return an empty job on error
@@ -157,7 +158,7 @@ func CreateFromIP(ctx context.Context, ip net.IP) (Job, error) {
 	}
 	j.mac = mac
 
-	err = j.setup(d)
+	err = j.setup(ctx, d)
 	if err != nil {
 		return Job{}, err
 	}
@@ -186,10 +187,17 @@ func (j Job) MarkDeviceActive(ctx context.Context) {
 	}
 }
 
-func (j *Job) setup(d packet.Discovery) error {
+func (j *Job) setup(ctx context.Context, d packet.Discovery) error {
 	dh := d.Hardware()
 
 	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
+
+	// When there is a traceparent in the hw record, create a link on the current
+	// trace and replace ctx with one that is parented to the traceparent.
+	if dh.GetTraceparent() != "" {
+		tpCtx := otelhelpers.ContextWithTraceparentString(ctx, dh.GetTraceparent())
+		trace.WithLinks(trace.LinkFromContext(ctx), trace.LinkFromContext(tpCtx))
+	}
 
 	// mac is needed to find the hostname for DiscoveryCacher
 	d.SetMAC(j.mac)

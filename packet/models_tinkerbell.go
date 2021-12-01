@@ -218,3 +218,9 @@ func (h *HardwareTinkerbellV1) instance() *Instance {
 
 	return h.Metadata.Instance
 }
+
+// GetTraceparent always returns empty string.
+// TODO(@tobert, 2021-11-30): implement this
+func (h HardwareTinkerbellV1) GetTraceparent() string {
+	return ""
+}

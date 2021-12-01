@@ -177,6 +177,7 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 	defer timer.ObserveDuration()
 
 	j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
+
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")

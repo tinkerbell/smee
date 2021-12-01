@@ -196,3 +196,9 @@ func (hs HardwareStandalone) emptyInterface() NetworkInterface {
 		Netboot: Netboot{},
 	}
 }
+
+// GetTraceparent always returns empty string.
+// TODO(@tobert, 2021-11-30): implement this
+func (h HardwareStandalone) GetTraceparent() string {
+	return ""
+}
