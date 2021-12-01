@@ -15,18 +15,17 @@ func TestSetPXEFilename(t *testing.T) {
 	conf.PublicFQDN = "boots-testing.packet.net"
 
 	var setPXEFilenameTests = []struct {
-		name       string
-		hState     string
-		id         string
-		iState     string
-		slug       string
-		plan       string
-		allowPXE   bool
-		httpClient bool
-		packet     bool
-		arm        bool
-		uefi       bool
-		filename   string
+		name     string
+		hState   string
+		id       string
+		iState   string
+		slug     string
+		plan     string
+		allowPXE bool
+		packet   bool
+		arm      bool
+		uefi     bool
+		filename string
 	}{
 		{name: "just in_use",
 			hState: "in_use"},
@@ -40,23 +39,20 @@ func TestSetPXEFilename(t *testing.T) {
 			hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe"},
 		{name: "active custom ipxe",
 			hState: "in_use", id: "$instance_id", iState: "active", slug: "custom_ipxe",
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "active custom ipxe with allow pxe",
 			hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "hua",
-			plan: "hua", filename: "ipxe/snp-hua.efi"},
+			plan: "hua", filename: "snp-hua.efi"},
 		{name: "2a2",
-			plan: "2a2", filename: "ipxe/snp-hua.efi"},
+			plan: "2a2", filename: "snp-hua.efi"},
 		{name: "arm",
-			arm: true, filename: "ipxe/snp-nolacp.efi"},
+			arm: true, filename: "snp-nolacp.efi"},
 		{name: "x86 uefi",
-			uefi: true, filename: "ipxe/ipxe.efi"},
-		{name: "x86 uefi http client",
-			uefi: true, allowPXE: true, httpClient: true,
-			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi"},
+			uefi: true, filename: "ipxe.efi"},
 		{name: "all defaults",
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "packet iPXE",
 			packet: true, filename: "/nonexistent"},
 		{name: "packet iPXE PXE allowed",
@@ -91,7 +87,7 @@ func TestSetPXEFilename(t *testing.T) {
 				instance: instance,
 			}
 			rep := dhcp4.NewPacket(42)
-			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)
+			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi)
 			filename := string(bytes.TrimRight(rep.File(), "\x00"))
 
 			if tt.filename != filename {
