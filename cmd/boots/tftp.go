@@ -71,6 +71,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 		l.Info("client requested filename '", filename, "' with a traceparent attached and has been shortened to '", shortfile, "'")
 		filename = shortfile
 	}
+
 	tracer := otel.Tracer("TFTP")
 	ctx, span := tracer.Start(ctx, "TFTP get",
 		trace.WithSpanKind(trace.SpanKindServer),
@@ -79,9 +80,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 		trace.WithAttributes(attribute.String("IP", ip.String())),
 	)
 
-	span.AddEvent("job.CreateFromIP")
-
-	j, err := job.CreateFromIP(ctx, ip)
+	_, j, err := job.CreateFromIP(ctx, ip)
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
 		span.SetStatus(codes.Error, "no existing job: "+err.Error())

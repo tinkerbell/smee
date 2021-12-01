@@ -144,7 +144,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
+	ctx, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
@@ -164,7 +164,8 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	j.ServeFile(w, req, h.i)
+	// otel: send a req.Clone with the updated context from the job's hw data
+	j.ServeFile(w, req.Clone(ctx), h.i)
 }
 
 func serveHardware(w http.ResponseWriter, req *http.Request) {
@@ -176,7 +177,7 @@ func serveHardware(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
+	ctx, j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -212,7 +213,7 @@ func servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
+	_, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
@@ -231,7 +232,7 @@ func serveProblem(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
+	_, j, err := job.CreateFromRemoteAddr(ctx, req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
