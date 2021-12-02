@@ -74,7 +74,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 
 	tracer := otel.Tracer("TFTP")
 	// save the context in a different var so it can be used to create links later
-	rctx, span := tracer.Start(ctx, "TFTP get",
+	rctx, span := tracer.Start(ctx, "tftp/ReadFile",
 		trace.WithSpanKind(trace.SpanKindServer),
 		trace.WithAttributes(attribute.String("filename", filename)),
 		trace.WithAttributes(attribute.String("requested-filename", longfile)),
@@ -105,7 +105,7 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 
 	// this span is after fetching the hw data so it will be attached to the upstream trace id
 	// we also link the spans here so they can be tied together in the tracing UI
-	ctx, uSpan := tracer.Start(ctx, "TFTP open", trace.WithAttributes(attribute.String("filename", filename)))
+	ctx, uSpan := tracer.Start(ctx, "tftp/ServeTFTP", trace.WithAttributes(attribute.String("filename", filename)))
 	trace.WithLinks(trace.LinkFromContext(ctx), trace.LinkFromContext(rctx))
 	defer uSpan.End()
 

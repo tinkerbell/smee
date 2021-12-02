@@ -99,7 +99,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	span.End()
 
 	go func() {
-		ctx, span := tracer.Start(ctx, "ServeDHCP Reply")
+		ctx, span := tracer.Start(ctx, "DHCP Reply")
 		ok, err := j.ServeDHCP(ctx, w, req)
 		if ok {
 			span.SetStatus(codes.Ok, "DHCPOFFER sent")
