@@ -161,7 +161,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 
 		os := j.OperatingSystem()
 		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
-		filename = "/nonexistent"
+		filename = "nonexistent"
 	} else {
 		isHTTPClient = true
 		filename = "auto.ipxe"

@@ -58,7 +58,7 @@ func TestSetPXEFilename(t *testing.T) {
 		{name: "all defaults",
 			filename: "ipxe/undionly.kpxe"},
 		{name: "packet iPXE",
-			packet: true, filename: "/nonexistent"},
+			packet: true, filename: "nonexistent"},
 		{name: "packet iPXE PXE allowed",
 			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + conf.PublicFQDN + "/auto.ipxe"},
 	}
