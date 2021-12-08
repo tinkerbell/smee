@@ -139,7 +139,6 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	}
 
 	var filename string
-	var isPXEClient bool
 	if !isPacket {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "ipxe/snp-hua.efi"
@@ -162,7 +161,6 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 
 		os := j.OperatingSystem()
 		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
-		isPXEClient = true
 		filename = "/nonexistent"
 	} else {
 		isHTTPClient = true
@@ -176,5 +174,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, conf.PublicIPv4, isPXEClient, isHTTPClient, conf.PublicFQDN)
+	dhcp.SetFilename(rep, filename, conf.PublicIPv4, isHTTPClient, conf.PublicFQDN)
 }
