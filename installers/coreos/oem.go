@@ -14,7 +14,7 @@ import (
 func ServeOEM() func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var isARM bool
-		if j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr); err == nil {
+		if _, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr); err == nil {
 			isARM = j.IsARM()
 		} else {
 			installers.Logger("coreos").With("client", req.RemoteAddr).Info(err, "retrieved job is empty")

@@ -41,6 +41,7 @@ type HardwareCacher struct {
 	ServicesVersion   ServicesVersion `json:"services"`
 	Instance          *Instance       `json:"instance"`
 	ProvisionerEngine string          `json:"provisioner_engine"`
+	Traceparent       string          `json:"traceparent"`
 }
 
 func (d DiscoveryCacher) Hardware() Hardware {
@@ -384,4 +385,8 @@ func (h *HardwareCacher) instance() *Instance {
 	}
 
 	return h.Instance
+}
+
+func (h HardwareCacher) GetTraceparent() string {
+	return h.Traceparent
 }

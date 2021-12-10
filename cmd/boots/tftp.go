@@ -71,21 +71,21 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 		l.Info("client requested filename '", filename, "' with a traceparent attached and has been shortened to '", shortfile, "'")
 		filename = shortfile
 	}
+
 	tracer := otel.Tracer("TFTP")
-	ctx, span := tracer.Start(ctx, "TFTP get",
+	// save the context in a different var so it can be used to create links later
+	rctx, span := tracer.Start(ctx, "tftp/ReadFile",
 		trace.WithSpanKind(trace.SpanKindServer),
 		trace.WithAttributes(attribute.String("filename", filename)),
 		trace.WithAttributes(attribute.String("requested-filename", longfile)),
 		trace.WithAttributes(attribute.String("IP", ip.String())),
 	)
+	defer span.End()
 
-	span.AddEvent("job.CreateFromIP")
-
-	j, err := job.CreateFromIP(ctx, ip)
+	ctx, j, err := job.CreateFromIP(rctx, ip)
 	if err != nil {
 		l.With("error", errors.WithMessage(err, "retrieved job is empty")).Info()
 		span.SetStatus(codes.Error, "no existing job: "+err.Error())
-		span.End()
 
 		return serveFakeReader(l, filename)
 	}
@@ -99,15 +99,17 @@ func (t tftpHandler) ReadFile(c tftp.Conn, filename string) (tftp.ReadCloser, er
 	if !j.AllowPxe() {
 		l.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
 		span.SetStatus(codes.Error, "allow_pxe is false")
-		span.End()
 
 		return serveFakeReader(l, filename)
 	}
 
-	span.SetStatus(codes.Ok, filename)
-	span.End()
+	// this span is after fetching the hw data so it will be attached to the upstream trace id
+	// we also link the spans here so they can be tied together in the tracing UI
+	ctx, uSpan := tracer.Start(ctx, "tftp/ServeTFTP", trace.WithAttributes(attribute.String("filename", filename)))
+	trace.WithLinks(trace.LinkFromContext(ctx), trace.LinkFromContext(rctx))
+	defer uSpan.End()
 
-	return j.ServeTFTP(filename, ip.String())
+	return j.ServeTFTP(ctx, filename, ip.String())
 }
 
 // extractTraceparentFromFilename takes a context and filename and checks the filename for

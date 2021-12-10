@@ -72,6 +72,7 @@ type Hardware interface {
 	KernelPath(mac net.HardwareAddr) string
 	InitrdPath(mac net.HardwareAddr) string
 	OperatingSystem() *OperatingSystem
+	GetTraceparent() string
 }
 
 // NewDiscovery instantiates a Discovery struct from the json argument

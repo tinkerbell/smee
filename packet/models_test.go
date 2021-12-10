@@ -173,6 +173,10 @@ func TestDiscoveryCacher(t *testing.T) {
 				t.Fatalf("unexpected osie version, want: %s, got: %s", test.osie, osie)
 			}
 
+			if d.GetTraceparent() != test.traceparent {
+				t.Fatalf("unexpected traceparent, want: %s, got: %s", test.traceparent, d.GetTraceparent())
+			}
+
 			if d.Instance() != nil {
 				if d.OperatingSystem().Distro != test.distro {
 					t.Fatalf("unexpected distro, want: %s, got: %s", test.distro, d.OperatingSystem().Distro)
@@ -417,6 +421,7 @@ var cacherTests = map[string]struct {
 	conf           IP
 	osie           string
 	distro         string
+	traceparent    string
 	json           string
 }{
 	"unknown": {
@@ -528,8 +533,9 @@ var cacherTests = map[string]struct {
 			Gateway: net.ParseIP("10.255.3.1"),
 			Netmask: net.ParseIP("255.255.255.0"),
 		},
-		distro: "vmware",
-		json:   fullStructCacher,
+		distro:      "vmware",
+		traceparent: "00-deadbeefcafedeadbeefcafedeadbeef-123456789abcdef0-01",
+		json:        fullStructCacher,
 	},
 }
 
@@ -1746,7 +1752,8 @@ const (
   "services": {},
   "state": "in_use",
   "type": "server",
-  "vlan_id": null
+  "vlan_id": null,
+  "traceparent": "00-deadbeefcafedeadbeefcafedeadbeef-123456789abcdef0-01"
 }
 `
 )

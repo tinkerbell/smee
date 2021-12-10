@@ -21,9 +21,10 @@ type DiscoverStandalone struct {
 
 // HardwareStandalone implements the Hardware interface for standalone operation
 type HardwareStandalone struct {
-	ID       string   `json:"id"`
-	Network  Network  `json:"network"`
-	Metadata Metadata `json:"metadata"`
+	ID          string   `json:"id"`
+	Network     Network  `json:"network"`
+	Metadata    Metadata `json:"metadata"`
+	Traceparent string   `json:"traceparent"`
 }
 
 // StandaloneClient is a placeholder for accessing data in []DiscoveryStandalone
@@ -195,4 +196,9 @@ func (hs HardwareStandalone) emptyInterface() NetworkInterface {
 		},
 		Netboot: Netboot{},
 	}
+}
+
+// GetTraceparent returns the traceparent from the config.
+func (h HardwareStandalone) GetTraceparent() string {
+	return h.Traceparent
 }
