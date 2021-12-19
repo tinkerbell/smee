@@ -3,12 +3,21 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/equinix-labs/otel-init-go/otelinit"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	ipxe "github.com/tinkerbell/boots-ipxe"
+	icmd "github.com/tinkerbell/boots-ipxe/cmd/ipxe"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
@@ -17,7 +26,10 @@ import (
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
-	"github.com/tinkerbell/boots/tftp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
+	"inet.af/netaddr"
 
 	"github.com/tinkerbell/boots/installers/coreos"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
@@ -25,8 +37,6 @@ import (
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/rancher"
 	"github.com/tinkerbell/boots/installers/vmware"
-
-	"github.com/avast/retry-go"
 )
 
 var (
@@ -41,6 +51,12 @@ var (
 )
 
 func main() {
+	httpAddr := flag.String("http-addr", conf.HTTPBind, "IP and port to listen on for HTTP.")
+	c := icmd.Command{}
+	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0:69", "IP and port to listen on for serveing iPXE binaries via TFTP.")
+	flag.DurationVar(&c.TFTPTimeout, "tftp-timeout", time.Second*5, "iPXE TFTP server timeout")
+	flag.StringVar(&c.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "IP and port to listen on for serveing iPXE binaries via HTTP.")
+	flag.DurationVar(&c.HTTPTimeout, "ihttp-timeout", time.Second*5, "iPXE HTTP server timeout")
 	flag.Parse()
 
 	l, err := log.Init("github.com/tinkerbell/boots")
@@ -50,7 +66,8 @@ func main() {
 	defer l.Close()
 	mainlog = l.Package("main")
 
-	ctx := context.Background()
+	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
+	defer done()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "boots")
 	defer otelShutdown(ctx)
 
@@ -61,7 +78,6 @@ func main() {
 	installers.Init(l)
 	job.Init(l)
 	syslog.Init(l)
-	tftp.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
 	consumer := env.Get("API_CONSUMER_TOKEN")
@@ -96,14 +112,59 @@ func main() {
 			mainlog.Fatal(errors.Wrap(err, "retry syslog serve"))
 		}
 	}()
-
+	g, ctx := errgroup.WithContext(ctx)
+	ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr)
+	if err != nil {
+		mainlog.Fatal(err)
+	}
 	mainlog.Info("serving tftp")
-	go ServeTFTP()
-	mainlog.Info("serving dhcp")
-	go ServeDHCP()
+	g.Go(func() error {
+		ipportHTTP, err := netaddr.ParseIPPort(c.HTTPAddr)
+		if err != nil {
+			return err
+		}
+		s := ipxe.Server{
+			TFTP: ipxe.ServerSpec{
+				Addr:    ipportTFTP,
+				Timeout: c.TFTPTimeout,
+			},
+			HTTP: ipxe.ServerSpec{
+				Addr:    ipportHTTP,
+				Timeout: c.HTTPTimeout,
+			},
+			Log: defaultLogger(flag.Lookup("log-level").Value.String()),
+		}
 
+		return s.ListenAndServe(ctx)
+	})
+	mainlog.Info("serving dhcp")
+	go ServeDHCP(ipportTFTP.IP().IPAddr().IP, c.HTTPAddr)
 	mainlog.Info("serving http")
-	ServeHTTP(registerInstallers())
+	go ServeHTTP(registerInstallers(), *httpAddr)
+
+	<-ctx.Done()
+	err = g.Wait()
+	if err != nil && !errors.Is(err, context.Canceled) {
+		mainlog.Fatal(err)
+	}
+}
+
+// defaultLogger is zap logr implementation.
+func defaultLogger(level string) logr.Logger {
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	switch level {
+	case "debug":
+		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	default:
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	}
+	zapLogger, err := config.Build()
+	if err != nil {
+		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
+	}
+
+	return zapr.NewLogger(zapLogger)
 }
 
 func registerInstallers() job.Installers {

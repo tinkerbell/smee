@@ -3,7 +3,6 @@ package job
 import (
 	"context"
 	"net"
-	"net/http"
 	"os"
 	"time"
 
@@ -12,20 +11,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
 	tw "github.com/tinkerbell/tink/protos/workflow"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var joblog log.Logger
-var ipxeFilesHandler http.Handler
 var client packet.Client
 var provisionerEngineName string
 
 func Init(l log.Logger) {
 	joblog = l.Package("job")
-	ipxeFilesHandler = http.FileServer(http.FS(ipxe.Files))
 	initRSA()
 }
 
@@ -43,13 +39,15 @@ func SetProvisionerEngineName(engineName string) {
 // Job holds per request data
 type Job struct {
 	log.Logger
-	mac      net.HardwareAddr
-	ip       net.IP
-	start    time.Time
-	mode     Mode
-	dhcp     dhcp.Config
-	hardware packet.Hardware
-	instance *packet.Instance
+	mac            net.HardwareAddr
+	ip             net.IP
+	start          time.Time
+	mode           Mode
+	dhcp           dhcp.Config
+	hardware       packet.Hardware
+	instance       *packet.Instance
+	NextServer     net.IP
+	HttpServerFQDN string
 }
 
 type Installers struct {

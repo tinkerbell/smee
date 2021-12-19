@@ -19,7 +19,6 @@ var (
 
 	SyslogBind = env.Get("SYSLOG_BIND", PublicIPv4.String()+":514")
 	HTTPBind   = env.Get("HTTP_BIND", PublicIPv4.String()+":80")
-	TFTPBind   = env.Get("TFTP_BIND", PublicIPv4.String()+":69")
 	BOOTPBind  = env.Get("BOOTP_BIND", PublicIPv4.String()+":67")
 
 	// Default to Google Public DNS

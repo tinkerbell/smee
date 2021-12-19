@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"net"
 	"runtime"
 
 	"github.com/avast/retry-go"
@@ -27,9 +28,13 @@ func init() {
 }
 
 // ServeDHCP is a useless comment
-func ServeDHCP() {
+func ServeDHCP(nextServer net.IP, httpServerFQDN string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
-	handler := dhcpHandler{pool: workerpool.New(poolSize)}
+	handler := dhcpHandler{
+		pool:           workerpool.New(poolSize),
+		nextServer:     nextServer,
+		httpServerFQDN: httpServerFQDN,
+	}
 	defer handler.pool.Stop()
 
 	err := retry.Do(
@@ -43,7 +48,9 @@ func ServeDHCP() {
 }
 
 type dhcpHandler struct {
-	pool *workerpool.WorkerPool
+	pool           *workerpool.WorkerPool
+	nextServer     net.IP
+	httpServerFQDN string
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
@@ -97,6 +104,8 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 	span.End()
+	j.HttpServerFQDN = d.httpServerFQDN
+	j.NextServer = d.nextServer
 
 	go func() {
 		ctx, span := tracer.Start(ctx, "DHCP Reply")

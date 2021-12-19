@@ -7,7 +7,6 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
@@ -141,13 +140,13 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	var filename string
 	if !isPacket {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
-			filename = "ipxe/snp-hua.efi"
+			filename = "snp.efi"
 		} else if isARM {
-			filename = "ipxe/snp-nolacp.efi"
+			filename = "snp.efi"
 		} else if isUEFI {
-			filename = "ipxe/ipxe.efi"
+			filename = "ipxe.efi"
 		} else {
-			filename = "ipxe/undionly.kpxe"
+			filename = "undionly.kpxe"
 		}
 	} else if !j.isPXEAllowed() {
 		// Always honor allow_pxe.
@@ -174,5 +173,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, conf.PublicIPv4, isHTTPClient, conf.PublicFQDN)
+	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, j.HttpServerFQDN)
 }

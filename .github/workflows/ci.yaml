@@ -29,7 +29,7 @@ jobs:
         with:
           go-version: "1.16.3"
       - name: Generate all files
-        run: nix-shell --run 'make gen && make ipxe'
+        run: nix-shell --run 'make gen'
       - name: goimports
         run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
       - name: go vet
@@ -38,8 +38,6 @@ jobs:
         run: nix-shell --run 'GOROOT= golangci-lint run -v'
       - name: go test
         run: go test -v ./... -gcflags=-l
-      - name: Run iPXE tests
-        run: nix-shell --run 'make test-ipxe'
       - name: go test coverage
         run: go test -coverprofile=coverage.txt ./... -gcflags=-l
       - name: upload codecov

@@ -1,3 +1,0 @@
-#!ipxe
-echo ping github.com
-ping github.com

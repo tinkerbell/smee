@@ -51,9 +51,6 @@ generated_go_files := \
 	
 .PHONY: $(generated_go_files)
 
-# build all the ipxe binaries
-generated_ipxe_files := ipxe/ipxe/ipxe.efi ipxe/ipxe/snp-hua.efi ipxe/ipxe/snp-nolacp.efi ipxe/ipxe/undionly.kpxe ipxe/ipxe/snp-hua.efi
-
 # go generate
 go_generate:
 $(filter %_string.go,$(generated_go_files)): bin/stringer
@@ -64,48 +61,5 @@ $(generated_go_files): bin/goimports
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) ipxe go_generate syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) go_generate syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
-
-include ipxev.mk
-ipxeconfigs := $(wildcard ipxe/ipxe/*.h)
-
-# copy ipxe binaries into location available for go embed
-ipxe/ipxe/ipxe.efi: ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi
-ipxe/ipxe/snp-nolacp.efi: ipxe/ipxe/build/bin-arm64-efi/snp.efi
-ipxe/ipxe/undionly.kpxe: ipxe/ipxe/build/bin/undionly.kpxe
-ipxe/ipxe/ipxe.efi ipxe/ipxe/snp-nolacp.efi ipxe/ipxe/undionly.kpxe:
-	mkdir -p ipxe/ipxe
-	cp $^ $@
-
-ipxe/ipxe/snp-hua.efi:
-	mkdir -p ipxe/ipxe
-# we dont build the snp-hua.efi binary. It's checked into git, so here we just copy it over
-	cp ipxe/bin/snp-hua.efi $@
-
-ipxe/ipxe/build/${ipxev}.tar.gz: ipxev.mk ## Download iPXE source tarball
-	mkdir -p $(@D)
-	curl -fL https://github.com/ipxe/ipxe/archive/${ipxev}.tar.gz > $@
-	echo "${ipxeh}  $@" | sha512sum -c
-
-# given  t=$(patsubst ipxe/ipxe/build/%,%,$@)
-# and   $@=ipxe/ipxe/build/*/*
-# t       =                */*
-OSFLAG:= $(shell go env GOHOSTOS)
-ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin-test/ipxe.lkrn: ipxe/ipxe/build/${ipxev}.tar.gz ipxe/ipxe/build.sh ${ipxeconfigs}
-ifeq (${OSFLAG},darwin)
-	docker run -it --rm -v ${PWD}:/code -w /code nixos/nix nix-shell --command "make -j2 ipxe/ipxe/build/bin-arm64-efi/snp.efi ipxe/ipxe/build/bin-x86_64-efi/ipxe.efi ipxe/ipxe/build/bin/undionly.kpxe ipxe/ipxe/build/bin-test/ipxe.lkrn"
-else
-	+t=$(patsubst ipxe/ipxe/build/%,%,$@)
-	rm -rf $(@D)
-	mkdir -p $(@D)
-	tar -xzf $< -C $(@D)
-	cp ${ipxeconfigs} $(@D)
-	cd $(@D) && ../../build.sh $$t ${ipxev}
-endif
-
-.PHONY: ipxe/tests ipxe/test-%
-ipxe/tests: ipxe/test-sanboot ipxe/test-ping
-# order of dependencies matters here
-ipxe/test-%: ipxe/test/%.expect ipxe/ipxe/build/bin-test/ipxe.lkrn ipxe/test/ ipxe/test/%.pxe
-	expect -f $^ | sed "s|^|test-$*: |"
