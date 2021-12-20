@@ -7,6 +7,7 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
@@ -80,12 +81,12 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			j.With("dhcp", isUEFI, "job", j.IsUEFI()).Info("uefi mismatch, using dhcp")
 		}
 
-		isPacket := ipxe.IsPacketIPXE(req)
-		if isPacket {
+		isTinkerbellIPXE := ipxe.IsTinkerbellIPXE(req)
+		if isTinkerbellIPXE {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isPacket, isARM, isUEFI, dhcp.IsHTTPClient(req))
+		j.setPXEFilename(rep, isTinkerbellIPXE, isARM, isUEFI, dhcp.IsHTTPClient(req))
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -112,7 +113,7 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPClient bool) {
+func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, isHTTPClient bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
@@ -138,7 +139,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	}
 
 	var filename string
-	if !isPacket {
+	if !isTinkerbellIPXE {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "snp.efi"
 		} else if isARM {
@@ -164,6 +165,8 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	} else {
 		isHTTPClient = true
 		filename = "auto.ipxe"
+		j.NextServer = conf.PublicIPv4
+		j.HttpServerFQDN = conf.PublicFQDN
 	}
 
 	if filename == "" {
