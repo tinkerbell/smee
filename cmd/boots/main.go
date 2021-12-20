@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -53,9 +54,11 @@ var (
 func main() {
 	httpAddr := flag.String("http-addr", conf.HTTPBind, "IP and port to listen on for HTTP.")
 	c := icmd.Command{}
-	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0:69", "IP and port to listen on for serveing iPXE binaries via TFTP.")
+	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0:69", "IP and port to listen on for serving iPXE binaries via TFTP.")
+	rTFTP := flag.String("remote-tftp-addr", "", "IP where iPXE binaries are served via TFTP.")
 	flag.DurationVar(&c.TFTPTimeout, "tftp-timeout", time.Second*5, "iPXE TFTP server timeout")
 	flag.StringVar(&c.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "IP and port to listen on for serveing iPXE binaries via HTTP.")
+	rHTTP := flag.String("remote-ihttp-addr", "", "IP and port where iPXE binaries are served via HTTP.")
 	flag.DurationVar(&c.HTTPTimeout, "ihttp-timeout", time.Second*5, "iPXE HTTP server timeout")
 	flag.Parse()
 
@@ -113,37 +116,50 @@ func main() {
 		}
 	}()
 	g, ctx := errgroup.WithContext(ctx)
-	ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr)
+	ipportHTTP, err := netaddr.ParseIPPort(c.HTTPAddr)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	mainlog.Info("serving tftp")
-	g.Go(func() error {
-		ipportHTTP, err := netaddr.ParseIPPort(c.HTTPAddr)
-		if err != nil {
-			return err
-		}
-		s := ipxe.Server{
-			TFTP: ipxe.ServerSpec{
-				Addr:    ipportTFTP,
-				Timeout: c.TFTPTimeout,
-			},
-			HTTP: ipxe.ServerSpec{
-				Addr:    ipportHTTP,
-				Timeout: c.HTTPTimeout,
-			},
-			Log: defaultLogger(flag.Lookup("log-level").Value.String()),
-		}
+	var nextServer net.IP
+	var httpServerFQDN string
+	if *rTFTP == "" && *rHTTP == "" {
+		mainlog.Info("serving ipxe binaries via tftp and http")
+		g.Go(func() error {
+			ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr)
+			if err != nil {
+				return err
+			}
+			s := ipxe.Server{
+				TFTP: ipxe.ServerSpec{
+					Addr:    ipportTFTP,
+					Timeout: c.TFTPTimeout,
+				},
+				HTTP: ipxe.ServerSpec{
+					Addr:    ipportHTTP,
+					Timeout: c.HTTPTimeout,
+				},
+				Log: defaultLogger(flag.Lookup("log-level").Value.String()),
+			}
 
-		return s.ListenAndServe(ctx)
-	})
+			return s.ListenAndServe(ctx)
+		})
+		nextServer = conf.PublicIPv4
+		httpServerFQDN = fmt.Sprintf("%v:%d", conf.PublicIPv4, ipportHTTP.Port())
+	} else {
+		nextServer = net.ParseIP(*rTFTP)
+		httpServerFQDN = *rHTTP
+	}
 	mainlog.Info("serving dhcp")
-	go ServeDHCP(ipportTFTP.IP().IPAddr().IP, c.HTTPAddr)
+	// ServeDHCP takes the next server address (nextServer), for serving the iPXE binaries via TFTP
+	// and IP:Port (httpServerFQDN) for serving the iPXE binaries via HTTP.
+	go ServeDHCP(nextServer, httpServerFQDN)
 	mainlog.Info("serving http")
 	go ServeHTTP(registerInstallers(), *httpAddr)
 
 	<-ctx.Done()
-	err = g.Wait()
+	if *rTFTP == "" && *rHTTP == "" {
+		err = g.Wait()
+	}
 	if err != nil && !errors.Is(err, context.Canceled) {
 		mainlog.Fatal(err)
 	}
