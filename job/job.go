@@ -47,7 +47,7 @@ type Job struct {
 	hardware       packet.Hardware
 	instance       *packet.Instance
 	NextServer     net.IP
-	HttpServerFQDN string
+	HTTPServerFQDN string
 }
 
 type Installers struct {

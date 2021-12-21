@@ -104,7 +104,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 	span.End()
-	j.HttpServerFQDN = d.httpServerFQDN
+	j.HTTPServerFQDN = d.httpServerFQDN
 	j.NextServer = d.nextServer
 
 	go func() {

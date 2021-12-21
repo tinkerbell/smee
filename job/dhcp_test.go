@@ -89,7 +89,7 @@ func TestSetPXEFilename(t *testing.T) {
 				},
 				instance:       instance,
 				NextServer:     conf.PublicIPv4,
-				HttpServerFQDN: conf.PublicFQDN,
+				HTTPServerFQDN: conf.PublicFQDN,
 			}
 			rep := dhcp4.NewPacket(42)
 			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)

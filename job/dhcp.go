@@ -166,7 +166,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 		isHTTPClient = true
 		filename = "auto.ipxe"
 		j.NextServer = conf.PublicIPv4
-		j.HttpServerFQDN = conf.PublicFQDN
+		j.HTTPServerFQDN = conf.PublicFQDN
 	}
 
 	if filename == "" {
@@ -176,5 +176,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, j.HttpServerFQDN)
+	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, j.HTTPServerFQDN)
 }
