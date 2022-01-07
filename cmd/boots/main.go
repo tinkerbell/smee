@@ -52,13 +52,13 @@ var (
 
 func main() {
 	c := ipxedust.Command{}
-	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0:69", "local IP and port to listen on for serving iPXE binaries via TFTP.")
+	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
 	flag.StringVar(&c.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "local IP and port to listen on for serving iPXE binaries via HTTP.")
 	flag.DurationVar(&c.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout")
 	flag.DurationVar(&c.HTTPTimeout, "ihttp-timeout", time.Second*5, "local iPXE HTTP server requests timeout")
 	tftpDisabled := flag.Bool("tftp-disabled", false, "disable serving iPXE binaries via TFTP")
 	ihttpDisabled := flag.Bool("ihttp-disabled", false, "disable serving iPXE binaries via HTTP")
-	rTFTP := flag.String("remote-tftp-addr", "", "remote IP and port where iPXE binaries are served via TFTP.")
+	rTFTP := flag.String("remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP.")
 	rHTTP := flag.String("remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP.")
 	httpAddr := flag.String("http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE files via HTTP.")
 
@@ -130,7 +130,7 @@ func main() {
 
 	if *rTFTP == "" { // use local iPXE binary service for TFTP
 		if !*tftpDisabled {
-			ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr)
+			ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr + ":69")
 			if err != nil {
 				mainlog.Fatal(err)
 			}
@@ -141,8 +141,11 @@ func main() {
 		}
 		nextServer = conf.PublicIPv4
 	} else { // use remote iPXE binary service for TFTP
-		// TODO(jacobweinstock): validate input
-		nextServer = net.ParseIP(*rTFTP)
+		ip := net.ParseIP(*rTFTP)
+		if ip == nil {
+			mainlog.Fatal(errors.New("invalid remote TFTP server IP: " + *rTFTP))
+		}
+		nextServer = ip
 	}
 
 	if *rHTTP == "" { // use local iPXE binary service for HTTP
