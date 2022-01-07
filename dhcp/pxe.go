@@ -137,7 +137,7 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 }
 
 func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpClient bool, httpServerFQDN string) {
-	rep.SetSIAddr(nextServer) // next-server: IP address of the TFTP/HTTP Server.
+	rep.SetSIAddr(nextServer.To4()) // next-server: IP address of the TFTP/HTTP Server.
 
 	if httpClient {
 		filename = "http://" + httpServerFQDN + "/" + filename

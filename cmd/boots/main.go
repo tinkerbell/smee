@@ -124,6 +124,8 @@ func main() {
 	ipxe := &ipxedust.Server{
 		Log:                  defaultLogger(flag.Lookup("log-level").Value.String()),
 		EnableTFTPSinglePort: true,
+		TFTP:                 ipxedust.ServerSpec{Disabled: true},
+		HTTP:                 ipxedust.ServerSpec{Disabled: true},
 	}
 
 	if *rTFTP == "" { // use local iPXE binary service for TFTP
@@ -136,8 +138,6 @@ func main() {
 				Addr:    ipportTFTP,
 				Timeout: c.TFTPTimeout,
 			}
-		} else {
-			ipxe.TFTP.Disabled = true
 		}
 		nextServer = conf.PublicIPv4
 	} else { // use remote iPXE binary service for TFTP
@@ -157,7 +157,6 @@ func main() {
 			}
 			httpServerFQDN = fmt.Sprintf("%v:%d", conf.PublicIPv4, ipportHTTP.Port())
 		} else {
-			ipxe.HTTP.Disabled = true
 			httpServerFQDN = conf.PublicIPv4.String()
 		}
 	} else { // use remote iPXE binary service for HTTP
