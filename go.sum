@@ -139,6 +139,7 @@ github.com/go-logr/logr v1.2.0/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbV
 github.com/go-logr/logr v1.2.1/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.2.2 h1:ahHml/yUpnlb96Rp8HCvtYVPY8ZYpxq3g7UYchIYwbs=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
+github.com/go-logr/stdr v1.2.0 h1:j4LrlVXgrbIWO83mmQUnK0Hi+YnbD+vzrE1z/EphbFE=
 github.com/go-logr/stdr v1.2.0/go.mod h1:YkVgnZu1ZjjL7xTxrfm/LLZBfkhTqSR1ydtm6jTKKwI=
 github.com/go-logr/zapr v1.2.2 h1:5YNlIL6oZLydaV4dOFjL8YpgXF/tPeTbnpatnu3cq6o=
 github.com/go-logr/zapr v1.2.2/go.mod h1:eIauM6P8qSvTw5o2ez6UEAfGjQKrxQTl5EoK+Qa2oG4=
@@ -501,8 +502,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tinkerbell/boots-ipxe v0.0.0-20211218045908-e9e36bd85356 h1:diVgz1oJIi4vZgE3dCnZANz/MDyGEMeVpvyCxxTyr0o=
-github.com/tinkerbell/boots-ipxe v0.0.0-20211218045908-e9e36bd85356/go.mod h1:ItLo5WAM27njURkuNWImzl+cp08AXQKFNMxVPaCiV74=
+github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd h1:QnZU7MqsrPjqaE0Zp9qrVwqghomFeZ5AIDlWlf6R1sI=
+github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfcAtnAFrwtJTNXGu99Q3EGhQJCJPZQ=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303/go.mod h1:b/3pqi4uYBWdTpatyUbL48rn1kUQ0dibH8N6MBAVn/g=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
