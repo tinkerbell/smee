@@ -16,6 +16,8 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
+	"github.com/peterbourgon/ff/v3"
+	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
@@ -50,19 +52,52 @@ var (
 	StartTime = time.Now()
 )
 
-func main() {
-	c := ipxedust.Command{}
-	flag.StringVar(&c.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
-	flag.StringVar(&c.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "local IP and port to listen on for serving iPXE binaries via HTTP.")
-	flag.DurationVar(&c.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout")
-	flag.DurationVar(&c.HTTPTimeout, "ihttp-timeout", time.Second*5, "local iPXE HTTP server requests timeout")
-	tftpDisabled := flag.Bool("tftp-disabled", false, "disable serving iPXE binaries via TFTP")
-	ihttpDisabled := flag.Bool("ihttp-disabled", false, "disable serving iPXE binaries via HTTP")
-	rTFTP := flag.String("remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP.")
-	rHTTP := flag.String("remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP.")
-	httpAddr := flag.String("http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE files via HTTP.")
+const name = "boots"
 
-	flag.Parse()
+type config struct {
+	// ipxe holds the config for serving ipxe binaries
+	ipxe ipxedust.Command
+	// iTFTPDisabled determines if local iPXE binaries served via TFTP are disabled
+	iTFTPDisabled bool
+	// iHTTPDisabled determines if local iPXE binaries served via TFTP are disabled
+	iHTTPDisabled bool
+	// remoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
+	remoteTFTPAddr string
+	// remoteTFTPPort is the address of the remote HTTP server serving iPXE binaries
+	remoteiHTTPAddr string
+	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets
+	httpAddr string
+	// dhcpAddr is the local address for the DHCP server
+	dhcpAddr string
+	// syslogAddr is the local address for the syslog server
+	syslogAddr string
+	// loglevel is the log level for boots
+	logLevel string
+}
+
+func main() {
+	cfg := config{}
+	fs := flag.NewFlagSet(name, flag.ExitOnError)
+	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
+	fs.StringVar(&cfg.ipxe.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "local IP and port to listen on for serving iPXE binaries via HTTP.")
+	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout")
+	fs.DurationVar(&cfg.ipxe.HTTPTimeout, "ihttp-timeout", time.Second*5, "local iPXE HTTP server requests timeout")
+	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP")
+	fs.BoolVar(&cfg.iHTTPDisabled, "ihttp-disabled", false, "disable serving iPXE binaries via HTTP")
+	fs.StringVar(&cfg.remoteTFTPAddr, "remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP.")
+	fs.StringVar(&cfg.remoteiHTTPAddr, "remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP.")
+	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE files via HTTP.")
+	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level")
+	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
+	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
+
+	cmd := &ffcli.Command{
+		Name:       name,
+		ShortUsage: "Run Boots server for provisioning",
+		FlagSet:    fs,
+		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
+	}
+	cmd.Parse(os.Args[1:])
 
 	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
@@ -73,7 +108,7 @@ func main() {
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
 	defer done()
-	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "boots")
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
 	defer otelShutdown(ctx)
 
 	metrics.Init(l)
@@ -105,10 +140,10 @@ func main() {
 	job.SetProvisionerEngineName(provisionerEngineName)
 
 	go func() {
-		mainlog.Info("serving syslog")
+		mainlog.With("addr", cfg.syslogAddr).Info("serving syslog")
 		err = retry.Do(
 			func() error {
-				_, err := syslog.StartReceiver(1)
+				_, err := syslog.StartReceiver(cfg.syslogAddr, 1)
 
 				return err
 			},
@@ -122,59 +157,59 @@ func main() {
 	var httpServerFQDN string
 	g, ctx := errgroup.WithContext(ctx)
 	ipxe := &ipxedust.Server{
-		Log:                  defaultLogger(flag.Lookup("log-level").Value.String()),
+		Log:                  defaultLogger(cfg.logLevel),
 		EnableTFTPSinglePort: true,
 		TFTP:                 ipxedust.ServerSpec{Disabled: true},
 		HTTP:                 ipxedust.ServerSpec{Disabled: true},
 	}
 
-	if *rTFTP == "" { // use local iPXE binary service for TFTP
-		if !*tftpDisabled {
-			ipportTFTP, err := netaddr.ParseIPPort(c.TFTPAddr + ":69")
+	if cfg.remoteTFTPAddr == "" { // use local iPXE binary service for TFTP
+		if !cfg.iTFTPDisabled {
+			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr + ":69")
 			if err != nil {
 				mainlog.Fatal(err)
 			}
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
-				Timeout: c.TFTPTimeout,
+				Timeout: cfg.ipxe.TFTPTimeout,
 			}
 		}
 		nextServer = conf.PublicIPv4
 	} else { // use remote iPXE binary service for TFTP
-		ip := net.ParseIP(*rTFTP)
+		ip := net.ParseIP(cfg.remoteTFTPAddr)
 		if ip == nil {
-			mainlog.Fatal(errors.New("invalid remote TFTP server IP: " + *rTFTP))
+			mainlog.Fatal(errors.New("invalid remote TFTP server IP: " + cfg.remoteTFTPAddr))
 		}
 		nextServer = ip
+		mainlog.With("addr", nextServer.String()).Info("serving iPXE binaries from remote TFTP server")
 	}
 
-	if *rHTTP == "" { // use local iPXE binary service for HTTP
-		if !*ihttpDisabled {
-			ipportHTTP, err := netaddr.ParseIPPort(c.HTTPAddr)
+	if cfg.remoteiHTTPAddr == "" { // use local iPXE binary service for HTTP
+		if !cfg.iHTTPDisabled {
+			ipportHTTP, err := netaddr.ParseIPPort(cfg.ipxe.HTTPAddr)
 			if err != nil {
 				mainlog.Fatal(err)
 			}
 			ipxe.HTTP = ipxedust.ServerSpec{
 				Addr:    ipportHTTP,
-				Timeout: c.HTTPTimeout,
+				Timeout: cfg.ipxe.HTTPTimeout,
 			}
 			httpServerFQDN = fmt.Sprintf("%v:%d", conf.PublicIPv4, ipportHTTP.Port())
 		} else {
 			httpServerFQDN = conf.PublicIPv4.String()
 		}
 	} else { // use remote iPXE binary service for HTTP
-		httpServerFQDN = *rHTTP
+		httpServerFQDN = cfg.remoteiHTTPAddr
+		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from remote HTTP server")
 	}
 	g.Go(func() error {
 		return ipxe.ListenAndServe(ctx)
 	})
 
-	mainlog.Info("serving dhcp")
-	// ServeDHCP takes the next server address (nextServer), for serving the iPXE binaries via TFTP
-	// and IP:Port (httpServerFQDN) for serving the iPXE binaries via HTTP.
-	go ServeDHCP(nextServer, httpServerFQDN)
-	mainlog.Info("serving http")
-	go ServeHTTP(registerInstallers(), *httpAddr)
+	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
+	go ServeDHCP(cfg.dhcpAddr, nextServer, httpServerFQDN)
+	mainlog.With("addr", cfg.httpAddr).Info("serving http")
+	go ServeHTTP(registerInstallers(), cfg.httpAddr)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")

@@ -1,20 +1,12 @@
 package syslog
 
 import (
-	"flag"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/conf"
 )
-
-var syslogAddr = conf.SyslogBind
-
-func init() {
-	flag.StringVar(&syslogAddr, "syslog-addr", syslogAddr, "IP and port to listen on for syslog messages.")
-}
 
 var syslogMessagePool = sync.Pool{
 	New: func() interface{} { return new(message) },
@@ -29,12 +21,12 @@ type Receiver struct {
 	err  error
 }
 
-func StartReceiver(parsers int) (*Receiver, error) {
+func StartReceiver(laddr string, parsers int) (*Receiver, error) {
 	if parsers < 1 {
 		parsers = 1
 	}
 
-	addr, err := net.ResolveUDPAddr("udp4", syslogAddr)
+	addr, err := net.ResolveUDPAddr("udp4", laddr)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve syslog udp listen address")
 	}

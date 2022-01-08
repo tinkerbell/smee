@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"net"
 	"runtime"
 
@@ -21,14 +20,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var listenAddr = conf.BOOTPBind
-
-func init() {
-	flag.StringVar(&listenAddr, "dhcp-addr", listenAddr, "IP and port to listen on for DHCP.")
-}
-
-// ServeDHCP is a useless comment
-func ServeDHCP(nextServer net.IP, httpServerFQDN string) {
+// ServeDHCP starts the DHCP server.
+// It takes the next server address (nextServer) for serving iPXE binaries via TFTP
+// and an IP:Port (httpServerFQDN) for serving iPXE binaries via HTTP.
+func ServeDHCP(addr string, nextServer net.IP, httpServerFQDN string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
 	handler := dhcpHandler{
 		pool:           workerpool.New(poolSize),
@@ -39,7 +34,7 @@ func ServeDHCP(nextServer net.IP, httpServerFQDN string) {
 
 	err := retry.Do(
 		func() error {
-			return errors.Wrap(dhcp4.ListenAndServe(listenAddr, handler), "serving dhcp")
+			return errors.Wrap(dhcp4.ListenAndServe(addr, handler), "serving dhcp")
 		},
 	)
 	if err != nil {

@@ -18,6 +18,7 @@ require (
 	github.com/packethost/cacher v0.0.0-20200825140532-0b62e6726807
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
 	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0
+	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.6.0
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
