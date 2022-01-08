@@ -75,9 +75,7 @@ type config struct {
 	logLevel string
 }
 
-func main() {
-	cfg := config{}
-	fs := flag.NewFlagSet(name, flag.ExitOnError)
+func parser(cfg *config, fs *flag.FlagSet, args []string) error {
 	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
 	fs.StringVar(&cfg.ipxe.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "local IP and port to listen on for serving iPXE binaries via HTTP.")
 	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout")
@@ -97,7 +95,13 @@ func main() {
 		FlagSet:    fs,
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
 	}
-	cmd.Parse(os.Args[1:])
+
+	return cmd.Parse(args)
+}
+
+func main() {
+	cfg := &config{}
+	parser(cfg, flag.NewFlagSet(name, flag.ExitOnError), os.Args[1:])
 
 	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
