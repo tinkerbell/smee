@@ -61,10 +61,13 @@ type jobHandler struct {
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func ServeHTTP(i job.Installers, addr string) {
+func ServeHTTP(i job.Installers, addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
 	s := jobHandler{i: i}
 	mux.Handle(otelFuncWrapper("/", s.serveJobFile))
+	if ipxeHandler != nil {
+		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
+	}
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
 	mux.HandleFunc("/_packet/pprof/", pprof.Index)

@@ -5,9 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"text/tabwriter"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -28,6 +31,7 @@ import (
 	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/ipxedust"
+	"github.com/tinkerbell/ipxedust/ihttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
@@ -73,30 +77,6 @@ type config struct {
 	syslogAddr string
 	// loglevel is the log level for boots
 	logLevel string
-}
-
-func parser(cfg *config, fs *flag.FlagSet, args []string) error {
-	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
-	fs.StringVar(&cfg.ipxe.HTTPAddr, "ihttp-addr", "0.0.0.0:8080", "local IP and port to listen on for serving iPXE binaries via HTTP.")
-	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout")
-	fs.DurationVar(&cfg.ipxe.HTTPTimeout, "ihttp-timeout", time.Second*5, "local iPXE HTTP server requests timeout")
-	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP")
-	fs.BoolVar(&cfg.iHTTPDisabled, "ihttp-disabled", false, "disable serving iPXE binaries via HTTP")
-	fs.StringVar(&cfg.remoteTFTPAddr, "remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP.")
-	fs.StringVar(&cfg.remoteiHTTPAddr, "remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP.")
-	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE files via HTTP.")
-	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level")
-	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
-	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
-
-	cmd := &ffcli.Command{
-		Name:       name,
-		ShortUsage: "Run Boots server for provisioning",
-		FlagSet:    fs,
-		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
-	}
-
-	return cmd.Parse(args)
 }
 
 func main() {
@@ -169,7 +149,13 @@ func main() {
 
 	if cfg.remoteTFTPAddr == "" { // use local iPXE binary service for TFTP
 		if !cfg.iTFTPDisabled {
-			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr + ":69")
+			ip := cfg.ipxe.TFTPAddr
+			if strings.Contains(cfg.ipxe.TFTPAddr, ":") {
+				ip = strings.Split(cfg.ipxe.TFTPAddr, ":")[0]
+				port := strings.Split(cfg.ipxe.TFTPAddr, ":")[1]
+				mainlog.With("providedPort", port).Info("warning: only port 69 is supported for TFTP")
+			}
+			ipportTFTP, err := netaddr.ParseIPPort(ip + ":69")
 			if err != nil {
 				mainlog.Fatal(err)
 			}
@@ -188,20 +174,14 @@ func main() {
 		mainlog.With("addr", nextServer.String()).Info("serving iPXE binaries from remote TFTP server")
 	}
 
+	var ipxeHandler func(http.ResponseWriter, *http.Request)
+	var ipxePattern string
 	if cfg.remoteiHTTPAddr == "" { // use local iPXE binary service for HTTP
 		if !cfg.iHTTPDisabled {
-			ipportHTTP, err := netaddr.ParseIPPort(cfg.ipxe.HTTPAddr)
-			if err != nil {
-				mainlog.Fatal(err)
-			}
-			ipxe.HTTP = ipxedust.ServerSpec{
-				Addr:    ipportHTTP,
-				Timeout: cfg.ipxe.HTTPTimeout,
-			}
-			httpServerFQDN = fmt.Sprintf("%v:%d", conf.PublicIPv4, ipportHTTP.Port())
-		} else {
-			httpServerFQDN = conf.PublicIPv4.String()
+			ipxeHandler = ihttp.Handler{Log: defaultLogger(cfg.logLevel)}.Handle
 		}
+		ipxePattern = "/ipxe/"
+		httpServerFQDN = cfg.httpAddr + ipxePattern
 	} else { // use remote iPXE binary service for HTTP
 		httpServerFQDN = cfg.remoteiHTTPAddr
 		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from remote HTTP server")
@@ -213,7 +193,7 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go ServeDHCP(cfg.dhcpAddr, nextServer, httpServerFQDN)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go ServeHTTP(registerInstallers(), cfg.httpAddr)
+	go ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -239,6 +219,81 @@ func defaultLogger(level string) logr.Logger {
 	}
 
 	return zapr.NewLogger(zapLogger)
+}
+
+// customUsageFunc is a custom UsageFunc used for all commands
+func customUsageFunc(c *ffcli.Command) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "USAGE\n")
+	if c.ShortUsage != "" {
+		fmt.Fprintf(&b, "  %s\n", c.ShortUsage)
+	} else {
+		fmt.Fprintf(&b, "  %s\n", c.Name)
+	}
+	fmt.Fprintf(&b, "\n")
+
+	if c.LongHelp != "" {
+		fmt.Fprintf(&b, "%s\n\n", c.LongHelp)
+	}
+
+	if len(c.Subcommands) > 0 {
+		fmt.Fprintf(&b, "SUBCOMMANDS\n")
+		tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
+		for _, subcommand := range c.Subcommands {
+			fmt.Fprintf(tw, "  %s\t%s\n", subcommand.Name, subcommand.ShortHelp)
+		}
+		tw.Flush()
+		fmt.Fprintf(&b, "\n")
+	}
+
+	if countFlags(c.FlagSet) > 0 {
+		fmt.Fprintf(&b, "FLAGS\n")
+		tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
+		c.FlagSet.VisitAll(func(f *flag.Flag) {
+			def := f.DefValue
+			if def != "" {
+				def = fmt.Sprintf("(default %q)", def)
+			}
+
+			fmt.Fprintf(tw, "  -%s\t%s %s\n", f.Name, f.Usage, def)
+		})
+		tw.Flush()
+		fmt.Fprintf(&b, "\n")
+	}
+
+	return strings.TrimSpace(b.String()) + "\n"
+}
+
+func countFlags(fs *flag.FlagSet) (n int) {
+	fs.VisitAll(func(*flag.Flag) { n++ })
+
+	return n
+}
+
+func parser(cfg *config, fs *flag.FlagSet, args []string) error {
+	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
+	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
+	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP.")
+	fs.BoolVar(&cfg.iHTTPDisabled, "ihttp-disabled", false, "disable serving iPXE binaries via HTTP.")
+	fs.StringVar(&cfg.remoteTFTPAddr, "remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.")
+	fs.StringVar(&cfg.remoteiHTTPAddr, "remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.")
+	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
+	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
+	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
+	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
+
+	cmd := &ffcli.Command{
+		Name:       name,
+		ShortUsage: "Run Boots server for provisioning",
+		FlagSet:    fs,
+		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
+		UsageFunc: func(c *ffcli.Command) string {
+			return customUsageFunc(c)
+		},
+	}
+
+	return cmd.Parse(args)
 }
 
 func registerInstallers() job.Installers {

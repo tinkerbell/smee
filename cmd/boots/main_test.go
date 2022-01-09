@@ -15,8 +15,6 @@ func TestParser(t *testing.T) {
 		ipxe: ipxedust.Command{
 			TFTPAddr:             "0.0.0.0",
 			TFTPTimeout:          time.Second * 5,
-			HTTPAddr:             "0.0.0.0:8080",
-			HTTPTimeout:          time.Second * 5,
 			EnableTFTPSinglePort: false,
 		},
 		iTFTPDisabled:   false,
