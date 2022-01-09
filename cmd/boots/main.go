@@ -81,7 +81,8 @@ type config struct {
 
 func main() {
 	cfg := &config{}
-	parser(cfg, flag.NewFlagSet(name, flag.ExitOnError), os.Args[1:])
+	cli := parser(cfg, flag.NewFlagSet(name, flag.ExitOnError))
+	cli.Parse(os.Args[1:])
 
 	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
@@ -252,12 +253,13 @@ func customUsageFunc(c *ffcli.Command) string {
 		fmt.Fprintf(&b, "FLAGS\n")
 		tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
 		c.FlagSet.VisitAll(func(f *flag.Flag) {
-			def := f.DefValue
-			if def != "" {
-				def = fmt.Sprintf("(default %q)", def)
+			format := "  -%s\t%s\n"
+			values := []interface{}{f.Name, f.Usage}
+			if def := f.DefValue; def != "" {
+				format = "  -%s\t%s (default %q)\n"
+				values = []interface{}{f.Name, f.Usage, def}
 			}
-
-			fmt.Fprintf(tw, "  -%s\t%s %s\n", f.Name, f.Usage, def)
+			fmt.Fprintf(tw, format, values...)
 		})
 		tw.Flush()
 		fmt.Fprintf(&b, "\n")
@@ -272,7 +274,7 @@ func countFlags(fs *flag.FlagSet) (n int) {
 	return n
 }
 
-func parser(cfg *config, fs *flag.FlagSet, args []string) error {
+func parser(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
 	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
 	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP.")
@@ -284,7 +286,7 @@ func parser(cfg *config, fs *flag.FlagSet, args []string) error {
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
 
-	cmd := &ffcli.Command{
+	return &ffcli.Command{
 		Name:       name,
 		ShortUsage: "Run Boots server for provisioning",
 		FlagSet:    fs,
@@ -293,8 +295,6 @@ func parser(cfg *config, fs *flag.FlagSet, args []string) error {
 			return customUsageFunc(c)
 		},
 	}
-
-	return cmd.Parse(args)
 }
 
 func registerInstallers() job.Installers {

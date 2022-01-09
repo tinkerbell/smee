@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -36,8 +38,53 @@ func TestParser(t *testing.T) {
 		"-dhcp-addr", "0.0.0.0:67",
 		"-syslog-addr", "0.0.0.0:514",
 	}
-	parser(got, fs, args)
+	cli := parser(got, fs)
+	cli.Parse(args)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreFields(ipxedust.Command{}, "Log"), cmp.AllowUnexported(config{})); diff != "" {
+		t.Fatal(diff)
+	}
+}
+
+func TestCustomUsageFunc(t *testing.T) {
+	var defaultIP net.IP
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, addr := range addrs {
+		ip, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		v4 := ip.IP.To4()
+		if v4 == nil || !v4.IsGlobalUnicast() {
+			continue
+		}
+		defaultIP = v4
+
+		break
+	}
+
+	want := fmt.Sprintf(`USAGE
+  Run Boots server for provisioning
+
+FLAGS
+  -dhcp-addr          IP and port to listen on for DHCP. (default "%v:67")
+  -http-addr          local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "%[1]v:80")
+  -ihttp-disabled     disable serving iPXE binaries via HTTP. (default "false")
+  -log-level          log level. (default "info")
+  -remote-ihttp-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
+  -remote-tftp-addr   remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
+  -syslog-addr        IP and port to listen on for syslog messages. (default "%[1]v:514")
+  -tftp-addr          local IP to listen on for serving iPXE binaries via TFTP. (default "0.0.0.0")
+  -tftp-disabled      disable serving iPXE binaries via TFTP. (default "false")
+  -tftp-timeout       local iPXE TFTP server requests timeout. (default "5s")
+`, defaultIP)
+	c := &config{}
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	cli := parser(c, fs)
+	got := customUsageFunc(cli)
+	if diff := cmp.Diff(got, want); diff != "" {
 		t.Fatal(diff)
 	}
 }
