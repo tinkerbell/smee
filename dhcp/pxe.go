@@ -3,6 +3,7 @@ package dhcp
 import (
 	"context"
 	"net"
+	"path"
 	"strings"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
@@ -140,7 +141,8 @@ func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpClie
 	rep.SetSIAddr(nextServer.To4()) // next-server: IP address of the TFTP/HTTP Server.
 
 	if httpClient {
-		filename = "http://" + httpServerFQDN + "/" + filename
+		urlPath := path.Join(httpServerFQDN, filename)
+		filename = "http://" + urlPath
 		rep.SetString(dhcp4.OptionClassID, "HTTPClient")
 	}
 
