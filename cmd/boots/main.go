@@ -150,10 +150,11 @@ func main() {
 	if cfg.remoteTFTPAddr == "" { // use local iPXE binary service for TFTP
 		if !cfg.iTFTPDisabled {
 			ip := cfg.ipxe.TFTPAddr
-			if strings.Contains(cfg.ipxe.TFTPAddr, ":") {
-				ip = strings.Split(cfg.ipxe.TFTPAddr, ":")[0]
-				port := strings.Split(cfg.ipxe.TFTPAddr, ":")[1]
-				mainlog.With("providedPort", port).Info("warning: only port 69 is supported for TFTP")
+			if strings.Contains(ip, ":") {
+				ip = strings.Split(ip, ":")[0]
+				if port := strings.Split(cfg.ipxe.TFTPAddr, ":")[1]; port != "69" {
+					mainlog.With("providedPort", port).Info("warning: only port 69 is supported for TFTP")
+				}
 			}
 			ipportTFTP, err := netaddr.ParseIPPort(ip + ":69")
 			if err != nil {
