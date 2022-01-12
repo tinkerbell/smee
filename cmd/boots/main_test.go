@@ -38,7 +38,7 @@ func TestParser(t *testing.T) {
 		"-dhcp-addr", "0.0.0.0:67",
 		"-syslog-addr", "0.0.0.0:514",
 	}
-	cli := parser(got, fs)
+	cli := newCLI(got, fs)
 	cli.Parse(args)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreFields(ipxedust.Command{}, "Log"), cmp.AllowUnexported(config{})); diff != "" {
 		t.Fatal(diff)
@@ -82,7 +82,7 @@ FLAGS
 `, defaultIP)
 	c := &config{}
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-	cli := parser(c, fs)
+	cli := newCLI(c, fs)
 	got := customUsageFunc(cli)
 	if diff := cmp.Diff(got, want); diff != "" {
 		t.Fatal(diff)

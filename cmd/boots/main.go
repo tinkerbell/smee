@@ -81,7 +81,7 @@ type config struct {
 
 func main() {
 	cfg := &config{}
-	cli := parser(cfg, flag.NewFlagSet(name, flag.ExitOnError))
+	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
 	cli.Parse(os.Args[1:])
 
 	l, err := log.Init("github.com/tinkerbell/boots")
@@ -274,7 +274,7 @@ func countFlags(fs *flag.FlagSet) (n int) {
 	return n
 }
 
-func parser(cfg *config, fs *flag.FlagSet) *ffcli.Command {
+func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
 	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
 	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP.")
