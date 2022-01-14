@@ -15,35 +15,38 @@ As boots runs a DHCP server, it's often asked if it is safe to run without any n
 
 ### Local Setup
 
-First, you need to make sure you have [git-lfs](https://github.com/git-lfs/git-lfs/wiki/Installation) installed:
-
-```
-# install "git-lfs" package for your OS. On Ubuntu, for instance:
-# curl https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-# apt install git-lfs
-
-# then run these two commands:
-git lfs install
-git lfs pull
-```
-
 Running the Tests
 
-```
-# make the files
-make all
+```bash
 # run the tests
-go test
+make test
 ```
 
 Build/Run Boots
 
-```
+```bash
+# make the binary
+make boots
 # run boots
-./boots
+./cmd/boots/boots -h
+
+USAGE
+  Run Boots server for provisioning
+
+FLAGS
+  -dhcp-addr          IP and port to listen on for DHCP. (default "0.0.0.0:67")
+  -http-addr          local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "0.0.0.0:80")
+  -ihttp-disabled     disable serving iPXE binaries via HTTP. (default "false")
+  -log-level          log level. (default "info")
+  -remote-ihttp-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
+  -remote-tftp-addr   remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
+  -syslog-addr        IP and port to listen on for syslog messages. (default "0.0.0.0:514")
+  -tftp-addr          local IP to listen on for serving iPXE binaries via TFTP. (default "0.0.0.0")
+  -tftp-disabled      disable serving iPXE binaries via TFTP. (default "false")
+  -tftp-timeout       local iPXE TFTP server requests timeout. (default "5s")
 ```
 
-You can use NixOS shell, which will have the Git-LFS, Go and others
+You can use NixOS shell, which will have Go and others
 
 `nix-shell`
 
