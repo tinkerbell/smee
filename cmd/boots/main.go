@@ -150,16 +150,12 @@ func main() {
 
 	if cfg.remoteTFTPAddr == "" { // use local iPXE binary service for TFTP
 		if !cfg.iTFTPDisabled {
-			ip := cfg.ipxe.TFTPAddr
-			if strings.Contains(ip, ":") {
-				ip = strings.Split(ip, ":")[0]
-				if port := strings.Split(cfg.ipxe.TFTPAddr, ":")[1]; port != "69" {
-					mainlog.With("providedPort", port).Info("warning: only port 69 is supported for TFTP")
-				}
-			}
-			ipportTFTP, err := netaddr.ParseIPPort(ip + ":69")
+			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
-				mainlog.Fatal(err)
+				mainlog.Fatal(fmt.Errorf("%w: -tftp-addr must be an ip:port", err))
+			}
+			if ipportTFTP.Port() != 69 {
+				mainlog.With("providedPort", ipportTFTP.Port()).Fatal(fmt.Errorf("port for -tftp-addr must be 69"))
 			}
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
@@ -275,7 +271,7 @@ func countFlags(fs *flag.FlagSet) (n int) {
 }
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
-	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0", "local IP to listen on for serving iPXE binaries via TFTP.")
+	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0:69", "local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).")
 	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
 	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP.")
 	fs.BoolVar(&cfg.iHTTPDisabled, "ihttp-disabled", false, "disable serving iPXE binaries via HTTP.")

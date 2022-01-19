@@ -15,7 +15,7 @@ import (
 func TestParser(t *testing.T) {
 	want := &config{
 		ipxe: ipxedust.Command{
-			TFTPAddr:             "0.0.0.0",
+			TFTPAddr:             "0.0.0.0:69",
 			TFTPTimeout:          time.Second * 5,
 			EnableTFTPSinglePort: false,
 		},
@@ -40,7 +40,7 @@ func TestParser(t *testing.T) {
 	}
 	cli := newCLI(got, fs)
 	cli.Parse(args)
-	if diff := cmp.Diff(got, want, cmpopts.IgnoreFields(ipxedust.Command{}, "Log"), cmp.AllowUnexported(config{})); diff != "" {
+	if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(ipxedust.Command{}, "Log"), cmp.AllowUnexported(config{})); diff != "" {
 		t.Fatal(diff)
 	}
 }
@@ -76,7 +76,7 @@ FLAGS
   -remote-ihttp-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
   -remote-tftp-addr   remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
   -syslog-addr        IP and port to listen on for syslog messages. (default "%[1]v:514")
-  -tftp-addr          local IP to listen on for serving iPXE binaries via TFTP. (default "0.0.0.0")
+  -tftp-addr          local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
   -tftp-disabled      disable serving iPXE binaries via TFTP. (default "false")
   -tftp-timeout       local iPXE TFTP server requests timeout. (default "5s")
 `, defaultIP)

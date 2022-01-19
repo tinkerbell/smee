@@ -41,7 +41,7 @@ FLAGS
   -remote-ihttp-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
   -remote-tftp-addr   remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
   -syslog-addr        IP and port to listen on for syslog messages. (default "0.0.0.0:514")
-  -tftp-addr          local IP to listen on for serving iPXE binaries via TFTP. (default "0.0.0.0")
+  -tftp-addr          local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
   -tftp-disabled      disable serving iPXE binaries via TFTP. (default "false")
   -tftp-timeout       local iPXE TFTP server requests timeout. (default "5s")
 ```
