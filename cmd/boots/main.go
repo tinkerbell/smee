@@ -84,6 +84,8 @@ func main() {
 	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
 	cli.Parse(os.Args[1:])
 
+	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
+	flag.Set("log-level", cfg.logLevel)
 	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
 		panic(nil)
@@ -155,10 +157,10 @@ func main() {
 		if !cfg.iTFTPDisabled {
 			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
-				mainlog.Fatal(fmt.Errorf("%w: -tftp-addr must be an ip:port", err))
+				mainlog.Fatal(fmt.Errorf("%w: tftp addr must be an ip:port", err))
 			}
 			if ipportTFTP.Port() != 69 {
-				mainlog.With("providedPort", ipportTFTP.Port()).Fatal(fmt.Errorf("port for -tftp-addr must be 69"))
+				mainlog.With("providedPort", ipportTFTP.Port()).Fatal(fmt.Errorf("port for tftp addr must be 69"))
 			}
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
@@ -169,7 +171,7 @@ func main() {
 	} else { // use remote iPXE binary service for TFTP
 		ip := net.ParseIP(cfg.remoteTFTPAddr)
 		if ip == nil {
-			mainlog.Fatal(errors.New("invalid remote TFTP server IP: " + cfg.remoteTFTPAddr))
+			mainlog.Fatal(fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.remoteTFTPAddr))
 		}
 		nextServer = ip
 		mainlog.With("addr", nextServer.String()).Info("serving iPXE binaries from remote TFTP server")
