@@ -141,8 +141,11 @@ func main() {
 	var nextServer net.IP
 	var httpServerFQDN string
 	g, ctx := errgroup.WithContext(ctx)
+	lg := defaultLogger(cfg.logLevel)
+	lg = lg.WithValues("service", "github.com/tinkerbell/boots")
+	lg = lg.WithName("github.com/tinkerbell/ipxedust")
 	ipxe := &ipxedust.Server{
-		Log:                  defaultLogger(cfg.logLevel),
+		Log:                  lg,
 		EnableTFTPSinglePort: true,
 		TFTP:                 ipxedust.ServerSpec{Disabled: true},
 		HTTP:                 ipxedust.ServerSpec{Disabled: true},
@@ -176,7 +179,7 @@ func main() {
 	var ipxePattern string
 	if cfg.remoteiHTTPAddr == "" { // use local iPXE binary service for HTTP
 		if !cfg.iHTTPDisabled {
-			ipxeHandler = ihttp.Handler{Log: defaultLogger(cfg.logLevel)}.Handle
+			ipxeHandler = ihttp.Handler{Log: lg}.Handle
 		}
 		ipxePattern = "/ipxe/"
 		httpServerFQDN = cfg.httpAddr + ipxePattern
