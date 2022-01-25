@@ -37,7 +37,7 @@ export PATH
 endif
 
 # parses tools.go and returns the tool name prefixed with bin/
-toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go)))
+toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
 
 # installs cli tools defined in tools.go
 $(toolsBins): go.sum tools.go

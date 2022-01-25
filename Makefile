@@ -6,7 +6,7 @@ boots: cmd/boots/boots ## Compile boots for host OS and Architecture
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 	
-gen: $(generated_files) ## Generate go generate'd files
+gen: $(generated_go_files) ## Generate go generate'd files
 
 IMAGE_TAG ?= boots:latest
 image: cmd/boots/boots-linux-amd64 ## Build docker image
