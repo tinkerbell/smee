@@ -4,8 +4,25 @@ on:
   pull_request:
 
 jobs:
+  get-runner:
+    runs-on: [ubuntu-latest]
+    outputs:
+      runner: ${{ steps.get-runner.outputs.runner }}
+    steps:
+      - name: Get Runner
+        id: get-runner
+        run: |
+          if [[ "${{ github.event.repository.owner.login }}" == "tinkerbell" ]]; then
+            echo "using self-hosted"
+            echo ::set-output name=runner::self-hosted,X64
+          else
+            echo "using github-hosted"
+            echo ::set-output name=runner::ubuntu-latest
+          fi
+
   validation:
-    runs-on: [self-hosted, X64]
+    needs: [get-runner]
+    runs-on: ${{ needs.get-runner.outputs.runner }}
     env:
       CGO_ENABLED: 0
     steps:
