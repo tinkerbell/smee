@@ -14,8 +14,6 @@ jobs:
           echo "MAKEFLAGS=-j$(nproc)" | tee $GITHUB_ENV
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          lfs: true
       - name: Install nix
         uses: cachix/install-nix-action@018abf956a0a15673dae4932ae26f0f071ac0944
         with:
