@@ -37,5 +37,7 @@ golangci-lint: ## Run golangci-lint
 
 validate-local: vet coverage goimports golangci-lint ## Runs all the same validations and tests that run in CI
 
+tools: $(toolsBins) ## Builds go based tools out of tools.go
+
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120

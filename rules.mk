@@ -40,8 +40,9 @@ endif
 toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
 
 # installs cli tools defined in tools.go
+$(toolsBins): CMD=$(shell awk -F'"' '/$(@F)/{print $$2}' tools.go | tr -d '\n')
 $(toolsBins): go.sum tools.go
-	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
+	go install $(CMD)
 
 generated_go_files := \
 	packet/mock_cacher/cacher_mock.go \
