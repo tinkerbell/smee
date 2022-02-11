@@ -42,13 +42,13 @@ toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"'
 # installs cli tools defined in tools.go
 $(toolsBins): go.sum tools.go
 	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
-	
+
 generated_go_files := \
 	packet/mock_cacher/cacher_mock.go \
 	packet/mock_workflow/workflow_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
-	
+
 .PHONY: $(generated_go_files)
 
 # go generate
