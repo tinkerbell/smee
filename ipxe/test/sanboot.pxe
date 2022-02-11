@@ -1,3 +1,0 @@
-#!ipxe
-echo sanboot http://boot.ipxe.org/freedos/fdfullcd.iso
-sanboot http://boot.ipxe.org/freedos/fdfullcd.iso

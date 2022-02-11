@@ -1,1 +1,0 @@
-ipxe/bin/snp-hua.efi filter=lfs diff=lfs merge=lfs -text

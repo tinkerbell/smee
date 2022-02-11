@@ -40,23 +40,23 @@ func TestSetPXEFilename(t *testing.T) {
 			hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe"},
 		{name: "active custom ipxe",
 			hState: "in_use", id: "$instance_id", iState: "active", slug: "custom_ipxe",
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "active custom ipxe with allow pxe",
 			hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "hua",
-			plan: "hua", filename: "ipxe/snp-hua.efi"},
+			plan: "hua", filename: "snp.efi"},
 		{name: "2a2",
-			plan: "2a2", filename: "ipxe/snp-hua.efi"},
+			plan: "2a2", filename: "snp.efi"},
 		{name: "arm",
-			arm: true, filename: "ipxe/snp-nolacp.efi"},
+			arm: true, filename: "snp.efi"},
 		{name: "x86 uefi",
-			uefi: true, filename: "ipxe/ipxe.efi"},
+			uefi: true, filename: "ipxe.efi"},
 		{name: "x86 uefi http client",
 			uefi: true, allowPXE: true, httpClient: true,
-			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi"},
+			filename: "http://" + conf.PublicFQDN + "/ipxe.efi"},
 		{name: "all defaults",
-			filename: "ipxe/undionly.kpxe"},
+			filename: "undionly.kpxe"},
 		{name: "packet iPXE",
 			packet: true, filename: "nonexistent"},
 		{name: "packet iPXE PXE allowed",
@@ -65,8 +65,7 @@ func TestSetPXEFilename(t *testing.T) {
 
 	for i, tt := range setPXEFilenameTests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("index=%d hState=%q id=%q iState=%q slug=%q plan=%q allowPXE=%v packet=%v arm=%v uefi=%v filename=%q",
-				i, tt.hState, tt.id, tt.iState, tt.slug, tt.plan, tt.allowPXE, tt.packet, tt.arm, tt.uefi, tt.filename)
+			t.Logf("%+v", tt)
 
 			if tt.plan == "" {
 				tt.plan = "0"
@@ -88,7 +87,9 @@ func TestSetPXEFilename(t *testing.T) {
 					PlanSlug: "baremetal_" + tt.plan,
 					Instance: instance,
 				},
-				instance: instance,
+				instance:       instance,
+				NextServer:     conf.PublicIPv4,
+				HTTPServerFQDN: conf.PublicFQDN,
 			}
 			rep := dhcp4.NewPacket(42)
 			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)

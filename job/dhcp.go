@@ -81,12 +81,12 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			j.With("dhcp", isUEFI, "job", j.IsUEFI()).Info("uefi mismatch, using dhcp")
 		}
 
-		isPacket := ipxe.IsPacketIPXE(req)
-		if isPacket {
+		isTinkerbellIPXE := ipxe.IsTinkerbellIPXE(req)
+		if isTinkerbellIPXE {
 			ipxe.Setup(rep)
 		}
 
-		j.setPXEFilename(rep, isPacket, isARM, isUEFI, dhcp.IsHTTPClient(req))
+		j.setPXEFilename(rep, isTinkerbellIPXE, isARM, isUEFI, dhcp.IsHTTPClient(req))
 	} else {
 		span.AddEvent("did not SetupPXE because packet is not a PXE request")
 	}
@@ -113,7 +113,7 @@ func (j Job) areWeProvisioner() bool {
 	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPClient bool) {
+func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, isHTTPClient bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Error(errors.New("setPXEFilename called on a job with no instance"))
@@ -139,15 +139,15 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	}
 
 	var filename string
-	if !isPacket {
+	if !isTinkerbellIPXE {
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
-			filename = "ipxe/snp-hua.efi"
+			filename = "snp.efi"
 		} else if isARM {
-			filename = "ipxe/snp-nolacp.efi"
+			filename = "snp.efi"
 		} else if isUEFI {
-			filename = "ipxe/ipxe.efi"
+			filename = "ipxe.efi"
 		} else {
-			filename = "ipxe/undionly.kpxe"
+			filename = "undionly.kpxe"
 		}
 	} else if !j.isPXEAllowed() {
 		// Always honor allow_pxe.
@@ -165,6 +165,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 	} else {
 		isHTTPClient = true
 		filename = "auto.ipxe"
+		j.HTTPServerFQDN = conf.PublicFQDN
 	}
 
 	if filename == "" {
@@ -174,5 +175,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isPacket, isARM, isUEFI, isHTTPCl
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, conf.PublicIPv4, isHTTPClient, conf.PublicFQDN)
+	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, j.HTTPServerFQDN)
 }

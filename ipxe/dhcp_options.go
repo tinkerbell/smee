@@ -1,7 +1,6 @@
 package ipxe
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
 
@@ -15,6 +14,7 @@ const (
 	OptionPriority        = 1   // ipxe.priority: int8
 	OptionKeepSAN         = 8   // ipxe.keep-san: uint8
 	OptionSkipSANBoot     = 9   // ipxe.skip-san-boot: uint8
+	OptionUserClass       = 77  // ipxe.user-class: string
 	OptionSyslogs         = 85  // ipxe.syslogs: string
 	OptionCertificate     = 91  // ipxe.cert: string
 	OptionPrivateKey      = 92  // ipxe.privkey: string
@@ -68,21 +68,13 @@ func Setup(rep *dhcp4.Packet) {
 	rep.SetIP(dhcp4.OptionLogServer, conf.PublicSyslogIPv4) // Have iPXE send syslog to me.
 }
 
-var packetVersion = []byte{1, 0, 255}
+// IsTinkerbellIPXE returns bool depending on if the DHCP request originated from an iPXE binary with its user-class (opt 77) set to "Tinkerbell"
+// github.com/tinkerbell/boots-ipxe builds the iPXE binary with the user-class set to "Tinkerbell"
+// https://ipxe.org/appnote/userclass
+func IsTinkerbellIPXE(req *dhcp4.Packet) bool {
+	uc, _ := req.GetOption(dhcp4.OptionUserClass)
 
-// IsPacketIPXE returns bool depending on if the request originated with packet's ipxe build
-func IsPacketIPXE(req *dhcp4.Packet) bool {
-	// TODO: make this actually check for iPXE and use ipxe' build system's ability to set name.
-	// This way we could set to something like "Packet iPXE" and then just look for that in the identifier sent in dhcp.
-	// This also means we won't lose ipxe's version number for logging and such.
-	// see https://ipxe.org/appnote/userclass
-	if om := GetEncapsulatedOptions(req); om != nil {
-		if ov, ok := om.GetOption(OptionVersion); ok {
-			return ok && bytes.Equal(ov, packetVersion)
-		}
-	}
-
-	return false
+	return string(uc) == "Tinkerbell"
 }
 
 // IsIPXE returns bool depending on if the request originated with a version of iPXE

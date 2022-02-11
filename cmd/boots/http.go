@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"io"
 	"io/ioutil"
 	"net"
@@ -26,14 +25,6 @@ import (
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-var (
-	httpAddr = conf.HTTPBind
-)
-
-func init() {
-	flag.StringVar(&httpAddr, "http-addr", httpAddr, "IP and port to listen on for HTTP.")
-}
 
 func serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -70,10 +61,13 @@ type jobHandler struct {
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func ServeHTTP(i job.Installers) {
+func ServeHTTP(i job.Installers, addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
 	s := jobHandler{i: i}
 	mux.Handle(otelFuncWrapper("/", s.serveJobFile))
+	if ipxeHandler != nil {
+		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
+	}
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/_packet/healthcheck", serveHealthchecker(GitRev, StartTime))
 	mux.HandleFunc("/_packet/pprof/", pprof.Index)
@@ -130,7 +124,7 @@ func ServeHTTP(i job.Installers) {
 		}
 	}
 
-	if err := http.ListenAndServe(httpAddr, xffHandler); err != nil {
+	if err := http.ListenAndServe(addr, xffHandler); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
 		mainlog.Fatal(err)
 	}
