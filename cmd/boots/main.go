@@ -26,6 +26,12 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/installers/coreos"
+	"github.com/tinkerbell/boots/installers/custom_ipxe"
+	"github.com/tinkerbell/boots/installers/nixos"
+	"github.com/tinkerbell/boots/installers/osie"
+	"github.com/tinkerbell/boots/installers/rancher"
+	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/packet"
@@ -36,13 +42,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 	"inet.af/netaddr"
-
-	"github.com/tinkerbell/boots/installers/coreos"
-	"github.com/tinkerbell/boots/installers/custom_ipxe"
-	"github.com/tinkerbell/boots/installers/nixos"
-	"github.com/tinkerbell/boots/installers/osie"
-	"github.com/tinkerbell/boots/installers/rancher"
-	"github.com/tinkerbell/boots/installers/vmware"
 )
 
 var (
@@ -61,14 +60,14 @@ const name = "boots"
 type config struct {
 	// ipxe holds the config for serving ipxe binaries
 	ipxe ipxedust.Command
-	// iTFTPDisabled determines if local iPXE binaries served via TFTP are disabled
-	iTFTPDisabled bool
-	// iHTTPDisabled determines if local iPXE binaries served via TFTP are disabled
-	iHTTPDisabled bool
-	// remoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
-	remoteTFTPAddr string
+	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled
+	ipxeTFTPEnabled bool
+	// ipxeHTTPEnabled determines if local iPXE binaries served via TFTP are enabled
+	ipxeHTTPEnabled bool
+	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
+	ipxeRemoteTFTPAddr string
 	// remoteTFTPPort is the address of the remote HTTP server serving iPXE binaries
-	remoteiHTTPAddr string
+	ipxeRemoteHTTPAddr string
 	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets
 	httpAddr string
 	// dhcpAddr is the local address for the DHCP server
@@ -140,8 +139,6 @@ func main() {
 		}
 	}()
 
-	var nextServer net.IP
-	var httpServerFQDN string
 	g, ctx := errgroup.WithContext(ctx)
 	lg := defaultLogger(cfg.logLevel)
 	lg = lg.WithValues("service", "github.com/tinkerbell/boots")
@@ -152,9 +149,9 @@ func main() {
 		TFTP:                 ipxedust.ServerSpec{Disabled: true},
 		HTTP:                 ipxedust.ServerSpec{Disabled: true},
 	}
-
-	if cfg.remoteTFTPAddr == "" { // use local iPXE binary service for TFTP
-		if !cfg.iTFTPDisabled {
+	var nextServer net.IP
+	if cfg.ipxeRemoteTFTPAddr == "" { // use local iPXE binary service for TFTP
+		if cfg.ipxeTFTPEnabled {
 			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
 				mainlog.Fatal(fmt.Errorf("%w: tftp addr must be an ip:port", err))
@@ -169,9 +166,9 @@ func main() {
 		}
 		nextServer = conf.PublicIPv4
 	} else { // use remote iPXE binary service for TFTP
-		ip := net.ParseIP(cfg.remoteTFTPAddr)
+		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
 		if ip == nil {
-			mainlog.Fatal(fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.remoteTFTPAddr))
+			mainlog.Fatal(fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr))
 		}
 		nextServer = ip
 		mainlog.With("addr", nextServer.String()).Info("serving iPXE binaries from remote TFTP server")
@@ -179,14 +176,15 @@ func main() {
 
 	var ipxeHandler func(http.ResponseWriter, *http.Request)
 	var ipxePattern string
-	if cfg.remoteiHTTPAddr == "" { // use local iPXE binary service for HTTP
-		if !cfg.iHTTPDisabled {
+	var httpServerFQDN string
+	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
+		if cfg.ipxeHTTPEnabled {
 			ipxeHandler = ihttp.Handler{Log: lg}.Handle
 		}
 		ipxePattern = "/ipxe/"
 		httpServerFQDN = cfg.httpAddr + ipxePattern
 	} else { // use remote iPXE binary service for HTTP
-		httpServerFQDN = cfg.remoteiHTTPAddr
+		httpServerFQDN = cfg.ipxeRemoteHTTPAddr
 		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from remote HTTP server")
 	}
 	g.Go(func() error {
@@ -276,12 +274,12 @@ func countFlags(fs *flag.FlagSet) (n int) {
 }
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
-	fs.StringVar(&cfg.ipxe.TFTPAddr, "tftp-addr", "0.0.0.0:69", "local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).")
-	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
-	fs.BoolVar(&cfg.iTFTPDisabled, "tftp-disabled", false, "disable serving iPXE binaries via TFTP.")
-	fs.BoolVar(&cfg.iHTTPDisabled, "ihttp-disabled", false, "disable serving iPXE binaries via HTTP.")
-	fs.StringVar(&cfg.remoteTFTPAddr, "remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.")
-	fs.StringVar(&cfg.remoteiHTTPAddr, "remote-ihttp-addr", "", "remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.")
+	fs.StringVar(&cfg.ipxe.TFTPAddr, "ipxe-tftp-addr", "0.0.0.0:69", "local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).")
+	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "ipxe-tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
+	fs.BoolVar(&cfg.ipxeTFTPEnabled, "ipxe-enable-tftp", true, "enable serving iPXE binaries via TFTP.")
+	fs.BoolVar(&cfg.ipxeHTTPEnabled, "ipxe-enable-http", true, "enable serving iPXE binaries via HTTP.")
+	fs.StringVar(&cfg.ipxeRemoteTFTPAddr, "ipxe-remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.")
+	fs.StringVar(&cfg.ipxeRemoteHTTPAddr, "ipxe-remote-http-addr", "", "remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.")
 	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")

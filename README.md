@@ -34,16 +34,16 @@ USAGE
   Run Boots server for provisioning
 
 FLAGS
-  -dhcp-addr          IP and port to listen on for DHCP. (default "0.0.0.0:67")
-  -http-addr          local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "0.0.0.0:80")
-  -ihttp-disabled     disable serving iPXE binaries via HTTP. (default "false")
-  -log-level          log level. (default "info")
-  -remote-ihttp-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
-  -remote-tftp-addr   remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
-  -syslog-addr        IP and port to listen on for syslog messages. (default "0.0.0.0:514")
-  -tftp-addr          local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
-  -tftp-disabled      disable serving iPXE binaries via TFTP. (default "false")
-  -tftp-timeout       local iPXE TFTP server requests timeout. (default "5s")
+  -dhcp-addr              IP and port to listen on for DHCP. (default "172.17.0.3:67")
+  -http-addr              local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "172.17.0.3:80")
+  -ipxe-enable-http       enable serving iPXE binaries via HTTP. (default "true")
+  -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
+  -ipxe-remote-http-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
+  -ipxe-remote-tftp-addr  remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
+  -ipxe-tftp-addr         local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
+  -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
+  -log-level              log level. (default "info")
+  -syslog-addr            IP and port to listen on for syslog messages. (default "172.17.0.3:514")
 ```
 
 You can use NixOS shell, which will have Go and others
