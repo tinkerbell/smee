@@ -99,14 +99,30 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 
 	if j.CanWorkflow() {
 		buildWorkerParams()
-		s.Args("docker_registry=" + dockerRegistry)
+		if len(dockerRegistry) > 0 {
+			s.Args("docker_registry=" + dockerRegistry)
+		}
+		if len(registryUsername) > 0 {
+			s.Args("registry_username=" + registryUsername)
+			s.Args("registry_password=" + registryPassword)
+		}
+		if len(registryCertUrl) > 0 {
+			s.Args("registry_cert_url=" + registryCertUrl)
+		}
+		if len(registryCertRequired) > 0 {
+			s.Args("registry_cert_required=" + registryCertRequired)
+		}
+		if len(useAbsoluteImageURI) > 0 {
+			s.Args("use_absolute_image_uri=" + useAbsoluteImageURI)
+		}
 		s.Args("grpc_authority=" + grpcAuthority)
 		s.Args("grpc_cert_url=" + grpcCertURL)
 		s.Args("instance_id=" + j.InstanceID())
-		s.Args("registry_username=" + registryUsername)
-		s.Args("registry_password=" + registryPassword)
 		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID().String())
+		if len(tinkWorkerImage) > 0 {
+			s.Args("tink_worker_image=" + tinkWorkerImage)
+		}
 	}
 
 	s.Args("packet_bootdev_mac=${bootdevmac}")
@@ -188,6 +204,9 @@ func isCustomOSIE(j job.Job) bool {
 
 // osieBaseURL returns the value of Custom OSIE Service Version or just /current
 func osieBaseURL(j job.Job) string {
+	if osiePathOverride != "" {
+		return osiePathOverride
+	}
 	if u := j.OSIEBaseURL(); u != "" {
 		return u
 	}
