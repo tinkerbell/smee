@@ -14,6 +14,10 @@ import (
 
 type BootScript func(context.Context, Job, *ipxe.Script)
 
+type BootScripter interface {
+	BootScript(string) BootScript
+}
+
 func (i *Installers) RegisterDefaultInstaller(bs BootScript) {
 	if i.Default != nil {
 		err := errors.New("default installer already registered!")
