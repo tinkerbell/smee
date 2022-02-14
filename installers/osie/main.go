@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	osieURL                            = conf.MirrorBaseURL + "/misc/osie"
-	dockerRegistry                     string
-	grpcAuthority, grpcCertURL         string
-	registryUsername, registryPassword string
+	osieURL     = conf.MirrorBaseURL + "/misc/osie"
+	workflowURL = conf.MirrorBaseURL + "/workflow"
+
+	staticTinkArgs []string
 )
 
 type installer struct {
@@ -33,19 +33,29 @@ func Installer(ExtraKernelArgs string) job.BootScripter {
 		return i
 	}
 
-	dockerRegistry = env.Get("DOCKER_REGISTRY")
-	registryUsername = env.Get("REGISTRY_USERNAME")
-	registryPassword = env.Get("REGISTRY_PASSWORD")
-
-	require := func(key string, v *string) {
+	require := func(key string) string {
 		val := env.Get(key)
 		if val == "" {
 			installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
 		}
-		*v = val
+
+		return val
 	}
-	require("TINKERBELL_CERT_URL", &grpcCertURL)
-	require("TINKERBELL_GRPC_AUTHORITY", &grpcAuthority)
+
+	staticTinkArgs = []string{
+		"grpc_authority=" + require("TINKERBELL_GRPC_AUTHORITY"),
+		"grpc_cert_url=" + require("TINKERBELL_CERT_URL"),
+		"packet_base_url=" + workflowURL,
+	}
+	if registry := env.Get("DOCKER_REGISTRY"); registry != "" {
+		staticTinkArgs = append(staticTinkArgs, "docker_registry="+registry)
+	}
+	if username := env.Get("REGISTRY_USERNAME"); username != "" {
+		staticTinkArgs = append(staticTinkArgs, "registry_username="+username)
+	}
+	if password := env.Get("REGISTRY_PASSWORD"); password != "" {
+		staticTinkArgs = append(staticTinkArgs, "registry_password="+password)
+	}
 
 	return i
 }
@@ -149,19 +159,8 @@ func (i installer) kernelParams(ctx context.Context, action, state string, j job
 	}
 
 	if j.CanWorkflow() {
-		if dockerRegistry != "" {
-			s.Args("docker_registry=" + dockerRegistry)
-		}
-		s.Args("grpc_authority=" + grpcAuthority)
-		s.Args("grpc_cert_url=" + grpcCertURL)
+		s.Args(staticTinkArgs...)
 		s.Args("instance_id=" + j.InstanceID())
-		if registryUsername != "" {
-			s.Args("registry_username=" + registryUsername)
-		}
-		if registryPassword != "" {
-			s.Args("registry_password=" + registryPassword)
-		}
-		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID().String())
 	}
 
@@ -250,8 +249,4 @@ func osieBaseURL(j job.Job) string {
 	}
 
 	return osieURL + "/current"
-}
-
-func workflowBaseURL() string {
-	return conf.MirrorBaseURL + "/workflow"
 }
