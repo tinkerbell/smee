@@ -27,10 +27,6 @@ jobs:
       - name: Non Go formatters and linters
         run: ./.github/workflows/ci-non-go.sh
 
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.16.3"
 
       - name: Generate all files
         run: nix-shell --run 'make gen'
@@ -39,16 +35,17 @@ jobs:
         run: ./bin/goimports -d . | (! grep .)
 
       - name: go vet
-        run: go mod tidy && go vet ./...
+        run: |
+          nix-shell --run 'go mod tidy && go vet ./...'
 
       - name: golangci-lint brought to you by Nix
-        run: nix-shell --run 'GOROOT= golangci-lint run -v'
+        run: nix-shell --run 'golangci-lint run -v'
 
       - name: go test
-        run: go test -v ./... -gcflags=-l
+        run: nix-shell --run 'go test -v ./... -gcflags=-l'
 
       - name: go test coverage
-        run: go test -coverprofile=coverage.txt ./... -gcflags=-l
+        run: nix-shell --run 'go test -coverprofile=coverage.txt ./... -gcflags=-l'
 
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
