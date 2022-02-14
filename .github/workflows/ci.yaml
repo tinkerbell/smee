@@ -24,9 +24,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
+      - name: Fetch Nix Derivations
+        run: nix-shell --command true
+
+      - name: Fetch Go Packages
+        run: nix-shell --run 'go get ./... && go get -t ./... && make tools'
+
       - name: Non Go formatters and linters
         run: ./.github/workflows/ci-non-go.sh
-
 
       - name: Generate all files
         run: nix-shell --run 'make gen'
