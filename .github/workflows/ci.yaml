@@ -4,117 +4,36 @@ on:
   pull_request:
 
 jobs:
-  get-runner:
-    runs-on: [ubuntu-latest]
-    outputs:
-      runner: ${{ steps.get-runner.outputs.runner }}
-    steps:
-      - name: Get Runner
-        id: get-runner
-        run: |
-          if [[ "${{ github.event.repository.owner.login }}" == "tinkerbell" ]]; then
-            echo "using self-hosted"
-            echo ::set-output name=runner::self-hosted,X64
-          else
-            echo "using github-hosted"
-            echo ::set-output name=runner::ubuntu-latest
-          fi
-
-  validation:
-    needs: [get-runner]
-    runs-on: ${{ needs.get-runner.outputs.runner }}
+  validation-for-tinkerbell:
+    if: github.event.repository.owner.loging == 'tinkerbell'
+    runs-on: [self-hosted, X64]
     env:
       CGO_ENABLED: 0
     steps:
-      - name: Setup Dynamic Env
-        run: |
-          PUSH=false
-          set +x # ensure we don't leak creds (even though github would hide it)
-          if [[ -n ${OCI_USERNAME:-} ]] && [[ -n ${OCI_PASSWORD:-} ]]; then
-            PUSH=true
-          fi
-
-          {
-            echo "MAKEFLAGS=-j$(nproc)"
-            echo "OCI_REGISTRY=${OCI_REGISTRY:-quay.io}"
-            echo "OCI_REGISTRY_NS=${OCI_REGISTRY_NS:-tinkerbell}"
-            echo "PUSH=$PUSH"
-          } | tee -a $GITHUB_ENV
-        env:
-          OCI_USERNAME: ${{ secrets.OCI_REGISTRY_USERNAME }}
-          OCI_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}
-          OCI_REGISTRY: ${{ secrets.OCI_REGISTRY }}
-          OCI_REGISTRY_NS: ${{ secrets.OCI_REGISTRY_NS }}
-
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install nix
-        uses: cachix/install-nix-action@018abf956a0a15673dae4932ae26f0f071ac0944
+      - name: validate
+        uses: ./.github/actions/build-test-push
         with:
-          nix_path: nixpkgs=channel:nixpkgs-unstable
+          registry: quay.io
+          namespace: tinkerbell
+          username: ${{ secrets.OCI_USERNAME }}
+          password: ${{ secrets.OCI_PASSWORD }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+  validation-for-forks:
+    if: github.event.repository.owner.loging != 'tinkerbell'
+    runs-on: [ubuntu-latest]
+    env:
+      CGO_ENABLED: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Fetch Nix Derivations
-        run: nix-shell --command true
-
-      - name: Fetch Go Packages
-        run: nix-shell --run 'go get ./... && go get -t ./... && make tools'
-
-      - name: Generate all files
-        run: nix-shell --run 'make gen'
-
-      - name: goimports
-        run: ./bin/goimports -d . | (! grep .)
-
-      - name: go vet
-        run: |
-          nix-shell --run 'go mod tidy && go vet ./...'
-
-      # This will catch any modifcations from go mod tidy above, this is hacky and needs to go away when boots gets lint-install'ed
-      - name: Non Go formatters and linters
-        run: ./.github/workflows/ci-non-go.sh
-
-      - name: golangci-lint brought to you by Nix
-        run: nix-shell --run 'golangci-lint run -v'
-
-      - name: go test
-        run: nix-shell --run 'go test -v ./... -gcflags=-l'
-
-      - name: go test coverage
-        run: nix-shell --run 'go test -coverprofile=coverage.txt ./... -gcflags=-l'
-
-      - name: upload codecov
-        run: bash <(curl -s https://codecov.io/bash)
-
-      - name: compile binaries
-        run: nix-shell --run 'make crosscompile'
-
-      - name: Docker Image Tags
-        id: gen-tags
-        run: |
-          TAGS="${{ env.OCI_REGISTRY }}/${{ env.OCI_REGISTRY_NS }}/boots:sha-$(git log -1 --pretty=%h)"
-          if ${{ startsWith(github.ref, 'refs/heads/main') }}; then
-            TAGS="$TAGS,${TAGS%%:sha*}:latest"
-          fi
-          echo ::set-output "name=tags::$TAGS"
-
-      - name: Login to Registry
-        uses: docker/login-action@v1
-        if: env.PUSH == 'true'
+      - name: validate
+        uses: ./.github/actions/build-test-push
         with:
-          registry: ${{ env.OCI_REGISTRY}}
-          username: ${{ secrets.OCI_REGISTRY_USERNAME }}
-          password: ${{ secrets.OCI_REGISTRY_PASSWORD }}
-
-      - name: Push to Registry
-        uses: docker/build-push-action@v2
-        with:
-          context: ./
-          file: ./Dockerfile
-          cache-from: type=registry,ref=${{ env.OCI_REGISTRY }}/${{ env.OCI_REGISTRY_NS }}/boots:latest
-          push: ${{ env.PUSH == 'true' }}
-          tags: ${{ steps.gen-tags.outputs.tags }}
-          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          registry: ${{ secrets.OCI_REGISTRY }}
+          namespace: ${{ secrets.OCI_REGISTRY_NS }}
+          username: ${{ secrets.OCI_USERNAME }}
+          password: ${{ secrets.OCI_PASSWORD }}
