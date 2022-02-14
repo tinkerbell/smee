@@ -502,8 +502,6 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd h1:QnZU7MqsrPjqaE0Zp9qrVwqghomFeZ5AIDlWlf6R1sI=
-github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/tinkerbell/ipxedust v0.0.0-20220115003831-1c488c3b00ae h1:PrEh1FSUH8JxTHSW9RB5qLx0KXLfs6F42LlLfAic+v0=
 github.com/tinkerbell/ipxedust v0.0.0-20220115003831-1c488c3b00ae/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfcAtnAFrwtJTNXGu99Q3EGhQJCJPZQ=
