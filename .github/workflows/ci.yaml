@@ -30,9 +30,6 @@ jobs:
       - name: Fetch Go Packages
         run: nix-shell --run 'go get ./... && go get -t ./... && make tools'
 
-      - name: Non Go formatters and linters
-        run: ./.github/workflows/ci-non-go.sh
-
       - name: Generate all files
         run: nix-shell --run 'make gen'
 
@@ -42,6 +39,10 @@ jobs:
       - name: go vet
         run: |
           nix-shell --run 'go mod tidy && go vet ./...'
+
+      # This will catch any modifcations from go mod tidy above, this is hacky and needs to go away when boots gets lint-install'ed
+      - name: Non Go formatters and linters
+        run: ./.github/workflows/ci-non-go.sh
 
       - name: golangci-lint brought to you by Nix
         run: nix-shell --run 'golangci-lint run -v'
