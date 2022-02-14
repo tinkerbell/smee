@@ -4,10 +4,20 @@ import (
 	"context"
 	"strings"
 
+	"github.com/packethost/pkg/env"
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
+	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	osieURL                            = conf.MirrorBaseURL + "/misc/osie"
+	dockerRegistry                     string
+	grpcAuthority, grpcCertURL         string
+	registryUsername, registryPassword string
 )
 
 type installer struct {
@@ -16,9 +26,28 @@ type installer struct {
 }
 
 func Installer(ExtraKernelArgs string) job.BootScripter {
-	return installer{
+	i := installer{
 		extraKernelArgs: ExtraKernelArgs,
 	}
+	if env.Get("DATA_MODEL_VERSION") != "1" {
+		return i
+	}
+
+	dockerRegistry = env.Get("DOCKER_REGISTRY")
+	registryUsername = env.Get("REGISTRY_USERNAME")
+	registryPassword = env.Get("REGISTRY_PASSWORD")
+
+	require := func(key string, v *string) {
+		val := env.Get(key)
+		if val == "" {
+			installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
+		}
+		*v = val
+	}
+	require("TINKERBELL_CERT_URL", &grpcCertURL)
+	require("TINKERBELL_GRPC_AUTHORITY", &grpcAuthority)
+
+	return i
 }
 
 func (i installer) BootScript(slug string) job.BootScript {
@@ -120,7 +149,6 @@ func (i installer) kernelParams(ctx context.Context, action, state string, j job
 	}
 
 	if j.CanWorkflow() {
-		buildWorkerParams()
 		if dockerRegistry != "" {
 			s.Args("docker_registry=" + dockerRegistry)
 		}
