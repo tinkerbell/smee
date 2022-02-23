@@ -29,7 +29,7 @@ func TestScript(t *testing.T) {
 			s.Echo("Tinkerbell Boots iPXE")
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
-			s.Set("ipxe_cloud_config", "packet")
+			s.Set("ipxe_cloud_config", "metal")
 			ci := Installer{}
 			bs := ci.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
@@ -44,7 +44,7 @@ var type2Script = map[string]string{
 	"baremetal_0": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -59,7 +59,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_1": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -74,7 +74,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_2": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -89,7 +89,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_3": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -104,7 +104,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_2a": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -119,7 +119,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_2a2": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -134,7 +134,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_2a4": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -149,7 +149,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_2a5": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -164,7 +164,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"baremetal_hua": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -179,7 +179,7 @@ chain --autofree http://127.0.0.1/fake_ipxe_url
 	"c2.large.arm": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system

@@ -68,7 +68,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	s.Set("iface", j.InterfaceName(0)).Or("shell")
 	s.Set("tinkerbell", "http://"+conf.PublicFQDN)
 	s.Set("syslog_host", conf.PublicSyslogFQDN)
-	s.Set("ipxe_cloud_config", "packet")
+	s.Set("ipxe_cloud_config", "metal")
 
 	s.Echo("Tinkerbell Boots iPXE")
 

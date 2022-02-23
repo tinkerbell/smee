@@ -42,7 +42,7 @@ func TestScript(t *testing.T) {
 			s.Echo("Tinkerbell Boots iPXE")
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
-			s.Set("ipxe_cloud_config", "packet")
+			s.Set("ipxe_cloud_config", "metal")
 			n := Installer{Paths: oshwToInitPath}
 			bs := n.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
@@ -57,7 +57,7 @@ var type2Script = map[string]string{
 	"17_03/t1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -73,7 +73,7 @@ boot
 	"17_03/c1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -89,7 +89,7 @@ boot
 	"17_03/m1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -105,7 +105,7 @@ boot
 	"17_03/c1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -121,7 +121,7 @@ boot
 	"18_03/t1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -137,7 +137,7 @@ boot
 	"18_03/c1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -153,7 +153,7 @@ boot
 	"18_03/c2.medium.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -169,7 +169,7 @@ boot
 	"18_03/m1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -185,7 +185,7 @@ boot
 	"18_03/m2.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -201,7 +201,7 @@ boot
 	"18_03/c1.xlarge.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -217,7 +217,7 @@ boot
 	"18_03/c1.large.arm": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -233,7 +233,7 @@ boot
 	"18_03/s1.large.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -249,7 +249,7 @@ boot
 	"18_03/x1.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -265,13 +265,13 @@ boot
 	"18_03/xx.nano.s390": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 shell
 `,
 	"20_09/c3.small.x86:nix-store-path-masquerading-as-version": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system

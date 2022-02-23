@@ -57,7 +57,7 @@ func TestScript(t *testing.T) {
 					s.Set("iface", "eth0").Or("shell")
 					s.Set("tinkerbell", "http://127.0.0.1")
 					s.Set("syslog_host", "127.0.0.1")
-					s.Set("ipxe_cloud_config", "packet")
+					s.Set("ipxe_cloud_config", "metal")
 					o := Installer{}
 					ctx := context.Background()
 					var bs ipxe.Script
@@ -109,7 +109,7 @@ var prefaces = map[string]string{
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 set action %s
 set state %s
 set arch %s
@@ -121,7 +121,7 @@ set base-url http://install.ewr1.packet.net/misc/osie/current
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 
 params
 param body Device connected to DHCP system
@@ -139,7 +139,7 @@ set bootdevmac %s
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
-set ipxe_cloud_config packet
+set ipxe_cloud_config metal
 set action %s
 set state %s
 set arch %s
