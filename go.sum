@@ -347,6 +347,8 @@ github.com/nats-io/nkeys v0.1.3/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxzi
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/nshalman/ipxedust v0.0.0-20220314162049-c60522a4a00e h1:/glWNVHPeCLBPWexV5NGYX60JZJpdvWwH0frM+XKLyo=
+github.com/nshalman/ipxedust v0.0.0-20220314162049-c60522a4a00e/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
@@ -502,10 +504,6 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd h1:QnZU7MqsrPjqaE0Zp9qrVwqghomFeZ5AIDlWlf6R1sI=
-github.com/tinkerbell/ipxedust v0.0.0-20220106182341-d4f6c38cecdd/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
-github.com/tinkerbell/ipxedust v0.0.0-20220115003831-1c488c3b00ae h1:PrEh1FSUH8JxTHSW9RB5qLx0KXLfs6F42LlLfAic+v0=
-github.com/tinkerbell/ipxedust v0.0.0-20220115003831-1c488c3b00ae/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfcAtnAFrwtJTNXGu99Q3EGhQJCJPZQ=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303/go.mod h1:b/3pqi4uYBWdTpatyUbL48rn1kUQ0dibH8N6MBAVn/g=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
