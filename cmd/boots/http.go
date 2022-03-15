@@ -111,9 +111,12 @@ func ServeHTTP(i job.Installers, addr string, ipxePattern string, ipxeHandler fu
 	// add X-Forwarded-For support if trusted proxies are configured
 	var xffHandler http.Handler
 	if len(conf.TrustedProxies) > 0 {
-		xffmw, _ := xff.New(xff.Options{
+		xffmw, err := xff.New(xff.Options{
 			AllowedSubnets: conf.TrustedProxies,
 		})
+		if err != nil {
+			mainlog.Fatal(err, "failed to create new xff object")
+		}
 
 		xffHandler = xffmw.Handler(&httplog.Handler{
 			Handler: otelHandler,
