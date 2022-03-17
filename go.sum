@@ -347,8 +347,8 @@ github.com/nats-io/nkeys v0.1.3/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxzi
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nshalman/ipxedust v0.0.0-20220314162049-c60522a4a00e h1:/glWNVHPeCLBPWexV5NGYX60JZJpdvWwH0frM+XKLyo=
-github.com/nshalman/ipxedust v0.0.0-20220314162049-c60522a4a00e/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
+github.com/nshalman/ipxedust v0.0.0-20220317160804-017373f78f95 h1:GtIR+d9ZU4GP8Xy2UiQB2C6XiDaXmPleC61+/KAj7Us=
+github.com/nshalman/ipxedust v0.0.0-20220317160804-017373f78f95/go.mod h1:WgjBPZVkWlD6RS+Pq9TmXpf62xW28UQr+ayrOd+znCo=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
