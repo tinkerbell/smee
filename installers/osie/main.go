@@ -79,6 +79,7 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 	s.Args("parch=${parch}")
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
+	s.Args("osie_vendors_url=" + conf.OsieVendorServicesURL)
 
 	// only add traceparent if tracing is enabled
 	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {

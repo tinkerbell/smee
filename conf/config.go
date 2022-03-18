@@ -33,6 +33,9 @@ var (
 	// Hollow auth secrets, passed into osie
 	HollowClientId            = env.Get("HOLLOW_CLIENT_ID")
 	HollowClientRequestSecret = env.Get("HOLLOW_CLIENT_REQUEST_SECRET")
+
+	// Vendor services url, used by osie to proxy requests for OS image artifacts
+	OsieVendorServicesURL = env.Get("OSIE_VENDOR_SERVICES_URL")
 )
 
 func mustPublicIPv4() net.IP {
