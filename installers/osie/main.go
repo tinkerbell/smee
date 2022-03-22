@@ -92,11 +92,6 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 		s.Args("hollow_client_request_secret=" + conf.HollowClientRequestSecret)
 	}
 
-	// Don't bother including eclypsium_token if none is provided
-	if conf.EclypsiumToken != "" && j.HardwareState() == "deprovisioning" {
-		s.Args("eclypsium_token=" + conf.EclypsiumToken)
-	}
-
 	if isCustomOSIE(j) {
 		s.Args("packet_base_url=" + osieBaseURL(j))
 	}
