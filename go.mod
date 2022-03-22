@@ -6,7 +6,7 @@ require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/davecgh/go-spew v1.1.1
-	github.com/equinix-labs/otel-init-go v0.0.4
+	github.com/equinix-labs/otel-init-go v0.0.5
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
 	github.com/go-logr/logr v1.2.2
 	github.com/go-logr/zapr v1.2.2
@@ -23,18 +23,17 @@ require (
 	github.com/prometheus/client_golang v1.6.0
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/stretchr/testify v1.7.0
-	github.com/tinkerbell/ipxedust v0.0.0-20220115003831-1c488c3b00ae
+	github.com/tinkerbell/ipxedust v0.0.0-20220322142617-916e98a98dba
 	github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
-	go.opentelemetry.io/otel v1.2.0
-	go.opentelemetry.io/otel/trace v1.2.0
+	go.opentelemetry.io/otel v1.3.0
+	go.opentelemetry.io/otel/trace v1.3.0
 	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/tools v0.1.7
 	google.golang.org/genproto v0.0.0-20200921165018-b9da36f5f452 // indirect
-	google.golang.org/grpc v1.40.0
+	google.golang.org/grpc v1.44.0
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 )
 
