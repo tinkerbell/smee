@@ -183,6 +183,7 @@ func main() {
 		}
 		ipxePattern = "/ipxe/"
 		httpServerFQDN = cfg.httpAddr + ipxePattern
+		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from local HTTP server")
 	} else { // use remote iPXE binary service for HTTP
 		httpServerFQDN = cfg.ipxeRemoteHTTPAddr
 		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from remote HTTP server")
