@@ -141,7 +141,13 @@ func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpClie
 	rep.SetSIAddr(nextServer.To4()) // next-server: IP address of the TFTP/HTTP Server.
 
 	if httpClient {
-		urlPath := path.Join(httpServerFQDN, filename)
+		urlPath := ""
+		if filename == "auto.ipxe" {
+			urlPath = path.Join(httpServerFQDN, filename)
+		} else {
+			// we serve everything other than auto.ipxe from /ipxe/
+			urlPath = path.Join(httpServerFQDN, "ipxe", filename)
+		}
 		filename = "http://" + urlPath
 		rep.SetString(dhcp4.OptionClassID, "HTTPClient")
 	}
