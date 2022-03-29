@@ -26,10 +26,10 @@ import (
 func ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
 	handler := dhcpHandler{
-		pool:           workerpool.New(poolSize),
-		nextServer:     nextServer,
-		ipxeBaseURL:    ipxeBaseURL,
-		bootsBaseURL:   bootsBaseURL,
+		pool:         workerpool.New(poolSize),
+		nextServer:   nextServer,
+		ipxeBaseURL:  ipxeBaseURL,
+		bootsBaseURL: bootsBaseURL,
 	}
 	defer handler.pool.Stop()
 
@@ -44,10 +44,10 @@ func ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL 
 }
 
 type dhcpHandler struct {
-	pool           *workerpool.WorkerPool
-	nextServer     net.IP
-	ipxeBaseURL    string
-	bootsBaseURL   string
+	pool         *workerpool.WorkerPool
+	nextServer   net.IP
+	ipxeBaseURL  string
+	bootsBaseURL string
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {

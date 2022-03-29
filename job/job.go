@@ -39,16 +39,16 @@ func SetProvisionerEngineName(engineName string) {
 // Job holds per request data
 type Job struct {
 	log.Logger
-	mac            net.HardwareAddr
-	ip             net.IP
-	start          time.Time
-	mode           Mode
-	dhcp           dhcp.Config
-	hardware       packet.Hardware
-	instance       *packet.Instance
-	NextServer     net.IP
-	IpxeBaseURL    string
-	BootsBaseURL   string
+	mac          net.HardwareAddr
+	ip           net.IP
+	start        time.Time
+	mode         Mode
+	dhcp         dhcp.Config
+	hardware     packet.Hardware
+	instance     *packet.Instance
+	NextServer   net.IP
+	IpxeBaseURL  string
+	BootsBaseURL string
 }
 
 type Installers struct {

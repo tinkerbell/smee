@@ -87,9 +87,9 @@ func TestSetPXEFilename(t *testing.T) {
 					PlanSlug: "baremetal_" + tt.plan,
 					Instance: instance,
 				},
-				instance:       instance,
-				NextServer:     conf.PublicIPv4,
-				IpxeBaseURL: conf.PublicFQDN + "/ipxe",
+				instance:     instance,
+				NextServer:   conf.PublicIPv4,
+				IpxeBaseURL:  conf.PublicFQDN + "/ipxe",
 				BootsBaseURL: conf.PublicFQDN,
 			}
 			rep := dhcp4.NewPacket(42)
