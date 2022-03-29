@@ -7,7 +7,6 @@ import (
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/packet"
@@ -139,7 +138,9 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 	}
 
 	var filename string
+	httpPrefix := j.BootsBaseURL
 	if !isTinkerbellIPXE {
+		httpPrefix = j.IpxeBaseURL
 		if j.PArch() == "hua" || j.PArch() == "2a2" {
 			filename = "snp.efi"
 		} else if isARM {
@@ -165,7 +166,6 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 	} else {
 		isHTTPClient = true
 		filename = "auto.ipxe"
-		j.HTTPServerFQDN = conf.PublicFQDN
 	}
 
 	if filename == "" {
@@ -175,5 +175,5 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 		return
 	}
 
-	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, j.HTTPServerFQDN)
+	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, httpPrefix)
 }
