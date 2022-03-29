@@ -54,7 +54,7 @@ func TestSetPXEFilename(t *testing.T) {
 			uefi: true, filename: "ipxe.efi"},
 		{name: "x86 uefi http client",
 			uefi: true, allowPXE: true, httpClient: true,
-			filename: "http://" + conf.PublicFQDN + "/ipxe.efi"},
+			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi"},
 		{name: "all defaults",
 			filename: "undionly.kpxe"},
 		{name: "packet iPXE",
@@ -89,7 +89,8 @@ func TestSetPXEFilename(t *testing.T) {
 				},
 				instance:       instance,
 				NextServer:     conf.PublicIPv4,
-				HTTPServerFQDN: conf.PublicFQDN,
+				IpxeBaseURL: conf.PublicFQDN + "/ipxe",
+				BootsBaseURL: conf.PublicFQDN,
 			}
 			rep := dhcp4.NewPacket(42)
 			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)
