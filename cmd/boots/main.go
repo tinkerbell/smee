@@ -176,24 +176,25 @@ func main() {
 
 	var ipxeHandler func(http.ResponseWriter, *http.Request)
 	var ipxePattern string
-	var httpServerFQDN string
+	var ipxeBaseURL string
+	bootsBaseURL := conf.PublicFQDN
 	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
 		if cfg.ipxeHTTPEnabled {
 			ipxeHandler = ihttp.Handler{Log: lg}.Handle
 		}
 		ipxePattern = "/ipxe/"
-		httpServerFQDN = cfg.httpAddr + ipxePattern
-		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from local HTTP server")
+		ipxeBaseURL = conf.PublicFQDN + ipxePattern
+		mainlog.With("addr", ipxeBaseURL).Info("serving iPXE binaries from local HTTP server")
 	} else { // use remote iPXE binary service for HTTP
-		httpServerFQDN = cfg.ipxeRemoteHTTPAddr
-		mainlog.With("addr", httpServerFQDN).Info("serving iPXE binaries from remote HTTP server")
+		ipxeBaseURL = cfg.ipxeRemoteHTTPAddr
+		mainlog.With("addr", ipxeBaseURL).Info("serving iPXE binaries from remote HTTP server")
 	}
 	g.Go(func() error {
 		return ipxe.ListenAndServe(ctx)
 	})
 
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
-	go ServeDHCP(cfg.dhcpAddr, nextServer, httpServerFQDN)
+	go ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
 	go ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
 
