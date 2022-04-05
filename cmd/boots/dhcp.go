@@ -23,12 +23,13 @@ import (
 // ServeDHCP starts the DHCP server.
 // It takes the next server address (nextServer) for serving iPXE binaries via TFTP
 // and an IP:Port (httpServerFQDN) for serving iPXE binaries via HTTP.
-func ServeDHCP(addr string, nextServer net.IP, httpServerFQDN string) {
+func ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
 	handler := dhcpHandler{
-		pool:           workerpool.New(poolSize),
-		nextServer:     nextServer,
-		httpServerFQDN: httpServerFQDN,
+		pool:         workerpool.New(poolSize),
+		nextServer:   nextServer,
+		ipxeBaseURL:  ipxeBaseURL,
+		bootsBaseURL: bootsBaseURL,
 	}
 	defer handler.pool.Stop()
 
@@ -43,9 +44,10 @@ func ServeDHCP(addr string, nextServer net.IP, httpServerFQDN string) {
 }
 
 type dhcpHandler struct {
-	pool           *workerpool.WorkerPool
-	nextServer     net.IP
-	httpServerFQDN string
+	pool         *workerpool.WorkerPool
+	nextServer   net.IP
+	ipxeBaseURL  string
+	bootsBaseURL string
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
@@ -99,7 +101,8 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		return
 	}
 	span.End()
-	j.HTTPServerFQDN = d.httpServerFQDN
+	j.IpxeBaseURL = d.ipxeBaseURL
+	j.BootsBaseURL = d.bootsBaseURL
 	j.NextServer = d.nextServer
 
 	go func() {
