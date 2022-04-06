@@ -504,8 +504,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tinkerbell/ipxedust v0.0.0-20220322142617-916e98a98dba h1:wdy1cpUDBzYhnlEEvkZvtSnTFK1gp0QLfnCSFjR/H5I=
-github.com/tinkerbell/ipxedust v0.0.0-20220322142617-916e98a98dba/go.mod h1:ATJPOr8ZkaKkfMPi5DmTgmcu/jfftwlZX2/LYbW6hCo=
+github.com/tinkerbell/ipxedust v0.0.0-20220406180840-46f16b8d8fb0 h1:3BDMKxrnzQV43JdosIXs5sdrvX7IFSd8WpJQJm67czY=
+github.com/tinkerbell/ipxedust v0.0.0-20220406180840-46f16b8d8fb0/go.mod h1:ATJPOr8ZkaKkfMPi5DmTgmcu/jfftwlZX2/LYbW6hCo=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303 h1:R371mpGgSgSAcfcAtnAFrwtJTNXGu99Q3EGhQJCJPZQ=
 github.com/tinkerbell/tink v0.0.0-20201109122352-0e8e57332303/go.mod h1:b/3pqi4uYBWdTpatyUbL48rn1kUQ0dibH8N6MBAVn/g=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
