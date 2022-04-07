@@ -31,15 +31,17 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.16.3"
+          go-version: "1.18"
       - name: Generate all files
         run: nix-shell --run 'make gen'
       - name: goimports
         run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
       - name: go vet
         run: go mod tidy && go vet ./...
-      - name: golangci-lint brought to you by Nix
-        run: nix-shell --run 'GOROOT= golangci-lint run -v'
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          args: -v
       - name: go test
         run: go test -v ./... -gcflags=-l
       - name: go test coverage

@@ -33,7 +33,7 @@ goimports: ## Run goimports
 
 golangci-lint: ## Run golangci-lint
 	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
-	golangci-lint run
+	golangci-lint run -v
 
 validate-local: vet coverage goimports golangci-lint ## Runs all the same validations and tests that run in CI
 
