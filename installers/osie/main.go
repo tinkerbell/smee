@@ -12,6 +12,16 @@ import (
 
 type Installer struct{}
 
+func (i Installer) DefaultHandler() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		if j.Rescue() {
+			return i.Rescue()(ctx, j, s)
+		}
+
+		return i.Install()(ctx, j, s)
+	}
+}
+
 func (i Installer) Rescue() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Set("action", "rescue")
