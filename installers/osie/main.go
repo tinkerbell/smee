@@ -12,7 +12,21 @@ import (
 
 type Installer struct{}
 
-func (i Installer) Rescue() job.BootScript {
+// DefaultHandler determines the ipxe boot script to be returned.
+// If the job has an instance with Rescue true, the rescue boot script is returned.
+// Otherwise the installation boot script is returned.
+func (i Installer) DefaultHandler() job.BootScript {
+	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+		if j.Rescue() {
+			return i.rescue()(ctx, j, s)
+		}
+
+		return i.install()(ctx, j, s)
+	}
+}
+
+// rescue generates the ipxe boot script for booting into osie in rescue mode
+func (i Installer) rescue() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
@@ -21,7 +35,8 @@ func (i Installer) Rescue() job.BootScript {
 	}
 }
 
-func (i Installer) Install() job.BootScript {
+// install generates the ipxe boot script for booting into the osie installer
+func (i Installer) install() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		typ := "provisioning.104.01"
 		if j.HardwareState() == "deprovisioning" {

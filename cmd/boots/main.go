@@ -314,11 +314,10 @@ func registerInstallers() job.Installers {
 	i.RegisterDistro("nixos", n.BootScript())
 	// register osie
 	o := osie.Installer{}
-	i.RegisterDistro("alpine", o.Rescue())
 	i.RegisterDistro("discovery", o.Discover())
 	// register osie as default
 	d := osie.Installer{}
-	i.RegisterDefaultInstaller(d.Install())
+	i.RegisterDefaultInstaller(d.DefaultHandler())
 	// register rancher
 	r := rancher.Installer{}
 	i.RegisterDistro("rancher", r.BootScript())

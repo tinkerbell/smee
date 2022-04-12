@@ -71,6 +71,14 @@ func (j Job) InstanceID() string {
 	return ""
 }
 
+func (j Job) Rescue() bool {
+	if i := j.instance; i != nil {
+		return i.Rescue
+	}
+
+	return false
+}
+
 // UserData returns instance.UserData
 func (j Job) UserData() string {
 	if i := j.instance; i != nil {
