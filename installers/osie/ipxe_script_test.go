@@ -66,9 +66,9 @@ func TestScript(t *testing.T) {
 					var bs ipxe.Script
 					switch action {
 					case "rescue":
-						bs = o.Rescue()(ctx, m.Job(), s)
+						bs = o.rescue()(ctx, m.Job(), s)
 					case "install":
-						bs = o.Install()(ctx, m.Job(), s)
+						bs = o.install()(ctx, m.Job(), s)
 					case "discover":
 						bs = o.Discover()(ctx, m.Job(), s)
 					}
