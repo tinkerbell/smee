@@ -52,11 +52,11 @@ func mustBuildOSIEURL() *url.URL {
 }
 
 func buildWorkerParams() {
-	dockerRegistry = getParam("DOCKER_REGISTRY")
+	dockerRegistry = os.Getenv("DOCKER_REGISTRY")
 	grpcAuthority = getParam("TINKERBELL_GRPC_AUTHORITY")
 	grpcCertURL = getParam("TINKERBELL_CERT_URL")
-	registryUsername = getParam("REGISTRY_USERNAME")
-	registryPassword = getParam("REGISTRY_PASSWORD")
+	registryUsername = os.Getenv("REGISTRY_USERNAME")
+	registryPassword = os.Getenv("REGISTRY_PASSWORD")
 }
 
 func getParam(key string) string {
