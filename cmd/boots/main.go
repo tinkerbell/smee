@@ -22,6 +22,11 @@ import (
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/client/cacher"
+	"github.com/tinkerbell/boots/client/packet"
+	"github.com/tinkerbell/boots/client/standalone"
+	"github.com/tinkerbell/boots/client/tinkerbell"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
@@ -34,7 +39,6 @@ import (
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
-	"github.com/tinkerbell/boots/packet"
 	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
@@ -45,7 +49,6 @@ import (
 )
 
 var (
-	client                packet.Client
 	apiBaseURL            = env.URL("API_BASE_URL", "https://api.packet.net")
 	provisionerEngineName = env.Get("PROVISIONER_ENGINE_NAME", "packet")
 
@@ -106,24 +109,19 @@ func main() {
 	syslog.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	consumer := env.Get("API_CONSUMER_TOKEN")
-	if consumer == "" {
-		err := errors.New("required envvar missing")
-		mainlog.With("envvar", "API_CONSUMER_TOKEN").Fatal(err)
-		panic(err)
-	}
-	auth := env.Get("API_AUTH_TOKEN")
-	if auth == "" {
-		err := errors.New("required envvar missing")
-		mainlog.With("envvar", "API_AUTH_TOKEN").Fatal(err)
-		panic(err)
-	}
-	client, err = packet.NewClient(l, consumer, auth, apiBaseURL)
+	reporter, err := getReporter(l)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	job.SetClient(client)
-	job.SetProvisionerEngineName(provisionerEngineName)
+	workflowFinder, err := getWorkflowFinder()
+	if err != nil {
+		mainlog.Fatal(err)
+	}
+	finder, err := getHardwareFinder()
+	if err != nil {
+		mainlog.Fatal(err)
+	}
+	jobManager := job.NewCreator(l, provisionerEngineName, reporter, finder)
 
 	go func() {
 		mainlog.With("addr", cfg.syslogAddr).Info("serving syslog")
@@ -193,10 +191,21 @@ func main() {
 		return ipxe.ListenAndServe(ctx)
 	})
 
+	httpServer := &BootsHTTPServer{
+		reporter:       reporter,
+		finder:         finder,
+		jobManager:     jobManager,
+		workflowFinder: workflowFinder,
+	}
+
+	dhcpServer := &BootsDHCPServer{
+		jobmanager: jobManager,
+	}
+
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
-	go ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
+	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -204,6 +213,56 @@ func main() {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		mainlog.Fatal(err)
 	}
+}
+
+// getWorkflowFinder returns a no-op workflow finder if tinkerbell is not the backend
+func getWorkflowFinder() (client.WorkflowFinder, error) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "1":
+		return tinkerbell.NewWorkflowFinder()
+	}
+
+	return &tinkerbell.NoOpWorkflowFinder{}, nil
+}
+
+func getReporter(l log.Logger) (client.Reporter, error) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "":
+		consumer := env.Get("API_CONSUMER_TOKEN")
+		if consumer == "" {
+			return nil, errors.New("required envvar missing: API_CONSUMER_TOKEN")
+
+		}
+		auth := env.Get("API_AUTH_TOKEN")
+		if auth == "" {
+			return nil, errors.Errorf("required envvar missing: API_AUTH_TOKEN")
+		}
+
+		return packet.NewReporter(l, apiBaseURL, consumer, auth)
+	default:
+		return client.NewNoOpReporter(l), nil
+	}
+}
+
+func getHardwareFinder() (client.HardwareFinder, error) {
+	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
+	switch dataModelVersion {
+	case "":
+		return cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"))
+	case "1":
+		return tinkerbell.NewHardwareFinder()
+	case "standalone":
+		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
+		if saFile == "" {
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+		}
+
+		return standalone.NewHardwareFinder(saFile)
+	}
+
+	return nil, errors.Errorf("invalid DATA_MODEL_VERSION: %q", dataModelVersion)
 }
 
 // defaultLogger is zap logr implementation.

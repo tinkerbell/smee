@@ -1,60 +1,57 @@
-package packet
+package cacher
 
 import (
 	"net"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
 )
 
-// models_cacher.go contains the interface methods specific to DiscoveryCacher and HardwareCacher structs
-
 //go:generate mockgen -destination mock_cacher/cacher_mock.go github.com/packethost/cacher/protos/cacher CacherClient
 
-// DiscoveryCacher presents the structure for old data model
+// DiscoveryCacher presents the structure for old data model.
 type DiscoveryCacher struct {
 	*HardwareCacher
 	mac net.HardwareAddr
 }
 
-// HardwareCacher represents the old hardware data model for backward compatibility
+// HardwareCacher represents the old hardware data model for backward compatibility.
 type HardwareCacher struct {
-	ID    string        `json:"id"`
-	Name  string        `json:"name"`
-	State HardwareState `json:"state"`
+	ID    string               `json:"id"`
+	Name  string               `json:"name"`
+	State client.HardwareState `json:"state"`
 
-	BondingMode       BondingMode     `json:"bonding_mode"`
-	NetworkPorts      []Port          `json:"network_ports"`
-	Manufacturer      Manufacturer    `json:"manufacturer"`
-	PlanSlug          string          `json:"plan_slug"`
-	PlanVersionSlug   string          `json:"plan_version_slug"`
-	Arch              string          `json:"arch"`
-	FacilityCode      string          `json:"facility_code"`
-	IPMI              IP              `json:"management"`
-	IPs               []IP            `json:"ip_addresses"`
-	PreinstallOS      OperatingSystem `json:"preinstalled_operating_system_version"`
-	PrivateSubnets    []string        `json:"private_subnets,omitempty"`
-	UEFI              bool            `json:"efi_boot"`
-	AllowPXE          bool            `json:"allow_pxe"`
-	AllowWorkflow     bool            `json:"allow_workflow"`
-	ServicesVersion   ServicesVersion `json:"services"`
-	Instance          *Instance       `json:"instance"`
-	ProvisionerEngine string          `json:"provisioner_engine"`
-	Traceparent       string          `json:"traceparent"`
+	BondingMode       client.BondingMode     `json:"bonding_mode"`
+	NetworkPorts      []client.Port          `json:"network_ports"`
+	Manufacturer      client.Manufacturer    `json:"manufacturer"`
+	PlanSlug          string                 `json:"plan_slug"`
+	PlanVersionSlug   string                 `json:"plan_version_slug"`
+	Arch              string                 `json:"arch"`
+	FacilityCode      string                 `json:"facility_code"`
+	IPMI              client.IP              `json:"management"`
+	IPs               []client.IP            `json:"ip_addresses"`
+	PreinstallOS      client.OperatingSystem `json:"preinstalled_operating_system_version"`
+	PrivateSubnets    []string               `json:"private_subnets,omitempty"`
+	UEFI              bool                   `json:"efi_boot"`
+	AllowPXE          bool                   `json:"allow_pxe"`
+	AllowWorkflow     bool                   `json:"allow_workflow"`
+	ServicesVersion   client.ServicesVersion `json:"services"`
+	Instance          *client.Instance       `json:"instance"`
+	ProvisionerEngine string                 `json:"provisioner_engine"`
+	Traceparent       string                 `json:"traceparent"`
 }
 
-func (d DiscoveryCacher) Hardware() Hardware {
-	var h Hardware = d.HardwareCacher
-
-	return h
+func (d DiscoveryCacher) Hardware() client.Hardware {
+	return d.HardwareCacher
 }
 
 func (d DiscoveryCacher) DnsServers(mac net.HardwareAddr) []net.IP {
 	return conf.DNSServers
 }
 
-func (d DiscoveryCacher) Instance() *Instance {
+func (d DiscoveryCacher) Instance() *client.Instance {
 	return d.HardwareCacher.Instance
 }
 
@@ -94,7 +91,7 @@ func (d DiscoveryCacher) MacIsType(mac string, portType string) bool {
 	return false
 }
 
-// Mode returns whether the mac belongs to the instance, hardware, bmc, discovered, or unknown
+// Mode returns whether the mac belongs to the instance, hardware, bmc, discovered, or unknown.
 func (d DiscoveryCacher) Mode() string {
 	mac := d.mac
 	if d.InstanceIP(mac.String()) != nil {
@@ -114,7 +111,7 @@ func (d DiscoveryCacher) Mode() string {
 }
 
 // NetConfig returns the network configuration that corresponds to the interface whose MAC address is mac.
-func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) IP {
+func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) client.IP {
 	ip := d.InstanceIP(mac.String())
 	if ip != nil {
 		return *ip
@@ -132,23 +129,24 @@ func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) IP {
 		return *ip
 	}
 
-	return IP{}
+	return client.IP{}
 }
 
-// dummy method for tink data model transition
+// dummy method for tink data model transition.
 func (d DiscoveryCacher) GetMAC(ip net.IP) net.HardwareAddr {
 	return d.PrimaryDataMAC().HardwareAddr()
 }
 
-// InstanceIP returns the IP configuration that should be Offered to the instance if there is one; if it's prov/deprov'ing, it's the hardware IP
-func (d DiscoveryCacher) InstanceIP(mac string) *IP {
+// InstanceIP returns the IP configuration that should be Offered to the
+// instance if there is one; if it's prov/deprov'ing, it's the hardware IP.
+func (d DiscoveryCacher) InstanceIP(mac string) *client.IP {
 	if d.Instance() == nil || d.Instance().ID == "" || !d.MacIsType(mac, "data") || d.PrimaryDataMAC().HardwareAddr().String() != mac {
 		return nil
 	}
-	if ip := d.Instance().FindIP(managementPublicIPv4IP); ip != nil {
+	if ip := d.Instance().FindIP(client.ManagementPublicIPv4IP); ip != nil {
 		return ip
 	}
-	if ip := d.Instance().FindIP(managementPrivateIPv4IP); ip != nil {
+	if ip := d.Instance().FindIP(client.ManagementPrivateIPv4IP); ip != nil {
 		return ip
 	}
 	if d.Instance().State == "provisioning" || d.Instance().State == "deprovisioning" {
@@ -161,8 +159,8 @@ func (d DiscoveryCacher) InstanceIP(mac string) *IP {
 	return nil
 }
 
-// HardwareIP returns the IP configuration that should be offered to the hardware if there is no instance
-func (d DiscoveryCacher) HardwareIP(mac string) *IP {
+// HardwareIP returns the IP configuration that should be offered to the hardware if there is no instance.
+func (d DiscoveryCacher) HardwareIP(mac string) *client.IP {
 	if !d.MacIsType(mac, "data") {
 		return nil
 	}
@@ -173,8 +171,8 @@ func (d DiscoveryCacher) HardwareIP(mac string) *IP {
 	return d.hardwareIP()
 }
 
-// hardwareIP returns the IP configuration that should be offered to the hardware (not exported)
-func (d DiscoveryCacher) hardwareIP() *IP {
+// hardwareIP returns the IP configuration that should be offered to the hardware (not exported).
+func (d DiscoveryCacher) hardwareIP() *client.IP {
 	h := d.Hardware()
 	for _, ip := range h.HardwareIPs() {
 		if ip.Family != 4 {
@@ -190,8 +188,8 @@ func (d DiscoveryCacher) hardwareIP() *IP {
 	return nil
 }
 
-// ManagementIP returns the IP configuration that should be Offered to the BMC, if the MAC is a BMC MAC
-func (d DiscoveryCacher) ManagementIP(mac string) *IP {
+// ManagementIP returns the IP configuration that should be Offered to the BMC, if the MAC is a BMC MAC.
+func (d DiscoveryCacher) ManagementIP(mac string) *client.IP {
 	if d.MacIsType(mac, "ipmi") && d.Name != "" {
 		return &d.IPMI
 	}
@@ -199,8 +197,8 @@ func (d DiscoveryCacher) ManagementIP(mac string) *IP {
 	return nil
 }
 
-// DiscoveredIP returns the IP configuration that should be offered to a newly discovered BMC, if the MAC is a BMC MAC
-func (d DiscoveryCacher) DiscoveredIP(mac string) *IP {
+// DiscoveredIP returns the IP configuration that should be offered to a newly discovered BMC, if the MAC is a BMC MAC.
+func (d DiscoveryCacher) DiscoveredIP(mac string) *client.IP {
 	if d.MacIsType(mac, "ipmi") && d.Name == "" {
 		return &d.IPMI
 	}
@@ -208,9 +206,9 @@ func (d DiscoveryCacher) DiscoveredIP(mac string) *IP {
 	return nil
 }
 
-// PrimaryDataMAC returns the mac associated with eth0, or as a fallback the lowest numbered non-bmc MAC address
-func (d DiscoveryCacher) PrimaryDataMAC() MACAddr {
-	mac := OnesMAC
+// PrimaryDataMAC returns the mac associated with eth0, or as a fallback the lowest numbered non-bmc MAC address.
+func (d DiscoveryCacher) PrimaryDataMAC() client.MACAddr {
+	mac := client.OnesMAC
 	for _, port := range d.NetworkPorts {
 		if port.Type != "data" {
 			continue
@@ -226,21 +224,21 @@ func (d DiscoveryCacher) PrimaryDataMAC() MACAddr {
 	}
 
 	if mac.IsOnes() {
-		return ZeroMAC
+		return client.ZeroMAC
 	}
 
 	return mac
 }
 
-// ManagementMAC returns the mac address of the BMC interface
-func (d DiscoveryCacher) ManagementMAC() MACAddr {
+// ManagementMAC returns the mac address of the BMC interface.
+func (d DiscoveryCacher) ManagementMAC() client.MACAddr {
 	for _, port := range d.NetworkPorts {
 		if port.Type == "ipmi" {
 			return *port.Data.MAC
 		}
 	}
 
-	return ZeroMAC
+	return client.ZeroMAC
 }
 
 func (d DiscoveryCacher) Hostname() (string, error) {
@@ -276,8 +274,8 @@ func (h *HardwareCacher) Management() (address, netmask, gateway net.IP) {
 	return ip.Address, ip.Netmask, ip.Gateway
 }
 
-func (h HardwareCacher) Interfaces() []Port {
-	ports := make([]Port, 0, len(h.NetworkPorts)-1)
+func (h HardwareCacher) Interfaces() []client.Port {
+	ports := make([]client.Port, 0, len(h.NetworkPorts)-1)
 	for _, p := range h.NetworkPorts {
 		if p.Type == "ipmi" {
 			continue
@@ -289,10 +287,6 @@ func (h HardwareCacher) Interfaces() []Port {
 	}
 
 	return ports
-}
-
-func (i InterfaceCacher) Name() string {
-	return i.Port.Name
 }
 
 func (h HardwareCacher) HardwareAllowPXE(mac net.HardwareAddr) bool {
@@ -307,7 +301,7 @@ func (h HardwareCacher) HardwareArch(mac net.HardwareAddr) string {
 	return h.Arch
 }
 
-func (h HardwareCacher) HardwareBondingMode() BondingMode {
+func (h HardwareCacher) HardwareBondingMode() client.BondingMode {
 	return h.BondingMode
 }
 
@@ -315,15 +309,15 @@ func (h HardwareCacher) HardwareFacilityCode() string {
 	return h.FacilityCode
 }
 
-func (h HardwareCacher) HardwareID() HardwareID {
-	return HardwareID(h.ID)
+func (h HardwareCacher) HardwareID() client.HardwareID {
+	return client.HardwareID(h.ID)
 }
 
-func (h HardwareCacher) HardwareIPs() []IP {
+func (h HardwareCacher) HardwareIPs() []client.IP {
 	return h.IPs
 }
 
-func (h HardwareCacher) HardwareIPMI() IP {
+func (h HardwareCacher) HardwareIPMI() client.IP {
 	return h.IPMI
 }
 
@@ -347,7 +341,7 @@ func (h HardwareCacher) HardwareOSIEVersion() string {
 	return h.ServicesVersion.OSIE
 }
 
-func (h HardwareCacher) HardwareState() HardwareState {
+func (h HardwareCacher) HardwareState() client.HardwareState {
 	return h.State
 }
 
@@ -370,18 +364,18 @@ func (h HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
 	return ""
 }
 
-func (h *HardwareCacher) OperatingSystem() *OperatingSystem {
+func (h *HardwareCacher) OperatingSystem() *client.OperatingSystem {
 	i := h.instance()
-	if i.OSV == (*OperatingSystem)(nil) {
-		i.OSV = &OperatingSystem{}
+	if i.OSV == (*client.OperatingSystem)(nil) {
+		i.OSV = &client.OperatingSystem{}
 	}
 
 	return i.OSV
 }
 
-func (h *HardwareCacher) instance() *Instance {
+func (h *HardwareCacher) instance() *client.Instance {
 	if h.Instance == nil {
-		h.Instance = &Instance{}
+		h.Instance = &client.Instance{}
 	}
 
 	return h.Instance

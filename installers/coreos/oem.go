@@ -11,10 +11,10 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func ServeOEM() func(w http.ResponseWriter, req *http.Request) {
+func ServeOEM(jobManager job.Manager) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var isARM bool
-		if _, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr); err == nil {
+		if _, j, err := jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr); err == nil {
 			isARM = j.IsARM()
 		} else {
 			installers.Logger("coreos").With("client", req.RemoteAddr).Info(err, "retrieved job is empty")

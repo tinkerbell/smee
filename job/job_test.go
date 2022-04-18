@@ -2,22 +2,15 @@ package job
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/packethost/pkg/log"
-	assert "github.com/stretchr/testify/require"
+	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/client/cacher"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/metrics"
-	"github.com/tinkerbell/boots/packet"
-	workflowMock "github.com/tinkerbell/boots/packet/mock_workflow"
-	tw "github.com/tinkerbell/tink/protos/workflow"
 )
 
 func TestMain(m *testing.M) {
@@ -33,35 +26,38 @@ func TestMain(m *testing.M) {
 }
 
 func TestSetupDiscover(t *testing.T) {
-	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	var d packet.Discovery = &packet.DiscoveryCacher{
-		HardwareCacher: &packet.HardwareCacher{
+	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
+	var d client.Discoverer = &cacher.DiscoveryCacher{
+		HardwareCacher: &cacher.HardwareCacher{
 			Name:     "TestSetupDiscover",
 			Instance: nil,
-			NetworkPorts: []packet.Port{
+			NetworkPorts: []client.Port{
 				{
 					Type: "ipmi",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC: &macIPMI,
 					},
 				},
 			},
-			IPMI: packet.IP{
+			IPMI: client.IP{
 				Address: net.ParseIP("192.168.0.2"),
 				Gateway: net.ParseIP("192.168.0.1"),
 				Netmask: net.ParseIP("192.168.0.255"),
 			},
 		},
 	}
-
-	j := &Job{mac: macIPMI.HardwareAddr()}
+	l := log.Test(t, "test")
+	j := &Job{
+		mac:    macIPMI.HardwareAddr(),
+		Logger: l,
+	}
 	j.setup(context.Background(), d)
 
 	dh := d.Hardware()
-	h := dh.(*packet.HardwareCacher)
+	h := dh.(*cacher.HardwareCacher)
 
 	mode := d.Mode()
 
@@ -70,7 +66,7 @@ func TestSetupDiscover(t *testing.T) {
 		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
 	}
 
-	dc := d.(*packet.DiscoveryCacher)
+	dc := d.(*cacher.DiscoveryCacher)
 	netConfig := dc.HardwareIPMI()
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
 		t.Fatalf("incorrect Address, want: %v, got: %v", netConfig.Address, j.dhcp.Address())
@@ -88,24 +84,24 @@ func TestSetupDiscover(t *testing.T) {
 
 // The easy way to differentiate between discovered hardware and enrolled/not-active hardware is by existence of PlanSLug
 func TestSetupManagement(t *testing.T) {
-	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	var d packet.Discovery = &packet.DiscoveryCacher{
-		HardwareCacher: &packet.HardwareCacher{
+	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
+	var d client.Discoverer = &cacher.DiscoveryCacher{
+		HardwareCacher: &cacher.HardwareCacher{
 			Name:     "TestSetupManagement",
-			Instance: &packet.Instance{},
+			Instance: &client.Instance{},
 			PlanSlug: "f1.fake.x86",
-			NetworkPorts: []packet.Port{
+			NetworkPorts: []client.Port{
 				{
 					Type: "ipmi",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC: &macIPMI,
 					},
 				},
 			},
-			IPMI: packet.IP{
+			IPMI: client.IP{
 				Address: net.ParseIP("192.168.0.2"),
 				Gateway: net.ParseIP("192.168.0.1"),
 				Netmask: net.ParseIP("192.168.0.255"),
@@ -114,9 +110,12 @@ func TestSetupManagement(t *testing.T) {
 	}
 
 	dh := d.Hardware()
-	h := dh.(*packet.HardwareCacher)
-
-	j := &Job{mac: macIPMI.HardwareAddr()}
+	h := dh.(*cacher.HardwareCacher)
+	l := log.Test(t, "test")
+	j := &Job{
+		mac:    macIPMI.HardwareAddr(),
+		Logger: l,
+	}
 	j.setup(context.Background(), d)
 
 	mode := d.Mode()
@@ -126,7 +125,7 @@ func TestSetupManagement(t *testing.T) {
 		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
 	}
 
-	dc := d.(*packet.DiscoveryCacher)
+	dc := d.(*cacher.DiscoveryCacher)
 	netConfig := dc.HardwareIPMI()
 
 	if !netConfig.Address.Equal(j.dhcp.Address()) {
@@ -144,11 +143,14 @@ func TestSetupManagement(t *testing.T) {
 }
 
 func TestSetupInstance(t *testing.T) {
-	var d packet.Discovery
-	var macs []packet.MACAddr
+	var d client.Discoverer
+	var macs []client.MACAddr
 	d, macs, _ = MakeHardwareWithInstance()
-
-	j := &Job{mac: macs[1].HardwareAddr()}
+	l := log.Test(t, "test")
+	j := &Job{
+		mac:    macs[1].HardwareAddr(),
+		Logger: l,
+	}
 	j.setup(context.Background(), d)
 
 	mode := d.Mode()
@@ -174,8 +176,8 @@ func TestSetupInstance(t *testing.T) {
 }
 
 func TestSetupFails(t *testing.T) {
-	var d packet.Discovery = &packet.DiscoveryCacher{HardwareCacher: &packet.HardwareCacher{}}
-	j := &Job{}
+	var d client.Discoverer = &cacher.DiscoveryCacher{HardwareCacher: &cacher.HardwareCacher{}}
+	j := &Job{Logger: log.Test(t, "test")}
 
 	_, err := j.setup(context.Background(), d)
 	if err == nil {
@@ -186,77 +188,9 @@ func TestSetupFails(t *testing.T) {
 	j.With("happyThoughts", true).Error(err)
 }
 
-func TestHasActiveWorkflow(t *testing.T) {
-	for _, test := range []struct {
-		name   string
-		wcl    *tw.WorkflowContextList
-		status bool
-	}{
-		{name: "test pending workflow",
-			wcl: &tw.WorkflowContextList{
-				WorkflowContexts: []*tw.WorkflowContext{
-					{
-						WorkflowId:         "pending-fake-workflow-bde9-812726eff314",
-						CurrentActionState: 0,
-					},
-				},
-			},
-			status: true,
-		},
-		{name: "test running workflow",
-			wcl: &tw.WorkflowContextList{
-				WorkflowContexts: []*tw.WorkflowContext{
-					{
-						WorkflowId:         "running-fake-workflow-bde9-812726eff314",
-						CurrentActionState: 1,
-					},
-				},
-			},
-			status: true,
-		},
-		{name: "test inactive workflow",
-			wcl: &tw.WorkflowContextList{
-				WorkflowContexts: []*tw.WorkflowContext{
-					{
-						WorkflowId:         "inactive-fake-workflow-bde9-812726eff314",
-						CurrentActionState: 4,
-					},
-				},
-			},
-			status: false,
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			ht := &httptest.Server{
-				URL:         "FakeURL",
-				Listener:    nil,
-				EnableHTTP2: false,
-				TLS:         &tls.Config{},
-				Config:      &http.Server{},
-			}
-			u, err := url.Parse(ht.URL)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			cMock := workflowMock.NewMockWorkflowServiceClient(ctrl)
-			cMock.EXPECT().GetWorkflowContextList(gomock.Any(), gomock.Any()).Return(test.wcl, nil)
-			c := packet.NewMockClient(u, cMock)
-			SetClient(c)
-			s, err := HasActiveWorkflow(context.Background(), "Hardware-fake-bde9-812726eff314")
-			if err != nil {
-				t.Fatal("error occured while testing")
-			}
-			assert.Equal(t, s, test.status)
-		})
-	}
-}
-
 func TestSetupWithoutInstance(t *testing.T) {
 	d, mac := MakeHardwareWithoutInstance()
-	j := &Job{mac: mac.HardwareAddr()}
+	j := &Job{mac: mac.HardwareAddr(), Logger: log.Test(t, "test")}
 	j.setup(context.Background(), d)
 
 	hostname, _ := d.Hostname()

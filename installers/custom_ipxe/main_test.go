@@ -8,10 +8,10 @@ import (
 
 	l "github.com/packethost/pkg/log"
 	"github.com/stretchr/testify/require"
+	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
-	"github.com/tinkerbell/boots/packet"
 )
 
 var (
@@ -35,7 +35,7 @@ func TestIpxeScript(t *testing.T) {
 	var testCases = []struct {
 		name          string
 		installer     string
-		installerData *packet.InstallerData
+		installerData *client.InstallerData
 		want          string
 	}{
 		{
@@ -51,7 +51,7 @@ func TestIpxeScript(t *testing.T) {
 		{
 			"valid config",
 			"custom_ipxe",
-			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -69,7 +69,7 @@ func TestIpxeScript(t *testing.T) {
 		{
 			"installer: valid config",
 			"",
-			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -97,7 +97,7 @@ func TestIpxeScript(t *testing.T) {
 		{
 			"instance: ipxe script url",
 			"",
-			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -115,7 +115,7 @@ func TestIpxeScript(t *testing.T) {
 		{
 			"instance: userdata script",
 			"",
-			&packet.InstallerData{Script: "#!ipxe\necho userdata script"},
+			&client.InstallerData{Script: "#!ipxe\necho userdata script"},
 			`#!ipxe
 
 
@@ -157,12 +157,12 @@ func TestIpxeScript(t *testing.T) {
 func TestIpxeScriptFromConfig(t *testing.T) {
 	var testCases = []struct {
 		name   string
-		config *packet.InstallerData
+		config *client.InstallerData
 		want   string
 	}{
 		{
 			"invalid config",
-			&packet.InstallerData{},
+			&client.InstallerData{},
 			`#!ipxe
 
 			echo ipxe config URL or Script must be defined
@@ -171,7 +171,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		},
 		{
 			"valid chain",
-			&packet.InstallerData{Chain: "http://url/path.ipxe"},
+			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
 
@@ -188,7 +188,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		},
 		{
 			"valid script",
-			&packet.InstallerData{Script: "echo my test script"},
+			&client.InstallerData{Script: "echo my test script"},
 			`#!ipxe
 
 
@@ -205,7 +205,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		},
 		{
 			"valid script with header",
-			&packet.InstallerData{Script: "#!ipxe\necho my test script"},
+			&client.InstallerData{Script: "#!ipxe\necho my test script"},
 			`#!ipxe
 
 
@@ -253,7 +253,7 @@ func TestConfigValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := require.New(t)
 
-			cfg := &packet.InstallerData{
+			cfg := &client.InstallerData{
 				Chain:  tc.chain,
 				Script: tc.script,
 			}

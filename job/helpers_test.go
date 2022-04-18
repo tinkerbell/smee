@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/boots/packet"
+	"github.com/tinkerbell/boots/client"
 )
 
 func TestPasswordHash(t *testing.T) {
@@ -19,7 +19,7 @@ func TestPasswordHash(t *testing.T) {
 		"only CryptedRootPassword is populated": {
 			want: "supersecret",
 			input: Job{
-				instance: &packet.Instance{
+				instance: &client.Instance{
 					CryptedRootPassword: "supersecret",
 				},
 			},
@@ -27,7 +27,7 @@ func TestPasswordHash(t *testing.T) {
 		"only PasswordHash is populated": {
 			want: "supersecret",
 			input: Job{
-				instance: &packet.Instance{
+				instance: &client.Instance{
 					PasswordHash: "supersecret",
 				},
 			},
@@ -35,7 +35,7 @@ func TestPasswordHash(t *testing.T) {
 		"CryptedRootPassword is preferred over PasswordHash": {
 			want: "cryptedrootpassword",
 			input: Job{
-				instance: &packet.Instance{
+				instance: &client.Instance{
 					CryptedRootPassword: "cryptedrootpassword",
 					PasswordHash:        "passwordhash",
 				},

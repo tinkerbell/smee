@@ -11,16 +11,16 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func ServeKickstart() func(w http.ResponseWriter, req *http.Request) {
+func ServeKickstart(jobManager job.Manager) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		_, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
+		_, j, err := jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 		if err != nil {
 			installers.Logger("vmware").With("client", req.RemoteAddr).Error(err, "retrieved job is empty")
 			w.WriteHeader(http.StatusNotFound)
 
 			return
 		}
-		if err := genKickstart(j, w); err != nil {
+		if err := genKickstart(*j, w); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			j.Error(err)
 		}

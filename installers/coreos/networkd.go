@@ -5,10 +5,10 @@ package coreos
 import (
 	"net"
 
+	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/files/unit"
 	"github.com/tinkerbell/boots/job"
-	"github.com/tinkerbell/boots/packet"
 )
 
 const bondName = "bond0"
@@ -24,7 +24,7 @@ var bondOptions = []string{
 	"MIIMonitorSec=.1",
 }
 
-func configureBondSlaveUnit(j job.Job, u *unit.Unit, p packet.Port) bool {
+func configureBondSlaveUnit(j job.Job, u *unit.Unit, p client.Port) bool {
 	if p.Data.Bond != bondName {
 		return false
 	}

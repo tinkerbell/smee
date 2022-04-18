@@ -20,16 +20,21 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type BootsDHCPServer struct {
+	jobmanager job.Manager
+}
+
 // ServeDHCP starts the DHCP server.
 // It takes the next server address (nextServer) for serving iPXE binaries via TFTP
 // and an IP:Port (httpServerFQDN) for serving iPXE binaries via HTTP.
-func ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
+func (s *BootsDHCPServer) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
 	handler := dhcpHandler{
 		pool:         workerpool.New(poolSize),
 		nextServer:   nextServer,
 		ipxeBaseURL:  ipxeBaseURL,
 		bootsBaseURL: bootsBaseURL,
+		jobmanager:   s.jobmanager,
 	}
 	defer handler.pool.Stop()
 
@@ -48,6 +53,7 @@ type dhcpHandler struct {
 	nextServer   net.IP
 	ipxeBaseURL  string
 	bootsBaseURL string
+	jobmanager   job.Manager
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
@@ -90,7 +96,7 @@ func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
 	)
 
-	ctx, j, err := job.CreateFromDHCP(ctx, mac, gi, circuitID)
+	ctx, j, err := d.jobmanager.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		mainlog.With("type", req.GetMessageType(), "mac", mac, "err", err).Info("retrieved job is empty")
 		metrics.JobsInProgress.With(labels).Dec()
