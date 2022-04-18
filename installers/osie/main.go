@@ -114,12 +114,18 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 
 	if j.CanWorkflow() {
 		buildWorkerParams()
-		s.Args("docker_registry=" + dockerRegistry)
+		if dockerRegistry != "" {
+			s.Args("docker_registry=" + dockerRegistry)
+		}
 		s.Args("grpc_authority=" + grpcAuthority)
 		s.Args("grpc_cert_url=" + grpcCertURL)
 		s.Args("instance_id=" + j.InstanceID())
-		s.Args("registry_username=" + registryUsername)
-		s.Args("registry_password=" + registryPassword)
+		if registryUsername != "" {
+			s.Args("registry_username=" + registryUsername)
+		}
+		if registryPassword != "" {
+			s.Args("registry_password=" + registryPassword)
+		}
 		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID().String())
 	}
