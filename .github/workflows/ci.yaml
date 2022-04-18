@@ -39,7 +39,7 @@ jobs:
           go-version: "1.18"
 
       - name: Generate all files
-        run: nix-shell --run 'make gen'
+        run: nix-shell --run 'make -j1 gen'
 
       - name: goimports
         run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
