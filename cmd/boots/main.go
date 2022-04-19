@@ -76,6 +76,8 @@ type config struct {
 	syslogAddr string
 	// loglevel is the log level for boots
 	logLevel string
+	// tinkWorkerImage is used in kernel command line parameters to define where the Tink worker image is located.
+	tinkWorkerImage string
 }
 
 func main() {
@@ -196,7 +198,7 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
+	go ServeHTTP(registerInstallers(), cfg.httpAddr, cfg.tinkWorkerImage, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -286,6 +288,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
+	fs.StringVar(&cfg.tinkWorkerImage, "tink-worker-image", "quay.io/tinkerbell/tink:latest", "Tink worker image for use as kernel commandline parameter.")
 
 	return &ffcli.Command{
 		Name:       name,

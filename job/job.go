@@ -49,6 +49,8 @@ type Job struct {
 	NextServer   net.IP
 	IpxeBaseURL  string
 	BootsBaseURL string
+	// TinkWorkerImage is used in kernel command line parameters to define where the Tink worker image is located.
+	TinkWorkerImage string
 }
 
 type Installers struct {

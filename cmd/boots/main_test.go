@@ -26,6 +26,7 @@ func TestParser(t *testing.T) {
 		httpAddr:           "192.168.2.225:8080",
 		dhcpAddr:           "0.0.0.0:67",
 		syslogAddr:         "0.0.0.0:514",
+		tinkWorkerImage:    "quay.io/tinkerbell/tink:latest",
 		logLevel:           "info",
 	}
 	got := &config{}
@@ -79,6 +80,7 @@ FLAGS
   -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
   -log-level              log level. (default "info")
   -syslog-addr            IP and port to listen on for syslog messages. (default "%[1]v:514")
+  -tink-worker-image      Tink worker image for use as kernel commandline parameter. (default "quay.io/tinkerbell/tink:latest")
 `, defaultIP)
 	c := &config{}
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)

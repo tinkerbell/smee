@@ -128,6 +128,9 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 		}
 		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID().String())
+		if j.TinkWorkerImage != "" {
+			s.Args("tink_worker_image=" + j.TinkWorkerImage)
+		}
 	}
 
 	s.Args("packet_bootdev_mac=${bootdevmac}")
