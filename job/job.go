@@ -51,6 +51,8 @@ type Job struct {
 	BootsBaseURL string
 	// TinkWorkerImage is used in kernel command line parameters to define where the Tink worker image is located.
 	TinkWorkerImage string
+	// tinkServerTLS is used in kernel command line parameters to define whether to connect to Tink server using TLS.
+	TinkServerTLS bool
 }
 
 type Installers struct {

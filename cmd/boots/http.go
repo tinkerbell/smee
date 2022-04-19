@@ -57,14 +57,15 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 type jobHandler struct {
 	i               job.Installers
 	tinkWorkerImage string
+	tinkServerTLS   bool
 }
 
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func ServeHTTP(i job.Installers, addr, tinkWorkerImage string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
+func ServeHTTP(i job.Installers, addr, tinkWorkerImage string, tinkServerTLS bool, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
-	s := jobHandler{i: i, tinkWorkerImage: tinkWorkerImage}
+	s := jobHandler{i: i, tinkWorkerImage: tinkWorkerImage, tinkServerTLS: tinkServerTLS}
 	mux.Handle(otelFuncWrapper("/", s.serveJobFile))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
@@ -151,6 +152,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	}
 	// set Tink Worker image location
 	j.TinkWorkerImage = h.tinkWorkerImage
+	j.TinkServerTLS = h.tinkServerTLS
 	// This gates serving PXE file by
 	// 1. the existence of a hardware record in tink server
 	// AND

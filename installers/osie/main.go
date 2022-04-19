@@ -131,6 +131,11 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 		if j.TinkWorkerImage != "" {
 			s.Args("tink_worker_image=" + j.TinkWorkerImage)
 		}
+		if j.TinkServerTLS {
+			s.Args("tink_server_tls=true")
+		} else {
+			s.Args("tink_server_tls=false")
+		}
 	}
 
 	s.Args("packet_bootdev_mac=${bootdevmac}")

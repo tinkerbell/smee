@@ -78,6 +78,8 @@ type config struct {
 	logLevel string
 	// tinkWorkerImage is used in kernel command line parameters to define where the Tink worker image is located.
 	tinkWorkerImage string
+	// tinkServerTLS is used in kernel command line parameters to define whether to connect to Tink server using TLS.
+	tinkServerTLS bool
 }
 
 func main() {
@@ -198,7 +200,7 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go ServeHTTP(registerInstallers(), cfg.httpAddr, cfg.tinkWorkerImage, ipxePattern, ipxeHandler)
+	go ServeHTTP(registerInstallers(), cfg.httpAddr, cfg.tinkWorkerImage, cfg.tinkServerTLS, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -289,6 +291,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
 	fs.StringVar(&cfg.tinkWorkerImage, "tink-worker-image", "quay.io/tinkerbell/tink:latest", "Tink worker image for use as kernel commandline parameter.")
+	fs.BoolVar(&cfg.tinkServerTLS, "tink-server-tls", true, "Connect to tink server with TLS or not.")
 
 	return &ffcli.Command{
 		Name:       name,
