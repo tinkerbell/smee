@@ -2,7 +2,6 @@ package conf
 
 import (
 	"net/url"
-	"os"
 	"reflect"
 	"testing"
 )
@@ -87,9 +86,9 @@ func Test_buildMirrorBaseURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.MirrorBaseURL != "" {
-				os.Setenv("MIRROR_BASE_URL", tt.MirrorBaseURL)
+				t.Setenv("MIRROR_BASE_URL", tt.MirrorBaseURL)
 			} else {
-				os.Unsetenv("MIRROR_BASE_URL")
+				t.Setenv("MIRROR_BASE_URL", "")
 			}
 
 			if tt.facilityCode != "" {
