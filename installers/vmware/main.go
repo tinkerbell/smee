@@ -12,68 +12,59 @@ const (
 	KickstartPath = "/vmware/ks-esxi.cfg"
 )
 
-type Installer struct{}
+type installer struct{}
 
-func (i Installer) BootScriptDefault() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		s.Shell()
-
-		j.DisablePXE(ctx)
-		j.MarkDeviceActive(ctx)
-	}
+func Installer() job.BootScripter {
+	return installer{}
 }
 
-func (i Installer) BootScriptVmwareEsxi55() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-5.5.0.update03")
-	}
+var slug2Paths = map[string]string{
+	"vmware_esxi_5_5":     "esxi-5.5.0.update03",
+	"vmware_esxi_6_0":     "esxi-6.0.0.update03",
+	"vmware_esxi_6_5":     "esxi-6.5.0",
+	"vmware_esxi_6_5_vcf": "esxi-6.5.0",
+	"vmware_esxi_6_7":     "esxi-6.7.0",
+	"vmware_esxi_6_7_vcf": "esxi-6.7.0",
+	"vmware_esxi_7_0U2a":  "esxi-7.0U2a",
+	"vmware_esxi_7_0":     "esxi-7.0.0",
+	"vmware_esxi_7_0_vcf": "esxi-7.0.0",
+	"vmware":              "abort",
 }
 
-func (i Installer) BootScriptVmwareEsxi60() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-6.0.0.update03")
+func (i installer) BootScript(slug string) job.BootScript {
+	path := slug2Paths[slug]
+	if path == "" {
+		panic("unknown slug:" + slug)
 	}
-}
+	if path == "abort" {
+		return func(ctx context.Context, j job.Job, s *ipxe.Script) {
+			s.Shell()
 
-func (i Installer) BootScriptVmwareEsxi65() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-6.5.0")
+			j.DisablePXE(ctx)
+			j.MarkDeviceActive(ctx)
+		}
 	}
-}
 
-func (i Installer) BootScriptVmwareEsxi67() job.BootScript {
 	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-6.7.0")
-	}
-}
-
-func (i Installer) BootScriptVmwareEsxi70() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-7.0.0")
-	}
-}
-
-func (i Installer) BootScriptVmwareEsxi70U2a() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, "/vmware/esxi-7.0U2a")
+		script(j, s, path)
 	}
 }
 
 func script(j job.Job, s *ipxe.Script, basePath string) {
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", conf.MirrorBaseURL+basePath)
+	s.Set("base-url", conf.MirrorBaseURL+"/vmware/"+basePath)
 	if j.IsUEFI() {
 		s.Kernel("${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg")
 	} else {
 		s.Kernel("${base-url}/mboot.c32 -c ${base-url}/boot.cfg")
 	}
 
-	kernelParams(j, s, "/vmware/ks-esxi.cfg")
+	kernelParams(j, s)
 	s.Boot()
 }
 
-func kernelParams(j job.Job, s *ipxe.Script, kickstartPath string) {
-	s.Args("ks=${tinkerbell}" + kickstartPath)
+func kernelParams(j job.Job, s *ipxe.Script) {
+	s.Args("ks=${tinkerbell}/vmware/ks-esxi.cfg")
 
 	vmnic := j.PrimaryNIC().String()
 	s.Args("netdevice=" + vmnic)

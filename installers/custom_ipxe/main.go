@@ -10,37 +10,42 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-type Installer struct{}
+type installer struct{}
 
-func (i Installer) BootScript() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		logger := j.Logger.With("installer", "custom_ipxe")
+func Installer() job.BootScripter {
+	return installer{}
+}
 
-		var cfg *client.InstallerData
+func (i installer) BootScript(string) job.BootScript {
+	return bootScript
+}
 
-		if j.OperatingSystem().Installer == "custom_ipxe" {
-			cfg = j.OperatingSystem().InstallerData
-			if cfg == nil {
-				s.Echo("Installer data not provided")
-				s.Shell()
-				logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
+func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+	logger := j.Logger.With("installer", "custom_ipxe")
 
-				return
-			}
-		} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
-			cfg = &client.InstallerData{Script: j.UserData()}
-		} else if j.IPXEScriptURL() != "" {
-			cfg = &client.InstallerData{Chain: j.IPXEScriptURL()}
-		} else {
-			s.Echo("Unknown ipxe configuration")
+	var cfg *client.InstallerData
+	if j.OperatingSystem().Installer == "custom_ipxe" {
+		cfg = j.OperatingSystem().InstallerData
+		if cfg == nil {
+			s.Echo("Installer data not provided")
 			s.Shell()
-			logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
+			logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
 
 			return
 		}
+	} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
+		cfg = &client.InstallerData{Script: j.UserData()}
+	} else if j.IPXEScriptURL() != "" {
+		cfg = &client.InstallerData{Chain: j.IPXEScriptURL()}
+	} else {
+		s.Echo("Unknown ipxe configuration")
+		s.Shell()
+		logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
 
-		ipxeScriptFromConfig(logger, cfg, j, s)
+		return
 	}
+
+	ipxeScriptFromConfig(logger, cfg, j, s)
 }
 
 func ipxeScriptFromConfig(logger log.Logger, cfg *client.InstallerData, j job.Job, s *ipxe.Script) {

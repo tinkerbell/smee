@@ -24,8 +24,11 @@ var facility = func() string {
 func TestScriptPerType(t *testing.T) {
 	for mode, planAndScript := range pxeByPlan {
 		t.Run(mode, func(t *testing.T) {
-			for slug, tt := range inputsBySlug {
+			for slug, path := range slug2Paths {
 				t.Run(slug, func(t *testing.T) {
+					if slug == "vmware" {
+						t.Skipf("skipping vmware slug/default because it panics when calling j.DisablePXE() because client is nil and mocking client is not worth it imo")
+					}
 					plan := planAndScript.plan
 					script := planAndScript.script
 
@@ -39,12 +42,12 @@ func TestScriptPerType(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					tt.script(context.Background(), m.Job(), s)
+					Installer().BootScript(slug)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
-					want := fmt.Sprintf(script, tt.path)
-					if !strings.Contains(want, tt.path) {
-						t.Fatalf("expected %s to be present in script:%v", tt.path, want)
+					want := fmt.Sprintf(script, path)
+					if !strings.Contains(want, path) {
+						t.Fatalf("expected %s to be present in script:%v", path, want)
 					}
 					if want != got {
 						t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(want, got))
@@ -100,20 +103,4 @@ kernel ${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg ks=${tinkerbell}
 boot
 `,
 	},
-}
-
-var inputsBySlug = map[string]struct {
-	path   string
-	script job.BootScript
-}{
-	"vmware_esxi_5_5":     {"esxi-5.5.0.update03", Installer{}.BootScriptVmwareEsxi55()},
-	"vmware_esxi_6_0":     {"esxi-6.0.0.update03", Installer{}.BootScriptVmwareEsxi60()},
-	"vmware_esxi_6_5":     {"esxi-6.5.0", Installer{}.BootScriptVmwareEsxi65()},
-	"vmware_esxi_6_7":     {"esxi-6.7.0", Installer{}.BootScriptVmwareEsxi67()},
-	"vmware_esxi_7_0":     {"esxi-7.0.0", Installer{}.BootScriptVmwareEsxi70()},
-	"vmware_esxi_7_0U2a":  {"esxi-7.0U2a", Installer{}.BootScriptVmwareEsxi70U2a()},
-	"vmware_esxi_6_5_vcf": {"esxi-6.5.0", Installer{}.BootScriptVmwareEsxi65()},
-	"vmware_esxi_6_7_vcf": {"esxi-6.7.0", Installer{}.BootScriptVmwareEsxi67()},
-	"vmware_esxi_7_0_vcf": {"esxi-7.0.0", Installer{}.BootScriptVmwareEsxi70()},
-	// "vmware":              {path: "", script: Installer{}.BootScriptDefault()}, panics because client is nil and mocking client is not worth it imo
 }

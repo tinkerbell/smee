@@ -44,13 +44,11 @@ func TestScript(t *testing.T) {
 					m.SetManufacturer("supermicro")
 					m.SetOSSlug("ubuntu_16_04_image")
 
-					state := ""
-					if action == "install" {
-						state = "provisioning"
-					} else {
-						state = "rescuing"
-					}
+					state := "provisioning"
 					m.SetState(state)
+					if action == "rescue" {
+						m.SetRescue(true)
+					}
 
 					mac := genRandMAC(t)
 					m.SetMAC(mac)
@@ -62,15 +60,7 @@ func TestScript(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					ctx := context.Background()
-					switch action {
-					case "rescue":
-						Installer{}.rescue()(ctx, m.Job(), s)
-					case "install":
-						Installer{}.install()(ctx, m.Job(), s)
-					case "discover":
-						Installer{}.Discover()(ctx, m.Job(), s)
-					}
+					Installer("").BootScript(action)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
 					arch := "aarch64"

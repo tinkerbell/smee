@@ -361,31 +361,33 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 func (cf *config) registerInstallers() job.Installers {
 	// register installers
 	i := job.NewInstallers()
+
 	// register flatcar
-	c := flatcar.Installer{}
-	i.RegisterDistro("flatcar", c.BootScript())
+	o := flatcar.Installer()
+	i.RegisterDistro("flatcar", o.BootScript("flatcar"))
+
 	// register custom ipxe
-	ci := custom_ipxe.Installer{}
-	i.RegisterDistro("custom_ipxe", ci.BootScript())
-	i.RegisterInstaller("custom_ipxe", ci.BootScript())
+	o = custom_ipxe.Installer()
+	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
+	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
+
 	// register osie
-	o := osie.Installer{}
-	i.RegisterDistro("discovery", o.Discover())
-	// register osie as default
-	d := osie.Installer{ExtraKernelArgs: cf.extraKernelArgs}
-	i.RegisterDefaultInstaller(d.DefaultHandler())
+	o = osie.Installer(cf.extraKernelArgs)
+	i.RegisterDistro("discovery", o.BootScript("discover"))
+	i.RegisterDefaultInstaller(o.BootScript("default"))
+
 	// register vmware
-	v := vmware.Installer{}
-	i.RegisterSlug("vmware_esxi_5_5", v.BootScriptVmwareEsxi55())
-	i.RegisterSlug("vmware_esxi_6_0", v.BootScriptVmwareEsxi60())
-	i.RegisterSlug("vmware_esxi_6_5", v.BootScriptVmwareEsxi65())
-	i.RegisterSlug("vmware_esxi_6_7", v.BootScriptVmwareEsxi67())
-	i.RegisterSlug("vmware_esxi_7_0", v.BootScriptVmwareEsxi70())
-	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScriptVmwareEsxi70U2a())
-	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScriptVmwareEsxi65())
-	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScriptVmwareEsxi67())
-	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScriptVmwareEsxi70())
-	i.RegisterDistro("vmware", v.BootScriptDefault())
+	v := vmware.Installer()
+	i.RegisterSlug("vmware_esxi_5_5", v.BootScript("vmware_esxi_5_5"))
+	i.RegisterSlug("vmware_esxi_6_0", v.BootScript("vmware_esxi_6_0"))
+	i.RegisterSlug("vmware_esxi_6_5", v.BootScript("vmware_esxi_6_5"))
+	i.RegisterSlug("vmware_esxi_6_7", v.BootScript("vmware_esxi_6_7"))
+	i.RegisterSlug("vmware_esxi_7_0", v.BootScript("vmware_esxi_7_0"))
+	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScript("vmware_esxi_7_0U2a"))
+	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScript("vmware_esxi_6_5_vcf"))
+	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScript("vmware_esxi_6_7_vcf"))
+	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
+	i.RegisterDistro("vmware", v.BootScript("vmware"))
 
 	return i
 }

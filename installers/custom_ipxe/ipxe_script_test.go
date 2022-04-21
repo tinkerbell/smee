@@ -32,7 +32,7 @@ func TestScript(t *testing.T) {
 			s.Set("syslog_host", "127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
 
-			Installer{}.BootScript()(context.Background(), m.Job(), s)
+			Installer().BootScript("")(context.Background(), m.Job(), s)
 			got := string(s.Bytes())
 			if script != got {
 				t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(script, got))

@@ -10,65 +10,66 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Installer struct {
-	// ExtraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
-	ExtraKernelArgs string
+type installer struct {
+	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE
+	extraKernelArgs string
 }
 
-// DefaultHandler determines the ipxe boot script to be returned.
-// If the job has an instance with Rescue true, the rescue boot script is returned.
-// Otherwise the installation boot script is returned.
-func (i Installer) DefaultHandler() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		if j.Rescue() {
-			i.rescue()(ctx, j, s)
-
-			return
-		}
-
-		i.install()(ctx, j, s)
+func Installer(ExtraKernelArgs string) job.BootScripter {
+	return installer{
+		extraKernelArgs: ExtraKernelArgs,
 	}
 }
 
-// rescue generates the ipxe boot script for booting into osie in rescue mode
-func (i Installer) rescue() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		s.Set("action", "rescue")
-		s.Set("state", j.HardwareState())
-
-		i.bootScript(ctx, "rescue", j, s)
+func (i installer) BootScript(slug string) job.BootScript {
+	switch slug {
+	case "install", "rescue", "default":
+		return i.install
+	case "discover":
+		return i.discover
+	default:
+		panic("unknown slug:" + slug)
 	}
 }
 
 // install generates the ipxe boot script for booting into the osie installer
-func (i Installer) install() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		typ := "provisioning.104.01"
-		if j.HardwareState() == "deprovisioning" {
-			typ = "deprovisioning.304.1"
-		}
-		s.PhoneHome(typ)
-		if j.CanWorkflow() {
-			s.Set("action", "workflow")
-		} else {
-			s.Set("action", "install")
-		}
-		s.Set("state", j.HardwareState())
+func (i installer) install(ctx context.Context, j job.Job, s *ipxe.Script) {
+	if j.Rescue() {
+		i.rescue(ctx, j, s)
 
-		i.bootScript(ctx, "install", j, s)
+		return
 	}
+
+	typ := "provisioning.104.01"
+	if j.HardwareState() == "deprovisioning" {
+		typ = "deprovisioning.304.1"
+	}
+	s.PhoneHome(typ)
+	if j.CanWorkflow() {
+		s.Set("action", "workflow")
+	} else {
+		s.Set("action", "install")
+	}
+	s.Set("state", j.HardwareState())
+
+	i.bootScript(ctx, "install", j, s)
 }
 
-func (i Installer) Discover() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		s.Set("action", "discover")
-		s.Set("state", j.HardwareState())
-
-		i.bootScript(ctx, "discover", j, s)
-	}
+// rescue generates the ipxe boot script for booting into osie in rescue mode
+func (i installer) rescue(ctx context.Context, j job.Job, s *ipxe.Script) {
+	s.Set("action", "rescue")
+	s.Set("state", j.HardwareState())
+	i.bootScript(ctx, "rescue", j, s)
 }
 
-func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
+func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
+	s.Set("action", "discover")
+	s.Set("state", j.HardwareState())
+
+	i.bootScript(ctx, "discover", j, s)
+}
+
+func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
@@ -85,7 +86,7 @@ func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s *
 	s.Boot()
 }
 
-func (i Installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
+func (i installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -98,8 +99,8 @@ func (i Installer) kernelParams(ctx context.Context, action, state string, j job
 	s.Args("osie_vendors_url=" + conf.OsieVendorServicesURL)
 
 	// Add extra kernel args
-	if i.ExtraKernelArgs != "" {
-		s.Args(i.ExtraKernelArgs)
+	if i.extraKernelArgs != "" {
+		s.Args(i.extraKernelArgs)
 	}
 
 	// only add traceparent if tracing is enabled

@@ -147,7 +147,7 @@ func TestIpxeScript(t *testing.T) {
 				mockJob.SetIPXEScriptURL(tc.installerData.Chain)
 				mockJob.SetUserData(tc.installerData.Script)
 			}
-			Installer{}.BootScript()(context.Background(), mockJob.Job(), s)
+			Installer().BootScript("")(context.Background(), mockJob.Job(), s)
 
 			assert.Equal(dedent(tc.want), string(s.Bytes()))
 		})

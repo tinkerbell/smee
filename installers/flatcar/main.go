@@ -16,17 +16,25 @@ const (
 // http://storage.googleapis.com/alpha.release.core-os.net/amd64-usr/current
 // http://storage.googleapis.com/users.developer.core-os.net/mischief/boards/amd64-usr/962.0.0+2016-02-23-2254
 
-type Installer struct{}
+type installer struct{}
 
-func (i Installer) BootScript() job.BootScript {
-	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		s.PhoneHome("provisioning.104.01")
-		s.Set("base-url", conf.MirrorBaseURL+"/misc/tinkerbell")
-		s.Kernel("${base-url}/" + kernelPath(j))
-		kernelParams(j, s)
-		s.Initrd("${base-url}/" + initrdPath(j))
-		s.Boot()
-	}
+func Installer() job.BootScripter {
+	return installer{}
+}
+
+func (i installer) BootScript(string) job.BootScript {
+	return bootScript
+}
+
+func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+	s.PhoneHome("provisioning.104.01")
+	s.Set("base-url", conf.MirrorBaseURL+"/misc/tinkerbell")
+	s.Kernel("${base-url}/" + kernelPath(j))
+
+	kernelParams(j, s)
+
+	s.Initrd("${base-url}/" + initrdPath(j))
+	s.Boot()
 }
 
 func kernelParams(j job.Job, s *ipxe.Script) {
