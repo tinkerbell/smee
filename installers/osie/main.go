@@ -19,28 +19,30 @@ type Installer struct {
 // If the job has an instance with Rescue true, the rescue boot script is returned.
 // Otherwise the installation boot script is returned.
 func (i Installer) DefaultHandler() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		if j.Rescue() {
-			return i.rescue()(ctx, j, s)
+			i.rescue()(ctx, j, s)
+
+			return
 		}
 
-		return i.install()(ctx, j, s)
+		i.install()(ctx, j, s)
 	}
 }
 
 // rescue generates the ipxe boot script for booting into osie in rescue mode
 func (i Installer) rescue() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
 
-		return i.bootScript(ctx, "rescue", j, s)
+		i.bootScript(ctx, "rescue", j, s)
 	}
 }
 
 // install generates the ipxe boot script for booting into the osie installer
 func (i Installer) install() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		typ := "provisioning.104.01"
 		if j.HardwareState() == "deprovisioning" {
 			typ = "deprovisioning.304.1"
@@ -53,41 +55,37 @@ func (i Installer) install() job.BootScript {
 		}
 		s.Set("state", j.HardwareState())
 
-		return i.bootScript(ctx, "install", j, s)
+		i.bootScript(ctx, "install", j, s)
 	}
 }
 
 func (i Installer) Discover() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.Set("action", "discover")
 		s.Set("state", j.HardwareState())
 
-		return i.bootScript(ctx, "discover", j, s)
+		i.bootScript(ctx, "discover", j, s)
 	}
 }
 
-func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(j))
 	s.Kernel("${base-url}/" + kernelPath(j))
-
-	ks := i.kernelParams(ctx, action, j.HardwareState(), j, s)
-
-	ks.Initrd("${base-url}/" + initrdPath(j))
+	i.kernelParams(ctx, action, j.HardwareState(), j, s)
+	s.Initrd("${base-url}/" + initrdPath(j))
 
 	if j.PArch() == "hua" || j.PArch() == "2a2" {
 		// Workaround for Huawei firmware crash
-		ks.Sleep(15)
+		s.Sleep(15)
 	}
 
-	ks.Boot()
-
-	return ks
+	s.Boot()
 }
 
-func (i Installer) kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -183,8 +181,6 @@ func (i Installer) kernelParams(ctx context.Context, action, state string, j job
 		}
 	}
 	s.Args("console=" + console + ",115200")
-
-	return s
 }
 
 func alpineMirror(j job.Job) string {

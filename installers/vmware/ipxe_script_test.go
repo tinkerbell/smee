@@ -32,15 +32,15 @@ func TestScriptPerType(t *testing.T) {
 					m := job.NewMock(t, plan, facility)
 					m.SetMAC("00:00:ba:dd:be:ef")
 
-					s := ipxe.Script{}
-					s.Reset()
-					s.Set("iface", "eth0").Or("shell")
+					s := ipxe.NewScript()
+					s.Set("iface", "eth0")
+					s.Or("shell")
 					s.Set("tinkerbell", "http://127.0.0.1")
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					bs := tt.script(context.Background(), m.Job(), s)
-					got := string(bs.Bytes())
+					tt.script(context.Background(), m.Job(), s)
+					got := string(s.Bytes())
 
 					want := fmt.Sprintf(script, tt.path)
 					if !strings.Contains(want, tt.path) {

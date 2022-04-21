@@ -19,21 +19,17 @@ const (
 type Installer struct{}
 
 func (i Installer) BootScript() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
+	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
 		s.PhoneHome("provisioning.104.01")
 		s.Set("base-url", conf.MirrorBaseURL+"/misc/tinkerbell")
 		s.Kernel("${base-url}/" + kernelPath(j))
-
-		ks := kernelParams(j, s)
-
-		ks.Initrd("${base-url}/" + initrdPath(j))
-		ks.Boot()
-
-		return ks
+		kernelParams(j, s)
+		s.Initrd("${base-url}/" + initrdPath(j))
+		s.Boot()
 	}
 }
 
-func kernelParams(j job.Job, s ipxe.Script) ipxe.Script {
+func kernelParams(j job.Job, s *ipxe.Script) {
 	// Linux Kernel
 	if j.IsARM() {
 		s.Args("console=ttyAMA0,115200")
@@ -54,8 +50,6 @@ func kernelParams(j job.Job, s ipxe.Script) ipxe.Script {
 
 	// Environment Variables
 	s.Args("systemd.setenv=phone_home_url=${tinkerbell}/phone-home")
-
-	return s
 }
 
 func kernelPath(j job.Job) string {

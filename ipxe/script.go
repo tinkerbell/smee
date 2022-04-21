@@ -7,10 +7,13 @@ type Script struct {
 }
 
 func NewScript() *Script {
-	return new(Script).Reset()
+	s := &Script{}
+	s.Reset()
+
+	return s
 }
 
-func (s *Script) Args(args ...string) *Script {
+func (s *Script) Args(args ...string) {
 	s.buf = s.buf[:len(s.buf)-1]
 
 	for _, arg := range args {
@@ -18,20 +21,16 @@ func (s *Script) Args(args ...string) *Script {
 	}
 
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
 // AppendString takes a string and appends it to the current Script
-func (s *Script) AppendString(s_script string) *Script {
+func (s *Script) AppendString(s_script string) {
 	s.buf = append(s.buf, s_script...)
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
 // PhoneHome takes a type and will post boots device connected to dhcp event
-func (s *Script) PhoneHome(typ string) *Script {
+func (s *Script) PhoneHome(typ string) {
 	s.buf = append(s.buf, `
 params
 param body Device connected to DHCP system
@@ -40,35 +39,27 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 `...)
-
-	return s
 }
 
 // Chain - Chainload another iPXE script
-func (s *Script) Chain(uri string) *Script {
+func (s *Script) Chain(uri string) {
 	s.buf = append(append(s.buf, "chain --autofree "...), uri...)
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) DHCP() *Script {
+func (s *Script) DHCP() {
 	s.buf = append(s.buf, "dhcp\n"...)
-
-	return s
 }
 
-func (s *Script) Boot() *Script {
+func (s *Script) Boot() {
 	s.buf = append(s.buf, "boot\n"...)
-
-	return s
 }
 
 func (s *Script) Bytes() []byte {
 	return s.buf
 }
 
-func (s *Script) Initrd(uri string, args ...string) *Script {
+func (s *Script) Initrd(uri string, args ...string) {
 	s.buf = append(append(s.buf, "initrd "...), uri...)
 
 	for _, arg := range args {
@@ -76,11 +67,9 @@ func (s *Script) Initrd(uri string, args ...string) *Script {
 	}
 
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) Kernel(uri string, args ...string) *Script {
+func (s *Script) Kernel(uri string, args ...string) {
 	s.buf = append(append(s.buf, "kernel "...), uri...)
 
 	for _, arg := range args {
@@ -88,49 +77,35 @@ func (s *Script) Kernel(uri string, args ...string) *Script {
 	}
 
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) Or(line string) *Script {
+func (s *Script) Or(line string) {
 	s.buf = append(s.buf[:len(s.buf)-1], " || "...)
 	s.buf = append(s.buf, line...)
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) Reset() *Script {
+func (s *Script) Reset() {
 	s.buf = append(s.buf[:0], "#!ipxe\n\n"...)
 	s.Echo("Tinkerbell Boots iPXE")
-
-	return s
 }
 
 // Echo outputs a string to console
-func (s *Script) Echo(message string) *Script {
+func (s *Script) Echo(message string) {
 	s.buf = append(append(s.buf, "echo "...), message...)
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) Set(name, value string) *Script {
+func (s *Script) Set(name, value string) {
 	s.buf = append(append(s.buf, "set "...), name...)
 	s.buf = append(append(s.buf, ' '), value...)
 	s.buf = append(s.buf, '\n')
-
-	return s
 }
 
-func (s *Script) Shell() *Script {
+func (s *Script) Shell() {
 	s.buf = append(s.buf, "shell\n"...)
-
-	return s
 }
 
-func (s *Script) Sleep(value int) *Script {
+func (s *Script) Sleep(value int) {
 	s.buf = append(s.buf, fmt.Sprintf("sleep %d\n", value)...)
-
-	return s
 }

@@ -55,25 +55,23 @@ func TestScript(t *testing.T) {
 					mac := genRandMAC(t)
 					m.SetMAC(mac)
 
-					s := ipxe.Script{}
-					s.Reset()
-					s.Set("iface", "eth0").Or("shell")
+					s := ipxe.NewScript()
+					s.Set("iface", "eth0")
+					s.Or("shell")
 					s.Set("tinkerbell", "http://127.0.0.1")
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					o := Installer{}
 					ctx := context.Background()
-					var bs ipxe.Script
 					switch action {
 					case "rescue":
-						bs = o.rescue()(ctx, m.Job(), s)
+						Installer{}.rescue()(ctx, m.Job(), s)
 					case "install":
-						bs = o.install()(ctx, m.Job(), s)
+						Installer{}.install()(ctx, m.Job(), s)
 					case "discover":
-						bs = o.Discover()(ctx, m.Job(), s)
+						Installer{}.Discover()(ctx, m.Job(), s)
 					}
-					got := string(bs.Bytes())
+					got := string(s.Bytes())
 
 					arch := "aarch64"
 					var parch string

@@ -25,16 +25,15 @@ func TestScript(t *testing.T) {
 			m := job.NewMock(t, tt.plan, facility)
 			m.SetOSDistro("flatcar")
 
-			s := ipxe.Script{}
-			s.Reset()
-			s.Set("iface", "eth0").Or("shell")
+			s := ipxe.NewScript()
+			s.Set("iface", "eth0")
+			s.Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
 			s.Set("syslog_host", "127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
 
-			i := Installer{}
-			bs := i.BootScript()(context.Background(), m.Job(), s)
-			got := string(bs.Bytes())
+			Installer{}.BootScript()(context.Background(), m.Job(), s)
+			got := string(s.Bytes())
 			if tt.script != got {
 				t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(tt.script, got))
 			}
