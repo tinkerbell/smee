@@ -41,7 +41,7 @@ func TestScript(t *testing.T) {
 }
 
 var type2Script = map[string]string{
-	"baremetal_0": `echo Tinkerbell Boots iPXE
+	"c3.small.x86": `echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set ipxe_cloud_config packet
@@ -53,142 +53,7 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set packet_facility ` + facility + `
-set packet_plan baremetal_0
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_1": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_1
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_2": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_2
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_3": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_3
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_2a": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_2a
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_2a2": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_2a2
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_2a4": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_2a4
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_2a5": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_2a5
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"baremetal_hua": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan baremetal_hua
-chain --autofree http://127.0.0.1/fake_ipxe_url
-`,
-	"c2.large.arm": `echo Tinkerbell Boots iPXE
-set iface eth0 || shell
-set tinkerbell http://127.0.0.1
-set ipxe_cloud_config packet
-
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set packet_facility ` + facility + `
-set packet_plan c2.large.arm
+set packet_plan c3.small.x86
 chain --autofree http://127.0.0.1/fake_ipxe_url
 `,
 }

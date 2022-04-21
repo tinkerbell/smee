@@ -22,11 +22,14 @@ var facility = func() string {
 }()
 
 func TestScriptPerType(t *testing.T) {
-	for typ, script := range type2pxe {
-		t.Run(typ, func(t *testing.T) {
+	for mode, planAndScript := range pxeByPlan {
+		t.Run(mode, func(t *testing.T) {
 			for version, bootScript := range versions {
 				t.Run(version, func(t *testing.T) {
-					m := job.NewMock(t, typ, facility)
+					plan := planAndScript.plan
+					script := planAndScript.script
+
+					m := job.NewMock(t, plan, facility)
 					m.SetMAC("00:00:ba:dd:be:ef")
 
 					s := ipxe.Script{}
@@ -38,7 +41,7 @@ func TestScriptPerType(t *testing.T) {
 						t.Fatalf("expected %s to be present in script:%v", version, want)
 					}
 					if want != got {
-						t.Fatalf("%s bad iPXE script:\n%v", typ, diff.LineDiff(want, got))
+						t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(want, got))
 					}
 				})
 			}
@@ -46,8 +49,13 @@ func TestScriptPerType(t *testing.T) {
 	}
 }
 
-var type2pxe = map[string]string{
-	"baremetal_0": `
+var pxeByPlan = map[string]struct {
+	plan   string
+	script string
+}{
+	"bios": {
+		plan: "c3.small.x86",
+		script: `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -57,52 +65,10 @@ imgfree
 set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
-`,
-	"baremetal_1": `
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
-boot
-`,
-	"baremetal_2": `
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
-boot
-`,
-	"baremetal_3": `
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
-boot
-`,
-	"baremetal_s": `
-params
-param body Device connected to DHCP system
-param type provisioning.104.01
-imgfetch ${tinkerbell}/phone-home##params
-imgfree
-
-set base-url http://install.ewr1.packet.net/vmware/%s
-kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
-boot
-`,
-	"c2.medium.x86": `
+`},
+	"uefi": {
+		plan: "c2.medium.x86",
+		script: `
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -113,6 +79,7 @@ set base-url http://install.ewr1.packet.net/vmware/%s
 kernel ${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,
+	},
 }
 
 var versions = map[string]job.BootScript{
