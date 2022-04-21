@@ -23,7 +23,7 @@ type Installer struct{}
 func (i Installer) BootScript() job.BootScript {
 	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
 		s.PhoneHome("provisioning.104.01")
-		s.Set("base-url", conf.MirrorURL)
+		s.Set("base-url", conf.MirrorBaseURL+"/misc/tinkerbell")
 		s.Kernel("${base-url}/" + kernelPath(j))
 
 		ks := kernelParams(j, s)

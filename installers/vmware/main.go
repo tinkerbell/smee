@@ -63,7 +63,7 @@ func (i Installer) BootScriptVmwareEsxi70U2a() job.BootScript {
 
 func script(j job.Job, s ipxe.Script, basePath string) ipxe.Script {
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", conf.MirrorBaseUrl+basePath)
+	s.Set("base-url", conf.MirrorBaseURL+basePath)
 	if j.IsUEFI() {
 		s.Kernel("${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg")
 	} else {

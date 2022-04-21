@@ -228,5 +228,5 @@ func osieBaseURL(j job.Job) string {
 }
 
 func workflowBaseURL() string {
-	return mirrorBaseURL + "/workflow"
+	return conf.MirrorBaseURL + "/workflow"
 }

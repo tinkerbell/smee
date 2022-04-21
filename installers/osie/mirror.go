@@ -1,7 +1,6 @@
 package osie
 
 import (
-	"net/url"
 	"os"
 
 	"github.com/pkg/errors"
@@ -9,47 +8,12 @@ import (
 	"github.com/tinkerbell/boots/installers"
 )
 
-const (
-	defaultOSIEPath = "/misc/osie"
-)
-
 var (
-	osieURL                            = mustBuildOSIEURL().String()
-	mirrorBaseURL                      = conf.MirrorBaseUrl
+	osieURL                            = conf.MirrorBaseURL + "/misc/osie"
 	dockerRegistry                     string
 	grpcAuthority, grpcCertURL         string
 	registryUsername, registryPassword string
 )
-
-func buildOSIEURL() (*url.URL, error) {
-	base, err := url.Parse(conf.MirrorBaseUrl)
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing MirrorBaseUrl")
-	}
-	if s, ok := os.LookupEnv("OSIE_PATH"); ok {
-		u, err := base.Parse(s)
-		if err != nil {
-			return nil, errors.Wrapf(err, "invalid OSIE_PATH: %s", s)
-		}
-
-		return u, nil
-	}
-	u, err := base.Parse(defaultOSIEPath)
-	if err != nil {
-		return nil, errors.Wrapf(err, "invalid default osie path: %s", defaultOSIEPath)
-	}
-
-	return u, nil
-}
-
-func mustBuildOSIEURL() *url.URL {
-	u, err := buildOSIEURL()
-	if err != nil {
-		panic(err)
-	}
-
-	return u
-}
 
 func buildWorkerParams() {
 	dockerRegistry = os.Getenv("DOCKER_REGISTRY")
