@@ -34,7 +34,6 @@ import (
 	"github.com/tinkerbell/boots/installers/coreos"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
 	"github.com/tinkerbell/boots/installers/osie"
-	"github.com/tinkerbell/boots/installers/rancher"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
@@ -376,9 +375,6 @@ func (cf *config) registerInstallers() job.Installers {
 	// register osie as default
 	d := osie.Installer{ExtraKernelArgs: cf.extraKernelArgs}
 	i.RegisterDefaultInstaller(d.DefaultHandler())
-	// register rancher
-	r := rancher.Installer{}
-	i.RegisterDistro("rancher", r.BootScript())
 	// register vmware
 	v := vmware.Installer{}
 	i.RegisterSlug("vmware_esxi_5_5", v.BootScriptVmwareEsxi55())
