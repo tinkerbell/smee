@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/installers/coreos/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
 

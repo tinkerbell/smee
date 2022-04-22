@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/installers/coreos/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
 

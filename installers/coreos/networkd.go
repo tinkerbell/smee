@@ -5,7 +5,7 @@ import (
 
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/files/unit"
+	"github.com/tinkerbell/boots/installers/coreos/files/unit"
 	"github.com/tinkerbell/boots/job"
 )
 

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tinkerbell/boots/files/ignition"
-	"github.com/tinkerbell/boots/files/unit"
 	"github.com/tinkerbell/boots/installers"
+	"github.com/tinkerbell/boots/installers/coreos/files/ignition"
+	"github.com/tinkerbell/boots/installers/coreos/files/unit"
 	"github.com/tinkerbell/boots/job"
 )
 
