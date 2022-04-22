@@ -80,8 +80,7 @@ func replacer(l []string, replacements ...string) []string {
 }
 
 var script = map[string][]string{
-	"baremetal_0":  Exec,
-	"baremetal_1":  Exec,
-	"s1.large.x86": replacer(Exec, "/dev/sda", "/dev/sdo"),
-	"baremetal_2a": replacer(Exec, " -o packet", "", "tty0 console=ttyS1,115200n8", "ttyAMA0,115200", "amd64", "arm64"),
+	"c3.small.x86":  Exec,
+	"s3.xlarge.x86": replacer(Exec, "-s", "-s -e 259"),
+	"c3.large.arm":  replacer(Exec, " -o packet", "", "tty0 console=ttyS1,115200n8", "ttyAMA0,115200", "amd64", "arm64"),
 }
