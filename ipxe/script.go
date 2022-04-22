@@ -102,6 +102,7 @@ func (s *Script) Or(line string) *Script {
 
 func (s *Script) Reset() *Script {
 	s.buf = append(s.buf[:0], "#!ipxe\n\n"...)
+	s.Echo("Tinkerbell Boots iPXE")
 
 	return s
 }

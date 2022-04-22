@@ -39,6 +39,7 @@ func TestIpxeScript(t *testing.T) {
 			nil,
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo Installer data not provided
 			shell
 			`,
@@ -49,6 +50,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -67,6 +69,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -85,6 +88,7 @@ func TestIpxeScript(t *testing.T) {
 			nil,
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo Unknown ipxe configuration
 			shell
 			`,
@@ -95,6 +99,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -113,6 +118,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Script: "#!ipxe\necho userdata script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -160,6 +166,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo ipxe config URL or Script must be defined
 			shell
 			`,
@@ -169,6 +176,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -186,6 +194,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Script: "echo my test script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -203,6 +212,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Script: "#!ipxe\necho my test script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
