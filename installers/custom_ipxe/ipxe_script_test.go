@@ -26,10 +26,12 @@ func TestScript(t *testing.T) {
 			m.SetIPXEScriptURL("http://127.0.0.1/fake_ipxe_url")
 
 			s := ipxe.Script{}
-			s.Echo("Tinkerbell Boots iPXE")
+			s.Reset()
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
+			s.Set("syslog_host", "127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
+
 			ci := Installer{}
 			bs := ci.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
@@ -41,9 +43,12 @@ func TestScript(t *testing.T) {
 }
 
 var type2Script = map[string]string{
-	"c3.small.x86": `echo Tinkerbell Boots iPXE
+	"c3.small.x86": `#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
 
 params

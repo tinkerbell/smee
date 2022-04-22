@@ -33,6 +33,12 @@ func TestScriptPerType(t *testing.T) {
 					m.SetMAC("00:00:ba:dd:be:ef")
 
 					s := ipxe.Script{}
+					s.Reset()
+					s.Set("iface", "eth0").Or("shell")
+					s.Set("tinkerbell", "http://127.0.0.1")
+					s.Set("syslog_host", "127.0.0.1")
+					s.Set("ipxe_cloud_config", "packet")
+
 					bs := tt.script(context.Background(), m.Job(), s)
 					got := string(bs.Bytes())
 
@@ -55,7 +61,14 @@ var pxeByPlan = map[string]struct {
 }{
 	"bios": {
 		plan: "c3.small.x86",
-		script: `
+		script: `#!ipxe
+
+echo Tinkerbell Boots iPXE
+set iface eth0 || shell
+set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
+set ipxe_cloud_config packet
+
 params
 param body Device connected to DHCP system
 param type provisioning.104.01
@@ -68,7 +81,14 @@ boot
 `},
 	"uefi": {
 		plan: "c2.medium.x86",
-		script: `
+		script: `#!ipxe
+
+echo Tinkerbell Boots iPXE
+set iface eth0 || shell
+set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
+set ipxe_cloud_config packet
+
 params
 param body Device connected to DHCP system
 param type provisioning.104.01

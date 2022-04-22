@@ -26,10 +26,12 @@ func TestScript(t *testing.T) {
 			m.SetOSDistro("flatcar")
 
 			s := ipxe.Script{}
-			s.Echo("Tinkerbell Boots iPXE")
+			s.Reset()
 			s.Set("iface", "eth0").Or("shell")
 			s.Set("tinkerbell", "http://127.0.0.1")
+			s.Set("syslog_host", "127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
+
 			i := Installer{}
 			bs := i.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
@@ -46,9 +48,12 @@ var pxeByPlan = map[string]struct {
 }{
 	"x86_64": {
 		"c3.small.x86",
-		`echo Tinkerbell Boots iPXE
+		`#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
 
 params
@@ -64,9 +69,12 @@ boot
 `},
 	"aarch64": {
 		"c3.large.arm",
-		`echo Tinkerbell Boots iPXE
+		`#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
+set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
 
 params

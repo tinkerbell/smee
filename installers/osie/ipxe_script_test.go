@@ -56,11 +56,12 @@ func TestScript(t *testing.T) {
 					m.SetMAC(mac)
 
 					s := ipxe.Script{}
-					s.Echo("Tinkerbell Boots iPXE")
+					s.Reset()
 					s.Set("iface", "eth0").Or("shell")
 					s.Set("tinkerbell", "http://127.0.0.1")
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
+
 					o := Installer{}
 					ctx := context.Background()
 					var bs ipxe.Script
@@ -110,7 +111,9 @@ func TestScript(t *testing.T) {
 }
 
 var prefaces = map[string]string{
-	"discover": `echo Tinkerbell Boots iPXE
+	"discover": `#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
@@ -122,7 +125,9 @@ set parch %s
 set bootdevmac %s
 set base-url http://install.ewr1.packet.net/misc/osie/current
 `,
-	"install": `echo Tinkerbell Boots iPXE
+	"install": `#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
@@ -140,7 +145,9 @@ set arch %s
 set parch %s
 set bootdevmac %s
 `,
-	"rescue": `echo Tinkerbell Boots iPXE
+	"rescue": `#!ipxe
+
+echo Tinkerbell Boots iPXE
 set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
