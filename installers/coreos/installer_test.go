@@ -28,21 +28,17 @@ func assertLines(t *testing.T, m job.Mock, execLines []string) {
 
 func TestInstaller(t *testing.T) {
 	for typ, execLines := range script {
-		execLines = replacer(execLines, "-d /dev/sda", "-s", "-d /dev/sdo", "-s")
 		t.Run(typ, func(t *testing.T) {
 			m := job.NewMock(t, typ, facility)
 			m.SetOSDistro("flatcar")
 			m.SetOSSlug("flatcar_alpha")
 			m.SetOSVersion("alpha")
-			for i := range execLines {
-				execLines[i] = strings.Replace(execLines[i], "coreos", "flatcar", -1)
-			}
 			assertLines(t, m, execLines)
 		})
 	}
 }
 
-// this is the base set of starter commands for coreos installs
+// this is the base set of starter commands for flatcar installs
 var baseStart = []string{
 	"[Unit]",
 	"Requires=systemd-networkd-wait-online.service",
@@ -52,7 +48,7 @@ var baseStart = []string{
 	"Type=oneshot",
 }
 
-// this is the end of every coreos install
+// this is the end of every flatcar install
 var baseEnd = []string{
 	"ExecStart=/usr/bin/systemctl reboot",
 	"",
@@ -63,7 +59,7 @@ var baseEnd = []string{
 
 var Exec = []string{
 	`ExecStart=/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
-	"ExecStart=/usr/bin/coreos-install -V current -C alpha -b http://install." + facility + ".packet.net/coreos/amd64-usr/alpha -o packet -d /dev/sda",
+	"ExecStart=/usr/bin/flatcar-install -V current -C alpha -b http://install." + facility + ".packet.net/flatcar/amd64-usr/alpha -o packet -s",
 	"ExecStart=/usr/bin/udevadm settle",
 	"ExecStart=/usr/bin/mkdir -p /oemmnt",
 	"ExecStart=/usr/bin/mount /dev/disk/by-label/OEM /oemmnt",

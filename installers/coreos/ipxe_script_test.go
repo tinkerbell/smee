@@ -3,7 +3,6 @@ package coreos
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/andreyvit/diff"
@@ -34,9 +33,8 @@ func TestScript(t *testing.T) {
 			i := Installer{}
 			bs := i.BootScript()(context.Background(), m.Job(), s)
 			got := string(bs.Bytes())
-			script := strings.Replace(tt.script, "coreos", "flatcar", -1)
-			if script != got {
-				t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(script, got))
+			if tt.script != got {
+				t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(tt.script, got))
 			}
 		})
 	}
@@ -60,8 +58,8 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
-initrd ${base-url}/coreos_production_pxe_image.cpio.gz
+kernel ${base-url}/flatcar_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=flatcar_production_pxe_image.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
+initrd ${base-url}/flatcar_production_pxe_image.cpio.gz
 boot
 `},
 	"aarch64": {
@@ -78,8 +76,8 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
-kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
-initrd ${base-url}/coreos-arm.cpio.gz
+kernel ${base-url}/flatcar-arm.vmlinuz console=ttyAMA0,115200 initrd=flatcar-arm.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
+initrd ${base-url}/flatcar-arm.cpio.gz
 boot
 `},
 }
