@@ -31,8 +31,8 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/installers/coreos"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
+	"github.com/tinkerbell/boots/installers/flatcar"
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
@@ -361,8 +361,8 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 func (cf *config) registerInstallers() job.Installers {
 	// register installers
 	i := job.NewInstallers()
-	// register coreos/flatcar
-	c := coreos.Installer{}
+	// register flatcar
+	c := flatcar.Installer{}
 	i.RegisterDistro("flatcar", c.BootScript())
 	// register custom ipxe
 	ci := custom_ipxe.Installer{}

@@ -1,4 +1,4 @@
-package coreos
+package flatcar
 
 import (
 	"context"

@@ -1,12 +1,12 @@
-package coreos
+package flatcar
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/installers/coreos/files/ignition"
-	"github.com/tinkerbell/boots/installers/coreos/files/unit"
+	"github.com/tinkerbell/boots/installers/flatcar/files/ignition"
+	"github.com/tinkerbell/boots/installers/flatcar/files/unit"
 	"github.com/tinkerbell/boots/job"
 )
 

@@ -1,11 +1,11 @@
-package coreos
+package flatcar
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tinkerbell/boots/installers/coreos/files/ignition"
+	"github.com/tinkerbell/boots/installers/flatcar/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
 

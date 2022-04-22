@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/installers/coreos/files/unit"
+	"github.com/tinkerbell/boots/installers/flatcar/files/unit"
 )
 
 type NetworkUnits []*unit.Unit
