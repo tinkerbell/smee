@@ -33,7 +33,6 @@ import (
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/installers/coreos"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
-	"github.com/tinkerbell/boots/installers/nixos"
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/rancher"
 	"github.com/tinkerbell/boots/installers/vmware"
@@ -371,9 +370,6 @@ func (cf *config) registerInstallers() job.Installers {
 	ci := custom_ipxe.Installer{}
 	i.RegisterDistro("custom_ipxe", ci.BootScript())
 	i.RegisterInstaller("custom_ipxe", ci.BootScript())
-	// register nixos
-	n := nixos.Installer{Paths: nixos.BuildInitPaths()}
-	i.RegisterDistro("nixos", n.BootScript())
 	// register osie
 	o := osie.Installer{}
 	i.RegisterDistro("discovery", o.Discover())
