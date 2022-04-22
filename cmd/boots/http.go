@@ -101,7 +101,6 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 	var httpHandlers = make(map[string]http.HandlerFunc)
 	// register coreos/flatcar endpoints
 	httpHandlers[coreos.IgnitionPathFlatcar] = coreos.ServeIgnitionConfig(s.jobManager)
-	httpHandlers[coreos.OEMPath] = coreos.ServeOEM(s.jobManager)
 	// register vmware endpoints
 	httpHandlers[vmware.KickstartPath] = vmware.ServeKickstart(s.jobManager)
 

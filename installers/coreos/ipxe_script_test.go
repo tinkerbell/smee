@@ -60,7 +60,7 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
-kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
+kernel ${base-url}/coreos_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=coreos_production_pxe_image.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
 `},
@@ -78,7 +78,7 @@ imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
 set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
-kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=oem_url=${tinkerbell}/coreos/oem.tgz systemd.setenv=phone_home_url=${tinkerbell}/phone-home
+kernel ${base-url}/coreos-arm.vmlinuz console=ttyAMA0,115200 initrd=coreos-arm.cpio.gz bonding.max_bonds=0 coreos.autologin coreos.first_boot=1 coreos.config.url=${tinkerbell}/coreos/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/coreos-arm.cpio.gz
 boot
 `},

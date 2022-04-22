@@ -10,7 +10,6 @@ import (
 
 const (
 	IgnitionPathFlatcar = "/flatcar/ignition.json"
-	OEMPath             = "/coreos/oem.tgz"
 )
 
 // Alternative Base URLs
@@ -54,7 +53,6 @@ func kernelParams(j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("flatcar.config.url=${tinkerbell}/flatcar/ignition.json")
 
 	// Environment Variables
-	s.Args("systemd.setenv=oem_url=${tinkerbell}/flatcar/oem.tgz") // To replace the files in our included OEM.
 	s.Args("systemd.setenv=phone_home_url=${tinkerbell}/phone-home")
 
 	return s
