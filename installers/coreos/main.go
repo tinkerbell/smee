@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	IgnitionPathCoreos  = "/coreos/ignition.json"
 	IgnitionPathFlatcar = "/flatcar/ignition.json"
 	OEMPath             = "/coreos/oem.tgz"
 )
@@ -36,8 +35,6 @@ func (i Installer) BootScript() job.BootScript {
 }
 
 func kernelParams(j job.Job, s ipxe.Script) ipxe.Script {
-	distro := j.OperatingSystem().Distro
-
 	// Linux Kernel
 	if j.IsARM() {
 		s.Args("console=ttyAMA0,115200")
@@ -50,33 +47,31 @@ func kernelParams(j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("bonding.max_bonds=0") // To prevent the wrong bond from coming up before our configs are in place.
 
 	// CoreOS
-	s.Args(distro + ".autologin")
-	s.Args(distro + ".first_boot=1")
+	s.Args("flatcar.autologin")
+	s.Args("flatcar.first_boot=1")
 
 	// Ignition
-	s.Args(distro + ".config.url=${tinkerbell}/" + distro + "/ignition.json")
+	s.Args("flatcar.config.url=${tinkerbell}/flatcar/ignition.json")
 
 	// Environment Variables
-	s.Args("systemd.setenv=oem_url=${tinkerbell}/" + distro + "/oem.tgz") // To replace the files in our included OEM.
+	s.Args("systemd.setenv=oem_url=${tinkerbell}/flatcar/oem.tgz") // To replace the files in our included OEM.
 	s.Args("systemd.setenv=phone_home_url=${tinkerbell}/phone-home")
 
 	return s
 }
 
 func kernelPath(j job.Job) string {
-	distro := j.OperatingSystem().Distro
 	if j.IsARM() {
-		return distro + "-arm.vmlinuz"
+		return "flatcar-arm.vmlinuz"
 	}
 
-	return distro + "_production_pxe.vmlinuz"
+	return "flatcar_production_pxe.vmlinuz"
 }
 
 func initrdPath(j job.Job) string {
-	distro := j.OperatingSystem().Distro
 	if j.IsARM() {
-		return distro + "-arm.cpio.gz"
+		return "flatcar-arm.cpio.gz"
 	}
 
-	return distro + "_production_pxe_image.cpio.gz"
+	return "flatcar_production_pxe_image.cpio.gz"
 }

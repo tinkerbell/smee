@@ -1,7 +1,5 @@
 package coreos
 
-// TODO(SWE-338) have coreos register http handler for /installers/coreos and move this into coreos package
-
 import (
 	"net"
 

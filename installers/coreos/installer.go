@@ -9,10 +9,9 @@ import (
 )
 
 func getInstallOpts(j job.Job, channel, facilityCode string) string {
-	distro := j.OperatingSystem().Distro
 	base := map[bool]string{
-		true:  "http://install." + facilityCode + ".packet.net/" + distro + "/arm64-usr/" + channel,
-		false: "http://install." + facilityCode + ".packet.net/" + distro + "/amd64-usr/" + channel,
+		true:  "http://install." + facilityCode + ".packet.net/flatcar/arm64-usr/" + channel,
+		false: "http://install." + facilityCode + ".packet.net/flatcar/amd64-usr/" + channel,
 	}
 	args := []string{
 		"-V current",
@@ -24,25 +23,16 @@ func getInstallOpts(j job.Job, channel, facilityCode string) string {
 		args = append(args, "-o packet")
 	}
 
-	if strings.HasPrefix(distro, "flatcar") {
-		if strings.Contains(j.PlanSlug(), "s3.xlarge") {
-			args = append(args, "-s", "-e", "259")
-		} else {
-			args = append(args, "-s")
-		}
+	if strings.Contains(j.PlanSlug(), "s3.xlarge") {
+		args = append(args, "-s", "-e", "259")
 	} else {
-		disk := "/dev/sda"
-		if strings.Contains(j.PlanSlug(), "s1.large") {
-			disk = "/dev/sdo"
-		}
-		args = append(args, "-d "+disk)
+		args = append(args, "-s")
 	}
 
 	return strings.Join(args, " ")
 }
 
 func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
-	distro := j.OperatingSystem().Distro
 	u.AddSection("Unit", "Requires=systemd-networkd-wait-online.service", "After=systemd-networkd-wait-online.service")
 
 	var channel string
@@ -69,7 +59,7 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	lines := []string{
 		// Install to disk:
 		`/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
-		"/usr/bin/" + distro + "-install " + installOpts,
+		"/usr/bin/flatcar-install " + installOpts,
 		"/usr/bin/udevadm settle",
 		"/usr/bin/mkdir -p /oemmnt",
 		"/usr/bin/mount /dev/disk/by-label/OEM /oemmnt",

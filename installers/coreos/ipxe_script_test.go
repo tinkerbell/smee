@@ -21,26 +21,22 @@ var facility = func() string {
 }()
 
 func TestScript(t *testing.T) {
-	for _, distro := range []string{"coreos", "flatcar"} {
-		t.Run(distro, func(t *testing.T) {
-			for arch, tt := range pxeByPlan {
-				t.Run(arch, func(t *testing.T) {
-					m := job.NewMock(t, tt.plan, facility)
-					m.SetOSDistro(distro)
+	for arch, tt := range pxeByPlan {
+		t.Run(arch, func(t *testing.T) {
+			m := job.NewMock(t, tt.plan, facility)
+			m.SetOSDistro("flatcar")
 
-					s := ipxe.Script{}
-					s.Echo("Tinkerbell Boots iPXE")
-					s.Set("iface", "eth0").Or("shell")
-					s.Set("tinkerbell", "http://127.0.0.1")
-					s.Set("ipxe_cloud_config", "packet")
-					i := Installer{}
-					bs := i.BootScript()(context.Background(), m.Job(), s)
-					got := string(bs.Bytes())
-					script := strings.Replace(tt.script, "coreos", distro, -1)
-					if script != got {
-						t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(script, got))
-					}
-				})
+			s := ipxe.Script{}
+			s.Echo("Tinkerbell Boots iPXE")
+			s.Set("iface", "eth0").Or("shell")
+			s.Set("tinkerbell", "http://127.0.0.1")
+			s.Set("ipxe_cloud_config", "packet")
+			i := Installer{}
+			bs := i.BootScript()(context.Background(), m.Job(), s)
+			got := string(bs.Bytes())
+			script := strings.Replace(tt.script, "coreos", "flatcar", -1)
+			if script != got {
+				t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(script, got))
 			}
 		})
 	}

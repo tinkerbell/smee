@@ -363,7 +363,6 @@ func (cf *config) registerInstallers() job.Installers {
 	i := job.NewInstallers()
 	// register coreos/flatcar
 	c := coreos.Installer{}
-	i.RegisterDistro("coreos", c.BootScript())
 	i.RegisterDistro("flatcar", c.BootScript())
 	// register custom ipxe
 	ci := custom_ipxe.Installer{}

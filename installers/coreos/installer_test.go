@@ -27,22 +27,18 @@ func assertLines(t *testing.T, m job.Mock, execLines []string) {
 }
 
 func TestInstaller(t *testing.T) {
-	for _, distro := range []string{"coreos", "flatcar"} {
-		for typ, execLines := range script {
-			if distro == "flatcar" {
-				execLines = replacer(execLines, "-d /dev/sda", "-s", "-d /dev/sdo", "-s")
+	for typ, execLines := range script {
+		execLines = replacer(execLines, "-d /dev/sda", "-s", "-d /dev/sdo", "-s")
+		t.Run(typ, func(t *testing.T) {
+			m := job.NewMock(t, typ, facility)
+			m.SetOSDistro("flatcar")
+			m.SetOSSlug("flatcar_alpha")
+			m.SetOSVersion("alpha")
+			for i := range execLines {
+				execLines[i] = strings.Replace(execLines[i], "coreos", "flatcar", -1)
 			}
-			t.Run(distro+"-"+typ, func(t *testing.T) {
-				m := job.NewMock(t, typ, facility)
-				m.SetOSDistro(distro)
-				m.SetOSSlug(distro + "_alpha")
-				m.SetOSVersion("alpha")
-				for i := range execLines {
-					execLines[i] = strings.Replace(execLines[i], "coreos", distro, -1)
-				}
-				assertLines(t, m, execLines)
-			})
-		}
+			assertLines(t, m, execLines)
+		})
 	}
 }
 
