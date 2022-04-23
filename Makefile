@@ -27,15 +27,16 @@ coverage: test ## Show test coverage
 vet: ## Run go vet
 	go vet ./...
 
-goimports: ## Run goimports
-	@echo be sure goimports is installed
+goimports: bin/goimports gen ## Run goimports
 	goimports -w .
 
-golangci-lint: ## Run golangci-lint
-	@echo be sure golangci-lint is installed: https://golangci-lint.run/usage/install/
+golangci-lint: bin/golangci-lint gen ## Run golangci-lint
 	golangci-lint run -v
 
-validate-local: vet coverage goimports golangci-lint ## Runs all the same validations and tests that run in CI
+ci-checks: bin/goimports .github/workflows/ci-non-go.sh shell.nix gen
+	./.github/workflows/ci-non-go.sh
+
+ci: ci-checks coverage goimports golangci-lint vet ## Runs all the same validations and tests that run in CI
 
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120

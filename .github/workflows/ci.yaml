@@ -27,11 +27,11 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixpkgs-unstable
 
+      - name: Fetch Deps
+        run: nix-shell --run 'go get -t ./... && go mod tidy'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Non Go formatters and linters
-        run: ./.github/workflows/ci-non-go.sh
 
       - name: Install Go
         uses: actions/setup-go@75726802f3f367f1a0ac12b135b50a9b28e6d89c
@@ -41,22 +41,8 @@ jobs:
       - name: Generate all files
         run: nix-shell --run 'make -j1 gen'
 
-      - name: goimports
-        run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
-
-      - name: go vet
-        run: go mod tidy && go vet ./...
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          args: -v
-
-      - name: go test
-        run: go test -v ./... -gcflags=-l
-
-      - name: go test coverage
-        run: go test -coverprofile=coverage.txt ./... -gcflags=-l
+      - name: Run all the tests
+        run: nix-shell --run 'make ci'
 
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
