@@ -33,11 +33,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Install Go
-        uses: actions/setup-go@75726802f3f367f1a0ac12b135b50a9b28e6d89c
-        with:
-          go-version: "1.18"
-
       - name: Generate all files
         run: nix-shell --run 'make -j1 gen'
 
