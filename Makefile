@@ -33,8 +33,8 @@ goimports: bin/goimports gen ## Run goimports
 golangci-lint: bin/golangci-lint gen ## Run golangci-lint
 	golangci-lint run -v
 
-ci-checks: bin/goimports .github/workflows/ci-non-go.sh shell.nix gen
-	./.github/workflows/ci-non-go.sh
+ci-checks: bin/goimports .github/workflows/ci-checks.sh shell.nix gen
+	./.github/workflows/ci-checks.sh
 
 ci: ci-checks coverage goimports golangci-lint vet ## Runs all the same validations and tests that run in CI
 
