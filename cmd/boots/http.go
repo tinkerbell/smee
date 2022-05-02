@@ -69,7 +69,7 @@ type jobHandler struct {
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
 func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
-	jh := jobHandler{i: i}
+	jh := jobHandler{i: i, jobManager: s.jobManager}
 	mux.Handle(otelFuncWrapper("/", jh.serveJobFile))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
