@@ -44,8 +44,9 @@ $(toolsBins): go.sum tools.go
 	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
 	
 generated_go_files := \
-	packet/mock_cacher/cacher_mock.go \
-	packet/mock_workflow/workflow_mock.go \
+	client/cacher/mock_cacher/cacher_mock.go \
+	client/tinkerbell/mock_workflow/workflow_mock.go \
+	client/tinkerbell/mock_hardware/hardware_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
 	

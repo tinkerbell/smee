@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/packet"
+	"github.com/tinkerbell/boots/client"
 )
 
 func (j Job) CustomPXEDone(ctx context.Context) {
@@ -24,7 +24,7 @@ func (j Job) CustomPXEDone(ctx context.Context) {
 
 	e := event{_kind: "phone-home"}
 
-	if err := e.postInstance(ctx, j.instance.ID); err != nil {
+	if err := e.postInstance(ctx, j.reporter, j.instance.ID); err != nil {
 		j.With("os", "custom_ipxe").Error(errors.WithMessage(err, "posting phone-home event"))
 	}
 }
@@ -36,7 +36,7 @@ func (j Job) DisablePXE(ctx context.Context) {
 		return
 	}
 
-	if err := client.UpdateInstance(ctx, j.instance.ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
+	if err := j.reporter.UpdateInstance(ctx, j.instance.ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
 		j.Error(errors.WithMessage(err, "disabling PXE"))
 
 		return
@@ -59,7 +59,7 @@ func (j Job) PostHardwareProblem(ctx context.Context, slug string) bool {
 
 		return false
 	}
-	if _, err := client.PostHardwareProblem(ctx, j.hardware.HardwareID(), bytes.NewReader(b)); err != nil {
+	if _, err := j.reporter.PostHardwareProblem(ctx, j.hardware.HardwareID(), bytes.NewReader(b)); err != nil {
 		j.With("problem", slug).Error(errors.WithMessage(err, "posting hardware problem"))
 
 		return false
@@ -69,8 +69,8 @@ func (j Job) PostHardwareProblem(ctx context.Context, slug string) bool {
 }
 
 type poster interface {
-	postInstance(context.Context, string) error
-	postHardware(context.Context, string) error
+	postInstance(context.Context, client.Reporter, string) error
+	postHardware(context.Context, client.Reporter, string) error
 	kind() string
 	id() string
 }
@@ -85,7 +85,7 @@ func (j Job) phoneHome(ctx context.Context, body []byte) bool {
 
 	var id string
 	var typ string
-	var post func(context.Context, string) error
+	var post func(context.Context, client.Reporter, string) error
 	var disablePXE bool
 	if j.InstanceID() != "" {
 		id = j.instance.ID
@@ -108,7 +108,7 @@ func (j Job) phoneHome(ctx context.Context, body []byte) bool {
 		post = p.postHardware
 	}
 
-	if err := post(ctx, id); err != nil {
+	if err := post(ctx, j.reporter, id); err != nil {
 		j.With("kind", p.kind(), "type", typ).Error(err)
 
 		return false
@@ -138,7 +138,7 @@ func (j Job) postEvent(ctx context.Context, kind, body string, private bool) boo
 
 		return false
 	}
-	if err := e.postInstance(ctx, j.instance.ID); err != nil {
+	if err := e.postInstance(ctx, j.reporter, j.instance.ID); err != nil {
 		// do not use j.Error to avoid infinite recursion
 		j.With("kind", kind).Error(err, "posting event")
 	}
@@ -189,7 +189,7 @@ func posterFromJSON(b []byte) (poster, error) {
 }
 
 func newEvent(kind, body string, private bool) (event, error) {
-	b, err := json.Marshal(&packet.Event{Type: kind, Body: body, Private: private})
+	b, err := json.Marshal(&client.Event{Type: kind, Body: body, Private: private})
 	if err != nil {
 		return event{}, errors.Wrap(err, "marshalling event")
 	}
@@ -204,30 +204,30 @@ type event struct {
 	json  []byte
 }
 
-func (e *event) post(ctx context.Context, endpoint, id string) error {
+func (e *event) post(ctx context.Context, reporter client.Reporter, endpoint, id string) error {
 	if id == "" {
 		return errors.New("missing id")
 	}
 
 	if e.pass != "" {
-		return client.PostInstancePassword(ctx, id, e.pass)
+		return reporter.PostInstancePassword(ctx, id, e.pass)
 	}
 
 	if endpoint == "hardware" {
 		if e._kind == "phone-home" {
-			return client.PostHardwarePhoneHome(ctx, id)
+			return reporter.PostHardwarePhoneHome(ctx, id)
 		} else {
 			var err error
-			e._id, err = client.PostHardwareEvent(ctx, id, bytes.NewReader(e.json))
+			e._id, err = reporter.PostHardwareEvent(ctx, id, bytes.NewReader(e.json))
 
 			return err
 		}
 	} else if endpoint == "instance" {
 		if e._kind == "phone-home" {
-			return client.PostInstancePhoneHome(ctx, id)
+			return reporter.PostInstancePhoneHome(ctx, id)
 		} else {
 			var err error
-			e._id, err = client.PostInstanceEvent(ctx, id, bytes.NewReader(e.json))
+			e._id, err = reporter.PostInstanceEvent(ctx, id, bytes.NewReader(e.json))
 
 			return err
 		}
@@ -235,11 +235,11 @@ func (e *event) post(ctx context.Context, endpoint, id string) error {
 
 	return errors.New("unknown endpoint: " + endpoint)
 }
-func (e *event) postInstance(ctx context.Context, id string) (err error) {
-	return e.post(ctx, "instance", id)
+func (e *event) postInstance(ctx context.Context, reporter client.Reporter, id string) (err error) {
+	return e.post(ctx, reporter, "instance", id)
 }
-func (e *event) postHardware(ctx context.Context, id string) (err error) {
-	return e.post(ctx, "hardware", id)
+func (e *event) postHardware(ctx context.Context, reporter client.Reporter, id string) (err error) {
+	return e.post(ctx, reporter, "hardware", id)
 }
 func (e *event) kind() string {
 	return e._kind
@@ -253,7 +253,7 @@ type failure struct {
 	Private bool   `json:"private"`
 }
 
-func (f *failure) post(ctx context.Context, typ, id string) error {
+func (f *failure) post(ctx context.Context, reporter client.Reporter, typ, id string) error {
 
 	if id == "" {
 		return errors.New("missing id")
@@ -265,18 +265,18 @@ func (f *failure) post(ctx context.Context, typ, id string) error {
 		return errors.Wrap(err, "marshalling failure event")
 	}
 	if typ == "hardware" {
-		return client.PostHardwareFail(ctx, id, bytes.NewReader(b))
+		return reporter.PostHardwareFail(ctx, id, bytes.NewReader(b))
 	} else if typ == "instance" {
-		return client.PostInstanceFail(ctx, id, bytes.NewReader(b))
+		return reporter.PostInstanceFail(ctx, id, bytes.NewReader(b))
 	}
 
 	return errors.New("unknown type: " + typ)
 }
-func (f *failure) postInstance(ctx context.Context, id string) error {
-	return f.post(ctx, "instance", id)
+func (f *failure) postInstance(ctx context.Context, reporter client.Reporter, id string) error {
+	return f.post(ctx, reporter, "instance", id)
 }
-func (f *failure) postHardware(ctx context.Context, id string) error {
-	return f.post(ctx, "hardware", id)
+func (f *failure) postHardware(ctx context.Context, reporter client.Reporter, id string) error {
+	return f.post(ctx, reporter, "hardware", id)
 }
 func (f *failure) kind() string {
 	return "failure"

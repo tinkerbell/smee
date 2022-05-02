@@ -7,7 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/packethost/pkg/log"
-	"github.com/tinkerbell/boots/packet"
+	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/client/cacher"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -32,7 +33,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 		uefi = true
 	}
 
-	servicesVersion := packet.ServicesVersion{}
+	servicesVersion := client.ServicesVersion{}
 	if strings.Contains(slug, "custom-osie") {
 		servicesVersion.OSIE = "osie-v18.08.13.00"
 	}
@@ -41,7 +42,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 
 	return Mock{
 		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
-		hardware: &packet.HardwareCacher{
+		hardware: &cacher.HardwareCacher{
 			ID:              uuid.New().String(),
 			PlanSlug:        slug,
 			PlanVersionSlug: planVersion,
@@ -51,13 +52,13 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 			UEFI:            uefi,
 			ServicesVersion: servicesVersion,
 		},
-		instance: &packet.Instance{
+		instance: &client.Instance{
 			State: "provisioning",
 		},
 	}
 }
 
-func NewMockFromDiscovery(d packet.Discovery, mac net.HardwareAddr) Mock {
+func NewMockFromDiscovery(d client.Discoverer, mac net.HardwareAddr) Mock {
 	mockLog, _ := log.Init("job.Mock")
 	j := Job{Logger: mockLog, mac: mac}
 	j.setup(context.Background(), d)
@@ -95,8 +96,8 @@ func (m *Mock) SetMAC(mac string) {
 
 func (m *Mock) SetManufacturer(slug string) {
 	hp := m.hardware
-	h := hp.(*packet.HardwareCacher)
-	h.Manufacturer = packet.Manufacturer{Slug: slug}
+	h := hp.(*cacher.HardwareCacher)
+	h.Manufacturer = client.Manufacturer{Slug: slug}
 }
 
 func (m *Mock) SetOSDistro(distro string) {
@@ -120,7 +121,7 @@ func (m *Mock) SetOSInstaller(installer string) {
 	m.hardware.OperatingSystem().Installer = installer
 }
 
-func (m *Mock) SetOSInstallerData(installerData *packet.InstallerData) {
+func (m *Mock) SetOSInstallerData(installerData *client.InstallerData) {
 	m.hardware.OperatingSystem().InstallerData = installerData
 }
 
@@ -131,86 +132,86 @@ func (m *Mock) SetPassword(password string) {
 
 func (m *Mock) SetState(state string) {
 	hp := m.hardware
-	h := hp.(*packet.HardwareCacher)
-	h.State = packet.HardwareState(state)
+	h := hp.(*cacher.HardwareCacher)
+	h.State = client.HardwareState(state)
 }
 
 func (m *Mock) SetBootDriveHint(drive string) {
 	m.instance.BootDriveHint = drive
 }
 
-func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, string) {
-	macIPMI := packet.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	mac0 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
-	mac1 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x01})
-	mac2 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x02})
-	mac3 := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x03})
+func MakeHardwareWithInstance() (*cacher.DiscoveryCacher, []client.MACAddr, string) {
+	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
+	mac0 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
+	mac1 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x01})
+	mac2 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x02})
+	mac3 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x03})
 	instanceId := uuid.New().String()
-	d := &packet.DiscoveryCacher{
-		HardwareCacher: &packet.HardwareCacher{
+	d := &cacher.DiscoveryCacher{
+		HardwareCacher: &cacher.HardwareCacher{
 			ID:   uuid.New().String(),
 			Name: "TestSetupInstanceHardwareName",
-			NetworkPorts: []packet.Port{
-				packet.Port{
+			NetworkPorts: []client.Port{
+				client.Port{
 					Type: "data",
 					Name: "eth0",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC:  &mac0,
 						Bond: "bond0",
 					},
 				},
-				packet.Port{
+				client.Port{
 					Type: "data",
 					Name: "eth1",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC:  &mac1,
 						Bond: "bond0",
 					},
 				},
-				packet.Port{
+				client.Port{
 					Type: "data",
 					Name: "eth2",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC:  &mac2,
 						Bond: "bond1",
 					},
 				},
-				packet.Port{
+				client.Port{
 					Type: "data",
 					Name: "eth3",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC:  &mac3,
 						Bond: "bond1",
 					},
 				},
-				packet.Port{
+				client.Port{
 					Type: "ipmi",
 					Name: "ipmi0",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC: &macIPMI,
 					},
 				},
 			},
-			Instance: &packet.Instance{
+			Instance: &client.Instance{
 				ID:       instanceId,
 				Hostname: "TestSetupInstanceHostname",
-				IPs: []packet.IP{
-					packet.IP{
+				IPs: []client.IP{
+					client.IP{
 						Address:    net.ParseIP("192.168.100.2"),
 						Gateway:    net.ParseIP("192.168.100.1"),
 						Netmask:    net.ParseIP("192.168.100.255"),
@@ -218,7 +219,7 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 						Management: true,
 						Public:     true,
 					},
-					packet.IP{
+					client.IP{
 						Address:    net.ParseIP("192.168.200.2"),
 						Gateway:    net.ParseIP("192.168.200.1"),
 						Netmask:    net.ParseIP("192.168.200.255"),
@@ -228,7 +229,7 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 					},
 				},
 			},
-			IPMI: packet.IP{
+			IPMI: client.IP{
 				Address:    net.ParseIP("192.168.0.2"),
 				Gateway:    net.ParseIP("192.168.0.1"),
 				Netmask:    net.ParseIP("192.168.0.255"),
@@ -239,21 +240,21 @@ func MakeHardwareWithInstance() (*packet.DiscoveryCacher, []packet.MACAddr, stri
 		},
 	}
 
-	return d, []packet.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceId
+	return d, []client.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceId
 }
 
-func MakeHardwareWithoutInstance() (*packet.DiscoveryCacher, packet.MACAddr) {
-	mac := packet.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
-	d := &packet.DiscoveryCacher{
-		HardwareCacher: &packet.HardwareCacher{
+func MakeHardwareWithoutInstance() (*cacher.DiscoveryCacher, client.MACAddr) {
+	mac := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
+	d := &cacher.DiscoveryCacher{
+		HardwareCacher: &cacher.HardwareCacher{
 			ID:   uuid.New().String(),
 			Name: "TestSetupWithoutInstanceHardwareName",
-			NetworkPorts: []packet.Port{
-				packet.Port{
+			NetworkPorts: []client.Port{
+				client.Port{
 					Type: "data",
 					Name: "eth0",
 					Data: struct {
-						MAC  *packet.MACAddr `json:"mac"`
+						MAC  *client.MACAddr `json:"mac"`
 						Bond string          `json:"bond"`
 					}{
 						MAC:  &mac,

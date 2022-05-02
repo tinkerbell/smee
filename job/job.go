@@ -3,52 +3,63 @@ package job
 import (
 	"context"
 	"net"
-	"os"
 	"time"
 
 	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/packet"
-	tw "github.com/tinkerbell/tink/protos/workflow"
 	"go.opentelemetry.io/otel/trace"
 )
 
+// JobManager creates jobs.
+type Manager interface {
+	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *Job, error)
+	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *Job, error)
+}
+
+// Creator is a type that can create jobs
+type Creator struct {
+	finder                client.HardwareFinder
+	reporter              client.Reporter
+	provisionerEngineName string
+	logger                log.Logger
+}
+
+// NewCreator returns a manager that can create jobs
+func NewCreator(logger log.Logger, provisionerEngineName string, reporter client.Reporter, finder client.HardwareFinder) *Creator {
+	return &Creator{
+		finder:                finder,
+		provisionerEngineName: provisionerEngineName,
+		reporter:              reporter,
+		logger:                logger,
+	}
+}
+
 var joblog log.Logger
-var client packet.Client
-var provisionerEngineName string
 
 func Init(l log.Logger) {
 	joblog = l.Package("job")
 	initRSA()
 }
 
-// SetClient sets the client used to interact with the api.
-func SetClient(c packet.Client) {
-	client = c
-}
-
-// SetProvisionerEngineName sets the provisioning engine name used
-// for this instance of boots
-func SetProvisionerEngineName(engineName string) {
-	provisionerEngineName = engineName
-}
-
 // Job holds per request data
 type Job struct {
 	log.Logger
-	mac          net.HardwareAddr
-	ip           net.IP
-	start        time.Time
-	mode         Mode
-	dhcp         dhcp.Config
-	hardware     packet.Hardware
-	instance     *packet.Instance
-	NextServer   net.IP
-	IpxeBaseURL  string
-	BootsBaseURL string
+	provisionerEngineName string
+	mac                   net.HardwareAddr
+	ip                    net.IP
+	start                 time.Time
+	mode                  Mode
+	dhcp                  dhcp.Config
+	hardware              client.Hardware
+	instance              *client.Instance
+	NextServer            net.IP
+	IpxeBaseURL           string
+	BootsBaseURL          string
+	reporter              client.Reporter
 }
 
 type Installers struct {
@@ -76,99 +87,72 @@ func (j Job) AllowPxe() bool {
 // ProvisionerEngineName returns the current provisioning engine name
 // as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime
 func (j Job) ProvisionerEngineName() string {
-	return provisionerEngineName
-}
-
-// HasActiveWorkflow fetches workflows for the given hardware and returns
-// the status true if there is a pending (active) workflow
-func HasActiveWorkflow(ctx context.Context, hwID packet.HardwareID) (bool, error) {
-	wcl, err := client.GetWorkflowsFromTink(ctx, hwID)
-	if err != nil {
-		return false, err
-	}
-	for _, wf := range (*wcl).WorkflowContexts {
-		if wf.CurrentActionState == tw.State_STATE_PENDING || wf.CurrentActionState == tw.State_STATE_RUNNING {
-			joblog.With("workflowID", wf.WorkflowId).Info("found active workflow for hardware")
-
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return j.provisionerEngineName
 }
 
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
-func CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (context.Context, Job, error) {
-	j := Job{
-		mac:   mac,
-		start: time.Now(),
+func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (context.Context, *Job, error) {
+	j := &Job{
+		mac:                   mac,
+		start:                 time.Now(),
+		reporter:              c.reporter,
+		provisionerEngineName: c.provisionerEngineName,
 	}
-
-	d, err := discoverHardwareFromDHCP(ctx, mac, giaddr, circuitID)
+	d, err := c.finder.ByMAC(ctx, mac, giaddr, circuitID)
 	if err != nil {
-		return ctx, Job{}, errors.WithMessage(err, "discover from dhcp message")
+		return ctx, nil, errors.WithMessage(err, "discover from dhcp message")
 	}
 
-	ctx, err = j.setup(ctx, d)
+	newCtx, err := j.setup(ctx, d)
 	if err != nil {
-		j = Job{} // return an empty job on error
+		return ctx, nil, err
 	}
 
-	return ctx, j, err
+	return newCtx, j, nil
 }
 
 // CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
-func CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, Job, error) {
+func (c *Creator) CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *Job, error) {
 	host, _, err := net.SplitHostPort(ip)
 	if err != nil {
-		return ctx, Job{}, errors.Wrap(err, "splitting host:ip")
+		return ctx, nil, errors.Wrap(err, "splitting host:ip")
 	}
 
-	return CreateFromIP(ctx, net.ParseIP(host))
+	return c.CreateFromIP(ctx, net.ParseIP(host))
 }
 
 // CreateFromIP looksup hardware using the IP from cacher to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
-func CreateFromIP(ctx context.Context, ip net.IP) (context.Context, Job, error) {
-	j := Job{
-		ip:    ip,
-		start: time.Now(),
+func (c *Creator) CreateFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
+	j := &Job{
+		ip:                    ip,
+		start:                 time.Now(),
+		reporter:              c.reporter,
+		provisionerEngineName: c.provisionerEngineName,
 	}
 
-	joblog.With("ip", ip).Info("discovering from ip")
-	d, err := discoverHardwareFromIP(ctx, ip)
+	c.logger.With("ip", ip).Info("discovering from ip")
+	d, err := c.finder.ByIP(ctx, ip)
 	if err != nil {
-		return ctx, Job{}, errors.WithMessage(err, "discovering from ip address")
+		return ctx, nil, errors.WithMessage(err, "discovering from ip address")
 	}
 	mac := d.GetMAC(ip)
-	if mac.String() == packet.ZeroMAC.String() {
-		joblog.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
+	if mac.String() == client.ZeroMAC.String() {
+		c.logger.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
 	j.mac = mac
 
 	ctx, err = j.setup(ctx, d)
 	if err != nil {
-		return ctx, Job{}, err
-	}
-
-	if os.Getenv("DATA_MODEL_VERSION") != "1" {
-		return ctx, j, nil
-	}
-
-	hd := d.Hardware()
-	hwID := hd.HardwareID()
-
-	joblog.With("hardwareID", hwID).Info("fetching workflows for hardware")
-	if err != nil {
-		return ctx, Job{}, err
+		return ctx, nil, err
 	}
 
 	return ctx, j, nil
@@ -177,7 +161,7 @@ func CreateFromIP(ctx context.Context, ip net.IP) (context.Context, Job, error) 
 // MarkDeviceActive marks the device active
 func (j Job) MarkDeviceActive(ctx context.Context) {
 	if id := j.InstanceID(); id != "" {
-		if err := client.PostInstancePhoneHome(ctx, id); err != nil {
+		if err := j.reporter.PostInstancePhoneHome(ctx, id); err != nil {
 			j.Error(err)
 		}
 	}
@@ -189,10 +173,10 @@ func (j Job) MarkDeviceActive(ctx context.Context) {
 // so that it points at the incoming traceparent from the hardware. A span
 // link is applied in the process. The returned context's parent trace will
 // be set to the traceparent value.
-func (j *Job) setup(ctx context.Context, d packet.Discovery) (context.Context, error) {
+func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, error) {
 	dh := d.Hardware()
 
-	j.Logger = joblog.With("mac", j.mac, "hardware.id", dh.HardwareID())
+	j.Logger = j.Logger.With("mac", j.mac, "hardware.id", dh.HardwareID())
 
 	// When there is a traceparent in the hw record, create a link on the current
 	// trace and replace ctx with one that is parented to the traceparent.
@@ -211,7 +195,7 @@ func (j *Job) setup(ctx context.Context, d packet.Discovery) (context.Context, e
 	// (kdeng3849) how can we remove this?
 	j.instance = d.Instance()
 	if j.instance == nil {
-		j.instance = &packet.Instance{}
+		j.instance = &client.Instance{}
 	} else {
 		j.Logger = j.Logger.With("instance.id", j.InstanceID())
 	}

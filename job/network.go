@@ -1,7 +1,7 @@
 package job
 
-import "github.com/tinkerbell/boots/packet"
+import "github.com/tinkerbell/boots/client"
 
-func (j Job) BondingMode() packet.BondingMode {
+func (j Job) BondingMode() client.BondingMode {
 	return j.hardware.HardwareBondingMode()
 }

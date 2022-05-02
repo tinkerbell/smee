@@ -1,108 +1,14 @@
-package packet
+package client
 
 import (
 	"bufio"
 	"encoding/json"
 	"net"
-	"os"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/pkg/errors"
 )
 
-// models.go contains the Hardware structures matching the data models defined by tink and cacher
-
 var servicesVersionUserdataRegex = regexp.MustCompile(`^\s*#\s*services\s*=\s*({.*})\s*$`)
-
-// BondingMode is the hardware bonding mode
-type BondingMode int
-
-// Discovery interface is the base for cacher and tinkerbell hardware discovery
-type Discovery interface {
-	Instance() *Instance
-	MAC() net.HardwareAddr
-	Mode() string
-	GetIP(addr net.HardwareAddr) IP
-	GetMAC(ip net.IP) net.HardwareAddr
-	DnsServers(mac net.HardwareAddr) []net.IP
-	LeaseTime(mac net.HardwareAddr) time.Duration
-	Hostname() (string, error)
-	Hardware() Hardware
-	SetMAC(mac net.HardwareAddr)
-}
-
-// Interface is the base for cacher and tinkerbell hardware (network) interface
-type Interface interface {
-}
-
-type InterfaceCacher struct {
-	*Port
-}
-
-type InterfaceTinkerbell struct {
-	*NetworkInterface
-}
-
-type HardwareID string
-
-func (hid HardwareID) String() string {
-	return string(hid)
-}
-
-// Hardware interface holds primary hardware methods
-type Hardware interface {
-	HardwareAllowPXE(mac net.HardwareAddr) bool
-	HardwareAllowWorkflow(mac net.HardwareAddr) bool
-	HardwareArch(mac net.HardwareAddr) string
-	HardwareBondingMode() BondingMode
-	HardwareFacilityCode() string
-	HardwareID() HardwareID
-	HardwareIPs() []IP
-	Interfaces() []Port // TODO: to be updated
-	HardwareManufacturer() string
-	HardwareProvisioner() string
-	HardwarePlanSlug() string
-	HardwarePlanVersionSlug() string
-	HardwareState() HardwareState
-	HardwareOSIEVersion() string
-	HardwareUEFI(mac net.HardwareAddr) bool
-	OSIEBaseURL(mac net.HardwareAddr) string
-	KernelPath(mac net.HardwareAddr) string
-	InitrdPath(mac net.HardwareAddr) string
-	OperatingSystem() *OperatingSystem
-	GetTraceparent() string
-}
-
-// NewDiscovery instantiates a Discovery struct from the json argument
-func NewDiscovery(b []byte) (Discovery, error) {
-	if string(b) == "" || string(b) == "{}" {
-		return nil, errors.New("empty response from db")
-	}
-
-	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
-	switch dataModelVersion {
-	case "":
-		d := &DiscoveryCacher{}
-		err := json.Unmarshal(b, &d)
-		if err != nil {
-			return nil, errors.Wrap(err, "unmarshal json for discovery")
-		}
-
-		return d, nil
-	case "1":
-		d := &DiscoveryTinkerbellV1{}
-		err := json.Unmarshal(b, &d)
-		if err != nil {
-			return nil, errors.Wrap(err, "unmarshal json for discovery")
-		}
-
-		return d, nil
-	default:
-		return nil, errors.New("unknown DATA_MODEL_VERSION")
-	}
-}
 
 // Instance models the instance data as returned by the API
 type Instance struct {
@@ -180,16 +86,13 @@ func (i *Instance) ServicesVersion() ServicesVersion {
 	return ServicesVersion{}
 }
 
-func managementPublicIPv4IP(ip IP) bool {
+func ManagementPublicIPv4IP(ip IP) bool {
 	return ip.Public && ip.Management && ip.Family == 4
 }
 
-func managementPrivateIPv4IP(ip IP) bool {
+func ManagementPrivateIPv4IP(ip IP) bool {
 	return !ip.Public && ip.Management && ip.Family == 4
 }
-
-// InstanceState represents the state of an instance (e.g. active)
-type InstanceState string
 
 type Event struct {
 	Type    string `json:"type"`
@@ -206,9 +109,6 @@ type UserEvent struct {
 type ServicesVersion struct {
 	OSIE string `json:"osie"`
 }
-
-// HardwareState is the hardware state (e.g. provisioning)
-type HardwareState string
 
 // IP represents IP address for a hardware
 type IP struct {
@@ -306,6 +206,30 @@ type OSIE struct {
 type Network struct {
 	Interfaces []NetworkInterface `json:"interfaces,omitempty"`
 	//Default    NetworkInterface   `json:"default,omitempty"`
+}
+
+// InterfacesByMac returns the NetworkInterface that contains the matching mac address
+// returns an empty NetworkInterface if not found
+func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
+	for _, i := range n.Interfaces {
+		if i.DHCP.MAC.String() == mac.String() {
+			return i
+		}
+	}
+
+	return NetworkInterface{}
+}
+
+// InterfacesByIp returns the NetworkInterface that contains the matching ip address
+// returns an empty NetworkInterface if not found
+func (n Network) InterfaceByIp(ip net.IP) NetworkInterface {
+	for _, i := range n.Interfaces {
+		if i.DHCP.IP.Address.String() == ip.String() {
+			return i
+		}
+	}
+
+	return NetworkInterface{}
 }
 
 // Metadata holds the hardware metadata

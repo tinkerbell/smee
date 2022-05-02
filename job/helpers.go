@@ -3,10 +3,10 @@ package job
 import (
 	"net"
 
-	"github.com/tinkerbell/boots/packet"
+	"github.com/tinkerbell/boots/client"
 )
 
-var rescueOS = &packet.OperatingSystem{
+var rescueOS = &client.OperatingSystem{
 	Slug:    "alpine_3",
 	Distro:  "alpine",
 	Version: "3",
@@ -97,7 +97,7 @@ func (j Job) IPXEScriptURL() string {
 	return ""
 }
 
-func (j Job) InstanceIPs() []packet.IP {
+func (j Job) InstanceIPs() []client.IP {
 	if i := j.instance; i != nil {
 		return i.IPs
 	}
@@ -119,7 +119,7 @@ func (j Job) PasswordHash() string {
 	return j.instance.PasswordHash
 }
 
-func (j Job) OperatingSystem() *packet.OperatingSystem {
+func (j Job) OperatingSystem() *client.OperatingSystem {
 	if i := j.instance; i != nil {
 		if i.Rescue {
 			return rescueOS
@@ -135,7 +135,7 @@ func (j Job) ID() string {
 	return j.mac.String()
 }
 
-func (j Job) Interfaces() []packet.Port {
+func (j Job) Interfaces() []client.Port {
 	if h := j.hardware; h != nil {
 		return h.Interfaces()
 	}
@@ -159,7 +159,7 @@ func (j Job) InterfaceMAC(i int) net.HardwareAddr {
 	return nil
 }
 
-func (j Job) HardwareID() packet.HardwareID {
+func (j Job) HardwareID() client.HardwareID {
 	if h := j.hardware; h != nil {
 		return h.HardwareID()
 	}

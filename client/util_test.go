@@ -1,4 +1,4 @@
-package packet
+package client
 
 import (
 	"encoding/json"

@@ -9,7 +9,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/tinkerbell/boots/packet"
+	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/client/cacher"
+	"github.com/tinkerbell/boots/client/packet"
 )
 
 func TestPhoneHome(t *testing.T) {
@@ -37,27 +40,32 @@ func TestPhoneHome(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	SetClient(packet.NewMockClient(u, nil))
-
 	for name, test := range phoneHomeTests {
 		t.Run(name, func(t *testing.T) {
+			l := log.Test(t, "PhoneHomeTest")
+			reporter, _ := packet.NewReporter(l, u, "", "")
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			reqs = nil
 
-			instance := &packet.Instance{
+			instance := &client.Instance{
 				ID: test.id,
-				OSV: &packet.OperatingSystem{
+				OSV: &client.OperatingSystem{
 					OsSlug: test.os,
 				},
 			}
 			j := Job{
 				Logger: joblog.With("test", name),
 				mode:   modeInstance,
-				hardware: &packet.HardwareCacher{
+				hardware: &cacher.HardwareCacher{
 					ID:       "$hardware_id",
-					State:    packet.HardwareState(test.state),
+					State:    client.HardwareState(test.state),
 					Instance: instance,
 				},
 				instance: instance,
+				reporter: reporter,
 			}
 			bad := !j.phoneHome(context.Background(), []byte(test.event))
 			if bad != test.bad {

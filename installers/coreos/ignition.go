@@ -33,9 +33,9 @@ func buildSystemdUnits(j job.Job) (su ignition.SystemdUnits) {
 	return
 }
 
-func ServeIgnitionConfig(distro string) func(w http.ResponseWriter, req *http.Request) {
+func ServeIgnitionConfig(distro string, jobManager job.Manager) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		_, j, err := job.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
+		_, j, err := jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 		if err != nil {
 			installers.Logger(distro).With("client", req.RemoteAddr).Error(err)
 			w.WriteHeader(http.StatusNotFound)
@@ -43,8 +43,8 @@ func ServeIgnitionConfig(distro string) func(w http.ResponseWriter, req *http.Re
 			return
 		}
 		c := ignition.Config{
-			Network: buildNetworkUnits(j),
-			Systemd: buildSystemdUnits(j),
+			Network: buildNetworkUnits(*j),
+			Systemd: buildSystemdUnits(*j),
 		}
 		if err := c.Render(w); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
