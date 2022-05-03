@@ -44,7 +44,6 @@ func Installer(ExtraKernelArgs string) job.BootScripter {
 
 	staticTinkArgs = []string{
 		"grpc_authority=" + require("TINKERBELL_GRPC_AUTHORITY"),
-		"grpc_cert_url=" + require("TINKERBELL_CERT_URL"),
 		"packet_base_url=" + workflowURL,
 	}
 	if !env.Bool("TINKERBELL_TLS", true) {
