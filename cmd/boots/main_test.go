@@ -70,6 +70,7 @@ func TestCustomUsageFunc(t *testing.T) {
 
 FLAGS
   -dhcp-addr              IP and port to listen on for DHCP. (default "%v:67")
+  -extra-kernel-args      Extra set of kernel args (k=v,k=v) that are appended to the kernel in iPXE for OSIE.
   -http-addr              local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "%[1]v:80")
   -ipxe-enable-http       enable serving iPXE binaries via HTTP. (default "true")
   -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
