@@ -10,7 +10,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Installer struct{}
+type Installer struct {
+	// ExtraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
+	ExtraKernelArgs string
+}
 
 // DefaultHandler determines the ipxe boot script to be returned.
 // If the job has an instance with Rescue true, the rescue boot script is returned.
@@ -31,7 +34,7 @@ func (i Installer) rescue() job.BootScript {
 		s.Set("action", "rescue")
 		s.Set("state", j.HardwareState())
 
-		return bootScript(ctx, "rescue", j, s)
+		return i.bootScript(ctx, "rescue", j, s)
 	}
 }
 
@@ -50,7 +53,7 @@ func (i Installer) install() job.BootScript {
 		}
 		s.Set("state", j.HardwareState())
 
-		return bootScript(ctx, "install", j, s)
+		return i.bootScript(ctx, "install", j, s)
 	}
 }
 
@@ -59,18 +62,18 @@ func (i Installer) Discover() job.BootScript {
 		s.Set("action", "discover")
 		s.Set("state", j.HardwareState())
 
-		return bootScript(ctx, "discover", j, s)
+		return i.bootScript(ctx, "discover", j, s)
 	}
 }
 
-func bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 
-	ks := kernelParams(ctx, action, j.HardwareState(), j, s)
+	ks := i.kernelParams(ctx, action, j.HardwareState(), j, s)
 
 	ks.Initrd("${base-url}/" + initrdPath(j))
 
@@ -84,7 +87,7 @@ func bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ip
 	return ks
 }
 
-func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
+func (i Installer) kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
 	s.Args("ip=dhcp") // Dracut?
 	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
 	s.Args("alpine_repo=" + alpineMirror(j))
@@ -95,6 +98,11 @@ func kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.S
 	s.Args("packet_action=${action}")
 	s.Args("packet_state=${state}")
 	s.Args("osie_vendors_url=" + conf.OsieVendorServicesURL)
+
+	// Add extra kernel args
+	if i.ExtraKernelArgs != "" {
+		s.Args(i.ExtraKernelArgs)
+	}
 
 	// only add traceparent if tracing is enabled
 	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {

@@ -79,6 +79,8 @@ type config struct {
 	syslogAddr string
 	// loglevel is the log level for boots
 	logLevel string
+	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE
+	extraKernelArgs string
 }
 
 func main() {
@@ -205,7 +207,7 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go httpServer.ServeHTTP(registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(cfg.registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -345,6 +347,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
+	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
 
 	return &ffcli.Command{
 		Name:       name,
@@ -357,7 +360,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	}
 }
 
-func registerInstallers() job.Installers {
+func (cf *config) registerInstallers() job.Installers {
 	// register installers
 	i := job.NewInstallers()
 	// register coreos/flatcar
@@ -375,7 +378,7 @@ func registerInstallers() job.Installers {
 	o := osie.Installer{}
 	i.RegisterDistro("discovery", o.Discover())
 	// register osie as default
-	d := osie.Installer{}
+	d := osie.Installer{ExtraKernelArgs: cf.extraKernelArgs}
 	i.RegisterDefaultInstaller(d.DefaultHandler())
 	// register rancher
 	r := rancher.Installer{}
