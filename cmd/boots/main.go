@@ -347,7 +347,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
-	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel in iPXE for the default iPXE installer.")
+	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
 
 	return &ffcli.Command{
 		Name:       name,
