@@ -100,6 +100,7 @@ func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giad
 		start:                 time.Now(),
 		reporter:              c.reporter,
 		provisionerEngineName: c.provisionerEngineName,
+		Logger:                c.logger,
 	}
 	d, err := c.finder.ByMAC(ctx, mac, giaddr, circuitID)
 	if err != nil {
@@ -137,6 +138,7 @@ func (c *Creator) CreateFromIP(ctx context.Context, ip net.IP) (context.Context,
 		start:                 time.Now(),
 		reporter:              c.reporter,
 		provisionerEngineName: c.provisionerEngineName,
+		Logger:                c.logger,
 	}
 
 	c.logger.With("ip", ip).Info("discovering from ip")
