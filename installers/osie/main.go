@@ -47,6 +47,9 @@ func Installer(ExtraKernelArgs string) job.BootScripter {
 		"grpc_cert_url=" + require("TINKERBELL_CERT_URL"),
 		"packet_base_url=" + workflowURL,
 	}
+	if !env.Bool("TINKERBELL_TLS", true) {
+		staticTinkArgs = append(staticTinkArgs, "tinkerbell_tls=false")
+	}
 	if registry := env.Get("DOCKER_REGISTRY"); registry != "" {
 		staticTinkArgs = append(staticTinkArgs, "docker_registry="+registry)
 	}
