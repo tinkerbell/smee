@@ -4,60 +4,76 @@ import (
 	"context"
 	"strings"
 
-	"github.com/packethost/pkg/env"
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"go.opentelemetry.io/otel/trace"
 )
 
-var (
-	osieURL     = conf.MirrorBaseURL + "/misc/osie"
-	workflowURL = conf.MirrorBaseURL + "/workflow"
-
-	staticTinkArgs []string
-)
-
 type installer struct {
-	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE
-	extraKernelArgs string
+	osieURL string
+	// defaultParams are passed to iPXE'd kernel always
+	defaultParams string
+	// workflowParams are passed to iPXE'd kernel when in tinkerbell or standalone mode and the hw indicates it can run workflows
+	workflowParams string
+	// hollowParams are passed to deprovisioning instances for hardware reporting
+	// TODO(mmlb): remove this EMism now that we can use extra-kernel-args
+	hollowParams string
 }
 
-func Installer(ExtraKernelArgs string) job.BootScripter {
-	i := installer{
-		extraKernelArgs: ExtraKernelArgs,
+// Installer instantiates a new osie installer.
+func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool) job.BootScripter {
+	defaultParams := []string{
+		"ip=dhcp",
+		"modules=loop,squashfs,sd-mod,usb-storage",
+		"alpine_repo=${base-url}/repo-${arch}/main",
+		"modloop=${base-url}/modloop-${parch}",
+		"tinkerbell=${tinkerbell}",
+		"syslog_host=${syslog_host}",
+		"parch=${parch}",
+		"packet_action=${action}",
+		"packet_state=${state}",
+		"osie_vendors_url=" + conf.OsieVendorServicesURL,
 	}
-	if env.Get("DATA_MODEL_VERSION") != "1" {
+
+	if extraKernelArgs != "" {
+		defaultParams = append(defaultParams, extraKernelArgs)
+	}
+
+	i := installer{
+		osieURL:       conf.MirrorBaseURL + "/misc/osie",
+		defaultParams: strings.Join(defaultParams, " "),
+	}
+
+	if conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
+		hollowParams := []string{
+			"hollow_client_id=" + conf.HollowClientId,
+			"hollow_client_request_secret=" + conf.HollowClientRequestSecret,
+		}
+		i.hollowParams = strings.Join(hollowParams, " ")
+	}
+
+	if dataModelVersion == "" {
 		return i
 	}
 
-	require := func(key string) string {
-		val := env.Get(key)
-		if val == "" {
-			installers.Logger("osie").With("key", key).Fatal(errors.New("invalid key"))
-		}
-
-		return val
+	workflowParams := []string{
+		"grpc_authority=" + tinkGRPCAuth,
+		"packet_base_url=" + conf.MirrorBaseURL + "/workflow",
 	}
-
-	staticTinkArgs = []string{
-		"grpc_authority=" + require("TINKERBELL_GRPC_AUTHORITY"),
-		"packet_base_url=" + workflowURL,
+	if !tinkTLS {
+		workflowParams = append(workflowParams, "tinkerbell_tls=false")
 	}
-	if !env.Bool("TINKERBELL_TLS", true) {
-		staticTinkArgs = append(staticTinkArgs, "tinkerbell_tls=false")
+	if registry != "" {
+		workflowParams = append(workflowParams, "docker_registry="+registry)
 	}
-	if registry := env.Get("DOCKER_REGISTRY"); registry != "" {
-		staticTinkArgs = append(staticTinkArgs, "docker_registry="+registry)
+	if registryUsername != "" {
+		workflowParams = append(workflowParams, "registry_username="+registryUsername)
 	}
-	if username := env.Get("REGISTRY_USERNAME"); username != "" {
-		staticTinkArgs = append(staticTinkArgs, "registry_username="+username)
+	if registryPassword != "" {
+		workflowParams = append(workflowParams, "registry_password="+registryPassword)
 	}
-	if password := env.Get("REGISTRY_PASSWORD"); password != "" {
-		staticTinkArgs = append(staticTinkArgs, "registry_password="+password)
-	}
+	i.workflowParams = strings.Join(workflowParams, " ")
 
 	return i
 }
@@ -114,7 +130,7 @@ func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
-	s.Set("base-url", osieBaseURL(j))
+	s.Set("base-url", osieBaseURL(i.osieURL, j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 	i.kernelParams(ctx, action, j.HardwareState(), j, s)
 	s.Initrd("${base-url}/" + initrdPath(j))
@@ -128,21 +144,7 @@ func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *
 }
 
 func (i installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
-	s.Args("ip=dhcp") // Dracut?
-	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
-	s.Args("alpine_repo=" + alpineMirror(j))
-	s.Args("modloop=${base-url}/" + modloopPath(j))
-	s.Args("tinkerbell=${tinkerbell}")
-	s.Args("syslog_host=${syslog_host}")
-	s.Args("parch=${parch}")
-	s.Args("packet_action=${action}")
-	s.Args("packet_state=${state}")
-	s.Args("osie_vendors_url=" + conf.OsieVendorServicesURL)
-
-	// Add extra kernel args
-	if i.extraKernelArgs != "" {
-		s.Args(i.extraKernelArgs)
-	}
+	s.Args(i.defaultParams)
 
 	// only add traceparent if tracing is enabled
 	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {
@@ -151,17 +153,16 @@ func (i installer) kernelParams(ctx context.Context, action, state string, j job
 	}
 
 	// Only provide the Hollow secrets for deprovisions
-	if j.HardwareState() == "deprovisioning" && conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
-		s.Args("hollow_client_id=" + conf.HollowClientId)
-		s.Args("hollow_client_request_secret=" + conf.HollowClientRequestSecret)
+	if j.HardwareState() == "deprovisioning" && i.hollowParams != "" {
+		s.Args(i.hollowParams)
 	}
 
 	if isCustomOSIE(j) {
-		s.Args("packet_base_url=" + osieBaseURL(j))
+		s.Args("packet_base_url=${base-url}")
 	}
 
 	if j.CanWorkflow() {
-		s.Args(staticTinkArgs...)
+		s.Args(i.workflowParams)
 		s.Args("instance_id=" + j.InstanceID())
 		s.Args("worker_id=" + j.HardwareID().String())
 	}
@@ -213,25 +214,17 @@ func (i installer) kernelParams(ctx context.Context, action, state string, j job
 	s.Args("console=" + console + ",115200")
 }
 
-func alpineMirror(j job.Job) string {
-	return "${base-url}/repo-${arch}/main"
-}
-
-func modloopPath(j job.Job) string {
-	return "modloop-${parch}"
-}
-
 func kernelPath(j job.Job) string {
-	if j.KernelPath() != "" {
-		return j.KernelPath()
+	if path := j.KernelPath(); path != "" {
+		return path
 	}
 
 	return "vmlinuz-${parch}"
 }
 
 func initrdPath(j job.Job) string {
-	if j.InitrdPath() != "" {
-		return j.InitrdPath()
+	if path := j.InitrdPath(); path != "" {
+		return path
 	}
 
 	return "initramfs-${parch}"
@@ -242,7 +235,7 @@ func isCustomOSIE(j job.Job) bool {
 }
 
 // osieBaseURL returns the value of Custom OSIE Service Version or just /current
-func osieBaseURL(j job.Job) string {
+func osieBaseURL(osieURL string, j job.Job) string {
 	if u := j.OSIEBaseURL(); u != "" {
 		return u
 	}

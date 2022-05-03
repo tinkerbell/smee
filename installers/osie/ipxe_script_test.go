@@ -60,7 +60,7 @@ func TestScript(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					Installer("").BootScript(action)(context.Background(), m.Job(), s)
+					Installer("", "", "", "", "", "", true).BootScript(action)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
 					arch := "aarch64"
@@ -209,7 +209,7 @@ boot
 `,
 	"custom-osie": `
 set base-url http://install.` + facility + `.packet.net/misc/osie/osie-v18.08.13.00
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_base_url=http://install.ewr1.packet.net/misc/osie/osie-v18.08.13.00 packet_bootdev_mac=${bootdevmac} facility=ewr1 intel_iommu=on iommu=pt plan=custom-osie manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
+kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_base_url=${base-url} packet_bootdev_mac=${bootdevmac} facility=ewr1 intel_iommu=on iommu=pt plan=custom-osie manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
 initrd ${base-url}/initramfs-${parch}
 boot
 `,

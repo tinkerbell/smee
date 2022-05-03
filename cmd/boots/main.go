@@ -204,8 +204,13 @@ func main() {
 
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
+
+	installers, err := cfg.registerInstallers()
+	if err != nil {
+		mainlog.Fatal(err)
+	}
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go httpServer.ServeHTTP(cfg.registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(installers, cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -358,7 +363,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	}
 }
 
-func (cf *config) registerInstallers() job.Installers {
+func (cf *config) registerInstallers() (job.Installers, error) {
 	// register installers
 	i := job.NewInstallers()
 
@@ -371,8 +376,22 @@ func (cf *config) registerInstallers() job.Installers {
 	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
 	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
 
+	dataModelVersion := env.Get("DATA_MODEL_VERSION")
+	auth := env.Get("TINKERBELL_GRPC_AUTHORITY")
+	if dataModelVersion == "1" && auth == "" {
+		return job.Installers{}, errors.New("TINKERBELL_GRPC_AUTHORITY is required when in tinkerbell mode")
+	}
+
 	// register osie
-	o = osie.Installer(cf.extraKernelArgs)
+	o = osie.Installer(
+		dataModelVersion,
+		auth,
+		cf.extraKernelArgs,
+		env.Get("DOCKER_REGISTRY"),
+		env.Get("REGISTRY_USERNAME"),
+		env.Get("REGISTRY_PASSWORD"),
+		env.Bool("TINKERBELL_TLS", true),
+	)
 	i.RegisterDistro("discovery", o.BootScript("discover"))
 	i.RegisterDefaultInstaller(o.BootScript("default"))
 
@@ -389,5 +408,5 @@ func (cf *config) registerInstallers() job.Installers {
 	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
 	i.RegisterDistro("vmware", v.BootScript("vmware"))
 
-	return i
+	return i, nil
 }
