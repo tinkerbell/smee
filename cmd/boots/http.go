@@ -20,7 +20,7 @@ import (
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/httplog"
-	"github.com/tinkerbell/boots/installers/coreos"
+	"github.com/tinkerbell/boots/installers/flatcar"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
@@ -99,10 +99,8 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 	}))
 
 	var httpHandlers = make(map[string]http.HandlerFunc)
-	// register coreos/flatcar endpoints
-	httpHandlers[coreos.IgnitionPathCoreos] = coreos.ServeIgnitionConfig("coreos", s.jobManager)
-	httpHandlers[coreos.IgnitionPathFlatcar] = coreos.ServeIgnitionConfig("flatcar", s.jobManager)
-	httpHandlers[coreos.OEMPath] = coreos.ServeOEM(s.jobManager)
+	// register flatcar endpoints
+	httpHandlers[flatcar.IgnitionPathFlatcar] = flatcar.ServeIgnitionConfig(s.jobManager)
 	// register vmware endpoints
 	httpHandlers[vmware.KickstartPath] = vmware.ServeKickstart(s.jobManager)
 

@@ -1,13 +1,11 @@
-package coreos
-
-// TODO(SWE-338) have coreos register http handler for /installers/coreos and move this into coreos package
+package flatcar
 
 import (
 	"net"
 
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/files/unit"
+	"github.com/tinkerbell/boots/installers/flatcar/files/unit"
 	"github.com/tinkerbell/boots/job"
 )
 

@@ -175,7 +175,6 @@ func TestIsSpecialOS(t *testing.T) {
 		"custom_ipxe": true,
 		"custom":      true,
 		"vmware_foo":  true,
-		"nixos_foo":   true,
 		"flatcar_foo": false,
 	} {
 		t.Run("OS-"+name, func(t *testing.T) {

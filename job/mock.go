@@ -140,12 +140,18 @@ func (m *Mock) SetBootDriveHint(drive string) {
 	m.instance.BootDriveHint = drive
 }
 
+func (m *Mock) SetRescue(b bool) {
+	i := m.instance
+	i.Rescue = b
+}
+
 func MakeHardwareWithInstance() (*cacher.DiscoveryCacher, []client.MACAddr, string) {
 	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
 	mac0 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
 	mac1 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x01})
 	mac2 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x02})
 	mac3 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x03})
+
 	instanceId := uuid.New().String()
 	d := &cacher.DiscoveryCacher{
 		HardwareCacher: &cacher.HardwareCacher{

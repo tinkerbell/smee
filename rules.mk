@@ -39,28 +39,33 @@ endif
 # parses tools.go and returns the tool name prefixed with bin/
 toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
 
-# installs cli tools defined in tools.go
-$(toolsBins): go.sum tools.go
-	go install $$(awk -F'"' '/$(@F)/{print $$2}' tools.go)
-	
+# build cli tools defined in tools.go
+$(toolsBins): go.mod go.sum tools.go
+$(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
+$(toolsBins):
+	go install "$(CMD)"
+
 generated_go_files := \
 	client/cacher/mock_cacher/cacher_mock.go \
 	client/tinkerbell/mock_workflow/workflow_mock.go \
 	client/tinkerbell/mock_hardware/hardware_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
-	
-.PHONY: $(generated_go_files)
 
 # go generate
-go_generate:
+go_generate: $(generated_go_files)
 $(filter %_string.go,$(generated_go_files)): bin/stringer
 $(filter %_mock.go,$(generated_go_files)): bin/mockgen
+client/cacher/mock_cacher/cacher_mock.go: client/cacher/discovery.go
+client/tinkerbell/mock_workflow/workflow_mock.go: client/tinkerbell/discovery.go
+client/tinkerbell/mock_hardware/hardware_mock.go: client/tinkerbell/discovery.go
+syslog/facility_string.go: syslog/message.go
+syslog/severity_string.go: syslog/message.go
 $(generated_go_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
 
 # this is quick and its really only for rebuilding when dev'ing, I wish go would
 # output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' | grep '.go$$' ) go_generate syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' -e 'mock' | grep '.go$$' ) syslog/facility_string.go syslog/severity_string.go
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/

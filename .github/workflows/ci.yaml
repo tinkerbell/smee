@@ -9,51 +9,47 @@ on:
 
 jobs:
   validation:
-    runs-on: [self-hosted, X64]
+    runs-on: ubuntu-latest
     env:
       CGO_ENABLED: 0
     steps:
       - name: Setup Dynamic Env
         run: |
           echo "MAKEFLAGS=-j$(nproc)" | tee $GITHUB_ENV
+
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           lfs: true
+
       - name: Install nix
-        uses: cachix/install-nix-action@018abf956a0a15673dae4932ae26f0f071ac0944
+        uses: cachix/install-nix-action@v17
         with:
           nix_path: nixpkgs=channel:nixpkgs-unstable
+
+      - name: Fetch Deps
+        run: nix-shell --run 'go get -t ./... && go mod tidy'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Non Go formatters and linters
-        run: ./.github/workflows/ci-non-go.sh
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.18"
+
       - name: Generate all files
-        run: nix-shell --run 'make gen'
-      - name: goimports
-        run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
-      - name: go vet
-        run: go mod tidy && go vet ./...
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          args: -v
-      - name: go test
-        run: go test -v ./... -gcflags=-l
-      - name: go test coverage
-        run: go test -coverprofile=coverage.txt ./... -gcflags=-l
+        run: nix-shell --run 'make -j1 gen'
+
+      - name: Run all the tests
+        run: nix-shell --run 'make ci'
+
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
+
       - name: compile binaries
         run: nix-shell --run 'make crosscompile'
+
       - name: Docker Image Tag for Sha
         id: docker-image-tag
         run: |
           echo ::set-output name=tags::quay.io/tinkerbell/boots:latest,quay.io/tinkerbell/boots:sha-${GITHUB_SHA::8}
+
       - name: Login to quay.io
         uses: docker/login-action@v1
         if: ${{ startsWith(github.ref, 'refs/heads/main') }}
@@ -61,7 +57,8 @@ jobs:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - name: quay.io/tinkerbell/boots
+
+      - name: Build Docker Images
         uses: docker/build-push-action@v2
         with:
           context: ./

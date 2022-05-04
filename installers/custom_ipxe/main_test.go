@@ -19,11 +19,6 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("PACKET_ENV", "test")
-	os.Setenv("PACKET_VERSION", "0")
-	os.Setenv("ROLLBAR_DISABLE", "1")
-	os.Setenv("ROLLBAR_TOKEN", "1")
-
 	logger, _ := l.Init("github.com/tinkerbell/boots")
 	job.Init(logger)
 	installers.Init(logger)
@@ -44,6 +39,7 @@ func TestIpxeScript(t *testing.T) {
 			nil,
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo Installer data not provided
 			shell
 			`,
@@ -54,6 +50,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -72,6 +69,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -90,6 +88,7 @@ func TestIpxeScript(t *testing.T) {
 			nil,
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo Unknown ipxe configuration
 			shell
 			`,
@@ -100,6 +99,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -118,6 +118,7 @@ func TestIpxeScript(t *testing.T) {
 			&client.InstallerData{Script: "#!ipxe\necho userdata script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -137,7 +138,7 @@ func TestIpxeScript(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := require.New(t)
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
-			script := ipxe.NewScript()
+			s := ipxe.NewScript()
 
 			if tc.installer == "custom_ipxe" {
 				mockJob.SetOSInstaller("custom_ipxe")
@@ -146,10 +147,9 @@ func TestIpxeScript(t *testing.T) {
 				mockJob.SetIPXEScriptURL(tc.installerData.Chain)
 				mockJob.SetUserData(tc.installerData.Script)
 			}
-			i := Installer{}
-			bs := i.BootScript()(context.Background(), mockJob.Job(), *script)
+			Installer().BootScript("")(context.Background(), mockJob.Job(), s)
 
-			assert.Equal(dedent(tc.want), string(bs.Bytes()))
+			assert.Equal(dedent(tc.want), string(s.Bytes()))
 		})
 	}
 }
@@ -165,6 +165,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 			echo ipxe config URL or Script must be defined
 			shell
 			`,
@@ -174,6 +175,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Chain: "http://url/path.ipxe"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -191,6 +193,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Script: "echo my test script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -208,6 +211,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 			&client.InstallerData{Script: "#!ipxe\necho my test script"},
 			`#!ipxe
 
+			echo Tinkerbell Boots iPXE
 
 			params
 			param body Device connected to DHCP system
@@ -227,11 +231,11 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := require.New(t)
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
-			script := ipxe.NewScript()
 
-			bs := ipxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), *script)
+			s := ipxe.NewScript()
+			ipxeScriptFromConfig(testLogger, tc.config, mockJob.Job(), s)
 
-			assert.Equal(dedent(tc.want), string(bs.Bytes()))
+			assert.Equal(dedent(tc.want), string(s.Bytes()))
 		})
 	}
 }

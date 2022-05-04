@@ -2,29 +2,23 @@ let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs";
-  #branch@date: nixpkgs@2020-11-24
-  rev = "6625284c397b44bc9518a5a1567c1b5aae455c08";
-  sha256 = "1w0czzv53sg35gp7sr506facbmzd33jm34p6cg23fb9kz5rf5c89";
+  #branch@date: nixos-unstable-small@2022-04-18
+  rev = "e33fe968df5a2503290682278399b1198f7ba56f";
+  sha256 = "0kr30yj9825jx4zzcyn43c398mx3l63ndgfrg1y9v3d739mfgyw3";
 }) { } }:
 
 with pkgs;
 
 mkShell {
   buildInputs = [
-    curl
-    expect
-    gcc
     git
-    git-lfs
     gnumake
+    go_1_18
     nixfmt
     nodePackages.prettier
     perl
     protobuf
-    qemu
     shellcheck
     shfmt
-    xz
-  ] ++ lib.optionals stdenv.isLinux
-    [ pkgsCross.aarch64-multiplatform.buildPackages.gcc ];
+  ];
 }

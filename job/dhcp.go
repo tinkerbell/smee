@@ -25,7 +25,7 @@ func IsSpecialOS(i *client.Instance) bool {
 		slug = i.OS.Slug
 	}
 
-	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware") || strings.HasPrefix(slug, "nixos")
+	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware")
 }
 
 // ServeDHCP responds to DHCP packets. Returns true if it replied. Returns false

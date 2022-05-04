@@ -10,99 +10,141 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Installer struct {
-	// ExtraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
-	ExtraKernelArgs string
+type installer struct {
+	osieURL string
+	// defaultParams are passed to iPXE'd kernel always
+	defaultParams string
+	// workflowParams are passed to iPXE'd kernel when in tinkerbell or standalone mode and the hw indicates it can run workflows
+	workflowParams string
+	// hollowParams are passed to deprovisioning instances for hardware reporting
+	// TODO(mmlb): remove this EMism now that we can use extra-kernel-args
+	hollowParams string
 }
 
-// DefaultHandler determines the ipxe boot script to be returned.
-// If the job has an instance with Rescue true, the rescue boot script is returned.
-// Otherwise the installation boot script is returned.
-func (i Installer) DefaultHandler() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		if j.Rescue() {
-			return i.rescue()(ctx, j, s)
-		}
-
-		return i.install()(ctx, j, s)
+// Installer instantiates a new osie installer.
+func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool) job.BootScripter {
+	defaultParams := []string{
+		"ip=dhcp",
+		"modules=loop,squashfs,sd-mod,usb-storage",
+		"alpine_repo=${base-url}/repo-${arch}/main",
+		"modloop=${base-url}/modloop-${parch}",
+		"tinkerbell=${tinkerbell}",
+		"syslog_host=${syslog_host}",
+		"parch=${parch}",
+		"packet_action=${action}",
+		"packet_state=${state}",
+		"osie_vendors_url=" + conf.OsieVendorServicesURL,
 	}
+
+	if extraKernelArgs != "" {
+		defaultParams = append(defaultParams, extraKernelArgs)
+	}
+
+	i := installer{
+		osieURL:       conf.MirrorBaseURL + "/misc/osie",
+		defaultParams: strings.Join(defaultParams, " "),
+	}
+
+	if conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
+		hollowParams := []string{
+			"hollow_client_id=" + conf.HollowClientId,
+			"hollow_client_request_secret=" + conf.HollowClientRequestSecret,
+		}
+		i.hollowParams = strings.Join(hollowParams, " ")
+	}
+
+	if dataModelVersion == "" {
+		return i
+	}
+
+	workflowParams := []string{
+		"grpc_authority=" + tinkGRPCAuth,
+		"packet_base_url=" + conf.MirrorBaseURL + "/workflow",
+	}
+	if !tinkTLS {
+		workflowParams = append(workflowParams, "tinkerbell_tls=false")
+	}
+	if registry != "" {
+		workflowParams = append(workflowParams, "docker_registry="+registry)
+	}
+	if registryUsername != "" {
+		workflowParams = append(workflowParams, "registry_username="+registryUsername)
+	}
+	if registryPassword != "" {
+		workflowParams = append(workflowParams, "registry_password="+registryPassword)
+	}
+	i.workflowParams = strings.Join(workflowParams, " ")
+
+	return i
 }
 
-// rescue generates the ipxe boot script for booting into osie in rescue mode
-func (i Installer) rescue() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		s.Set("action", "rescue")
-		s.Set("state", j.HardwareState())
-
-		return i.bootScript(ctx, "rescue", j, s)
+func (i installer) BootScript(slug string) job.BootScript {
+	switch slug {
+	case "install", "rescue", "default":
+		return i.install
+	case "discover":
+		return i.discover
+	default:
+		panic("unknown slug:" + slug)
 	}
 }
 
 // install generates the ipxe boot script for booting into the osie installer
-func (i Installer) install() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		typ := "provisioning.104.01"
-		if j.HardwareState() == "deprovisioning" {
-			typ = "deprovisioning.304.1"
-		}
-		s.PhoneHome(typ)
-		if j.CanWorkflow() {
-			s.Set("action", "workflow")
-		} else {
-			s.Set("action", "install")
-		}
-		s.Set("state", j.HardwareState())
+func (i installer) install(ctx context.Context, j job.Job, s *ipxe.Script) {
+	if j.Rescue() {
+		i.rescue(ctx, j, s)
 
-		return i.bootScript(ctx, "install", j, s)
+		return
 	}
+
+	typ := "provisioning.104.01"
+	if j.HardwareState() == "deprovisioning" {
+		typ = "deprovisioning.304.1"
+	}
+	s.PhoneHome(typ)
+	if j.CanWorkflow() {
+		s.Set("action", "workflow")
+	} else {
+		s.Set("action", "install")
+	}
+	s.Set("state", j.HardwareState())
+
+	i.bootScript(ctx, "install", j, s)
 }
 
-func (i Installer) Discover() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		s.Set("action", "discover")
-		s.Set("state", j.HardwareState())
-
-		return i.bootScript(ctx, "discover", j, s)
-	}
+// rescue generates the ipxe boot script for booting into osie in rescue mode
+func (i installer) rescue(ctx context.Context, j job.Job, s *ipxe.Script) {
+	s.Set("action", "rescue")
+	s.Set("state", j.HardwareState())
+	i.bootScript(ctx, "rescue", j, s)
 }
 
-func (i Installer) bootScript(ctx context.Context, action string, j job.Job, s ipxe.Script) ipxe.Script {
+func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
+	s.Set("action", "discover")
+	s.Set("state", j.HardwareState())
+
+	i.bootScript(ctx, "discover", j, s)
+}
+
+func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
-	s.Set("base-url", osieBaseURL(j))
+	s.Set("base-url", osieBaseURL(i.osieURL, j))
 	s.Kernel("${base-url}/" + kernelPath(j))
-
-	ks := i.kernelParams(ctx, action, j.HardwareState(), j, s)
-
-	ks.Initrd("${base-url}/" + initrdPath(j))
+	i.kernelParams(ctx, action, j.HardwareState(), j, s)
+	s.Initrd("${base-url}/" + initrdPath(j))
 
 	if j.PArch() == "hua" || j.PArch() == "2a2" {
 		// Workaround for Huawei firmware crash
-		ks.Sleep(15)
+		s.Sleep(15)
 	}
 
-	ks.Boot()
-
-	return ks
+	s.Boot()
 }
 
-func (i Installer) kernelParams(ctx context.Context, action, state string, j job.Job, s ipxe.Script) ipxe.Script {
-	s.Args("ip=dhcp") // Dracut?
-	s.Args("modules=loop,squashfs,sd-mod,usb-storage")
-	s.Args("alpine_repo=" + alpineMirror(j))
-	s.Args("modloop=${base-url}/" + modloopPath(j))
-	s.Args("tinkerbell=${tinkerbell}")
-	s.Args("syslog_host=${syslog_host}")
-	s.Args("parch=${parch}")
-	s.Args("packet_action=${action}")
-	s.Args("packet_state=${state}")
-	s.Args("osie_vendors_url=" + conf.OsieVendorServicesURL)
-
-	// Add extra kernel args
-	if i.ExtraKernelArgs != "" {
-		s.Args(i.ExtraKernelArgs)
-	}
+func (i installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
+	s.Args(i.defaultParams)
 
 	// only add traceparent if tracing is enabled
 	if sc := trace.SpanContextFromContext(ctx); sc.IsSampled() {
@@ -111,30 +153,17 @@ func (i Installer) kernelParams(ctx context.Context, action, state string, j job
 	}
 
 	// Only provide the Hollow secrets for deprovisions
-	if j.HardwareState() == "deprovisioning" && conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
-		s.Args("hollow_client_id=" + conf.HollowClientId)
-		s.Args("hollow_client_request_secret=" + conf.HollowClientRequestSecret)
+	if j.HardwareState() == "deprovisioning" && i.hollowParams != "" {
+		s.Args(i.hollowParams)
 	}
 
 	if isCustomOSIE(j) {
-		s.Args("packet_base_url=" + osieBaseURL(j))
+		s.Args("packet_base_url=${base-url}")
 	}
 
 	if j.CanWorkflow() {
-		buildWorkerParams()
-		if dockerRegistry != "" {
-			s.Args("docker_registry=" + dockerRegistry)
-		}
-		s.Args("grpc_authority=" + grpcAuthority)
-		s.Args("grpc_cert_url=" + grpcCertURL)
+		s.Args(i.workflowParams)
 		s.Args("instance_id=" + j.InstanceID())
-		if registryUsername != "" {
-			s.Args("registry_username=" + registryUsername)
-		}
-		if registryPassword != "" {
-			s.Args("registry_password=" + registryPassword)
-		}
-		s.Args("packet_base_url=" + workflowBaseURL())
 		s.Args("worker_id=" + j.HardwareID().String())
 	}
 
@@ -183,29 +212,19 @@ func (i Installer) kernelParams(ctx context.Context, action, state string, j job
 		}
 	}
 	s.Args("console=" + console + ",115200")
-
-	return s
-}
-
-func alpineMirror(j job.Job) string {
-	return "${base-url}/repo-${arch}/main"
-}
-
-func modloopPath(j job.Job) string {
-	return "modloop-${parch}"
 }
 
 func kernelPath(j job.Job) string {
-	if j.KernelPath() != "" {
-		return j.KernelPath()
+	if path := j.KernelPath(); path != "" {
+		return path
 	}
 
 	return "vmlinuz-${parch}"
 }
 
 func initrdPath(j job.Job) string {
-	if j.InitrdPath() != "" {
-		return j.InitrdPath()
+	if path := j.InitrdPath(); path != "" {
+		return path
 	}
 
 	return "initramfs-${parch}"
@@ -216,7 +235,7 @@ func isCustomOSIE(j job.Job) bool {
 }
 
 // osieBaseURL returns the value of Custom OSIE Service Version or just /current
-func osieBaseURL(j job.Job) string {
+func osieBaseURL(osieURL string, j job.Job) string {
 	if u := j.OSIEBaseURL(); u != "" {
 		return u
 	}
@@ -225,8 +244,4 @@ func osieBaseURL(j job.Job) string {
 	}
 
 	return osieURL + "/current"
-}
-
-func workflowBaseURL() string {
-	return mirrorBaseURL + "/workflow"
 }

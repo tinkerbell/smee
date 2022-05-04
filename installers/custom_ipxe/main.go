@@ -10,46 +10,51 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-type Installer struct{}
+type installer struct{}
 
-func (i Installer) BootScript() job.BootScript {
-	return func(ctx context.Context, j job.Job, s ipxe.Script) ipxe.Script {
-		logger := j.Logger.With("installer", "custom_ipxe")
-
-		var cfg *client.InstallerData
-
-		if j.OperatingSystem().Installer == "custom_ipxe" {
-			cfg = j.OperatingSystem().InstallerData
-			if cfg == nil {
-				s.Echo("Installer data not provided")
-				s.Shell()
-				logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
-
-				return s
-			}
-		} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
-			cfg = &client.InstallerData{Script: j.UserData()}
-		} else if j.IPXEScriptURL() != "" {
-			cfg = &client.InstallerData{Chain: j.IPXEScriptURL()}
-		} else {
-			s.Echo("Unknown ipxe configuration")
-			s.Shell()
-			logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
-
-			return s
-		}
-
-		return ipxeScriptFromConfig(logger, cfg, j, s)
-	}
+func Installer() job.BootScripter {
+	return installer{}
 }
 
-func ipxeScriptFromConfig(logger log.Logger, cfg *client.InstallerData, j job.Job, s ipxe.Script) ipxe.Script {
+func (i installer) BootScript(string) job.BootScript {
+	return bootScript
+}
+
+func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+	logger := j.Logger.With("installer", "custom_ipxe")
+
+	var cfg *client.InstallerData
+	if j.OperatingSystem().Installer == "custom_ipxe" {
+		cfg = j.OperatingSystem().InstallerData
+		if cfg == nil {
+			s.Echo("Installer data not provided")
+			s.Shell()
+			logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
+
+			return
+		}
+	} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
+		cfg = &client.InstallerData{Script: j.UserData()}
+	} else if j.IPXEScriptURL() != "" {
+		cfg = &client.InstallerData{Chain: j.IPXEScriptURL()}
+	} else {
+		s.Echo("Unknown ipxe configuration")
+		s.Shell()
+		logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
+
+		return
+	}
+
+	ipxeScriptFromConfig(logger, cfg, j, s)
+}
+
+func ipxeScriptFromConfig(logger log.Logger, cfg *client.InstallerData, j job.Job, s *ipxe.Script) {
 	if err := validateConfig(cfg); err != nil {
 		s.Echo(err.Error())
 		s.Shell()
 		logger.Error(err, "validating ipxe config")
 
-		return s
+		return
 	}
 
 	s.PhoneHome("provisioning.104.01")
@@ -61,8 +66,6 @@ func ipxeScriptFromConfig(logger log.Logger, cfg *client.InstallerData, j job.Jo
 	} else if cfg.Script != "" {
 		s.AppendString(strings.TrimPrefix(cfg.Script, "#!ipxe"))
 	}
-
-	return s
 }
 
 func validateConfig(c *client.InstallerData) error {

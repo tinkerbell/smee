@@ -1,11 +1,11 @@
-package coreos
+package flatcar
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tinkerbell/boots/files/ignition"
+	"github.com/tinkerbell/boots/installers/flatcar/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
 
@@ -27,26 +27,18 @@ func assertLines(t *testing.T, m job.Mock, execLines []string) {
 }
 
 func TestInstaller(t *testing.T) {
-	for _, distro := range []string{"coreos", "flatcar"} {
-		for typ, execLines := range script {
-			if distro == "flatcar" {
-				execLines = replacer(execLines, "-d /dev/sda", "-s", "-d /dev/sdo", "-s")
-			}
-			t.Run(distro+"-"+typ, func(t *testing.T) {
-				m := job.NewMock(t, typ, facility)
-				m.SetOSDistro(distro)
-				m.SetOSSlug(distro + "_alpha")
-				m.SetOSVersion("alpha")
-				for i := range execLines {
-					execLines[i] = strings.Replace(execLines[i], "coreos", distro, -1)
-				}
-				assertLines(t, m, execLines)
-			})
-		}
+	for typ, execLines := range script {
+		t.Run(typ, func(t *testing.T) {
+			m := job.NewMock(t, typ, facility)
+			m.SetOSDistro("flatcar")
+			m.SetOSSlug("flatcar_alpha")
+			m.SetOSVersion("alpha")
+			assertLines(t, m, execLines)
+		})
 	}
 }
 
-// this is the base set of starter commands for coreos installs
+// this is the base set of starter commands for flatcar installs
 var baseStart = []string{
 	"[Unit]",
 	"Requires=systemd-networkd-wait-online.service",
@@ -56,7 +48,7 @@ var baseStart = []string{
 	"Type=oneshot",
 }
 
-// this is the end of every coreos install
+// this is the end of every flatcar install
 var baseEnd = []string{
 	"ExecStart=/usr/bin/systemctl reboot",
 	"",
@@ -67,7 +59,7 @@ var baseEnd = []string{
 
 var Exec = []string{
 	`ExecStart=/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
-	"ExecStart=/usr/bin/coreos-install -V current -C alpha -b http://install." + facility + ".packet.net/coreos/amd64-usr/alpha -o packet -d /dev/sda",
+	"ExecStart=/usr/bin/flatcar-install -V current -C alpha -b http://install." + facility + ".packet.net/flatcar/amd64-usr/alpha -o packet -s",
 	"ExecStart=/usr/bin/udevadm settle",
 	"ExecStart=/usr/bin/mkdir -p /oemmnt",
 	"ExecStart=/usr/bin/mount /dev/disk/by-label/OEM /oemmnt",
@@ -88,8 +80,7 @@ func replacer(l []string, replacements ...string) []string {
 }
 
 var script = map[string][]string{
-	"baremetal_0":  Exec,
-	"baremetal_1":  Exec,
-	"s1.large.x86": replacer(Exec, "/dev/sda", "/dev/sdo"),
-	"baremetal_2a": replacer(Exec, " -o packet", "", "tty0 console=ttyS1,115200n8", "ttyAMA0,115200", "amd64", "arm64"),
+	"c3.small.x86":  Exec,
+	"s3.xlarge.x86": replacer(Exec, "-s", "-s -e 259"),
+	"c3.large.arm":  replacer(Exec, " -o packet", "", "tty0 console=ttyS1,115200n8", "ttyAMA0,115200", "amd64", "arm64"),
 }

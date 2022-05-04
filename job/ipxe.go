@@ -12,7 +12,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type BootScript func(context.Context, Job, ipxe.Script) ipxe.Script
+type BootScript func(context.Context, Job, *ipxe.Script)
+
+type BootScripter interface {
+	BootScript(string) BootScript
+}
 
 func (i *Installers) RegisterDefaultInstaller(bs BootScript) {
 	if i.Default != nil {
@@ -65,23 +69,22 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	}
 
 	s := ipxe.NewScript()
-	s.Set("iface", j.InterfaceName(0)).Or("shell")
+	s.Set("iface", j.InterfaceName(0))
+	s.Or("shell")
 	s.Set("tinkerbell", "http://"+conf.PublicFQDN)
 	s.Set("syslog_host", conf.PublicSyslogFQDN)
 	s.Set("ipxe_cloud_config", "packet")
-
-	s.Echo("Tinkerbell Boots iPXE")
 
 	// the trace id is enough to find otel traces in most systems
 	if sc := span.SpanContext(); sc.IsSampled() {
 		s.Echo("Debug Trace ID: " + sc.TraceID().String())
 	}
 
-	iScript := fn(ctx, j, *s)
-	src := iScript.Bytes()
-	span.SetAttributes(attribute.String("ipxe-script", string(src)))
+	fn(ctx, j, s)
+	script := s.Bytes()
+	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
-	if _, err := w.Write(src); err != nil {
+	if _, err := w.Write(script); err != nil {
 		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
 		span.SetStatus(codes.Error, err.Error())
 
@@ -89,31 +92,37 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	}
 }
 
-func (i Installers) auto(ctx context.Context, j Job, s ipxe.Script) ipxe.Script {
+func (i Installers) auto(ctx context.Context, j Job, s *ipxe.Script) {
 	if j.instance == nil {
 		j.Info(errors.New("no device to boot, providing an iPXE shell"))
+		shell(ctx, j, s)
 
-		return *s.Shell()
+		return
 	}
 	if f, ok := i.ByInstaller[j.hardware.OperatingSystem().Installer]; ok {
 		f(ctx, j, s)
 
-		return f(ctx, j, s)
+		return
 	}
 	if f, ok := i.BySlug[j.hardware.OperatingSystem().Slug]; ok {
-		return f(ctx, j, s)
+		f(ctx, j, s)
+
+		return
 	}
 	if f, ok := i.ByDistro[j.hardware.OperatingSystem().Distro]; ok {
-		return f(ctx, j, s)
+		f(ctx, j, s)
+
+		return
 	}
 	if i.Default != nil {
-		return i.Default(ctx, j, s)
+		i.Default(ctx, j, s)
+
+		return
 	}
 	j.With("slug", j.hardware.OperatingSystem().Slug, "distro", j.hardware.OperatingSystem().Distro).Error(errors.New("unsupported slug/distro"))
-
-	return *s.Shell()
+	shell(ctx, j, s)
 }
 
-func shell(ctx context.Context, j Job, s ipxe.Script) ipxe.Script {
-	return *s.Shell()
+func shell(ctx context.Context, j Job, s *ipxe.Script) {
+	s.Shell()
 }

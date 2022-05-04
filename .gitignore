@@ -6,11 +6,3 @@
 /cmd/boots/boots
 /cmd/boots/boots-*-*
 coverage.txt
-!deploy/stack/.env
-.vagrant
-deploy/stack/state/webroot/misc/osie/current/*
-deploy/stack/state/webroot/workflow/*
-!deploy/stack/state/webroot/misc/osie/current/.keep
-!deploy/stack/state/webroot/workflow/.keep
-deploy/stack/state/webroot/*.gz
-workflow_id.txt

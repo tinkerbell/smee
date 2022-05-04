@@ -31,11 +31,9 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/installers/coreos"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
-	"github.com/tinkerbell/boots/installers/nixos"
+	"github.com/tinkerbell/boots/installers/flatcar"
 	"github.com/tinkerbell/boots/installers/osie"
-	"github.com/tinkerbell/boots/installers/rancher"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
@@ -206,8 +204,13 @@ func main() {
 
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
+
+	installers, err := cfg.registerInstallers()
+	if err != nil {
+		mainlog.Fatal(err)
+	}
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go httpServer.ServeHTTP(cfg.registerInstallers(), cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(installers, cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -360,41 +363,50 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	}
 }
 
-func (cf *config) registerInstallers() job.Installers {
+func (cf *config) registerInstallers() (job.Installers, error) {
 	// register installers
 	i := job.NewInstallers()
-	// register coreos/flatcar
-	c := coreos.Installer{}
-	i.RegisterDistro("coreos", c.BootScript())
-	i.RegisterDistro("flatcar", c.BootScript())
-	// register custom ipxe
-	ci := custom_ipxe.Installer{}
-	i.RegisterDistro("custom_ipxe", ci.BootScript())
-	i.RegisterInstaller("custom_ipxe", ci.BootScript())
-	// register nixos
-	n := nixos.Installer{Paths: nixos.BuildInitPaths()}
-	i.RegisterDistro("nixos", n.BootScript())
-	// register osie
-	o := osie.Installer{}
-	i.RegisterDistro("discovery", o.Discover())
-	// register osie as default
-	d := osie.Installer{ExtraKernelArgs: cf.extraKernelArgs}
-	i.RegisterDefaultInstaller(d.DefaultHandler())
-	// register rancher
-	r := rancher.Installer{}
-	i.RegisterDistro("rancher", r.BootScript())
-	// register vmware
-	v := vmware.Installer{}
-	i.RegisterSlug("vmware_esxi_5_5", v.BootScriptVmwareEsxi55())
-	i.RegisterSlug("vmware_esxi_6_0", v.BootScriptVmwareEsxi60())
-	i.RegisterSlug("vmware_esxi_6_5", v.BootScriptVmwareEsxi65())
-	i.RegisterSlug("vmware_esxi_6_7", v.BootScriptVmwareEsxi67())
-	i.RegisterSlug("vmware_esxi_7_0", v.BootScriptVmwareEsxi70())
-	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScriptVmwareEsxi70U2a())
-	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScriptVmwareEsxi65())
-	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScriptVmwareEsxi67())
-	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScriptVmwareEsxi70())
-	i.RegisterDistro("vmware", v.BootScriptDefault())
 
-	return i
+	// register flatcar
+	o := flatcar.Installer()
+	i.RegisterDistro("flatcar", o.BootScript("flatcar"))
+
+	// register custom ipxe
+	o = custom_ipxe.Installer()
+	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
+	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
+
+	dataModelVersion := env.Get("DATA_MODEL_VERSION")
+	auth := env.Get("TINKERBELL_GRPC_AUTHORITY")
+	if dataModelVersion == "1" && auth == "" {
+		return job.Installers{}, errors.New("TINKERBELL_GRPC_AUTHORITY is required when in tinkerbell mode")
+	}
+
+	// register osie
+	o = osie.Installer(
+		dataModelVersion,
+		auth,
+		cf.extraKernelArgs,
+		env.Get("DOCKER_REGISTRY"),
+		env.Get("REGISTRY_USERNAME"),
+		env.Get("REGISTRY_PASSWORD"),
+		env.Bool("TINKERBELL_TLS", true),
+	)
+	i.RegisterDistro("discovery", o.BootScript("discover"))
+	i.RegisterDefaultInstaller(o.BootScript("default"))
+
+	// register vmware
+	v := vmware.Installer()
+	i.RegisterSlug("vmware_esxi_5_5", v.BootScript("vmware_esxi_5_5"))
+	i.RegisterSlug("vmware_esxi_6_0", v.BootScript("vmware_esxi_6_0"))
+	i.RegisterSlug("vmware_esxi_6_5", v.BootScript("vmware_esxi_6_5"))
+	i.RegisterSlug("vmware_esxi_6_7", v.BootScript("vmware_esxi_6_7"))
+	i.RegisterSlug("vmware_esxi_7_0", v.BootScript("vmware_esxi_7_0"))
+	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScript("vmware_esxi_7_0U2a"))
+	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScript("vmware_esxi_6_5_vcf"))
+	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScript("vmware_esxi_6_7_vcf"))
+	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
+	i.RegisterDistro("vmware", v.BootScript("vmware"))
+
+	return i, nil
 }

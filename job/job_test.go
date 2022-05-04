@@ -14,11 +14,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("PACKET_ENV", "test")
-	os.Setenv("PACKET_VERSION", "0")
-	os.Setenv("ROLLBAR_DISABLE", "1")
-	os.Setenv("ROLLBAR_TOKEN", "1")
-
 	joblog, _ = log.Init("github.com/tinkerbell/boots")
 	httplog.Init(joblog)
 	metrics.Init(joblog)
