@@ -82,20 +82,12 @@ func (f *HardwareFinder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.
 	return d, nil
 }
 
-// NoOpWokrflowFinder is used to always return false.
-type NoOpWorkflowFinder struct{}
-
-// HasActiveWorkflow always returns false without error
-func (f *NoOpWorkflowFinder) HasActiveWorkflow(context.Context, client.HardwareID) (bool, error) {
-	return false, nil
-}
-
 // WorkflowFinder is a type for finding if a hardware ID has active workflows.
 type WorkflowFinder struct {
 	wClient tinkworkflow.WorkflowServiceClient
 }
 
-// NewFinder returns a *Finder that satisfies client.Finder.
+// NewWorkflowFinder returns a *WorkflowFinder that satisfies client.WorkflowFinder.
 //
 // TODO: micahhausler: Explicitly pass in tink endpoint
 func NewWorkflowFinder() (*WorkflowFinder, error) {
@@ -109,7 +101,7 @@ func NewWorkflowFinder() (*WorkflowFinder, error) {
 	}, nil
 }
 
-// HasActiveWorkflow finds if an active workflow exists for a particular hardware id.
+// HasActiveWorkflow finds if an active workflow exists for a particular hardware ID.
 func (f *WorkflowFinder) HasActiveWorkflow(ctx context.Context, hwID client.HardwareID) (bool, error) {
 	if hwID == "" {
 		return false, errors.New("missing hardware id")
