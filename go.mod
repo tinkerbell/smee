@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/equinix-labs/otel-init-go v0.0.5
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
-	github.com/go-logr/logr v1.2.2
+	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.2
 	github.com/golang/mock v1.6.0
 	github.com/golangci/golangci-lint v1.45.2
@@ -24,7 +24,7 @@ require (
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/stretchr/testify v1.7.1
 	github.com/tinkerbell/ipxedust v0.0.0-20220406180840-46f16b8d8fb0
-	github.com/tinkerbell/tink v0.6.1-0.20220426181411-59b0126c7dc0
+	github.com/tinkerbell/tink v0.6.1-0.20220506205527-97aa134e7938
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
 	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/trace v1.3.0
@@ -230,7 +230,7 @@ require (
 	k8s.io/api v0.23.0 // indirect
 	k8s.io/apiextensions-apiserver v0.23.0 // indirect
 	k8s.io/component-base v0.23.0 // indirect
-	k8s.io/klog/v2 v2.30.0 // indirect
+	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
 	mvdan.cc/gofumpt v0.3.0 // indirect

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	"github.com/tinkerbell/tink/pkg/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -53,17 +54,17 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 		{
 			&v1alpha1.Workflow{},
 			WorkflowWorkerNonTerminalStateIndex,
-			workflowWorkerNonTerminalStateIndexFunc,
+			controllers.WorkflowWorkerNonTerminalStateIndexFunc,
 		},
 		{
 			&v1alpha1.Hardware{},
 			HardwareIPAddrIndex,
-			hardwareIPIndexFunc,
+			controllers.HardwareIPIndexFunc,
 		},
 		{
 			&v1alpha1.Hardware{},
 			HardwareMACAddrIndex,
-			hardwareMacIndexFunc,
+			controllers.HardwareMacIndexFunc,
 		},
 	}
 	for _, indexer := range indexers {
@@ -78,58 +79,4 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 	}
 
 	return c, nil
-}
-
-// TODO micahhausler: make the following index functions public in tinkerbell/tink import from there
-
-// workflowWorkerNonTerminalStateIndexFunc func indexes workflow by worker for non terminal workflows.
-func workflowWorkerNonTerminalStateIndexFunc(obj client.Object) []string {
-	wf, ok := obj.(*v1alpha1.Workflow)
-	if !ok {
-		return nil
-	}
-
-	resp := []string{}
-	if !(wf.Status.State == v1alpha1.WorkflowStateRunning || wf.Status.State == v1alpha1.WorkflowStatePending) {
-		return resp
-	}
-	for _, task := range wf.Status.Tasks {
-		if task.WorkerAddr != "" {
-			resp = append(resp, task.WorkerAddr)
-		}
-	}
-
-	return resp
-}
-
-// hardwareMacIndexFunc returns a list of mac addresses from a hardware.
-func hardwareMacIndexFunc(obj client.Object) []string {
-	hw, ok := obj.(*v1alpha1.Hardware)
-	if !ok {
-		return nil
-	}
-	resp := []string{}
-	for _, iface := range hw.Spec.Interfaces {
-		if iface.DHCP != nil && iface.DHCP.MAC != "" {
-			resp = append(resp, iface.DHCP.MAC)
-		}
-	}
-
-	return resp
-}
-
-// hardwareIPIndexFunc returns a list of mac addresses from a hardware.
-func hardwareIPIndexFunc(obj client.Object) []string {
-	hw, ok := obj.(*v1alpha1.Hardware)
-	if !ok {
-		return nil
-	}
-	resp := []string{}
-	for _, iface := range hw.Spec.Interfaces {
-		if iface.DHCP != nil && iface.DHCP.IP != nil && iface.DHCP.IP.Address != "" {
-			resp = append(resp, iface.DHCP.IP.Address)
-		}
-	}
-
-	return resp
 }
