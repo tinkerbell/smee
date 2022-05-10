@@ -10,9 +10,3 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - deployment.yaml
-
-patches:
-  - path: deployment_patch.yaml
-    target:
-      kind: Deployment
-      labelSelector: "app=tinkerbell-boots"
