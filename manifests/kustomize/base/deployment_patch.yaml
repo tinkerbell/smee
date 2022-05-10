@@ -17,7 +17,7 @@
   path: /spec/template/spec/containers/0/env/-
   value:
     name: HTTP_BIND
-    value: "0.0.0.0:80"
+    value: ":80"
 - op: add
   path: /spec/template/spec/containers/0/env/-
   value:

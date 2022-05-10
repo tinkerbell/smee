@@ -27,16 +27,20 @@ This directory contains the manifests for deploying Boots to various environment
 
 3. Watch the logs
 
-    ```bash
-    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
-    ```
+   ```bash
+   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   ```
 
 > **Note:** KinD will not be able to listen for DHCP broadcast traffic. A DHCP relay is suggested.
 >
 > ```bash
-> # Linux
+> # Linux direct
 > ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane)
 > sudo -E dhcrelay -id <interface to listen on for DHCP broadcast>  -iu $(ip -o route get ${ipaddr} | cut -d" " -f3) -d ${ipaddr}
+>
+> # Linux Container
+> ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane)
+> docker run -d --network host --name dhcrelay modem7/dhcprelay:latest -id <interface to listen on for DHCP broadcast>  -iu $(ip -o route get ${ipaddr} | cut -d" " -f3) -d ${ipaddr}
 >
 > # MacOS TBD
 > ```
@@ -55,18 +59,18 @@ This directory contains the manifests for deploying Boots to various environment
 
    ```bash
    # Create the K3D cluster
-   k3d cluster create --network host --no-lb
+   k3d cluster create --network host --no-lb --k3s-arg "--disable=traefik"
    ```
 
 2. Deploy Boots
 
    ```bash
    # Deploy Boots to KinD
-   kubectl kustomize manifests/kustomize/overlays/kind | kubectl apply -f -
+   kubectl kustomize manifests/kustomize/overlays/k3d | kubectl apply -f -
    ```
 
 3. Watch the logs
 
-    ```bash
-    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
-    ```
+   ```bash
+   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   ```
