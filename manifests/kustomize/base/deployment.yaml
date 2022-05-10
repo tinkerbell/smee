@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tinkerbell-boots
+  name: boots-deployment
+  namespace: tinkerbell
+spec:
+  selector:
+    matchLabels:
+      app: tinkerbell-boots
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tinkerbell-boots
+    spec:
+      containers:
+        - args: ["-log-level", "debug", "-dhcp-addr", "0.0.0.0:67"]
+          env: []
+          image: quay.io/tinkerbell/boots:latest
+          imagePullPolicy: Always
+          name: tinkerbell-boots
+          ports:
+            - name: dhcp
+              containerPort: 67
+              protocol: UDP
+            - name: tftp
+              containerPort: 69
+              protocol: UDP
+            - name: syslog
+              containerPort: 514
+              protocol: UDP
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      serviceAccountName: tinkerbell-boots

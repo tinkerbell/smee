@@ -1,0 +1,72 @@
+# Manifests
+
+This directory contains the manifests for deploying Boots to various environments.
+
+## KinD (Kubernetes in Docker)
+
+### Prerequisites
+
+- [KinD >= v0.12.0](https://kind.sigs.k8s.io/docs/user/quick-start#installation)
+- [Kubectl >= v1.23.4](https://www.downloadkubernetes.com/)
+
+### Steps
+
+1. Create KinD cluster
+
+   ```bash
+   # Create the KinD cluster
+   kind create cluster --config ./manifests/kind/config.yaml
+   ```
+
+2. Deploy Boots
+
+   ```bash
+   # Deploy Boots to KinD
+   kubectl kustomize manifests/kustomize/overlays/kind | kubectl apply -f -
+   ```
+
+3. Watch the logs
+
+    ```bash
+    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+    ```
+
+> **Note:** KinD will not be able to listen for DHCP broadcast traffic. A DHCP relay is suggested.
+>
+> ```bash
+> # Linux
+> ipaddr=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane)
+> sudo -E dhcrelay -id <interface to listen on for DHCP broadcast>  -iu $(ip -o route get ${ipaddr} | cut -d" " -f3) -d ${ipaddr}
+>
+> # MacOS TBD
+> ```
+
+## K3D (K3S in Docker)
+
+### Prerequisites
+
+- [K3D >= v5.4.1](https://k3d.io/v5.4.1/#installation)
+- [Kubectl >= v1.23.4](https://www.downloadkubernetes.com/)
+- Supported platforms: Linux
+
+### Steps
+
+1. Create K3D cluster
+
+   ```bash
+   # Create the K3D cluster
+   k3d cluster create --network host --no-lb
+   ```
+
+2. Deploy Boots
+
+   ```bash
+   # Deploy Boots to KinD
+   kubectl kustomize manifests/kustomize/overlays/kind | kubectl apply -f -
+   ```
+
+3. Watch the logs
+
+    ```bash
+    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+    ```

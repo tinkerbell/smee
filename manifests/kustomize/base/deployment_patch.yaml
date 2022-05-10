@@ -1,0 +1,50 @@
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: BOOTS_EXTRA_KERNEL_ARGS
+    value: "tink_worker_image=reg.weinstocklabs.com/tink-worker:latest packet_base_url=http://192.168.2.150:8080/workflow"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: DATA_MODEL_VERSION
+    value: "kubernetes"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: FACILITY_CODE
+    value: "lab1"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: HTTP_BIND
+    value: "0.0.0.0:80"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: MIRROR_BASE_URL
+    value: http://192.168.2.150:8080
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: PUBLIC_IP
+    value: 192.168.2.160
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: PUBLIC_SYSLOG_FQDN
+    value: 192.168.2.160
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SYSLOG_BIND
+    value: 0.0.0.0:514
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: TINKERBELL_GRPC_AUTHORITY
+    value: 192.168.2.150:42113
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: TINKERBELL_TLS
+    value: "false"
