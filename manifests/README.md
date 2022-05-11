@@ -31,7 +31,7 @@ This directory contains the manifests for deploying Boots to various environment
    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
    ```
 
-> **Note:** KinD will not be able to listen for DHCP broadcast traffic. A DHCP relay is suggested.
+> **Note:** KinD will not be able to listen for DHCP broadcast traffic. Using a DHCP relay is recommended.
 >
 > ```bash
 > # Linux direct
