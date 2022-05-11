@@ -102,3 +102,33 @@ This deployment is under development and is not guaranteed to work at this time.
    ```bash
    kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
    ```
+
+## Tilt
+
+This deployment method is for quick local development.
+Tilt will build and deploy Boots to the Kubernetes cluster pointed to in the current context of your Kubeernetes config file.
+
+### Prerequisites
+
+- [Tilt >= v0.28.1](https://docs.tilt.dev/install.html)
+- Go >= 1.18
+- [Kubectl >= v1.23.4](https://www.downloadkubernetes.com/)
+- KinD cluster
+
+### Steps
+
+1. Deploy Boots
+
+   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+   This deployment method uses the kustomize kind overlay. This can be updated in the `Tiltfile`.
+
+   ```bash
+   # Deploy Boots with Tilt
+   tilt up --stream
+   ```
+
+2. Watch the logs
+
+   ```bash
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
+   ```
