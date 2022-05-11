@@ -74,3 +74,25 @@ This directory contains the manifests for deploying Boots to various environment
    ```bash
    kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
    ```
+
+## Kubernetes
+
+### Prerequisites
+
+This deployment requires a running Kubernetes cluster. It can be a single node cluster. It is required to be running directly on a Linux machine, not in a container.
+This deployment is under development and is not guaranteed to work at this time.
+
+### Steps
+
+1. Deploy Boots
+
+   ```bash
+   # Deploy Boots to Kubernetes
+   kubectl kustomize manifests/kustomize/overlays/dev | kubectl apply -f -
+   ```
+
+2. Watch the logs
+
+   ```bash
+   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   ```
