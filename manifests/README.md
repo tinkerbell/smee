@@ -20,6 +20,8 @@ This directory contains the manifests for deploying Boots to various environment
 
 2. Deploy Boots
 
+   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+
    ```bash
    # Deploy Boots to KinD
    kubectl kustomize manifests/kustomize/overlays/kind | kubectl apply -f -
@@ -28,7 +30,7 @@ This directory contains the manifests for deploying Boots to various environment
 3. Watch the logs
 
    ```bash
-   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
    ```
 
 > **Note:** KinD will not be able to listen for DHCP broadcast traffic. Using a DHCP relay is recommended.
@@ -64,6 +66,8 @@ This directory contains the manifests for deploying Boots to various environment
 
 2. Deploy Boots
 
+   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+
    ```bash
    # Deploy Boots to KinD
    kubectl kustomize manifests/kustomize/overlays/k3d | kubectl apply -f -
@@ -72,7 +76,7 @@ This directory contains the manifests for deploying Boots to various environment
 3. Watch the logs
 
    ```bash
-   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
    ```
 
 ## Kubernetes
@@ -86,6 +90,8 @@ This deployment is under development and is not guaranteed to work at this time.
 
 1. Deploy Boots
 
+   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+
    ```bash
    # Deploy Boots to Kubernetes
    kubectl kustomize manifests/kustomize/overlays/dev | kubectl apply -f -
@@ -94,5 +100,5 @@ This deployment is under development and is not guaranteed to work at this time.
 2. Watch the logs
 
    ```bash
-   kubectl -n tinkerbell logs -f $(kubectl get -n tinkerbell pods --template '{{range .items}}{{.metadata.name}}{{end}}' --selector=app=tinkerbell-boots)
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
    ```

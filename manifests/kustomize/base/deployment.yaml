@@ -20,7 +20,7 @@ spec:
         - args: ["-log-level", "debug", "-dhcp-addr", "0.0.0.0:67"]
           env:
             - name: BOOTS_EXTRA_KERNEL_ARGS
-              value: "tink_worker_image=reg.weinstocklabs.com/tink-worker:latest"
+              value: "tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
             - name: DATA_MODEL_VERSION
               value: "kubernetes"
             - name: FACILITY_CODE
