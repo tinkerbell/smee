@@ -4,5 +4,5 @@ kind: Kustomization
 resources:
   - ./../../base
   - service.yaml
-  - nginx_ingress.yaml
+  - github.com/kubernetes/ingress-nginx/deploy/static/provider/cloud?ref=controller-v1.2.0
   - ingress.yaml
