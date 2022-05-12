@@ -2,6 +2,8 @@
 
 This directory contains the manifests for deploying Boots to various environments.
 
+Get started by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+
 ## KinD (Kubernetes in Docker)
 
 ### Prerequisites
@@ -20,7 +22,7 @@ This directory contains the manifests for deploying Boots to various environment
 
 2. Deploy Boots
 
-   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+   Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
 
    ```bash
    # Deploy Boots to KinD
@@ -66,7 +68,7 @@ This directory contains the manifests for deploying Boots to various environment
 
 2. Deploy Boots
 
-   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+   Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
 
    ```bash
    # Deploy Boots to K3D
@@ -90,7 +92,7 @@ This deployment is under development and is not guaranteed to work at this time.
 
 1. Deploy Boots
 
-   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+   Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
 
    ```bash
    # Deploy Boots to Kubernetes
@@ -107,6 +109,7 @@ This deployment is under development and is not guaranteed to work at this time.
 
 This deployment method is for quick local development.
 Tilt will build and deploy Boots to the Kubernetes cluster pointed to in the current context of your Kubeernetes config file.
+It will use the KinD manifest, [documented above](#kind-kubernetes-in-docker), for deployment.
 
 ### Prerequisites
 
@@ -119,8 +122,8 @@ Tilt will build and deploy Boots to the Kubernetes cluster pointed to in the cur
 
 1. Deploy Boots
 
-   Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
-   This deployment method uses the kustomize kind overlay. This can be updated in the `Tiltfile`.
+   Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
+   This deployment method uses the kustomize kind overlay (`manifests/kustomize/overlays/kind`). See the `Tiltfile` modify this.
 
    ```bash
    # Deploy Boots with Tilt
