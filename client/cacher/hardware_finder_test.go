@@ -14,9 +14,9 @@ import (
 )
 
 func TestByIP(t *testing.T) {
+	ip := net.ParseIP("192.168.1.1")
 	cases := []struct {
 		name    string
-		arg     net.IP
 		resp    *cacher.Hardware
 		respErr error
 		want    *DiscoveryCacher
@@ -24,40 +24,27 @@ func TestByIP(t *testing.T) {
 	}{
 		{
 			name:    "query error",
-			arg:     net.ParseIP("192.168.1.1"),
-			resp:    nil,
 			respErr: errors.New("no hardware"),
-			want:    nil,
 			wantErr: errors.New("get hardware by ip from cacher: no hardware"),
 		},
 		{
 			name:    "not found error",
-			arg:     net.ParseIP("192.168.1.1"),
 			resp:    &cacher.Hardware{JSON: ""},
-			respErr: nil,
-			want:    nil,
 			wantErr: client.ErrNotFound,
 		},
 		{
 			name:    "json error",
-			arg:     net.ParseIP("192.168.1.1"),
 			resp:    &cacher.Hardware{JSON: "{"},
-			respErr: nil,
-			want:    nil,
 			wantErr: errors.New("unmarshal json for discovery: unexpected end of JSON input"),
 		},
 		{
-			name:    "happy path",
-			arg:     net.ParseIP("192.168.1.1"),
-			resp:    &cacher.Hardware{JSON: `{"id": "abc123"}`},
-			respErr: nil,
+			name: "happy path",
+			resp: &cacher.Hardware{JSON: `{"id": "abc123"}`},
 			want: &DiscoveryCacher{
 				HardwareCacher: &HardwareCacher{
 					ID: "abc123",
 				},
-				mac: nil,
 			},
-			wantErr: nil,
 		},
 	}
 
@@ -67,10 +54,10 @@ func TestByIP(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
-			cc.EXPECT().ByIP(context.Background(), &cacher.GetRequest{IP: tc.arg.String()}).Times(1).Return(tc.resp, tc.respErr)
+			cc.EXPECT().ByIP(context.Background(), &cacher.GetRequest{IP: ip.String()}).Times(1).Return(tc.resp, tc.respErr)
 
 			cf := HardwareFinder{cc}
-			d, err := cf.ByIP(context.Background(), tc.arg)
+			d, err := cf.ByIP(context.Background(), ip)
 
 			if err != nil {
 				if tc.wantErr == nil {
@@ -99,66 +86,37 @@ func TestByIP(t *testing.T) {
 }
 
 func TestByMAC(t *testing.T) {
+	mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
 	cases := []struct {
 		name    string
-		arg     net.HardwareAddr
 		resp    *cacher.Hardware
 		respErr error
 		want    *DiscoveryCacher
 		wantErr error
 	}{
 		{
-			name: "query error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    nil,
+			name:    "query error",
 			respErr: errors.New("no hardware"),
-			want:    nil,
 			wantErr: errors.New("get hardware by mac from cacher: no hardware"),
 		},
 		{
-			name: "not found error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
+			name:    "not found error",
 			resp:    &cacher.Hardware{JSON: ""},
-			respErr: nil,
-			want:    nil,
 			wantErr: client.ErrNotFound,
 		},
 		{
-			name: "json error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
+			name:    "json error",
 			resp:    &cacher.Hardware{JSON: "{"},
-			respErr: nil,
-			want:    nil,
 			wantErr: errors.New("unmarshal json for discovery: unexpected end of JSON input"),
 		},
 		{
 			name: "happy path",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    &cacher.Hardware{JSON: `{"id": "abc123"}`},
-			respErr: nil,
+			resp: &cacher.Hardware{JSON: `{"id": "abc123"}`},
 			want: &DiscoveryCacher{
 				HardwareCacher: &HardwareCacher{
 					ID: "abc123",
 				},
-				mac: nil,
 			},
-			wantErr: nil,
 		},
 	}
 
@@ -168,10 +126,10 @@ func TestByMAC(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
-			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: tc.arg.String()}).Times(1).Return(tc.resp, tc.respErr)
+			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: mac.String()}).Times(1).Return(tc.resp, tc.respErr)
 
 			cf := HardwareFinder{cc}
-			d, err := cf.ByMAC(context.Background(), tc.arg, nil, "")
+			d, err := cf.ByMAC(context.Background(), mac, nil, "")
 
 			if err != nil {
 				if tc.wantErr == nil {
