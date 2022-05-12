@@ -118,7 +118,7 @@ func main() {
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	workflowFinder, finder, err := getFinders(l, cfg)
+	workflowFinder, finder, err := getFinders(l, cfg, reporter)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
@@ -221,14 +221,14 @@ func main() {
 	}
 }
 
-func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
+func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.WorkflowFinder, client.HardwareFinder, error) {
 	var hf client.HardwareFinder
 	var wf client.WorkflowFinder = &client.NoOpWorkflowFinder{}
 	var err error
 
 	switch os.Getenv("DATA_MODEL_VERSION") {
 	case "":
-		hf, err = cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"))
+		hf, err = cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"), reporter)
 		if err != nil {
 			return nil, nil, err
 		}

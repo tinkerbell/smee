@@ -16,17 +16,18 @@ import (
 
 // HardwareFinder is a type that can discover hardware from a cacher client.
 type HardwareFinder struct {
-	cc cacher.CacherClient
+	cc       cacher.CacherClient
+	reporter client.Reporter
 }
 
 // NewHardwareFinder returns a github.com/packethost/cacher/client Finder.
-func NewHardwareFinder(facility string) (*HardwareFinder, error) {
+func NewHardwareFinder(facility string, reporter client.Reporter) (*HardwareFinder, error) {
 	cc, err := cacherClient.New(facility)
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to cacher")
 	}
 
-	return &HardwareFinder{cc}, nil
+	return &HardwareFinder{cc, reporter}, nil
 }
 
 // ByIP returns a Discoverer for a particular IP.

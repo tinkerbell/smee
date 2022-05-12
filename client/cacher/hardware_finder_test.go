@@ -56,7 +56,7 @@ func TestByIP(t *testing.T) {
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
 			cc.EXPECT().ByIP(context.Background(), &cacher.GetRequest{IP: ip.String()}).Times(1).Return(tc.resp, tc.respErr)
 
-			cf := HardwareFinder{cc}
+			cf := HardwareFinder{cc, nil}
 			d, err := cf.ByIP(context.Background(), ip)
 
 			if err != nil {
@@ -128,7 +128,7 @@ func TestByMAC(t *testing.T) {
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
 			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: mac.String()}).Times(1).Return(tc.resp, tc.respErr)
 
-			cf := HardwareFinder{cc}
+			cf := HardwareFinder{cc, nil}
 			d, err := cf.ByMAC(context.Background(), mac, nil, "")
 
 			if err != nil {
