@@ -2,16 +2,28 @@ package cacher
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/client"
 	mockcacher "github.com/tinkerbell/boots/client/cacher/mock_cacher"
+	"github.com/tinkerbell/boots/metrics"
 )
+
+func TestMain(m *testing.M) {
+	l, _ := log.Init("github.com/tinkerbell/boots")
+	metrics.Init(l)
+	os.Exit(m.Run())
+}
 
 func TestByIP(t *testing.T) {
 	ip := net.ParseIP("192.168.1.1")
@@ -87,12 +99,14 @@ func TestByIP(t *testing.T) {
 
 func TestByMAC(t *testing.T) {
 	mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
+	giaddr := net.ParseIP("192.168.1.1")
 	cases := []struct {
-		name    string
-		resp    *cacher.Hardware
-		respErr error
-		want    *DiscoveryCacher
-		wantErr error
+		name     string
+		resp     *cacher.Hardware
+		respErr  error
+		want     *DiscoveryCacher
+		wantErr  error
+		reporter client.Reporter
 	}{
 		{
 			name:    "query error",
@@ -100,9 +114,24 @@ func TestByMAC(t *testing.T) {
 			wantErr: errors.New("get hardware by mac from cacher: no hardware"),
 		},
 		{
-			name:    "not found error",
-			resp:    &cacher.Hardware{JSON: ""},
-			wantErr: client.ErrNotFound,
+			name: "not found in cacher and not found in emapi",
+			resp: &cacher.Hardware{JSON: ""},
+			reporter: &fakeEMGetter{
+				response: `{}`,
+			},
+			want: &DiscoveryCacher{},
+		},
+		{
+			name: "not found in cacher found in emapi",
+			resp: &cacher.Hardware{JSON: ""},
+			want: &DiscoveryCacher{
+				HardwareCacher: &HardwareCacher{
+					ID: "abc123",
+				},
+			},
+			reporter: &fakeEMGetter{
+				response: `{"id":"abc123"}`,
+			},
 		},
 		{
 			name:    "json error",
@@ -128,8 +157,8 @@ func TestByMAC(t *testing.T) {
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
 			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: mac.String()}).Times(1).Return(tc.resp, tc.respErr)
 
-			cf := HardwareFinder{cc, nil}
-			d, err := cf.ByMAC(context.Background(), mac, nil, "")
+			cf := HardwareFinder{cc, tc.reporter}
+			d, err := cf.ByMAC(context.Background(), mac, giaddr, "")
 
 			if err != nil {
 				if tc.wantErr == nil {
@@ -155,4 +184,20 @@ func TestByMAC(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fakeEMGetter struct {
+	client.Reporter
+	body     []byte
+	response string
+}
+
+func (c *fakeEMGetter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+	var err error
+	c.body, err = ioutil.ReadAll(body)
+	if err != nil {
+		panic(err)
+	}
+
+	return json.Unmarshal([]byte(c.response), v)
 }

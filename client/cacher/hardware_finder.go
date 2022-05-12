@@ -38,9 +38,10 @@ func (f *HardwareFinder) ByIP(ctx context.Context, ip net.IP) (client.Discoverer
 	if err != nil {
 		return nil, errors.Wrap(err, "get hardware by ip from cacher")
 	}
-	if len(resp.JSON) == 0 {
+	if resp.JSON == "" {
 		return nil, client.ErrNotFound
 	}
+
 	d := &DiscoveryCacher{}
 	err = json.Unmarshal([]byte(resp.JSON), d)
 	if err != nil {
@@ -51,16 +52,22 @@ func (f *HardwareFinder) ByIP(ctx context.Context, ip net.IP) (client.Discoverer
 }
 
 // ByMAC returns a Discoverer for a particular MAC address.
-func (f *HardwareFinder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.IP, _ string) (client.Discoverer, error) {
+func (f *HardwareFinder) ByMAC(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (client.Discoverer, error) {
 	resp, err := f.cc.ByMAC(ctx, &cacher.GetRequest{
 		MAC: mac.String(),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "get hardware by mac from cacher")
 	}
-	if len(resp.JSON) == 0 {
-		return nil, client.ErrNotFound
+	if resp.JSON == "" {
+		d, err := getDiscoveryFromEM(ctx, f.reporter, mac, giaddr, circuitID)
+		if err != nil {
+			return nil, errors.Wrap(err, "get hardware by mac from EMAPI")
+		}
+
+		return d, nil
 	}
+
 	d := &DiscoveryCacher{}
 	err = json.Unmarshal([]byte(resp.JSON), d)
 	if err != nil {
@@ -70,12 +77,12 @@ func (f *HardwareFinder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.
 	return d, nil
 }
 
-// GetDiscoveryFromEM is called when Cacher returns an empty response for the MAC address.
+// getDiscoveryFromEM is called when Cacher returns an empty response for the MAC address.
 // It does a POST to the Packet API /staff/cacher/hardware-discovery endpoint.
 // This was split out from DiscoverHardwareFromDHCP to make the control flow easier to understand.
-func GetDiscoveryFromEM(ctx context.Context, reporter client.Reporter, mac net.HardwareAddr, giaddr net.IP, circuitID string) (client.Discoverer, error) {
+func getDiscoveryFromEM(ctx context.Context, reporter client.Reporter, mac net.HardwareAddr, giaddr net.IP, circuitID string) (client.Discoverer, error) {
 	if giaddr == nil {
-		return nil, errors.New("missing MAC address")
+		return nil, errors.New("missing GIADDR address")
 	}
 
 	labels := prometheus.Labels{"from": "dhcp"}
