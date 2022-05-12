@@ -69,7 +69,7 @@ This directory contains the manifests for deploying Boots to various environment
    Start by updating `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the `manifests/kustomize/base/deployment.yaml` file.
 
    ```bash
-   # Deploy Boots to KinD
+   # Deploy Boots to K3D
    kubectl kustomize manifests/kustomize/overlays/k3d | kubectl apply -f -
    ```
 
@@ -132,3 +132,13 @@ Tilt will build and deploy Boots to the Kubernetes cluster pointed to in the cur
    ```bash
    kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
    ```
+
+## Notes
+
+<details><summary>The following is a visual break down of the Boots deployment options.</summary>
+<p>
+
+![Boots deployment options](./BootsDeploymentsVisualized.png)
+
+</p>
+</details>
