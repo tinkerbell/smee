@@ -17,4 +17,6 @@ type Reporter interface {
 	PostInstanceFail(ctx context.Context, id string, body io.Reader) error
 	PostInstancePassword(ctx context.Context, id, pass string) error
 	UpdateInstance(ctx context.Context, id string, body io.Reader) error
+
+	Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error
 }
