@@ -5,58 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"net"
 
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/cacher"
-	"github.com/tinkerbell/boots/metrics"
 )
 
 const mimeJSON = "application/json"
-
-// GetDiscoveryFromEM is called when Cacher returns an empty response for the MAC
-// address. It does a POST to the Packet API /staff/cacher/hardware-discovery
-// endpoint.
-// This was split out from DiscoverHardwareFromDHCP to make the control flow
-// easier to understand.
-func (c *Reporter) GetDiscoveryFromEM(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (client.Discoverer, error) {
-	if giaddr == nil {
-		return nil, errors.New("missing MAC address")
-	}
-
-	labels := prometheus.Labels{"from": "dhcp"}
-	metrics.HardwareDiscovers.With(labels).Inc()
-	metrics.DiscoversInProgress.With(labels).Inc()
-	defer metrics.DiscoversInProgress.With(labels).Dec()
-	discoverTimer := prometheus.NewTimer(metrics.DiscoverDuration.With(labels))
-	defer discoverTimer.ObserveDuration()
-
-	req := struct {
-		MAC       string `json:"mac"`
-		GIADDR    string `json:"giaddr,omitempty"`
-		CIRCUITID string `json:"circuit_id,omitempty"`
-	}{
-		MAC:       mac.String(),
-		GIADDR:    giaddr.String(),
-		CIRCUITID: circuitID,
-	}
-
-	b, err := json.Marshal(&req)
-	if err != nil {
-		return nil, errors.Wrap(err, "unmarshalling api discovery")
-	}
-
-	c.logger.With("giaddr", req.GIADDR, "mac", req.MAC).Debug("hardware discovery by mac")
-
-	var res cacher.DiscoveryCacher
-	if err := c.Post(ctx, "/staff/cacher/hardware-discovery", mimeJSON, bytes.NewReader(b), &res); err != nil {
-		return nil, err
-	}
-
-	return &res, nil
-}
 
 // PostHardwareComponent - POSTs a HardwareComponent to the API.
 func (c *Reporter) PostHardwareComponent(ctx context.Context, hardwareID client.HardwareID, body io.Reader) (*client.ComponentsResponse, error) {
