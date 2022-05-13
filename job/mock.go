@@ -14,8 +14,18 @@ import (
 
 type Mock Job
 
+// Option for setting optional Job values
+type Option func(*Mock)
+
+// WithHardwareClient sets the hardware client for the job
+func WithHardwareClient(h client.Hardware) Option {
+	return func(args *Mock) {
+		args.hardware = h
+	}
+}
+
 // NewMock returns a mock Job with only minimal fields set, it is useful only for tests
-func NewMock(t zaptest.TestingT, slug, facility string) Mock {
+func NewMock(t zaptest.TestingT, slug, facility string, opts ...Option) Mock {
 	slugs := strings.Split(slug, ":")
 	slug = slugs[0]
 	var planVersion string
@@ -40,7 +50,7 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 
 	mockLog := log.Test(t, "job.Mock")
 
-	return Mock{
+	m := Mock{
 		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
 		hardware: &cacher.HardwareCacher{
 			ID:              uuid.New().String(),
@@ -56,6 +66,11 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 			State: "provisioning",
 		},
 	}
+	for _, opt := range opts {
+		opt(&m)
+	}
+
+	return m
 }
 
 func NewMockFromDiscovery(d client.Discoverer, mac net.HardwareAddr) Mock {
