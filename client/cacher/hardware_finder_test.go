@@ -2,21 +2,33 @@ package cacher
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/cacher/protos/cacher"
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/client"
 	mockcacher "github.com/tinkerbell/boots/client/cacher/mock_cacher"
+	"github.com/tinkerbell/boots/metrics"
 )
 
+func TestMain(m *testing.M) {
+	l, _ := log.Init("github.com/tinkerbell/boots")
+	metrics.Init(l)
+	os.Exit(m.Run())
+}
+
 func TestByIP(t *testing.T) {
+	ip := net.ParseIP("192.168.1.1")
 	cases := []struct {
 		name    string
-		arg     net.IP
 		resp    *cacher.Hardware
 		respErr error
 		want    *DiscoveryCacher
@@ -24,40 +36,27 @@ func TestByIP(t *testing.T) {
 	}{
 		{
 			name:    "query error",
-			arg:     net.ParseIP("192.168.1.1"),
-			resp:    nil,
 			respErr: errors.New("no hardware"),
-			want:    nil,
 			wantErr: errors.New("get hardware by ip from cacher: no hardware"),
 		},
 		{
 			name:    "not found error",
-			arg:     net.ParseIP("192.168.1.1"),
 			resp:    &cacher.Hardware{JSON: ""},
-			respErr: nil,
-			want:    nil,
 			wantErr: client.ErrNotFound,
 		},
 		{
 			name:    "json error",
-			arg:     net.ParseIP("192.168.1.1"),
 			resp:    &cacher.Hardware{JSON: "{"},
-			respErr: nil,
-			want:    nil,
 			wantErr: errors.New("unmarshal json for discovery: unexpected end of JSON input"),
 		},
 		{
-			name:    "happy path",
-			arg:     net.ParseIP("192.168.1.1"),
-			resp:    &cacher.Hardware{JSON: `{"id": "abc123"}`},
-			respErr: nil,
+			name: "happy path",
+			resp: &cacher.Hardware{JSON: `{"id": "abc123"}`},
 			want: &DiscoveryCacher{
 				HardwareCacher: &HardwareCacher{
 					ID: "abc123",
 				},
-				mac: nil,
 			},
-			wantErr: nil,
 		},
 	}
 
@@ -67,10 +66,10 @@ func TestByIP(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
-			cc.EXPECT().ByIP(context.Background(), &cacher.GetRequest{IP: tc.arg.String()}).Times(1).Return(tc.resp, tc.respErr)
+			cc.EXPECT().ByIP(context.Background(), &cacher.GetRequest{IP: ip.String()}).Times(1).Return(tc.resp, tc.respErr)
 
-			cf := HardwareFinder{cc}
-			d, err := cf.ByIP(context.Background(), tc.arg)
+			cf := HardwareFinder{cc, nil}
+			d, err := cf.ByIP(context.Background(), ip)
 
 			if err != nil {
 				if tc.wantErr == nil {
@@ -99,66 +98,54 @@ func TestByIP(t *testing.T) {
 }
 
 func TestByMAC(t *testing.T) {
+	mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
+	giaddr := net.ParseIP("192.168.1.1")
 	cases := []struct {
-		name    string
-		arg     net.HardwareAddr
-		resp    *cacher.Hardware
-		respErr error
-		want    *DiscoveryCacher
-		wantErr error
+		name     string
+		resp     *cacher.Hardware
+		respErr  error
+		want     *DiscoveryCacher
+		wantErr  error
+		reporter client.Reporter
 	}{
 		{
-			name: "query error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    nil,
+			name:    "query error",
 			respErr: errors.New("no hardware"),
-			want:    nil,
 			wantErr: errors.New("get hardware by mac from cacher: no hardware"),
 		},
 		{
-			name: "not found error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    &cacher.Hardware{JSON: ""},
-			respErr: nil,
-			want:    nil,
-			wantErr: client.ErrNotFound,
+			name: "not found in cacher and not found in emapi",
+			resp: &cacher.Hardware{JSON: ""},
+			reporter: &fakeEMGetter{
+				response: `{}`,
+			},
+			want: &DiscoveryCacher{},
 		},
 		{
-			name: "json error",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    &cacher.Hardware{JSON: "{"},
-			respErr: nil,
-			want:    nil,
-			wantErr: errors.New("unmarshal json for discovery: unexpected end of JSON input"),
-		},
-		{
-			name: "happy path",
-			arg: func() net.HardwareAddr {
-				mac, _ := net.ParseMAC("ab:cd:ef:01:12:34")
-
-				return mac
-			}(),
-			resp:    &cacher.Hardware{JSON: `{"id": "abc123"}`},
-			respErr: nil,
+			name: "not found in cacher found in emapi",
+			resp: &cacher.Hardware{JSON: ""},
 			want: &DiscoveryCacher{
 				HardwareCacher: &HardwareCacher{
 					ID: "abc123",
 				},
-				mac: nil,
 			},
-			wantErr: nil,
+			reporter: &fakeEMGetter{
+				response: `{"id":"abc123"}`,
+			},
+		},
+		{
+			name:    "json error",
+			resp:    &cacher.Hardware{JSON: "{"},
+			wantErr: errors.New("unmarshal json for discovery: unexpected end of JSON input"),
+		},
+		{
+			name: "happy path",
+			resp: &cacher.Hardware{JSON: `{"id": "abc123"}`},
+			want: &DiscoveryCacher{
+				HardwareCacher: &HardwareCacher{
+					ID: "abc123",
+				},
+			},
 		},
 	}
 
@@ -168,10 +155,10 @@ func TestByMAC(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			cc := mockcacher.NewMockCacherClient(mockCtrl)
-			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: tc.arg.String()}).Times(1).Return(tc.resp, tc.respErr)
+			cc.EXPECT().ByMAC(context.Background(), &cacher.GetRequest{MAC: mac.String()}).Times(1).Return(tc.resp, tc.respErr)
 
-			cf := HardwareFinder{cc}
-			d, err := cf.ByMAC(context.Background(), tc.arg, nil, "")
+			cf := HardwareFinder{cc, tc.reporter}
+			d, err := cf.ByMAC(context.Background(), mac, giaddr, "")
 
 			if err != nil {
 				if tc.wantErr == nil {
@@ -197,4 +184,20 @@ func TestByMAC(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fakeEMGetter struct {
+	client.Reporter
+	body     []byte
+	response string
+}
+
+func (c *fakeEMGetter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+	var err error
+	c.body, err = ioutil.ReadAll(body)
+	if err != nil {
+		panic(err)
+	}
+
+	return json.Unmarshal([]byte(c.response), v)
 }

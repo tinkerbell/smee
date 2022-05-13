@@ -51,6 +51,10 @@ func (c *noOpReporter) UpdateInstance(ctx context.Context, id string, body io.Re
 	return nil
 }
 
+func (c *noOpReporter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+	return nil
+}
+
 // NewNoOpReporter returns a reporter that does nothing. This is used for the
 // Tinkerbell and standalone backends.
 func NewNoOpReporter(logger log.Logger) Reporter {
