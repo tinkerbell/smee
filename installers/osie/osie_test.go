@@ -260,7 +260,7 @@ func TestOsieBaseURL(t *testing.T) {
 		"CustomOSIE":  {i: installer{osieURL: "http://my.url.com/files"}, h: hardwareMock{osieVersion: "v1.2.3"}, want: "http://my.url.com/files/v1.2.3"},
 		"ipxeBaseURL": {i: installer{ipxeBaseURL: "http://example.com/files"}, h: hardwareMock{}, want: "http://example.com/files"},
 		"ipxeBaseURL with trailing slash removed": {i: installer{ipxeBaseURL: "http://example.com/files/"}, h: hardwareMock{}, want: "http://example.com/files"},
-		"osieURL":    {i: installer{osieURL: "http://www.example.com/files"}, h: hardwareMock{}, want: "http://www.example.com/files/current"},
+		"osieURL": {i: installer{osieURL: "http://www.example.com/files"}, h: hardwareMock{}, want: "http://www.example.com/files/current"},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
