@@ -70,7 +70,7 @@ func (m Mock) Job() Job {
 	return Job(m)
 }
 
-func (m Mock) DropInstance() {
+func (m *Mock) DropInstance() {
 	m.instance = nil
 }
 
