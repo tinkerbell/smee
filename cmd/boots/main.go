@@ -86,9 +86,8 @@ type config struct {
 	kubeAPI string
 	// kubeNamespace is an override for the namespace the kubernetes client will watch.
 	kubeNamespace string
-	// osiePathOverride allows a completely custom path/URL to be specified for OSIE/Hook images
-	// This will bypass the hardcoded path appending of 'misc/osie/current' to the path
-	osiePathOverride string
+	// ipxeBaseURL is the base URL for where the default installer (OSIE) kernel and initrd are hosted
+	ipxeBaseURL string
 }
 
 func main() {
@@ -378,7 +377,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
-	fs.StringVar(&cfg.osiePathOverride, "osie-path-override", "", "A custom URL for OSIE/Hook images.")
+	fs.StringVar(&cfg.ipxeBaseURL, "ipxe-base-url", "", "The URL base (will be used unmodified) for where the default installer kernel and initrd are hosted.")
 
 	return &ffcli.Command{
 		Name:       name,
@@ -418,8 +417,8 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 		env.Get("DOCKER_REGISTRY"),
 		env.Get("REGISTRY_USERNAME"),
 		env.Get("REGISTRY_PASSWORD"),
+		cf.ipxeBaseURL,
 		env.Bool("TINKERBELL_TLS", true),
-		cf.osiePathOverride,
 	)
 	i.RegisterDistro("discovery", o.BootScript("discover"))
 	i.RegisterDefaultInstaller(o.BootScript("default"))

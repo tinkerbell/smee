@@ -72,6 +72,7 @@ FLAGS
   -dhcp-addr              IP and port to listen on for DHCP. (default "%v:67")
   -extra-kernel-args      Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.
   -http-addr              local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "%[1]v:80")
+  -ipxe-base-url          The URL base (will be used unmodified) for where the default installer kernel and initrd are hosted.
   -ipxe-enable-http       enable serving iPXE binaries via HTTP. (default "true")
   -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
   -ipxe-remote-http-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
@@ -82,7 +83,6 @@ FLAGS
   -kubeconfig             The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
   -kubernetes             The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
   -log-level              log level. (default "info")
-  -osie-path-override     A custom URL for OSIE/Hook images.
   -syslog-addr            IP and port to listen on for syslog messages. (default "%[1]v:514")
 `, defaultIP)
 	c := &config{}
