@@ -27,7 +27,7 @@ goimports: bin/goimports gen ## Run goimports
 	goimports -w .
 
 golangci-lint: bin/golangci-lint gen ## Run golangci-lint
-	golangci-lint run -v
+	golangci-lint run -v --timeout=5m
 
 ci-checks: bin/goimports .github/workflows/ci-checks.sh shell.nix gen
 	./.github/workflows/ci-checks.sh

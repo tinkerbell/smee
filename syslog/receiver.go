@@ -81,7 +81,7 @@ func (r *Receiver) run() {
 		n, from, err := r.c.ReadFromUDP(msg.buf[:])
 		if err != nil {
 			err = errors.Wrap(err, "error reading udp message")
-			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+			if _, ok := err.(net.Error); ok {
 				sysloglog.Error(err)
 
 				continue
