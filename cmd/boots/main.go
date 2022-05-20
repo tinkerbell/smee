@@ -84,6 +84,8 @@ type config struct {
 	kubeconfig string
 	// kubeAPI is the Kubernetes API URL
 	kubeAPI string
+	// kubeNamespace is an override for the namespace the kubernetes client will watch.
+	kubeNamespace string
 }
 
 func main() {
@@ -256,7 +258,7 @@ func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.Workf
 			return nil, nil, err
 		}
 	case "kubernetes":
-		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig)
+		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -372,6 +374,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
 	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
+	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
 
 	return &ffcli.Command{
 		Name:       name,
