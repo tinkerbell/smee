@@ -6,3 +6,4 @@
 /cmd/boots/boots
 /cmd/boots/boots-*-*
 coverage.txt
+.vscode

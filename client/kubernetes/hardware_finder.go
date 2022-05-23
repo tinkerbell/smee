@@ -21,25 +21,29 @@ type Finder struct {
 	clientFunc   func() crclient.Client
 	cacheStarter func(context.Context) error
 	logger       log.Logger
-	namespace    string
 }
 
 // NewFinder returns a HardwareFinder that discovers hardware from Kubernetes.
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
-func NewFinder(logger log.Logger, k8sAPI, kubeconfig string) (*Finder, error) {
+func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
-		&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: k8sAPI}})
+		&clientcmd.ClientConfigLoadingRules{
+			ExplicitPath: kubeconfig,
+		},
+		&clientcmd.ConfigOverrides{
+			ClusterInfo: clientcmdapi.Cluster{
+				Server: k8sAPI,
+			},
+			Context: clientcmdapi.Context{
+				Namespace: kubeNamespace,
+			},
+		},
+	)
 
 	config, err := ccfg.ClientConfig()
 	if err != nil {
 		return nil, err
-	}
-
-	namespace, _, err := ccfg.Namespace()
-	if err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	cluster, err := NewCluster(config)
@@ -51,7 +55,6 @@ func NewFinder(logger log.Logger, k8sAPI, kubeconfig string) (*Finder, error) {
 		clientFunc:   cluster.GetClient,
 		cacheStarter: cluster.Start,
 		logger:       logger,
-		namespace:    namespace,
 	}, nil
 }
 
