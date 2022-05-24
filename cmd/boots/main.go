@@ -377,7 +377,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
-	fs.StringVar(&cfg.ipxeBaseURL, "ipxe-base-url", "", "The URL base (will be used unmodified) for where the default installer kernel and initrd are hosted.")
+	fs.StringVar(&cfg.ipxeBaseURL, "ipxe-base-url", "", "The URL base hosting the default installer kernel and initrd (will be used unmodified).")
 
 	return &ffcli.Command{
 		Name:       name,
