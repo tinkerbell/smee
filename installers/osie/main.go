@@ -18,11 +18,12 @@ type installer struct {
 	workflowParams string
 	// hollowParams are passed to deprovisioning instances for hardware reporting
 	// TODO(mmlb): remove this EMism now that we can use extra-kernel-args
-	hollowParams string
+	hollowParams        string
+	osieFullURLOverride string
 }
 
 // Installer instantiates a new osie installer.
-func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool) job.BootScripter {
+func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool, osiePathOverride string) job.BootScripter {
 	defaultParams := []string{
 		"ip=dhcp",
 		"modules=loop,squashfs,sd-mod,usb-storage",
@@ -41,8 +42,9 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 	}
 
 	i := installer{
-		osieURL:       conf.MirrorBaseURL + "/misc/osie",
-		defaultParams: strings.Join(defaultParams, " "),
+		osieURL:             conf.MirrorBaseURL + "/misc/osie",
+		defaultParams:       strings.Join(defaultParams, " "),
+		osieFullURLOverride: osiePathOverride,
 	}
 
 	if conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
@@ -130,7 +132,7 @@ func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
-	s.Set("base-url", osieBaseURL(i.osieURL, j))
+	s.Set("base-url", osieBaseURL(i.osieURL, i.osieFullURLOverride, j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 	i.kernelParams(ctx, action, j.HardwareState(), j, s)
 	s.Initrd("${base-url}/" + initrdPath(j))
@@ -235,7 +237,10 @@ func isCustomOSIE(j job.Job) bool {
 }
 
 // osieBaseURL returns the value of Custom OSIE Service Version or just /current
-func osieBaseURL(osieURL string, j job.Job) string {
+func osieBaseURL(osieURL string, osieFullURLOverride string, j job.Job) string {
+	if osieFullURLOverride != "" {
+		return osieFullURLOverride
+	}
 	if u := j.OSIEBaseURL(); u != "" {
 		return u
 	}

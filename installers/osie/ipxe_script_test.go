@@ -60,7 +60,7 @@ func TestScript(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					Installer("", "", "", "", "", "", true).BootScript(action)(context.Background(), m.Job(), s)
+					Installer("", "", "", "", "", "", true, "").BootScript(action)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
 					arch := "aarch64"

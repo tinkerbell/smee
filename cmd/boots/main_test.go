@@ -82,6 +82,7 @@ FLAGS
   -kubeconfig             The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
   -kubernetes             The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
   -log-level              log level. (default "info")
+  -osie-path-override     A custom URL for OSIE/Hook images.
   -syslog-addr            IP and port to listen on for syslog messages. (default "%[1]v:514")
 `, defaultIP)
 	c := &config{}
