@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tinkerbell-boots
+  name: boots-deployment
+  namespace: tinkerbell
+spec:
+  selector:
+    matchLabels:
+      app: tinkerbell-boots
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tinkerbell-boots
+    spec:
+      containers:
+        - args: ["-log-level", "debug", "-dhcp-addr", "0.0.0.0:67"]
+          env:
+            - name: BOOTS_EXTRA_KERNEL_ARGS
+              value: "tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
+            - name: DATA_MODEL_VERSION
+              value: "kubernetes"
+            - name: FACILITY_CODE
+              value: "lab1"
+            - name: HTTP_BIND
+              value: ":80"
+            - name: MIRROR_BASE_URL
+              value: http://192.168.2.150:8080
+            - name: PUBLIC_IP
+              value: 192.168.2.160
+            - name: PUBLIC_SYSLOG_FQDN
+              value: 192.168.2.160
+            - name: SYSLOG_BIND
+              value: 0.0.0.0:514
+            - name: TINKERBELL_GRPC_AUTHORITY
+              value: 192.168.2.150:42113
+            - name: TINKERBELL_TLS
+              value: "false"
+          image: quay.io/tinkerbell/boots:latest
+          imagePullPolicy: Always
+          name: tinkerbell-boots
+          ports:
+            - name: dhcp
+              containerPort: 67
+              protocol: UDP
+            - name: tftp
+              containerPort: 69
+              protocol: UDP
+            - name: syslog
+              containerPort: 514
+              protocol: UDP
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      serviceAccountName: tinkerbell-boots
