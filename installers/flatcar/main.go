@@ -28,7 +28,7 @@ func (i installer) BootScript(string) job.BootScript {
 
 func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", conf.MirrorBaseURL+"/misc/tinkerbell")
+	s.Set("base-url", conf.OsieVendorServicesURL+"/flatcar")
 	s.Kernel("${base-url}/" + kernelPath(j))
 
 	kernelParams(j, s)

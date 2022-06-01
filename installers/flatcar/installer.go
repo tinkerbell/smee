@@ -10,8 +10,8 @@ import (
 
 func getInstallOpts(j job.Job, channel, facilityCode string) string {
 	base := map[bool]string{
-		true:  "http://install." + facilityCode + ".packet.net/flatcar/arm64-usr/" + channel,
-		false: "http://install." + facilityCode + ".packet.net/flatcar/amd64-usr/" + channel,
+		true:  conf.OsieVendorServicesURL + "/flatcar/arm64-usr/" + channel,
+		false: conf.OsieVendorServicesURL + "/flatcar/amd64-usr/" + channel,
 	}
 	args := []string{
 		"-V current",
