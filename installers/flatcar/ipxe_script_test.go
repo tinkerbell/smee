@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -61,7 +62,7 @@ param type provisioning.104.01
 imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+set base-url ` + conf.OsieVendorServicesURL + `/flatcar
 kernel ${base-url}/flatcar_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=flatcar_production_pxe_image.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/flatcar_production_pxe_image.cpio.gz
 boot
@@ -82,7 +83,7 @@ param type provisioning.104.01
 imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.` + facility + `.packet.net/misc/tinkerbell
+set base-url ` + conf.OsieVendorServicesURL + `/flatcar
 kernel ${base-url}/flatcar-arm.vmlinuz console=ttyAMA0,115200 initrd=flatcar-arm.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/flatcar-arm.cpio.gz
 boot

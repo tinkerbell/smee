@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/installers/flatcar/files/ignition"
 	"github.com/tinkerbell/boots/job"
 )
@@ -59,7 +60,7 @@ var baseEnd = []string{
 
 var Exec = []string{
 	`ExecStart=/usr/bin/curl --retry 10 -H "Content-Type: application/json" -X POST -d '{"type":"provisioning.106"}' ${phone_home_url}`,
-	"ExecStart=/usr/bin/flatcar-install -V current -C alpha -b http://install." + facility + ".packet.net/flatcar/amd64-usr/alpha -o packet -s",
+	"ExecStart=/usr/bin/flatcar-install -V current -C alpha -b " + conf.OsieVendorServicesURL + "/flatcar/amd64-usr/alpha -o packet -s",
 	"ExecStart=/usr/bin/udevadm settle",
 	"ExecStart=/usr/bin/mkdir -p /oemmnt",
 	"ExecStart=/usr/bin/mount /dev/disk/by-label/OEM /oemmnt",
