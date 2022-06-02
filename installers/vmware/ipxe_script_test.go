@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
+	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 )
@@ -78,7 +79,7 @@ param type provisioning.104.01
 imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.ewr1.packet.net/vmware/%s
+set base-url ` + conf.OsieVendorServicesURL + `/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `},
@@ -98,7 +99,7 @@ param type provisioning.104.01
 imgfetch ${tinkerbell}/phone-home##params
 imgfree
 
-set base-url http://install.ewr1.packet.net/vmware/%s
+set base-url ` + conf.OsieVendorServicesURL + `/vmware/%s
 kernel ${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
 `,

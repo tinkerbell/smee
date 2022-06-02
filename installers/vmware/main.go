@@ -52,7 +52,7 @@ func (i installer) BootScript(slug string) job.BootScript {
 
 func script(j job.Job, s *ipxe.Script, basePath string) {
 	s.PhoneHome("provisioning.104.01")
-	s.Set("base-url", conf.MirrorBaseURL+"/vmware/"+basePath)
+	s.Set("base-url", conf.OsieVendorServicesURL+"/vmware/"+basePath)
 	if j.IsUEFI() {
 		s.Kernel("${base-url}/efi/boot/bootx64.efi -c ${base-url}/boot.cfg")
 	} else {
