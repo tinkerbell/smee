@@ -15,7 +15,7 @@ Regardless of the option you choose it is recommended you get started by updatin
 
 ## Deployment Options
 
-- [Kind](KIND.md)
-- [Kubernetes](KUBERNETES.md)
-- [K3D](K3D.md)
-- [Tilt](TILT.md)
+- [Kind](kind.md)
+- [Kubernetes](kubernetes.md)
+- [K3D](k3d.md)
+- [Tilt](tilt.md)
