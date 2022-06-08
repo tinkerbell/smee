@@ -34,6 +34,7 @@ import (
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
 	"github.com/tinkerbell/boots/installers/flatcar"
+	"github.com/tinkerbell/boots/installers/harvester"
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
@@ -119,7 +120,7 @@ func main() {
 	syslog.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	reporter, err := getReporter(l)
+	reporter, err := getReporter(l, cfg)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
@@ -274,7 +275,7 @@ func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.Workf
 	return wf, hf, nil
 }
 
-func getReporter(l log.Logger) (client.Reporter, error) {
+func getReporter(l log.Logger, c *config) (client.Reporter, error) {
 	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
 	switch dataModelVersion {
 	case "":
@@ -289,6 +290,8 @@ func getReporter(l log.Logger) (client.Reporter, error) {
 		}
 
 		return packet.NewReporter(l, apiBaseURL, consumer, auth)
+	case "kubernetes":
+		return kubernetes.NewReporter(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
 	default:
 		return client.NewNoOpReporter(l), nil
 	}
@@ -436,6 +439,9 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScript("vmware_esxi_6_7_vcf"))
 	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
 	i.RegisterDistro("vmware", v.BootScript("vmware"))
+
+	h := harvester.Installer()
+	i.RegisterDistro("harvester", h.BootScript("harvester"))
 
 	return i, nil
 }
