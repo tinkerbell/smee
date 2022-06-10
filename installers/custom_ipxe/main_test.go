@@ -51,6 +51,8 @@ func TestIpxeScript(t *testing.T) {
 			`#!ipxe
 
 			echo Tinkerbell Boots iPXE
+			set dynamic_var1 dynamic_val1
+			set dynamic_var2 dynamic_val2
 
 			params
 			param body Device connected to DHCP system
@@ -70,6 +72,8 @@ func TestIpxeScript(t *testing.T) {
 			`#!ipxe
 
 			echo Tinkerbell Boots iPXE
+			set dynamic_var1 dynamic_val1
+			set dynamic_var2 dynamic_val2
 
 			params
 			param body Device connected to DHCP system
@@ -100,6 +104,8 @@ func TestIpxeScript(t *testing.T) {
 			`#!ipxe
 
 			echo Tinkerbell Boots iPXE
+			set dynamic_var1 dynamic_val1
+			set dynamic_var2 dynamic_val2
 
 			params
 			param body Device connected to DHCP system
@@ -119,6 +125,8 @@ func TestIpxeScript(t *testing.T) {
 			`#!ipxe
 
 			echo Tinkerbell Boots iPXE
+			set dynamic_var1 dynamic_val1
+			set dynamic_var2 dynamic_val2
 
 			params
 			param body Device connected to DHCP system
@@ -137,6 +145,10 @@ func TestIpxeScript(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := require.New(t)
+			extraIPXEVars := make([][]string, 2)
+			extraIPXEVars[0] = []string{"dynamic_var1", "dynamic_val1"}
+			extraIPXEVars[1] = []string{"dynamic_var2", "dynamic_val2"}
+
 			mockJob := job.NewMock(t, "test.slug", "test.facility")
 			s := ipxe.NewScript()
 
@@ -147,7 +159,7 @@ func TestIpxeScript(t *testing.T) {
 				mockJob.SetIPXEScriptURL(tc.installerData.Chain)
 				mockJob.SetUserData(tc.installerData.Script)
 			}
-			Installer().BootScript("")(context.Background(), mockJob.Job(), s)
+			Installer(extraIPXEVars).BootScript("")(context.Background(), mockJob.Job(), s)
 
 			assert.Equal(dedent(tc.want), string(s.Bytes()))
 		})

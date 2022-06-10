@@ -16,17 +16,27 @@ const (
 // http://storage.googleapis.com/alpha.release.core-os.net/amd64-usr/current
 // http://storage.googleapis.com/users.developer.core-os.net/mischief/boards/amd64-usr/962.0.0+2016-02-23-2254
 
-type installer struct{}
+type installer struct {
+	extraIPXEVars [][]string
+}
 
-func Installer() job.BootScripter {
-	return installer{}
+func Installer(dynamicIPXEVars [][]string) job.BootScripter {
+	i := installer{
+		extraIPXEVars: dynamicIPXEVars,
+	}
+
+	return i
 }
 
 func (i installer) BootScript(string) job.BootScript {
-	return bootScript
+	return i.bootScript
 }
 
-func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+func (i installer) bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+	for _, kv := range i.extraIPXEVars {
+		s.Set(kv[0], kv[1])
+	}
+
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.OsieVendorServicesURL+"/flatcar")
 	s.Kernel("${base-url}/" + kernelPath(j))

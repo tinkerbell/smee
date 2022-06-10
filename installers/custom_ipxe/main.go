@@ -10,17 +10,24 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-type installer struct{}
+type installer struct {
+	extraIPXEVars [][]string
+}
 
-func Installer() job.BootScripter {
-	return installer{}
+// pass vars here
+func Installer(dynamicIPXEVars [][]string) job.BootScripter {
+	i := installer{
+		extraIPXEVars: dynamicIPXEVars,
+	}
+
+	return i
 }
 
 func (i installer) BootScript(string) job.BootScript {
-	return bootScript
+	return i.bootScript
 }
 
-func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+func (i installer) bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 	logger := j.Logger.With("installer", "custom_ipxe")
 
 	var cfg *client.InstallerData
@@ -45,6 +52,9 @@ func bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
 		return
 	}
 
+	for _, kv := range i.extraIPXEVars {
+		s.Set(kv[0], kv[1])
+	}
 	ipxeScriptFromConfig(logger, cfg, j, s)
 }
 
