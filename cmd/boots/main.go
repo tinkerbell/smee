@@ -68,8 +68,13 @@ type config struct {
 	ipxeHTTPEnabled bool
 	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
 	ipxeRemoteTFTPAddr string
-	// remoteTFTPPort is the address of the remote HTTP server serving iPXE binaries
+	// ipxeRemoteHTTPAddr is the address and port of the remote HTTP server serving iPXE binaries
 	ipxeRemoteHTTPAddr string
+	// ipxeVars are additional variable definitions to include in all iPXE installer
+	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
+	// e.g. 'var1=val1 var2=val2'. Note that settings which require spaces (e.g, scriptlets)
+	// are not yet supported.
+	ipxeVars string
 	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets
 	httpAddr string
 	// dhcpAddr is the local address for the DHCP server
@@ -294,6 +299,34 @@ func getReporter(l log.Logger) (client.Reporter, error) {
 	}
 }
 
+// parseDynamicIPXEVars will parse any number of variable definitions from a
+// string, and return a an array of two-element arrays which are the key/value
+// string pairs of the variable's name and value. These will later be injected
+// as variable definitions in the iPXE script. Variable order is preserved.
+func parseDynamicIPXEVars(v string) ([][]string, error) {
+	if v == "" {
+		return nil, nil
+	}
+
+	// extract multiple variable definitions by splitting first on spaces
+	allDefs := strings.Fields(v)
+	retVal := make([][]string, len(allDefs))
+
+	// iterate over each variable definition and split on '='
+	for i, el := range allDefs {
+		varDef := strings.SplitN(el, "=", 2)
+		if len(varDef) == 2 && varDef[0] != "" && varDef[1] != "" {
+			retVal[i] = varDef
+		} else {
+			err := errors.Errorf("unable to parse iPXE dynamic variable definitions from string %v", v)
+
+			return nil, err
+		}
+	}
+
+	return retVal, nil
+}
+
 // defaultLogger is zap logr implementation.
 func defaultLogger(level string) logr.Logger {
 	config := zap.NewProductionConfig()
@@ -370,6 +403,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.BoolVar(&cfg.ipxeHTTPEnabled, "ipxe-enable-http", true, "enable serving iPXE binaries via HTTP.")
 	fs.StringVar(&cfg.ipxeRemoteTFTPAddr, "ipxe-remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.")
 	fs.StringVar(&cfg.ipxeRemoteHTTPAddr, "ipxe-remote-http-addr", "", "remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.")
+	fs.StringVar(&cfg.ipxeVars, "ipxe-vars", "", "additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.")
 	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
@@ -395,12 +429,17 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 	// register installers
 	i := job.NewInstallers()
 
+	extraIPXEVars, err := parseDynamicIPXEVars(cf.ipxeVars)
+	if err != nil {
+		return job.Installers{}, err
+	}
+
 	// register flatcar
-	o := flatcar.Installer()
+	o := flatcar.Installer(extraIPXEVars)
 	i.RegisterDistro("flatcar", o.BootScript("flatcar"))
 
 	// register custom ipxe
-	o = custom_ipxe.Installer()
+	o = custom_ipxe.Installer(extraIPXEVars)
 	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
 	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
 
@@ -420,12 +459,13 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 		env.Get("REGISTRY_PASSWORD"),
 		env.Bool("TINKERBELL_TLS", true),
 		cf.osiePathOverride,
+		extraIPXEVars,
 	)
 	i.RegisterDistro("discovery", o.BootScript("discover"))
 	i.RegisterDefaultInstaller(o.BootScript("default"))
 
 	// register vmware
-	v := vmware.Installer()
+	v := vmware.Installer(extraIPXEVars)
 	i.RegisterSlug("vmware_esxi_5_5", v.BootScript("vmware_esxi_5_5"))
 	i.RegisterSlug("vmware_esxi_6_0", v.BootScript("vmware_esxi_6_0"))
 	i.RegisterSlug("vmware_esxi_6_5", v.BootScript("vmware_esxi_6_5"))

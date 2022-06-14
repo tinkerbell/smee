@@ -23,6 +23,9 @@ var facility = func() string {
 func TestScript(t *testing.T) {
 	for arch, tt := range pxeByPlan {
 		t.Run(arch, func(t *testing.T) {
+			extraIPXEVars := make([][]string, 2)
+			extraIPXEVars[0] = []string{"dynamic_var1", "dynamic_val1"}
+			extraIPXEVars[1] = []string{"dynamic_var2", "dynamic_val2"}
 			m := job.NewMock(t, tt.plan, facility)
 			m.SetOSDistro("flatcar")
 
@@ -33,7 +36,7 @@ func TestScript(t *testing.T) {
 			s.Set("syslog_host", "127.0.0.1")
 			s.Set("ipxe_cloud_config", "packet")
 
-			Installer().BootScript("")(context.Background(), m.Job(), s)
+			Installer(extraIPXEVars).BootScript("")(context.Background(), m.Job(), s)
 			got := string(s.Bytes())
 			if tt.script != got {
 				t.Fatalf("bad iPXE script:\n%v", diff.LineDiff(tt.script, got))
@@ -55,6 +58,8 @@ set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
+set dynamic_var1 dynamic_val1
+set dynamic_var2 dynamic_val2
 
 params
 param body Device connected to DHCP system
@@ -76,6 +81,8 @@ set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
+set dynamic_var1 dynamic_val1
+set dynamic_var2 dynamic_val2
 
 params
 param body Device connected to DHCP system

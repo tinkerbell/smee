@@ -12,10 +12,17 @@ const (
 	KickstartPath = "/vmware/ks-esxi.cfg"
 )
 
-type installer struct{}
+type installer struct {
+	extraIPXEVars [][]string
+}
 
-func Installer() job.BootScripter {
-	return installer{}
+// pass var here
+func Installer(dynamicIPXEVars [][]string) job.BootScripter {
+	i := installer{
+		extraIPXEVars: dynamicIPXEVars,
+	}
+
+	return i
 }
 
 var slug2Paths = map[string]string{
@@ -46,11 +53,15 @@ func (i installer) BootScript(slug string) job.BootScript {
 	}
 
 	return func(ctx context.Context, j job.Job, s *ipxe.Script) {
-		script(j, s, path)
+		script(i, j, s, path)
 	}
 }
 
-func script(j job.Job, s *ipxe.Script, basePath string) {
+func script(i installer, j job.Job, s *ipxe.Script, basePath string) {
+	for _, kv := range i.extraIPXEVars {
+		s.Set(kv[0], kv[1])
+	}
+
 	s.PhoneHome("provisioning.104.01")
 	s.Set("base-url", conf.OsieVendorServicesURL+"/vmware/"+basePath)
 	if j.IsUEFI() {

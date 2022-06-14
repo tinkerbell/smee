@@ -30,6 +30,11 @@ func TestScriptPerType(t *testing.T) {
 					if slug == "vmware" {
 						t.Skipf("skipping vmware slug/default because it panics when calling j.DisablePXE() because client is nil and mocking client is not worth it imo")
 					}
+
+					extraIPXEVars := make([][]string, 2)
+					extraIPXEVars[0] = []string{"dynamic_var1", "dynamic_val1"}
+					extraIPXEVars[1] = []string{"dynamic_var2", "dynamic_val2"}
+
 					plan := planAndScript.plan
 					script := planAndScript.script
 
@@ -43,7 +48,7 @@ func TestScriptPerType(t *testing.T) {
 					s.Set("syslog_host", "127.0.0.1")
 					s.Set("ipxe_cloud_config", "packet")
 
-					Installer().BootScript(slug)(context.Background(), m.Job(), s)
+					Installer(extraIPXEVars).BootScript(slug)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
 					want := fmt.Sprintf(script, path)
@@ -72,6 +77,8 @@ set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
+set dynamic_var1 dynamic_val1
+set dynamic_var2 dynamic_val2
 
 params
 param body Device connected to DHCP system
@@ -92,6 +99,8 @@ set iface eth0 || shell
 set tinkerbell http://127.0.0.1
 set syslog_host 127.0.0.1
 set ipxe_cloud_config packet
+set dynamic_var1 dynamic_val1
+set dynamic_var2 dynamic_val2
 
 params
 param body Device connected to DHCP system

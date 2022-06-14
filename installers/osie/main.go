@@ -20,10 +20,11 @@ type installer struct {
 	// TODO(mmlb): remove this EMism now that we can use extra-kernel-args
 	hollowParams        string
 	osieFullURLOverride string
+	extraIPXEVars       [][]string
 }
 
 // Installer instantiates a new osie installer.
-func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool, osiePathOverride string) job.BootScripter {
+func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool, osiePathOverride string, dynamicIPXEVars [][]string) job.BootScripter {
 	defaultParams := []string{
 		"ip=dhcp",
 		"modules=loop,squashfs,sd-mod,usb-storage",
@@ -45,6 +46,7 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 		osieURL:             conf.MirrorBaseURL + "/misc/osie",
 		defaultParams:       strings.Join(defaultParams, " "),
 		osieFullURLOverride: osiePathOverride,
+		extraIPXEVars:       dynamicIPXEVars,
 	}
 
 	if conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
@@ -93,6 +95,10 @@ func (i installer) BootScript(slug string) job.BootScript {
 
 // install generates the ipxe boot script for booting into the osie installer
 func (i installer) install(ctx context.Context, j job.Job, s *ipxe.Script) {
+	for _, kv := range i.extraIPXEVars {
+		s.Set(kv[0], kv[1])
+	}
+
 	if j.Rescue() {
 		i.rescue(ctx, j, s)
 
@@ -122,6 +128,10 @@ func (i installer) rescue(ctx context.Context, j job.Job, s *ipxe.Script) {
 }
 
 func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
+	for _, kv := range i.extraIPXEVars {
+		s.Set(kv[0], kv[1])
+	}
+
 	s.Set("action", "discover")
 	s.Set("state", j.HardwareState())
 
