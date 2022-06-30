@@ -173,7 +173,7 @@ var _ client.Hardware = &K8sDiscoverer{}
 
 func (d *K8sDiscoverer) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
 	for _, iface := range d.hw.Spec.Interfaces {
-		if iface.Netboot != nil && iface.DHCP != nil && mac.String() == iface.DHCP.MAC {
+		if iface.Netboot != nil && iface.DHCP != nil && mac.String() == iface.DHCP.MAC && iface.Netboot.AllowWorkflow != nil {
 			return *iface.Netboot.AllowWorkflow
 		}
 	}

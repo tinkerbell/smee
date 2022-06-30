@@ -36,9 +36,9 @@ func (j Job) DisablePXE(ctx context.Context) {
 		return
 	}
 
-	if err := j.reporter.UpdateInstance(ctx, j.mac.String(), strings.NewReader(`{"allow_pxe":false}`)); err != nil {
+	j.With("job instance id", j.instance.ID).Info("searching for instance id")
+	if err := j.reporter.UpdateInstance(ctx, j.instance.ID, strings.NewReader(`{"allow_pxe":false}`)); err != nil {
 		j.Error(errors.WithMessage(err, "disabling PXE"))
-
 		return
 	}
 

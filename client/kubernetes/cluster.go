@@ -17,6 +17,7 @@ const (
 	WorkflowWorkerNonTerminalStateIndex = ".status.state.nonTerminalWorker"
 	HardwareMACAddrIndex                = ".spec.interfaces.dhcp.mac"
 	HardwareIPAddrIndex                 = ".spec.interfaces.dhcp.ip"
+	InstanceIDIndex                     = ".spec.metadata.instance.id"
 )
 
 // NewCluster returns a controller-runtime cluster.Cluster with the Tinkerbell runtime
@@ -66,6 +67,11 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 			HardwareMACAddrIndex,
 			controllers.HardwareMacIndexFunc,
 		},
+		{
+			&v1alpha1.Hardware{},
+			InstanceIDIndex,
+			InstanceIDIndexFunction,
+		},
 	}
 	for _, indexer := range indexers {
 		if err := c.GetFieldIndexer().IndexField(
@@ -79,4 +85,13 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 	}
 
 	return c, nil
+}
+
+func InstanceIDIndexFunction(obj client.Object) []string {
+	hw, ok := obj.(*v1alpha1.Hardware)
+	if !ok {
+		return nil
+	}
+	resp := []string{hw.Spec.Metadata.Instance.ID}
+	return resp
 }

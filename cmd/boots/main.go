@@ -34,7 +34,6 @@ import (
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/installers/custom_ipxe"
 	"github.com/tinkerbell/boots/installers/flatcar"
-	"github.com/tinkerbell/boots/installers/harvester"
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
@@ -439,9 +438,6 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScript("vmware_esxi_6_7_vcf"))
 	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
 	i.RegisterDistro("vmware", v.BootScript("vmware"))
-
-	h := harvester.Installer()
-	i.RegisterDistro("harvester", h.BootScript("harvester"))
 
 	return i, nil
 }
