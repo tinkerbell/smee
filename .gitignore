@@ -7,3 +7,6 @@
 /cmd/boots/boots-*-*
 coverage.txt
 .vscode
+
+# added by lint-install
+out/

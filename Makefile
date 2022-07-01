@@ -1,5 +1,6 @@
 all: help
 
+-include lint.mk
 -include rules.mk
 
 boots: cmd/boots/boots ## Compile boots for host OS and Architecture
@@ -26,13 +27,10 @@ vet: ## Run go vet
 goimports: bin/goimports gen ## Run goimports
 	goimports -w .
 
-golangci-lint: bin/golangci-lint gen ## Run golangci-lint
-	golangci-lint run -v --timeout=5m
-
 ci-checks: bin/goimports .github/workflows/ci-checks.sh shell.nix gen
 	./.github/workflows/ci-checks.sh
 
-ci: ci-checks coverage goimports golangci-lint vet ## Runs all the same validations and tests that run in CI
+ci: ci-checks coverage goimports lint vet ## Runs all the same validations and tests that run in CI
 
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120

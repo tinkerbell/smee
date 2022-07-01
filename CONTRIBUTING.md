@@ -134,7 +134,7 @@ To execute linting, run:
 
 ```bash
 # runs golangci-lint
-make golangci-lint
+make lint
 
 # runs goimports
 make goimports
