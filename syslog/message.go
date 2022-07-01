@@ -124,13 +124,13 @@ func (m *message) Timestamp() time.Time {
 func (m *message) correctLegacyTime(t time.Time) {
 	t = t.AddDate(m.time.Year(), 0, 0)
 
-	offset := m.time.Sub(t)
+	offset := m.time.Sub(t) //nolint:ifshort // erroneous warning. offset is used below
 	if offset < 0 {
 		offset = -offset
 	}
 
 	if hoursOff := (offset - (offset % time.Hour)) / time.Hour; hoursOff > 1 {
-		t = t.Add(hoursOff * time.Hour)
+		t = t.Add(hoursOff)
 	}
 
 	m.time = t

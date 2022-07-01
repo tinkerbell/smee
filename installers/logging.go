@@ -22,5 +22,7 @@ func Logger(os string) log.Logger {
 		logger, _ = loggers.LoadOrStore(os, logger)
 	}
 
-	return logger.(log.Logger)
+	l, _ := logger.(log.Logger)
+
+	return l
 }

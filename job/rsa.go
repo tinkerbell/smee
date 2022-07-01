@@ -51,7 +51,7 @@ func ServePublicKey(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET", "HEAD":
 		w.WriteHeader(http.StatusOK)
-		w.Write(rsaKeypair.pub)
+		_, _ = w.Write(rsaKeypair.pub)
 
 		return
 	default:

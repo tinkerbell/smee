@@ -139,18 +139,20 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 
 	var filename string
 	httpPrefix := j.BootsBaseURL
-	if !isTinkerbellIPXE {
+	switch {
+	case !isTinkerbellIPXE:
 		httpPrefix = j.IpxeBaseURL
-		if j.PArch() == "hua" || j.PArch() == "2a2" {
+		switch {
+		case j.PArch() == "hua" || j.PArch() == "2a2":
 			filename = "snp.efi"
-		} else if isARM {
+		case isARM:
 			filename = "snp.efi"
-		} else if isUEFI {
+		case isUEFI:
 			filename = "ipxe.efi"
-		} else {
+		default:
 			filename = "undionly.kpxe"
 		}
-	} else if !j.isPXEAllowed() {
+	case !j.isPXEAllowed():
 		// Always honor allow_pxe.
 		// We set a filename because if a machine is actually trying to PXE and nothing is sent it may hang for
 		// a while waiting for any possible ProxyDHCP packets and it would delay booting to disks and phoning-home.
@@ -163,7 +165,7 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 		os := j.OperatingSystem()
 		j.With("instance.state", j.instance.State, "os_slug", os.Slug, "os_distro", os.Distro, "os_version", os.Version).Info()
 		filename = "nonexistent"
-	} else {
+	default:
 		isHTTPClient = true
 		filename = "auto.ipxe"
 	}

@@ -27,7 +27,7 @@ func (c *Config) Render(w io.Writer) error {
 
 	_, err = w.Write(b)
 	if err != nil {
-		errors.Wrap(err, "writing ignition config")
+		return errors.Wrap(err, "writing ignition config")
 	}
 
 	return nil

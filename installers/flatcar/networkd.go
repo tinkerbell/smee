@@ -22,7 +22,7 @@ var bondOptions = []string{
 	"MIIMonitorSec=.1",
 }
 
-func configureBondSlaveUnit(j job.Job, u *unit.Unit, p client.Port) bool {
+func configureBondSlaveUnit(_ job.Job, u *unit.Unit, p client.Port) bool {
 	if p.Data.Bond != bondName {
 		return false
 	}

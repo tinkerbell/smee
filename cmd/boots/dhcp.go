@@ -57,10 +57,10 @@ type dhcpHandler struct {
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
-	d.pool.Submit(func() { d.serveDHCP(w, req) })
+	d.pool.Submit(func() { d.serve(w, req) })
 }
 
-func (d dhcpHandler) serveDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
+func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
 	if conf.ShouldIgnoreOUI(mac.String()) {
 		mainlog.With("mac", mac).Info("mac is in ignore list")

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Component models a single hardware component
+// Component models a single hardware component.
 type Component struct {
 	Type            string      `json:"type"`
 	Name            string      `json:"name"`
@@ -23,7 +23,7 @@ type ComponentsResponse struct {
 	Components []Component `json:"components"`
 }
 
-// AddHardware - Add hardware component(s)
+// AddHardware - Add hardware component(s).
 func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 	b, err := readClose(req.Body)
 	if err != nil {
@@ -58,5 +58,5 @@ func (j Job) AddHardware(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte{})
+	_, _ = w.Write([]byte{})
 }

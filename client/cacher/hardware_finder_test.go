@@ -70,7 +70,6 @@ func TestByIP(t *testing.T) {
 
 			cf := HardwareFinder{cc, nil}
 			d, err := cf.ByIP(context.Background(), ip)
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)
@@ -159,7 +158,6 @@ func TestByMAC(t *testing.T) {
 
 			cf := HardwareFinder{cc, tc.reporter}
 			d, err := cf.ByMAC(context.Background(), mac, giaddr, "")
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)
@@ -192,7 +190,7 @@ type fakeEMGetter struct {
 	response string
 }
 
-func (c *fakeEMGetter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+func (c *fakeEMGetter) Post(_ context.Context, _, _ string, body io.Reader, v interface{}) error {
 	var err error
 	c.body, err = ioutil.ReadAll(body)
 	if err != nil {

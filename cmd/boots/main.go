@@ -32,7 +32,7 @@ import (
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/installers/custom_ipxe"
+	"github.com/tinkerbell/boots/installers/customipxe"
 	"github.com/tinkerbell/boots/installers/flatcar"
 	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/installers/vmware"
@@ -99,10 +99,10 @@ type config struct {
 func main() {
 	cfg := &config{}
 	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
-	cli.Parse(os.Args[1:])
+	_ = cli.Parse(os.Args[1:])
 
 	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
-	flag.Set("log-level", cfg.logLevel)
+	_ = flag.Set("log-level", cfg.logLevel)
 	l, err := log.Init("github.com/tinkerbell/boots")
 	if err != nil {
 		panic(nil)
@@ -216,12 +216,12 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 
-	installers, err := cfg.registerInstallers()
+	i, err := cfg.registerInstallers()
 	if err != nil {
 		mainlog.Fatal(err)
 	}
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go httpServer.ServeHTTP(installers, cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(i, cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -273,7 +273,9 @@ func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.Workf
 		wf = kf
 		hf = kf
 		// Start the client-side cache
-		go kf.Start(context.Background())
+		go func() {
+			_ = kf.Start(context.Background())
+		}()
 	}
 
 	return wf, hf, nil
@@ -286,7 +288,6 @@ func getReporter(l log.Logger) (client.Reporter, error) {
 		consumer := env.Get("API_CONSUMER_TOKEN")
 		if consumer == "" {
 			return nil, errors.New("required envvar missing: API_CONSUMER_TOKEN")
-
 		}
 		auth := env.Get("API_AUTH_TOKEN")
 		if auth == "" {
@@ -345,7 +346,7 @@ func defaultLogger(level string) logr.Logger {
 	return zapr.NewLogger(zapLogger)
 }
 
-// customUsageFunc is a custom UsageFunc used for all commands
+// customUsageFunc is a custom UsageFunc used for all commands.
 func customUsageFunc(c *ffcli.Command) string {
 	var b strings.Builder
 
@@ -419,9 +420,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 		ShortUsage: "Run Boots server for provisioning",
 		FlagSet:    fs,
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
-		UsageFunc: func(c *ffcli.Command) string {
-			return customUsageFunc(c)
-		},
+		UsageFunc:  customUsageFunc,
 	}
 }
 
@@ -439,7 +438,7 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 	i.RegisterDistro("flatcar", o.BootScript("flatcar"))
 
 	// register custom ipxe
-	o = custom_ipxe.Installer(extraIPXEVars)
+	o = customipxe.Installer(extraIPXEVars)
 	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
 	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
 

@@ -89,7 +89,8 @@ imgfree
 set base-url ` + conf.OsieVendorServicesURL + `/vmware/%s
 kernel ${base-url}/mboot.c32 -c ${base-url}/boot.cfg ks=${tinkerbell}/vmware/ks-esxi.cfg netdevice=00:00:ba:dd:be:ef ksdevice=00:00:ba:dd:be:ef
 boot
-`},
+`,
+	},
 	"uefi": {
 		plan: "c2.medium.x86",
 		script: `#!ipxe

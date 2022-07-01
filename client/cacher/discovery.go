@@ -47,7 +47,7 @@ func (d DiscoveryCacher) Hardware() client.Hardware {
 	return d.HardwareCacher
 }
 
-func (d DiscoveryCacher) DnsServers(mac net.HardwareAddr) []net.IP {
+func (d DiscoveryCacher) DNSServers(net.HardwareAddr) []net.IP {
 	return conf.DNSServers
 }
 
@@ -55,7 +55,7 @@ func (d DiscoveryCacher) Instance() *client.Instance {
 	return d.HardwareCacher.Instance
 }
 
-func (d DiscoveryCacher) LeaseTime(mac net.HardwareAddr) time.Duration {
+func (d DiscoveryCacher) LeaseTime(net.HardwareAddr) time.Duration {
 	return conf.DHCPLeaseTime
 }
 
@@ -133,7 +133,7 @@ func (d DiscoveryCacher) GetIP(mac net.HardwareAddr) client.IP {
 }
 
 // dummy method for tink data model transition.
-func (d DiscoveryCacher) GetMAC(ip net.IP) net.HardwareAddr {
+func (d DiscoveryCacher) GetMAC(net.IP) net.HardwareAddr {
 	return d.PrimaryDataMAC().HardwareAddr()
 }
 
@@ -150,7 +150,7 @@ func (d DiscoveryCacher) InstanceIP(mac string) *client.IP {
 		return ip
 	}
 	if d.Instance().State == "provisioning" || d.Instance().State == "deprovisioning" {
-		ip := d.hardwareIP()
+		ip := d.hwIP()
 		if ip != nil {
 			return ip
 		}
@@ -168,11 +168,11 @@ func (d DiscoveryCacher) HardwareIP(mac string) *client.IP {
 		return nil
 	}
 
-	return d.hardwareIP()
+	return d.hwIP()
 }
 
-// hardwareIP returns the IP configuration that should be offered to the hardware (not exported).
-func (d DiscoveryCacher) hardwareIP() *client.IP {
+// hwIP returns the IP configuration that should be offered to the hardware (not exported).
+func (d DiscoveryCacher) hwIP() *client.IP {
 	h := d.Hardware()
 	for _, ip := range h.HardwareIPs() {
 		if ip.Family != 4 {
@@ -289,15 +289,15 @@ func (h HardwareCacher) Interfaces() []client.Port {
 	return ports
 }
 
-func (h HardwareCacher) HardwareAllowPXE(mac net.HardwareAddr) bool {
+func (h HardwareCacher) HardwareAllowPXE(net.HardwareAddr) bool {
 	return h.AllowPXE
 }
 
-func (h HardwareCacher) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
+func (h HardwareCacher) HardwareAllowWorkflow(net.HardwareAddr) bool {
 	return h.AllowWorkflow
 }
 
-func (h HardwareCacher) HardwareArch(mac net.HardwareAddr) string {
+func (h HardwareCacher) HardwareArch(net.HardwareAddr) string {
 	return h.Arch
 }
 
@@ -345,22 +345,22 @@ func (h HardwareCacher) HardwareState() client.HardwareState {
 	return h.State
 }
 
-func (h HardwareCacher) HardwareUEFI(mac net.HardwareAddr) bool {
+func (h HardwareCacher) HardwareUEFI(net.HardwareAddr) bool {
 	return h.UEFI
 }
 
-// dummy method for tink data model transition
-func (h HardwareCacher) OSIEBaseURL(mac net.HardwareAddr) string {
+// dummy method for tink data model transition.
+func (h HardwareCacher) OSIEBaseURL(net.HardwareAddr) string {
 	return ""
 }
 
-// dummy method for tink data model transition
-func (h HardwareCacher) KernelPath(mac net.HardwareAddr) string {
+// dummy method for tink data model transition.
+func (h HardwareCacher) KernelPath(net.HardwareAddr) string {
 	return ""
 }
 
-// dummy method for tink data model transition
-func (h HardwareCacher) InitrdPath(mac net.HardwareAddr) string {
+// dummy method for tink data model transition.
+func (h HardwareCacher) InitrdPath(net.HardwareAddr) string {
 	return ""
 }
 

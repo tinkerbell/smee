@@ -77,7 +77,7 @@ func IsTinkerbellIPXE(req *dhcp4.Packet) bool {
 	return string(uc) == "Tinkerbell"
 }
 
-// IsIPXE returns bool depending on if the request originated with a version of iPXE
+// IsIPXE returns bool depending on if the request originated with a version of iPXE.
 func IsIPXE(req *dhcp4.Packet) bool {
 	if om := GetEncapsulatedOptions(req); om != nil && HasFeature(om, FeatureHTTP) {
 		return true
@@ -147,8 +147,7 @@ func formatFeature(info *optionInfo, b []byte) (string, string) {
 	}
 	v := b[0]
 
-	switch info.Type {
-	case "bool":
+	if info.Type == "bool" {
 		if v == 1 {
 			return info.Name, "true"
 		}
@@ -160,7 +159,6 @@ func formatFeature(info *optionInfo, b []byte) (string, string) {
 func formatOption(info *optionInfo, b []byte) (string, string) {
 	switch info.Type {
 	case "string", "":
-		break
 	case "hex":
 		buf := make([]byte, 0, len(b)*2+len(b)-1)
 		for i, c := range b {

@@ -16,7 +16,7 @@ import (
 func TestSetPXEFilename(t *testing.T) {
 	conf.PublicFQDN = "boots-testing.packet.net"
 
-	var setPXEFilenameTests = []struct {
+	setPXEFilenameTests := []struct {
 		name       string
 		hState     string
 		id         string
@@ -30,39 +30,69 @@ func TestSetPXEFilename(t *testing.T) {
 		httpClient bool
 		filename   string
 	}{
-		{name: "just in_use",
-			hState: "in_use"},
-		{name: "no instance state",
-			hState: "in_use", id: "$instance_id", iState: ""},
-		{name: "instance not active",
-			hState: "in_use", id: "$instance_id", iState: "not_active"},
-		{name: "instance active",
-			hState: "in_use", id: "$instance_id", iState: "active"},
-		{name: "active not custom ipxe",
-			hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe"},
-		{name: "active custom ipxe",
+		{
+			name:   "just in_use",
+			hState: "in_use",
+		},
+		{
+			name:   "no instance state",
+			hState: "in_use", id: "$instance_id", iState: "",
+		},
+		{
+			name:   "instance not active",
+			hState: "in_use", id: "$instance_id", iState: "not_active",
+		},
+		{
+			name:   "instance active",
+			hState: "in_use", id: "$instance_id", iState: "active",
+		},
+		{
+			name:   "active not custom ipxe",
+			hState: "in_use", id: "$instance_id", iState: "active", slug: "not_custom_ipxe",
+		},
+		{
+			name:   "active custom ipxe",
 			hState: "in_use", id: "$instance_id", iState: "active", slug: "custom_ipxe",
-			filename: "undionly.kpxe"},
-		{name: "active custom ipxe with allow pxe",
+			filename: "undionly.kpxe",
+		},
+		{
+			name:   "active custom ipxe with allow pxe",
 			hState: "in_use", id: "$instance_id", iState: "active", allowPXE: true,
-			filename: "undionly.kpxe"},
-		{name: "hua",
-			plan: "hua", filename: "snp.efi"},
-		{name: "2a2",
-			plan: "2a2", filename: "snp.efi"},
-		{name: "arm",
-			arm: true, filename: "snp.efi"},
-		{name: "x86 uefi",
-			uefi: true, filename: "ipxe.efi"},
-		{name: "x86 uefi http client",
+			filename: "undionly.kpxe",
+		},
+		{
+			name: "hua",
+			plan: "hua", filename: "snp.efi",
+		},
+		{
+			name: "2a2",
+			plan: "2a2", filename: "snp.efi",
+		},
+		{
+			name: "arm",
+			arm:  true, filename: "snp.efi",
+		},
+		{
+			name: "x86 uefi",
+			uefi: true, filename: "ipxe.efi",
+		},
+		{
+			name: "x86 uefi http client",
 			uefi: true, allowPXE: true, httpClient: true,
-			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi"},
-		{name: "all defaults",
-			filename: "undionly.kpxe"},
-		{name: "packet iPXE",
-			packet: true, filename: "nonexistent"},
-		{name: "packet iPXE PXE allowed",
-			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + conf.PublicFQDN + "/auto.ipxe"},
+			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi",
+		},
+		{
+			name:     "all defaults",
+			filename: "undionly.kpxe",
+		},
+		{
+			name:   "packet iPXE",
+			packet: true, filename: "nonexistent",
+		},
+		{
+			name:   "packet iPXE PXE allowed",
+			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + conf.PublicFQDN + "/auto.ipxe",
+		},
 	}
 
 	for i, tt := range setPXEFilenameTests {

@@ -49,9 +49,9 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 		extraIPXEVars:       dynamicIPXEVars,
 	}
 
-	if conf.HollowClientId != "" && conf.HollowClientRequestSecret != "" {
+	if conf.HollowClientID != "" && conf.HollowClientRequestSecret != "" {
 		hollowParams := []string{
-			"hollow_client_id=" + conf.HollowClientId,
+			"hollow_client_id=" + conf.HollowClientID,
 			"hollow_client_request_secret=" + conf.HollowClientRequestSecret,
 		}
 		i.hollowParams = strings.Join(hollowParams, " ")
@@ -93,7 +93,7 @@ func (i installer) BootScript(slug string) job.BootScript {
 	}
 }
 
-// install generates the ipxe boot script for booting into the osie installer
+// install generates the ipxe boot script for booting into the osie installer.
 func (i installer) install(ctx context.Context, j job.Job, s *ipxe.Script) {
 	for _, kv := range i.extraIPXEVars {
 		s.Set(kv[0], kv[1])
@@ -117,14 +117,14 @@ func (i installer) install(ctx context.Context, j job.Job, s *ipxe.Script) {
 	}
 	s.Set("state", j.HardwareState())
 
-	i.bootScript(ctx, "install", j, s)
+	i.setBootScript(ctx, "install", j, s)
 }
 
-// rescue generates the ipxe boot script for booting into osie in rescue mode
+// rescue generates the ipxe boot script for booting into osie in rescue mode.
 func (i installer) rescue(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.Set("action", "rescue")
 	s.Set("state", j.HardwareState())
-	i.bootScript(ctx, "rescue", j, s)
+	i.setBootScript(ctx, "rescue", j, s)
 }
 
 func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
@@ -135,10 +135,10 @@ func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
 	s.Set("action", "discover")
 	s.Set("state", j.HardwareState())
 
-	i.bootScript(ctx, "discover", j, s)
+	i.setBootScript(ctx, "discover", j, s)
 }
 
-func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
+func (i installer) setBootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
 	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
@@ -155,7 +155,7 @@ func (i installer) bootScript(ctx context.Context, action string, j job.Job, s *
 	s.Boot()
 }
 
-func (i installer) kernelParams(ctx context.Context, action, state string, j job.Job, s *ipxe.Script) {
+func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job, s *ipxe.Script) {
 	s.Args(i.defaultParams)
 
 	// only add traceparent if tracing is enabled
@@ -246,7 +246,7 @@ func isCustomOSIE(j job.Job) bool {
 	return j.OSIEVersion() != ""
 }
 
-// osieBaseURL returns the value of Custom OSIE Service Version or just /current
+// osieBaseURL returns the value of Custom OSIE Service Version or just /current.
 func osieBaseURL(osieURL string, osieFullURLOverride string, j job.Job) string {
 	if osieFullURLOverride != "" {
 		return osieFullURLOverride

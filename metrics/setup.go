@@ -23,7 +23,7 @@ var (
 	JobsInProgress *prometheus.GaugeVec
 )
 
-func Init(_ log.Logger) {
+func Init(log.Logger) {
 	DHCPTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "dhcp_total",
 		Help: "Number of DHCP Requests handled.",
@@ -71,7 +71,7 @@ func Init(_ log.Logger) {
 
 	DiscoverDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "discover_duration_seconds",
-		Help:    "Duration taken to get a responce for a newly discovered request.",
+		Help:    "Duration taken to get a response for a newly discovered request.",
 		Buckets: prometheus.LinearBuckets(.01, .05, 10),
 	}, []string{"from"})
 	HardwareDiscovers = promauto.NewCounterVec(prometheus.CounterOpts{

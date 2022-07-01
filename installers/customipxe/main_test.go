@@ -1,4 +1,4 @@
-package custom_ipxe
+package customipxe
 
 import (
 	"context"
@@ -14,9 +14,7 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-var (
-	testLogger l.Logger
-)
+var testLogger l.Logger
 
 func TestMain(m *testing.M) {
 	logger, _ := l.Init("github.com/tinkerbell/boots")
@@ -27,7 +25,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIpxeScript(t *testing.T) {
-	var testCases = []struct {
+	testCases := []struct {
 		name          string
 		installer     string
 		installerData *client.InstallerData
@@ -167,7 +165,7 @@ func TestIpxeScript(t *testing.T) {
 }
 
 func TestIpxeScriptFromConfig(t *testing.T) {
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		config *client.InstallerData
 		want   string
@@ -253,7 +251,7 @@ func TestIpxeScriptFromConfig(t *testing.T) {
 }
 
 func TestConfigValidate(t *testing.T) {
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		chain  string
 		script string

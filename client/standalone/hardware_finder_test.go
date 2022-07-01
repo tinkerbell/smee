@@ -105,7 +105,6 @@ func TestByIP(t *testing.T) {
 				db: tc.db,
 			}
 			d, err := sf.ByIP(context.Background(), tc.arg)
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)
@@ -227,10 +226,8 @@ func TestByMAC(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			cf := HardwareFinder{tc.db}
 			d, err := cf.ByMAC(context.Background(), tc.arg, nil, "")
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)

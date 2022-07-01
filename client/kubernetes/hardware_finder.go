@@ -16,7 +16,7 @@ import (
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Finder is a type that looks up hardware and workflows from Kubernetes
+// Finder is a type that looks up hardware and workflows from Kubernetes.
 type Finder struct {
 	clientFunc   func() crclient.Client
 	cacheStarter func(context.Context) error
@@ -58,7 +58,7 @@ func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Fi
 	}, nil
 }
 
-// Start instantiates the client-side cache
+// Start instantiates the client-side cache.
 func (f *Finder) Start(ctx context.Context) error {
 	return f.cacheStarter(ctx)
 }
@@ -123,6 +123,7 @@ func (f *Finder) HasActiveWorkflow(ctx context.Context, hwID client.HardwareID) 
 
 	wfContexts := []*workflow.WorkflowContext{}
 	for _, wf := range stored.Items {
+		wf := wf
 		wfContexts = append(wfContexts, convert.WorkflowToWorkflowContext(&wf))
 	}
 
@@ -130,7 +131,7 @@ func (f *Finder) HasActiveWorkflow(ctx context.Context, hwID client.HardwareID) 
 		WorkflowContexts: wfContexts,
 	}
 
-	for _, wf := range (*wcl).WorkflowContexts {
+	for _, wf := range wcl.WorkflowContexts {
 		if wf.CurrentActionState == workflow.State_STATE_PENDING || wf.CurrentActionState == workflow.State_STATE_RUNNING {
 			return true, nil
 		}

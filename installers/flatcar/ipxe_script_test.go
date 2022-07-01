@@ -71,7 +71,8 @@ set base-url ` + conf.OsieVendorServicesURL + `/flatcar
 kernel ${base-url}/flatcar_production_pxe.vmlinuz console=ttyS1,115200n8 console=tty0 vga=773 initrd=flatcar_production_pxe_image.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/flatcar_production_pxe_image.cpio.gz
 boot
-`},
+`,
+	},
 	"aarch64": {
 		"c3.large.arm",
 		`#!ipxe
@@ -94,5 +95,6 @@ set base-url ` + conf.OsieVendorServicesURL + `/flatcar
 kernel ${base-url}/flatcar-arm.vmlinuz console=ttyAMA0,115200 initrd=flatcar-arm.cpio.gz bonding.max_bonds=0 flatcar.autologin flatcar.first_boot=1 flatcar.config.url=${tinkerbell}/flatcar/ignition.json systemd.setenv=phone_home_url=${tinkerbell}/phone-home
 initrd ${base-url}/flatcar-arm.cpio.gz
 boot
-`},
+`,
+	},
 }

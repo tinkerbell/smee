@@ -20,7 +20,7 @@ type Manager interface {
 	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *Job, error)
 }
 
-// Creator is a type that can create jobs
+// Creator is a type that can create jobs.
 type Creator struct {
 	finder                client.HardwareFinder
 	reporter              client.Reporter
@@ -28,7 +28,7 @@ type Creator struct {
 	logger                log.Logger
 }
 
-// NewCreator returns a manager that can create jobs
+// NewCreator returns a manager that can create jobs.
 func NewCreator(logger log.Logger, provisionerEngineName string, reporter client.Reporter, finder client.HardwareFinder) *Creator {
 	return &Creator{
 		finder:                finder,
@@ -45,7 +45,7 @@ func Init(l log.Logger) {
 	initRSA()
 }
 
-// Job holds per request data
+// Job holds per request data.
 type Job struct {
 	log.Logger
 	provisionerEngineName string
@@ -79,13 +79,13 @@ func NewInstallers() Installers {
 }
 
 // AllowPxe returns the value from the hardware data
-// in tink server defined at network.interfaces[].netboot.allow_pxe
+// in tink server defined at network.interfaces[].netboot.allow_pxe.
 func (j Job) AllowPxe() bool {
 	return j.hardware.HardwareAllowPXE(j.mac)
 }
 
 // ProvisionerEngineName returns the current provisioning engine name
-// as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime
+// as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime.
 func (j Job) ProvisionerEngineName() string {
 	return j.provisionerEngineName
 }
@@ -160,7 +160,7 @@ func (c *Creator) CreateFromIP(ctx context.Context, ip net.IP) (context.Context,
 	return ctx, j, nil
 }
 
-// MarkDeviceActive marks the device active
+// MarkDeviceActive marks the device active.
 func (j Job) MarkDeviceActive(ctx context.Context) {
 	if id := j.InstanceID(); id != "" {
 		if err := j.reporter.PostInstancePhoneHome(ctx, id); err != nil {
@@ -209,7 +209,7 @@ func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, 
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
 	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))
 	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
-	j.dhcp.SetDNSServers(d.DnsServers(j.mac))
+	j.dhcp.SetDNSServers(d.DNSServers(j.mac))
 
 	hostname, err := d.Hostname()
 	if err != nil {

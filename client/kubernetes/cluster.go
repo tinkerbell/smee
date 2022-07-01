@@ -42,7 +42,6 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 	c, err := cluster.New(config, func(o *cluster.Options) {
 		o.Scheme = runtimescheme
 	})
-
 	if err != nil {
 		return nil, err
 	}

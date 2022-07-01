@@ -10,7 +10,6 @@ import (
 )
 
 func TestGetCircuitID(t *testing.T) {
-
 	for _, test := range []struct {
 		name        string
 		option      dhcp4.Option
@@ -41,7 +40,7 @@ func TestGetCircuitID(t *testing.T) {
 		},
 	} {
 		t.Log(test.name)
-		var packet = new(dhcp4.Packet)
+		packet := new(dhcp4.Packet)
 
 		packet.OptionMap = make(dhcp4.OptionMap, 255)
 		packet.SetOption(test.option, test.optionvalue)
@@ -56,7 +55,6 @@ func TestGetCircuitID(t *testing.T) {
 				t.Fatalf("expected value not returned for option82, want: %s, got: %s", test.expected, c)
 			}
 		}
-
 	}
 }
 
@@ -68,5 +66,5 @@ func TestMain(m *testing.M) {
 	defer l.Close()
 	mainlog = l.Package("main")
 	metrics.Init(l)
-	os.Exit(m.Run())
+	os.Exit(m.Run()) //nolint:gocritic // this seems to be the correct pattern
 }
