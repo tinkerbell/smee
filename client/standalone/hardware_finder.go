@@ -16,7 +16,7 @@ type HardwareFinder struct {
 }
 
 // NewHardwareFinder returns a Finder given a JSON file that is formatted as a slice of
-// DiscoverStandalone
+// DiscoverStandalone.
 func NewHardwareFinder(path string) (*HardwareFinder, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -47,7 +47,7 @@ func (f *HardwareFinder) ByIP(_ context.Context, ip net.IP) (client.Discoverer, 
 }
 
 // ByMAC returns a Discoverer for a particular MAC address.
-func (f *HardwareFinder) ByMAC(_ context.Context, mac net.HardwareAddr, ip net.IP, circutId string) (client.Discoverer, error) {
+func (f *HardwareFinder) ByMAC(_ context.Context, mac net.HardwareAddr, _ net.IP, _ string) (client.Discoverer, error) {
 	for _, d := range f.db {
 		if d.MAC().String() == mac.String() {
 			return d, nil

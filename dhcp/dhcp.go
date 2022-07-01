@@ -16,6 +16,7 @@ func NewReply(w dhcp4.ReplyWriter, req *dhcp4.Packet) Reply {
 		return NewOffer(w, req)
 	case dhcp4.MessageTypeRequest:
 		return NewAck(w, req)
+	default:
 	}
 
 	return nil

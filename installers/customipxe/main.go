@@ -1,4 +1,4 @@
-package custom_ipxe
+package customipxe
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type installer struct {
 	extraIPXEVars [][]string
 }
 
-// pass vars here
+// pass vars here.
 func Installer(dynamicIPXEVars [][]string) job.BootScripter {
 	i := installer{
 		extraIPXEVars: dynamicIPXEVars,
@@ -24,30 +24,31 @@ func Installer(dynamicIPXEVars [][]string) job.BootScripter {
 }
 
 func (i installer) BootScript(string) job.BootScript {
-	return i.bootScript
+	return i.setBootScript
 }
 
-func (i installer) bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+func (i installer) setBootScript(_ context.Context, j job.Job, s *ipxe.Script) {
 	logger := j.Logger.With("installer", "custom_ipxe")
 
 	var cfg *client.InstallerData
-	if j.OperatingSystem().Installer == "custom_ipxe" {
+	switch {
+	case j.OperatingSystem().Installer == "custom_ipxe":
 		cfg = j.OperatingSystem().InstallerData
 		if cfg == nil {
 			s.Echo("Installer data not provided")
 			s.Shell()
-			logger.Error(ErrEmptyIpxeConfig, "installer data not provided")
+			logger.Error(ErrEmptyIPXEConfig, "installer data not provided")
 
 			return
 		}
-	} else if strings.HasPrefix(j.UserData(), "#!ipxe") {
+	case strings.HasPrefix(j.UserData(), "#!ipxe"):
 		cfg = &client.InstallerData{Script: j.UserData()}
-	} else if j.IPXEScriptURL() != "" {
+	case j.IPXEScriptURL() != "":
 		cfg = &client.InstallerData{Chain: j.IPXEScriptURL()}
-	} else {
+	default:
 		s.Echo("Unknown ipxe configuration")
 		s.Shell()
-		logger.Error(ErrEmptyIpxeConfig, "unknown ipxe configuration")
+		logger.Error(ErrEmptyIPXEConfig, "unknown ipxe configuration")
 
 		return
 	}
@@ -80,7 +81,7 @@ func ipxeScriptFromConfig(logger log.Logger, cfg *client.InstallerData, j job.Jo
 
 func validateConfig(c *client.InstallerData) error {
 	if c.Chain == "" && c.Script == "" {
-		return ErrEmptyIpxeConfig
+		return ErrEmptyIPXEConfig
 	}
 
 	return nil

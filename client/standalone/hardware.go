@@ -6,7 +6,7 @@ import (
 	"github.com/tinkerbell/boots/client"
 )
 
-// HardwareStandalone implements the Hardware interface for standalone operation
+// HardwareStandalone implements the Hardware interface for standalone operation.
 type HardwareStandalone struct {
 	ID          string          `json:"id"`
 	Network     client.Network  `json:"network"`
@@ -14,15 +14,15 @@ type HardwareStandalone struct {
 	Traceparent string          `json:"traceparent"`
 }
 
-func (hs *HardwareStandalone) HardwareAllowPXE(mac net.HardwareAddr) bool {
+func (hs *HardwareStandalone) HardwareAllowPXE(net.HardwareAddr) bool {
 	return hs.getPrimaryInterface().Netboot.AllowPXE
 }
 
-func (hs *HardwareStandalone) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
+func (hs *HardwareStandalone) HardwareAllowWorkflow(net.HardwareAddr) bool {
 	return hs.getPrimaryInterface().Netboot.AllowWorkflow
 }
 
-func (hs *HardwareStandalone) HardwareArch(mac net.HardwareAddr) string {
+func (hs *HardwareStandalone) HardwareArch(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().DHCP.Arch
 }
 
@@ -75,19 +75,19 @@ func (hs *HardwareStandalone) HardwareOSIEVersion() string {
 	return "" // stubbed out in tink too
 }
 
-func (hs *HardwareStandalone) HardwareUEFI(mac net.HardwareAddr) bool {
+func (hs *HardwareStandalone) HardwareUEFI(net.HardwareAddr) bool {
 	return hs.getPrimaryInterface().DHCP.UEFI
 }
 
-func (hs *HardwareStandalone) OSIEBaseURL(mac net.HardwareAddr) string {
+func (hs *HardwareStandalone) OSIEBaseURL(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().Netboot.OSIE.BaseURL
 }
 
-func (hs *HardwareStandalone) KernelPath(mac net.HardwareAddr) string {
+func (hs *HardwareStandalone) KernelPath(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().Netboot.OSIE.Kernel
 }
 
-func (hs *HardwareStandalone) InitrdPath(mac net.HardwareAddr) string {
+func (hs *HardwareStandalone) InitrdPath(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().Netboot.OSIE.Initrd
 }
 
@@ -103,9 +103,9 @@ func (hs *HardwareStandalone) OperatingSystem() *client.OperatingSystem {
 func (hs *HardwareStandalone) getPrimaryInterface() client.NetworkInterface {
 	if len(hs.Network.Interfaces) >= 1 {
 		return hs.Network.Interfaces[0]
-	} else {
-		return hs.emptyInterface()
 	}
+
+	return hs.emptyInterface()
 }
 
 func (hs *HardwareStandalone) emptyInterface() client.NetworkInterface {
@@ -121,6 +121,6 @@ func (hs *HardwareStandalone) emptyInterface() client.NetworkInterface {
 }
 
 // GetTraceparent returns the traceparent from the config.
-func (h HardwareStandalone) GetTraceparent() string {
-	return h.Traceparent
+func (hs *HardwareStandalone) GetTraceparent() string {
+	return hs.Traceparent
 }

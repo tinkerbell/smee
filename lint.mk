@@ -1,4 +1,4 @@
-# BEGIN: lint-install /Users/jacobweinstock/repos/tinkerbell/boots
+# BEGIN: lint-install github.com/tinkerbell/boots
 # http://github.com/tinkerbell/lint-install
 
 .PHONY: lint
@@ -42,4 +42,4 @@ _lint: $(LINTERS)
 .PHONY: fix $(FIXERS)
 fix: $(FIXERS)
 
-# END: lint-install /Users/jacobweinstock/repos/tinkerbell/boots
+# END: lint-install github.com/tinkerbell/boots

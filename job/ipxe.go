@@ -20,7 +20,7 @@ type BootScripter interface {
 
 func (i *Installers) RegisterDefaultInstaller(bs BootScript) {
 	if i.Default != nil {
-		err := errors.New("default installer already registered!")
+		err := errors.New("default installer already registered")
 		joblog.Fatal(err)
 	}
 	i.Default = bs
@@ -28,7 +28,7 @@ func (i *Installers) RegisterDefaultInstaller(bs BootScript) {
 
 func (i *Installers) RegisterDistro(name string, builder BootScript) {
 	if _, ok := i.ByDistro[name]; ok {
-		err := errors.Errorf("distro %q already registered!", name)
+		err := errors.Errorf("distro %q already registered", name)
 		joblog.Fatal(err, "distro", name)
 	}
 	i.ByDistro[name] = builder
@@ -36,7 +36,7 @@ func (i *Installers) RegisterDistro(name string, builder BootScript) {
 
 func (i *Installers) RegisterInstaller(name string, builder BootScript) {
 	if _, ok := i.ByInstaller[name]; ok {
-		err := errors.Errorf("installer %q already registered!", name)
+		err := errors.Errorf("installer %q already registered", name)
 		joblog.Fatal(err, "installer", name)
 	}
 	i.ByInstaller[name] = builder
@@ -44,7 +44,7 @@ func (i *Installers) RegisterInstaller(name string, builder BootScript) {
 
 func (i *Installers) RegisterSlug(name string, builder BootScript) {
 	if _, ok := i.BySlug[name]; ok {
-		err := errors.Errorf("slug %q already registered!", name)
+		err := errors.Errorf("slug %q already registered", name)
 		joblog.Fatal(err, "slug", name)
 	}
 	i.BySlug[name] = builder
@@ -123,6 +123,6 @@ func (i Installers) auto(ctx context.Context, j Job, s *ipxe.Script) {
 	shell(ctx, j, s)
 }
 
-func shell(ctx context.Context, j Job, s *ipxe.Script) {
+func shell(_ context.Context, _ Job, s *ipxe.Script) {
 	s.Shell()
 }

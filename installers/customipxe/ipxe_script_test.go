@@ -1,4 +1,4 @@
-package custom_ipxe
+package customipxe
 
 import (
 	"context"

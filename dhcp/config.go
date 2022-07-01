@@ -58,8 +58,7 @@ func (c *Config) Hostname() string {
 }
 
 func (c *Config) Setup(address, netmask, gateway net.IP) {
-	v4 := address.To4()
-	if v4 != nil {
+	if v4 := address.To4(); v4 != nil {
 		c.addr = v4
 		c.opts = make(dhcp4.OptionMap, 255)
 

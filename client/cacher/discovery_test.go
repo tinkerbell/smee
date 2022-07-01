@@ -30,7 +30,7 @@ func TestDiscoveryCacher(t *testing.T) {
 			t.Logf("PrimaryDataMac: %s", d.PrimaryDataMAC().HardwareAddr().String())
 			t.Logf("MAC: %v", d.MAC())
 			t.Logf("mac: %s", mac.String())
-			t.Logf("hardwareclient.IP: %v", d.hardwareIP())
+			t.Logf("hardwareclient.IP: %v", d.hwIP())
 			t.Log()
 			h := d.Hardware()
 			for _, IP := range h.HardwareIPs() {
@@ -234,7 +234,7 @@ var cacherTests = map[string]struct {
 	},
 }
 
-// use vim's (or equivalent) `!jq -S` on these strings
+// use vim's (or equivalent) `!jq -S` on these strings.
 const (
 	discovered = `
 {

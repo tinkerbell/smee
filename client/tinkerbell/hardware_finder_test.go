@@ -84,7 +84,6 @@ func TestByIP(t *testing.T) {
 
 			tinkfinder := HardwareFinder{tcli}
 			d, err := tinkfinder.ByIP(context.Background(), tc.arg)
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)
@@ -179,7 +178,6 @@ func TestByMAC(t *testing.T) {
 
 			tinkfinder := HardwareFinder{tcli}
 			d, err := tinkfinder.ByMAC(context.Background(), tc.arg, net.ParseIP("1.1.1.1"), "")
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)
@@ -273,7 +271,6 @@ func TestWorkflowFinder(t *testing.T) {
 
 			tinkfinder := WorkflowFinder{tcli}
 			got, err := tinkfinder.HasActiveWorkflow(context.Background(), tc.arg)
-
 			if err != nil {
 				if tc.wantErr == nil {
 					t.Errorf("Unexpected error: %s", err)

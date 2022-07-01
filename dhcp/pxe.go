@@ -174,7 +174,7 @@ func copyGUID(rep, req *dhcp4.Packet) bool {
 // binaryTpFromContext extracts the binary trace id, span id, and trace flags
 // from the running span in ctx and returns a 26 byte []byte with the traceparent
 // encoded and ready to pass in opt43
-// see test/test-boots.sh for how to decode tp with busybox udhcpc & cut(1)
+// see test/test-boots.sh for how to decode tp with busybox udhcpc & cut(1).
 func binaryTpFromContext(ctx context.Context) []byte {
 	sc := trace.SpanContextFromContext(ctx)
 	tpBytes := make([]byte, 0, 26)

@@ -46,13 +46,13 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		post_data := map[string]string{}
+		postData := map[string]string{}
 		for key, value := range req.PostForm {
-			post_data[key] = value[0]
+			postData[key] = value[0]
 		}
 
 		buf := new(bytes.Buffer)
-		json.NewEncoder(buf).Encode(post_data)
+		_ = json.NewEncoder(buf).Encode(postData)
 		b = buf.Bytes()
 	default:
 		// Any other content types equal a bad request
@@ -64,7 +64,7 @@ func (j Job) ServePhoneHomeEndpoint(w http.ResponseWriter, req *http.Request) {
 	j.phoneHome(req.Context(), b)
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte{})
+	_, _ = w.Write([]byte{})
 }
 
 func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
@@ -90,7 +90,7 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte{})
+	_, _ = w.Write([]byte{})
 }
 
 func readClose(r io.ReadCloser) (b []byte, err error) {

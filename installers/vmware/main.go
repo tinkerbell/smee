@@ -16,7 +16,7 @@ type installer struct {
 	extraIPXEVars [][]string
 }
 
-// pass var here
+// pass var here.
 func Installer(dynamicIPXEVars [][]string) job.BootScripter {
 	i := installer{
 		extraIPXEVars: dynamicIPXEVars,

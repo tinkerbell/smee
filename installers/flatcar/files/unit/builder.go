@@ -14,7 +14,7 @@ func (b *Builder) AddSection(name string, lines ...string) *SectionBuilder {
 func (b *Builder) Len() (sum int) {
 	for i, s := range b.sections {
 		if i > 0 {
-			sum += 1
+			sum++
 		}
 		sum += s.Len()
 	}

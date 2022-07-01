@@ -22,7 +22,7 @@ func tinkOsToDiscovererOS(in *v1alpha1.MetadataInstanceOperatingSystem) *client.
 	}
 }
 
-func tinkIpToDiscovererIp(in *v1alpha1.MetadataInstanceIP) *client.IP {
+func tinkIPToDiscovererIP(in *v1alpha1.MetadataInstanceIP) *client.IP {
 	if in == nil {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (d *K8sDiscoverer) Instance() *client.Instance {
 			IPs: func(in []*v1alpha1.MetadataInstanceIP) []client.IP {
 				resp := []client.IP{}
 				for _, ip := range in {
-					resp = append(resp, *tinkIpToDiscovererIp(ip))
+					resp = append(resp, *tinkIPToDiscovererIP(ip))
 				}
 
 				return resp
@@ -81,7 +81,6 @@ func (d *K8sDiscoverer) MAC() net.HardwareAddr {
 }
 
 func (d *K8sDiscoverer) Mode() string {
-
 	return "hardware"
 }
 
@@ -123,7 +122,7 @@ func (d *K8sDiscoverer) GetMAC(ip net.IP) net.HardwareAddr {
 	return nil
 }
 
-func (d *K8sDiscoverer) DnsServers(mac net.HardwareAddr) []net.IP {
+func (d *K8sDiscoverer) DNSServers(net.HardwareAddr) []net.IP {
 	resp := []net.IP{}
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.DHCP != nil && iface.DHCP.MAC != "" {
@@ -136,7 +135,7 @@ func (d *K8sDiscoverer) DnsServers(mac net.HardwareAddr) []net.IP {
 	return resp
 }
 
-func (d *K8sDiscoverer) LeaseTime(mac net.HardwareAddr) time.Duration {
+func (d *K8sDiscoverer) LeaseTime(net.HardwareAddr) time.Duration {
 	if len(d.hw.Spec.Interfaces) > 0 && d.hw.Spec.Interfaces[0].DHCP != nil {
 		return time.Duration(d.hw.Spec.Interfaces[0].DHCP.LeaseTime) * time.Second
 	}
@@ -157,10 +156,9 @@ func (d *K8sDiscoverer) Hostname() (string, error) {
 
 func (d *K8sDiscoverer) Hardware() client.Hardware { return d }
 
-func (d *K8sDiscoverer) SetMAC(mac net.HardwareAddr) {}
+func (d *K8sDiscoverer) SetMAC(net.HardwareAddr) {}
 
 func NewK8sDiscoverer(hw *v1alpha1.Hardware) client.Discoverer {
-
 	return &K8sDiscoverer{hw: hw}
 }
 
@@ -168,8 +166,10 @@ type K8sDiscoverer struct {
 	hw *v1alpha1.Hardware
 }
 
-var _ client.Discoverer = &K8sDiscoverer{}
-var _ client.Hardware = &K8sDiscoverer{}
+var (
+	_ client.Discoverer = &K8sDiscoverer{}
+	_ client.Hardware   = &K8sDiscoverer{}
+)
 
 func (d *K8sDiscoverer) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
 	for _, iface := range d.hw.Spec.Interfaces {
@@ -191,7 +191,7 @@ func (d *K8sDiscoverer) HardwareAllowPXE(mac net.HardwareAddr) bool {
 	return false
 }
 
-func (d *K8sDiscoverer) HardwareArch(mac net.HardwareAddr) string {
+func (d *K8sDiscoverer) HardwareArch(net.HardwareAddr) string {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.DHCP != nil {
 			return iface.DHCP.Arch
@@ -229,7 +229,7 @@ func (d *K8sDiscoverer) HardwareIPs() []client.IP {
 	resp := []client.IP{}
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil {
 		for _, ip := range d.hw.Spec.Metadata.Instance.Ips {
-			resp = append(resp, *tinkIpToDiscovererIp(ip))
+			resp = append(resp, *tinkIPToDiscovererIP(ip))
 		}
 	}
 
@@ -247,7 +247,6 @@ func (d *K8sDiscoverer) HardwareManufacturer() string {
 }
 
 func (d *K8sDiscoverer) HardwareProvisioner() string {
-
 	return ""
 }
 
@@ -276,11 +275,10 @@ func (d *K8sDiscoverer) HardwareState() client.HardwareState {
 }
 
 func (d *K8sDiscoverer) HardwareOSIEVersion() string {
-
 	return ""
 }
 
-func (d *K8sDiscoverer) HardwareUEFI(mac net.HardwareAddr) bool {
+func (d *K8sDiscoverer) HardwareUEFI(net.HardwareAddr) bool {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.DHCP != nil {
 			return iface.DHCP.UEFI
@@ -290,7 +288,7 @@ func (d *K8sDiscoverer) HardwareUEFI(mac net.HardwareAddr) bool {
 	return false
 }
 
-func (d *K8sDiscoverer) OSIEBaseURL(mac net.HardwareAddr) string {
+func (d *K8sDiscoverer) OSIEBaseURL(net.HardwareAddr) string {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.Netboot != nil && iface.Netboot.OSIE != nil {
 			return iface.Netboot.OSIE.BaseURL
@@ -300,7 +298,7 @@ func (d *K8sDiscoverer) OSIEBaseURL(mac net.HardwareAddr) string {
 	return ""
 }
 
-func (d *K8sDiscoverer) KernelPath(mac net.HardwareAddr) string {
+func (d *K8sDiscoverer) KernelPath(net.HardwareAddr) string {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.Netboot != nil && iface.Netboot.OSIE != nil {
 			return iface.Netboot.OSIE.Kernel
@@ -310,7 +308,7 @@ func (d *K8sDiscoverer) KernelPath(mac net.HardwareAddr) string {
 	return ""
 }
 
-func (d *K8sDiscoverer) InitrdPath(mac net.HardwareAddr) string {
+func (d *K8sDiscoverer) InitrdPath(net.HardwareAddr) string {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.Netboot != nil && iface.Netboot.OSIE != nil {
 			return iface.Netboot.OSIE.Initrd
@@ -336,6 +334,5 @@ func (d *K8sDiscoverer) OperatingSystem() *client.OperatingSystem {
 
 // GetTraceparent always returns an empty string.
 func (d *K8sDiscoverer) GetTraceparent() string {
-
 	return ""
 }

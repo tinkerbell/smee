@@ -29,10 +29,10 @@ func Installer(dynamicIPXEVars [][]string) job.BootScripter {
 }
 
 func (i installer) BootScript(string) job.BootScript {
-	return i.bootScript
+	return i.setBootScript
 }
 
-func (i installer) bootScript(ctx context.Context, j job.Job, s *ipxe.Script) {
+func (i installer) setBootScript(_ context.Context, j job.Job, s *ipxe.Script) {
 	for _, kv := range i.extraIPXEVars {
 		s.Set(kv[0], kv[1])
 	}

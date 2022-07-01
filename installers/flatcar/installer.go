@@ -8,7 +8,7 @@ import (
 	"github.com/tinkerbell/boots/job"
 )
 
-func getInstallOpts(j job.Job, channel, facilityCode string) string {
+func getInstallOpts(j job.Job, channel, _ string) string {
 	base := map[bool]string{
 		true:  conf.OsieVendorServicesURL + "/flatcar/arm64-usr/" + channel,
 		false: conf.OsieVendorServicesURL + "/flatcar/amd64-usr/" + channel,
@@ -77,6 +77,6 @@ func configureInstaller(j job.Job, u *ignition.SystemdUnit) {
 	u.Enable()
 }
 
-func configureNetworkService(j job.Job, u *ignition.SystemdUnit) {
+func configureNetworkService(_ job.Job, u *ignition.SystemdUnit) {
 	u.Enable()
 }

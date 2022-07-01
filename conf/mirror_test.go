@@ -63,7 +63,7 @@ func Test_buildMirrorBaseURL(t *testing.T) {
 			wantErr:       true,
 		},
 		{
-			name:          "Rejects MIRROR_BASE_URL value that contains a fragmet",
+			name:          "Rejects MIRROR_BASE_URL value that contains a fragment",
 			MirrorBaseURL: "http://10.10.10.10/path#greeting",
 			wantErr:       true,
 		},

@@ -126,6 +126,7 @@ func (j Job) phoneHome(ctx context.Context, body []byte) bool {
 
 	return true
 }
+
 func (j Job) postEvent(ctx context.Context, kind, body string, private bool) bool {
 	if j.InstanceID() == "" {
 		j.With("kind", kind).Error(errors.New("postEvent called for nil instance"))
@@ -216,34 +217,36 @@ func (e *event) post(ctx context.Context, reporter client.Reporter, endpoint, id
 	if endpoint == "hardware" {
 		if e._kind == "phone-home" {
 			return reporter.PostHardwarePhoneHome(ctx, id)
-		} else {
-			var err error
-			e._id, err = reporter.PostHardwareEvent(ctx, id, bytes.NewReader(e.json))
-
-			return err
 		}
+		var err error
+		e._id, err = reporter.PostHardwareEvent(ctx, id, bytes.NewReader(e.json))
+
+		return err
 	} else if endpoint == "instance" {
 		if e._kind == "phone-home" {
 			return reporter.PostInstancePhoneHome(ctx, id)
-		} else {
-			var err error
-			e._id, err = reporter.PostInstanceEvent(ctx, id, bytes.NewReader(e.json))
-
-			return err
 		}
+		var err error
+		e._id, err = reporter.PostInstanceEvent(ctx, id, bytes.NewReader(e.json))
+
+		return err
 	}
 
 	return errors.New("unknown endpoint: " + endpoint)
 }
+
 func (e *event) postInstance(ctx context.Context, reporter client.Reporter, id string) (err error) {
 	return e.post(ctx, reporter, "instance", id)
 }
+
 func (e *event) postHardware(ctx context.Context, reporter client.Reporter, id string) (err error) {
 	return e.post(ctx, reporter, "hardware", id)
 }
+
 func (e *event) kind() string {
 	return e._kind
 }
+
 func (e *event) id() string {
 	return e._id
 }
@@ -254,7 +257,6 @@ type failure struct {
 }
 
 func (f *failure) post(ctx context.Context, reporter client.Reporter, typ, id string) error {
-
 	if id == "" {
 		return errors.New("missing id")
 	}
@@ -272,15 +274,19 @@ func (f *failure) post(ctx context.Context, reporter client.Reporter, typ, id st
 
 	return errors.New("unknown type: " + typ)
 }
+
 func (f *failure) postInstance(ctx context.Context, reporter client.Reporter, id string) error {
 	return f.post(ctx, reporter, "instance", id)
 }
+
 func (f *failure) postHardware(ctx context.Context, reporter client.Reporter, id string) error {
 	return f.post(ctx, reporter, "hardware", id)
 }
+
 func (f *failure) kind() string {
 	return "failure"
 }
+
 func (f *failure) id() string {
 	return "no-id"
 }

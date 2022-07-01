@@ -11,23 +11,23 @@ type noOpReporter struct {
 	logger log.Logger
 }
 
-func (c *noOpReporter) PostHardwareComponent(ctx context.Context, hardwareID HardwareID, body io.Reader) (*ComponentsResponse, error) {
+func (c *noOpReporter) PostHardwareComponent(context.Context, HardwareID, io.Reader) (*ComponentsResponse, error) {
 	return nil, nil
 }
 
-func (c *noOpReporter) PostHardwareEvent(ctx context.Context, id string, body io.Reader) (string, error) {
+func (c *noOpReporter) PostHardwareEvent(context.Context, string, io.Reader) (string, error) {
 	return "", nil
 }
 
-func (c *noOpReporter) PostHardwarePhoneHome(ctx context.Context, id string) error {
+func (c *noOpReporter) PostHardwarePhoneHome(context.Context, string) error {
 	return nil
 }
 
-func (c *noOpReporter) PostHardwareFail(ctx context.Context, id string, body io.Reader) error {
+func (c *noOpReporter) PostHardwareFail(context.Context, string, io.Reader) error {
 	return nil
 }
 
-func (c *noOpReporter) PostHardwareProblem(ctx context.Context, id HardwareID, body io.Reader) (string, error) {
+func (c *noOpReporter) PostHardwareProblem(context.Context, HardwareID, io.Reader) (string, error) {
 	return "", nil
 }
 
@@ -35,23 +35,23 @@ func (c *noOpReporter) PostInstancePhoneHome(context.Context, string) error {
 	return nil
 }
 
-func (c *noOpReporter) PostInstanceEvent(ctx context.Context, id string, body io.Reader) (string, error) {
+func (c *noOpReporter) PostInstanceEvent(context.Context, string, io.Reader) (string, error) {
 	return "", nil
 }
 
-func (c *noOpReporter) PostInstanceFail(ctx context.Context, id string, body io.Reader) error {
+func (c *noOpReporter) PostInstanceFail(context.Context, string, io.Reader) error {
 	return nil
 }
 
-func (c *noOpReporter) PostInstancePassword(ctx context.Context, id, pass string) error {
+func (c *noOpReporter) PostInstancePassword(context.Context, string, string) error {
 	return nil
 }
 
-func (c *noOpReporter) UpdateInstance(ctx context.Context, id string, body io.Reader) error {
+func (c *noOpReporter) UpdateInstance(context.Context, string, io.Reader) error {
 	return nil
 }
 
-func (c *noOpReporter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
+func (c *noOpReporter) Post(context.Context, string, string, io.Reader, interface{}) error {
 	return nil
 }
 

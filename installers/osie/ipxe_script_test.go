@@ -14,9 +14,9 @@ import (
 )
 
 func genRandMAC(t *testing.T) string {
+	t.Helper()
 	buf := make([]byte, 6)
-	_, err := rand.Read(buf)
-	if err != nil {
+	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
 	buf[0] = (buf[0] | 2) & 0xfe // Set local bit, ensure unicast address

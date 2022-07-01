@@ -11,6 +11,7 @@ import (
 )
 
 func assertLines(t *testing.T, m job.Mock, execLines []string) {
+	t.Helper()
 	assert := require.New(t)
 	su := ignition.SystemdUnits{}
 	configureInstaller(m.Job(), su.Add("install.service"))
@@ -22,7 +23,7 @@ func assertLines(t *testing.T, m job.Mock, execLines []string) {
 	assert.True(unit.Enabled)
 	bytes, err := unit.Contents.MarshalText()
 	assert.Nil(err)
-	verifyLines := append(baseStart, execLines...)
+	verifyLines := append(baseStart, execLines...) //nolint:gocritic // pkg level var :(
 	verifyLines = append(verifyLines, baseEnd...)
 	assert.Equal(strings.Join(verifyLines, "\n"), string(bytes))
 }
@@ -39,7 +40,7 @@ func TestInstaller(t *testing.T) {
 	}
 }
 
-// this is the base set of starter commands for flatcar installs
+// this is the base set of starter commands for flatcar installs.
 var baseStart = []string{
 	"[Unit]",
 	"Requires=systemd-networkd-wait-online.service",
@@ -49,7 +50,7 @@ var baseStart = []string{
 	"Type=oneshot",
 }
 
-// this is the end of every flatcar install
+// this is the end of every flatcar install.
 var baseEnd = []string{
 	"ExecStart=/usr/bin/systemctl reboot",
 	"",
@@ -73,7 +74,7 @@ func replacer(l []string, replacements ...string) []string {
 		panic("replacements count must be even multiple of 2")
 	}
 	script := strings.Join(l, "\n")
-	for i := 0; i < len(replacements); i = i + 2 {
+	for i := 0; i < len(replacements); i += 2 {
 		script = strings.ReplaceAll(script, replacements[i], replacements[i+1])
 	}
 

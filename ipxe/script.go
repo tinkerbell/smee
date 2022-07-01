@@ -23,13 +23,13 @@ func (s *Script) Args(args ...string) {
 	s.buf = append(s.buf, '\n')
 }
 
-// AppendString takes a string and appends it to the current Script
-func (s *Script) AppendString(s_script string) {
-	s.buf = append(s.buf, s_script...)
+// AppendString takes a string and appends it to the current Script.
+func (s *Script) AppendString(str string) {
+	s.buf = append(s.buf, str...)
 	s.buf = append(s.buf, '\n')
 }
 
-// PhoneHome takes a type and will post boots device connected to dhcp event
+// PhoneHome takes a type and will post boots device connected to dhcp event.
 func (s *Script) PhoneHome(typ string) {
 	s.buf = append(s.buf, `
 params
@@ -41,7 +41,7 @@ imgfree
 `...)
 }
 
-// Chain - Chainload another iPXE script
+// Chain - Chainload another iPXE script.
 func (s *Script) Chain(uri string) {
 	s.buf = append(append(s.buf, "chain --autofree "...), uri...)
 	s.buf = append(s.buf, '\n')
@@ -90,7 +90,7 @@ func (s *Script) Reset() {
 	s.Echo("Tinkerbell Boots iPXE")
 }
 
-// Echo outputs a string to console
+// Echo outputs a string to console.
 func (s *Script) Echo(message string) {
 	s.buf = append(append(s.buf, "echo "...), message...)
 	s.buf = append(s.buf, '\n')

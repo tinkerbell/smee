@@ -18,7 +18,7 @@ type tclient struct {
 	postErr error
 }
 
-func (c tclient) GetInstanceIDFromIP(ctx context.Context, ip net.IP) (string, error) {
+func (c tclient) GetInstanceIDFromIP(context.Context, net.IP) (string, error) {
 	return c.id, c.getErr
 }
 
@@ -37,35 +37,43 @@ func TestServeEvents(t *testing.T) {
 		body    string
 		err     string // description of error logged due to scenario
 	}{
-		{name: "no remote",
+		{
+			name:   "no remote",
 			remote: "",
 			err:    `split host port: missing port in address`,
 		},
-		{name: "no remote ip",
+		{
+			name:   "no remote ip",
 			remote: "localhost",
 			err:    `split host port: address localhost: missing port in address`,
 		},
-		{name: "fake error in GetDeviceIDFromIP",
+		{
+			name:   "fake error in GetDeviceIDFromIP",
 			remote: "10.0.0.1:42", code: 200, getErr: errors.New("fake error from GetDeviceIDFromIP"),
 			err: `client=10.0.0.1:42 msg="no device found for client address"`,
 		},
-		{name: "no GetDeviceIDFromIP error, yet no id",
+		{
+			name:   "no GetDeviceIDFromIP error, yet no id",
 			remote: "10.0.0.1:42", code: 200,
 			err: `client=10.0.0.1:42 msg="no device found for client address"`,
 		},
-		{name: "empty userEvent body",
+		{
+			name:   "empty userEvent body",
 			remote: "10.0.0.1:42", id: "id",
 			err: "userEvent body is empty",
 		},
-		{name: "invalid userEvent json",
+		{
+			name:   "invalid userEvent json",
 			remote: "10.0.0.1:42", id: "id", body: `invalid json`,
 			err: "userEvent cannot be generated from supplied json",
 		},
-		{name: "failed to post userEvent",
+		{
+			name:   "failed to post userEvent",
 			remote: "10.0.0.1:42", id: "id", body: `{}`, postErr: errors.New("fake PostInstanceUserEvent error"),
 			err: "failed to post userEvent",
 		},
-		{name: "ok",
+		{
+			name:   "ok",
 			remote: "10.0.0.1:42", id: "id", body: `{}`, code: 200,
 			err: "",
 		},

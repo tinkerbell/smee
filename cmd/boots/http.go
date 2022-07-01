@@ -54,7 +54,7 @@ func (s *BootsHTTPServer) serveHealthchecker(rev string, start time.Time) http.H
 }
 
 // otelFuncWrapper takes a route and an http handler function, wraps the function
-// with otelhttp, and returns the route again and http.Handler all set for mux.Handle()
+// with otelhttp, and returns the route again and http.Handler all set for mux.Handle().
 func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Request)) (string, http.Handler) {
 	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
 }
@@ -98,7 +98,7 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 		}
 	}))
 
-	var httpHandlers = make(map[string]http.HandlerFunc)
+	httpHandlers := make(map[string]http.HandlerFunc)
 	// register flatcar endpoints
 	httpHandlers[flatcar.IgnitionPathFlatcar] = flatcar.ServeIgnitionConfig(s.jobManager)
 	// register vmware endpoints
@@ -106,7 +106,7 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 
 	// register Installer handlers
 	for path, fn := range httpHandlers {
-		mux.Handle(path, otelhttp.WithRouteTag(path, http.HandlerFunc(fn)))
+		mux.Handle(path, otelhttp.WithRouteTag(path, fn))
 	}
 
 	// wrap the mux with an OpenTelemetry interceptor
@@ -179,7 +179,6 @@ func (s *BootsHTTPServer) serveHardware(w http.ResponseWriter, req *http.Request
 	defer timer.ObserveDuration()
 
 	ctx, j, err := s.jobManager.CreateFromRemoteAddr(ctx, req.RemoteAddr)
-
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
@@ -298,7 +297,7 @@ func EventServerForReporterFinder(reporter client.Reporter, finder client.Hardwa
 	return &es{reporter, finder}
 }
 
-// Forward user generated events to Packet API
+// Forward user generated events to Packet API.
 func serveEvents(es eventsServer, w http.ResponseWriter, req *http.Request) (int, error) {
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
@@ -369,7 +368,7 @@ func serveEvents(es eventsServer, w http.ResponseWriter, req *http.Request) (int
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte{})
+	_, _ = w.Write([]byte{})
 
 	return http.StatusOK, nil
 }

@@ -76,7 +76,13 @@ func (r *Receiver) run() {
 
 	for {
 		if msg == nil {
-			msg = syslogMessagePool.Get().(*message)
+			var ok bool
+			msg, ok = syslogMessagePool.Get().(*message)
+			if !ok {
+				sysloglog.Error(errors.New("error type asserting pool item into message"))
+
+				continue
+			}
 		}
 		n, from, err := r.c.ReadFromUDP(msg.buf[:])
 		if err != nil {

@@ -54,11 +54,8 @@ func TestSetupDiscover(t *testing.T) {
 	dh := d.Hardware()
 	h := dh.(*cacher.HardwareCacher)
 
-	mode := d.Mode()
-
-	wantMode := "management"
-	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
+	if wantMode, mode := "management", d.Mode(); mode != wantMode {
+		t.Fatalf("incorrect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	dc := d.(*cacher.DiscoveryCacher)
@@ -77,7 +74,7 @@ func TestSetupDiscover(t *testing.T) {
 	}
 }
 
-// The easy way to differentiate between discovered hardware and enrolled/not-active hardware is by existence of PlanSLug
+// The easy way to differentiate between discovered hardware and enrolled/not-active hardware is by existence of PlanSLug.
 func TestSetupManagement(t *testing.T) {
 	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
 	var d client.Discoverer = &cacher.DiscoveryCacher{
@@ -113,11 +110,8 @@ func TestSetupManagement(t *testing.T) {
 	}
 	j.setup(context.Background(), d)
 
-	mode := d.Mode()
-
-	wantMode := "management"
-	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
+	if wantMode, mode := "management", d.Mode(); mode != wantMode {
+		t.Fatalf("incorrect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	dc := d.(*cacher.DiscoveryCacher)
@@ -148,11 +142,8 @@ func TestSetupInstance(t *testing.T) {
 	}
 	j.setup(context.Background(), d)
 
-	mode := d.Mode()
-
-	wantMode := "instance"
-	if mode != wantMode {
-		t.Fatalf("incorect mode, want: %v, got: %v", wantMode, mode)
+	if wantMode, mode := "instance", d.Mode(); mode != wantMode {
+		t.Fatalf("incorrect mode, want: %v, got: %v", wantMode, mode)
 	}
 
 	netConfig := d.GetIP(macs[1].HardwareAddr())
@@ -188,8 +179,7 @@ func TestSetupWithoutInstance(t *testing.T) {
 	j := &Job{mac: mac.HardwareAddr(), Logger: log.Test(t, "test")}
 	j.setup(context.Background(), d)
 
-	hostname, _ := d.Hostname()
-	if hostname != j.dhcp.Hostname() {
+	if hostname, _ := d.Hostname(); hostname != j.dhcp.Hostname() {
 		t.Fatalf("incorrect Hostname, want: %v, got: %v", hostname, j.dhcp.Hostname())
 	}
 }

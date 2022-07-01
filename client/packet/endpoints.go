@@ -22,6 +22,7 @@ func (c *Reporter) PostHardwareComponent(ctx context.Context, hardwareID client.
 
 	return &response, nil
 }
+
 func (c *Reporter) PostHardwareEvent(ctx context.Context, id string, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
@@ -32,12 +33,15 @@ func (c *Reporter) PostHardwareEvent(ctx context.Context, id string, body io.Rea
 
 	return res.ID, nil
 }
+
 func (c *Reporter) PostHardwarePhoneHome(ctx context.Context, id string) error {
 	return c.Post(ctx, "/hardware/"+id+"/phone-home", "", nil, nil)
 }
+
 func (c *Reporter) PostHardwareFail(ctx context.Context, id string, body io.Reader) error {
 	return c.Post(ctx, "/hardware/"+id+"/fail", mimeJSON, body, nil)
 }
+
 func (c *Reporter) PostHardwareProblem(ctx context.Context, id client.HardwareID, body io.Reader) (string, error) {
 	var res struct {
 		ID string `json:"id"`
@@ -63,11 +67,13 @@ func (c *Reporter) PostInstanceEvent(ctx context.Context, id string, body io.Rea
 
 	return res.ID, nil
 }
+
 func (c *Reporter) PostInstanceFail(ctx context.Context, id string, body io.Reader) error {
 	return c.Post(ctx, "/devices/"+id+"/fail", mimeJSON, body, nil)
 }
+
 func (c *Reporter) PostInstancePassword(ctx context.Context, id, pass string) error {
-	var req = struct {
+	req := struct {
 		Password string `json:"password"`
 	}{
 		Password: pass,
@@ -80,6 +86,7 @@ func (c *Reporter) PostInstancePassword(ctx context.Context, id, pass string) er
 
 	return c.Post(ctx, "/devices/"+id+"/password", mimeJSON, bytes.NewReader(b), nil)
 }
+
 func (c *Reporter) UpdateInstance(ctx context.Context, id string, body io.Reader) error {
 	return c.Patch(ctx, "/devices/"+id, mimeJSON, body, nil)
 }

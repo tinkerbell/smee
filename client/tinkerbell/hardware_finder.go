@@ -13,14 +13,14 @@ import (
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 )
 
-// HardwareFinder is a type that looks up hardware from Tinkerbell
+// HardwareFinder is a type that looks up hardware from Tinkerbell.
 type HardwareFinder struct {
 	hClient tinkhardware.HardwareServiceClient
 }
 
 // NewHardwareFinder returns a Finder that discovers hardware from Tinkerbell.
 //
-// TODO: micahhausler: Explicitly pass in tink endpoint
+// TODO: micahhausler: Explicitly pass in tink endpoint.
 func NewHardwareFinder() (*HardwareFinder, error) {
 	hc, err := tinkClient.TinkHardwareClient()
 	if err != nil {
@@ -89,7 +89,7 @@ type WorkflowFinder struct {
 
 // NewWorkflowFinder returns a *WorkflowFinder that satisfies client.WorkflowFinder.
 //
-// TODO: micahhausler: Explicitly pass in tink endpoint
+// TODO: micahhausler: Explicitly pass in tink endpoint.
 func NewWorkflowFinder() (*WorkflowFinder, error) {
 	wc, err := tinkClient.TinkWorkflowClient()
 	if err != nil {
@@ -113,15 +113,13 @@ func (f *WorkflowFinder) HasActiveWorkflow(ctx context.Context, hwID client.Hard
 	// metrics.CacherTotal.With(labels).Inc()
 
 	wcl, err := f.wClient.GetWorkflowContextList(ctx, &tinkworkflow.WorkflowContextRequest{WorkerId: hwID.String()})
-
 	// cacherTimer.ObserveDuration()
 	// metrics.CacherRequestsInProgress.With(labels).Dec()
-
 	if err != nil {
 		return false, errors.Wrap(err, "error while fetching the workflow")
 	}
 
-	for _, wf := range (*wcl).WorkflowContexts {
+	for _, wf := range wcl.WorkflowContexts {
 		if wf.CurrentActionState == tinkworkflow.State_STATE_PENDING || wf.CurrentActionState == tinkworkflow.State_STATE_RUNNING {
 			return true, nil
 		}
