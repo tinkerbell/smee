@@ -11,6 +11,8 @@ collaborators:
     permission: push
   - username: rgl
     permission: push
+  - username: ScottGarman
+    permission: push
   - username: tobert
     permission: push
   - username: tstromberg
@@ -21,8 +23,6 @@ collaborators:
   - username: displague
     permission: triage
   - username: mikemrm
-    permission: triage
-  - username: ScottGarman
     permission: triage
 
   # Note: `permission` is only valid on organization-owned repositories.
