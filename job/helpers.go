@@ -119,6 +119,15 @@ func (j Job) PasswordHash() string {
 	return j.instance.PasswordHash
 }
 
+// CustomData returns instance.CustomData.
+func (j Job) CustomData() interface{} {
+	if i := j.instance; i != nil && i.CustomData != nil {
+		return i.CustomData
+	}
+
+	return nil
+}
+
 func (j Job) OperatingSystem() *client.OperatingSystem {
 	if i := j.instance; i != nil {
 		if i.Rescue {

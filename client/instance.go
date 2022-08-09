@@ -33,6 +33,10 @@ type Instance struct {
 	// Only returned in the first 24 hours of a provision
 	PasswordHash string `json:"password_hash,omitempty"`
 
+	// CustomData is an additional JSON field included in metadata
+	// Typically in the format of map[string]interface{}, however this format is not required.
+	CustomData interface{} `json:"customdata,omitempty"`
+
 	Tags []string `json:"tags,omitempty"`
 	// Project
 	SSHKeys []string `json:"ssh_keys,omitempty"`

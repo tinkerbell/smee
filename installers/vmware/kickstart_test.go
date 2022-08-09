@@ -132,3 +132,51 @@ func TestScriptKickstart(t *testing.T) {
 		})
 	}
 }
+
+func TestRootpw(t *testing.T) {
+	testCases := []struct {
+		name       string
+		customData interface{}
+		want       string
+	}{
+		{
+			"instance password used",
+			nil,
+			"insecure",
+		},
+		{
+			"CustomData password used",
+			map[string]interface{}{"rootpwcrypt": "override"},
+			"override",
+		},
+		{
+			"bad CustomData not used",
+			[]string{"test"},
+			"insecure",
+		},
+		{
+			"CustomData not used if value is not string",
+			map[string]interface{}{"rootpwcrypt": 4},
+			"insecure",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := job.NewMock(t, "some.slug", "test-facility")
+
+			m.SetPassword("insecure")
+			m.SetCustomData(tc.customData)
+
+			var w strings.Builder
+			genKickstart(m.Job(), &w)
+
+			got := w.String()
+			want := fmt.Sprintf("rootpw --iscrypted %s", tc.want)
+
+			if !strings.Contains(got, want) {
+				t.Errorf("expected root password not set, expected %s in %s", want, got)
+			}
+		})
+	}
+}

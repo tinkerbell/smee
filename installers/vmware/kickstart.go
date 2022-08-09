@@ -176,16 +176,10 @@ custom_data () {
         fi
 }
 
-set_root_pw() {
-	echo "Setting rootpw"
-	sed -i "s|^root:[^:]*|root:$1|" "$2"
-}
-
 ## TODO: Consider validating customdata, but maybe the API is a better place for that
 
 sshset=$(custom_data "['sshd']['enabled']")
 sshpwauth=$(custom_data "['sshd']['pwauth']")
-rootpwcrypt=$(custom_data "['rootpwcrypt']")
 esxishellset=$(custom_data "['esxishell']['enabled']")
 kickstartfburl=$(custom_data "['kickstart']['firstboot_url']")
 kickstartfbshell=$(custom_data "['kickstart']['firstboot_shell']")
@@ -225,14 +219,6 @@ elif [ "$esxishellset" == "false" ]; then
 	vim-cmd hostsvc/stop_esx_shell
 else
 	echo "Skipping ESXishell config"
-fi
-
-# Custom root pass
-if [ "$rootpwcrypt" != "null" ]; then
-	echo "Using custom root pass"
-	set_root_pw "$rootpwcrypt" /etc/shadow
-else
-	echo "Skipping custom root pass"
 fi
 
 # Kickstart firstboot supplemental config URL
@@ -383,7 +369,17 @@ func vmnic(j job.Job) string {
 }
 
 func rootpw(j job.Job) string {
-	return j.PasswordHash()
+	pass := j.PasswordHash()
+
+	// Check if CustomData has a field `rootpwcrypt` which overrides the generated password.
+	cd := j.CustomData()
+	if cdmap, ok := cd.(map[string]interface{}); ok {
+		if override, ok := cdmap["rootpwcrypt"].(string); ok {
+			pass = override
+		}
+	}
+
+	return pass
 }
 
 // firstDisk returns which disk to install onto - normally provided via metadata.
