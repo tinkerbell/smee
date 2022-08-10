@@ -132,6 +132,10 @@ func (m *Mock) SetPassword(string) {
 	m.instance.PasswordHash = "insecure"
 }
 
+func (m *Mock) SetCustomData(data interface{}) {
+	m.instance.CustomData = data
+}
+
 func (m *Mock) SetState(state string) {
 	hp := m.hardware
 	h, ok := hp.(*cacher.HardwareCacher)
