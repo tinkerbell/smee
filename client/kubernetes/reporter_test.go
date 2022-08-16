@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	plog "github.com/packethost/pkg/log"
 	"github.com/stretchr/testify/require"
@@ -104,9 +105,10 @@ func Test_UpdateInstance(t *testing.T) {
 	err := r.UpdateInstance(context.TODO(), "73009DBE-C6EB-4222-8DFB-79CFD6361B84", strings.NewReader(`{"allow_pxe":false}`))
 	assert.NoError(err, "expected no error during update instance operation")
 	obj := &v1alpha1.Hardware{}
+	time.Sleep(10 * time.Second) // avoid flaky test
 	err = r.clientFunc().Get(context.TODO(), types.NamespacedName{Namespace: i.Namespace, Name: i.Name}, obj)
 	assert.NoError(err, "expected no error while fetching instance")
 	for _, v := range obj.Spec.Interfaces {
-		assert.Equal(*v.Netboot.AllowPXE, false, "expected PXE boot to be disabled")
+		assert.Equal(false, *v.Netboot.AllowPXE, "expected PXE boot to be disabled")
 	}
 }
