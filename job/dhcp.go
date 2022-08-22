@@ -132,8 +132,6 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 	case !isTinkerbellIPXE:
 		httpPrefix = j.IpxeBaseURL
 		switch {
-		case j.PArch() == "hua" || j.PArch() == "2a2":
-			filename = "snp.efi"
 		case isARM:
 			filename = "snp.efi"
 		case isUEFI:

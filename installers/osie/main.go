@@ -29,10 +29,9 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 		"ip=dhcp",
 		"modules=loop,squashfs,sd-mod,usb-storage",
 		"alpine_repo=${base-url}/repo-${arch}/main",
-		"modloop=${base-url}/modloop-${parch}",
+		"modloop=${base-url}/modloop-${arch}",
 		"tinkerbell=${tinkerbell}",
 		"syslog_host=${syslog_host}",
-		"parch=${parch}",
 		"packet_action=${action}",
 		"packet_state=${state}",
 		"osie_vendors_url=" + conf.OsieVendorServicesURL,
@@ -140,17 +139,11 @@ func (i installer) discover(ctx context.Context, j job.Job, s *ipxe.Script) {
 
 func (i installer) setBootScript(ctx context.Context, action string, j job.Job, s *ipxe.Script) {
 	s.Set("arch", j.Arch())
-	s.Set("parch", j.PArch())
 	s.Set("bootdevmac", j.PrimaryNIC().String())
 	s.Set("base-url", osieBaseURL(i.osieURL, i.osieFullURLOverride, j))
 	s.Kernel("${base-url}/" + kernelPath(j))
 	i.kernelParams(ctx, action, j.HardwareState(), j, s)
 	s.Initrd("${base-url}/" + initrdPath(j))
-
-	if j.PArch() == "hua" || j.PArch() == "2a2" {
-		// Workaround for Huawei firmware crash
-		s.Sleep(15)
-	}
 
 	s.Boot()
 }
@@ -231,7 +224,7 @@ func kernelPath(j job.Job) string {
 		return path
 	}
 
-	return "vmlinuz-${parch}"
+	return "vmlinuz-${arch}"
 }
 
 func initrdPath(j job.Job) string {
@@ -239,7 +232,7 @@ func initrdPath(j job.Job) string {
 		return path
 	}
 
-	return "initramfs-${parch}"
+	return "initramfs-${arch}"
 }
 
 func isCustomOSIE(j job.Job) bool {
