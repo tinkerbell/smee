@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/andreyvit/diff"
@@ -66,32 +67,14 @@ func TestScript(t *testing.T) {
 					Installer("", "", "", "", "", "", true, "", extraIPXEVars).BootScript(action)(context.Background(), m.Job(), s)
 					got := string(s.Bytes())
 
-					arch := "aarch64"
-					var parch string
-
-					switch plan {
-					case "baremetal_2a":
-						parch = "aarch64"
-					case "baremetal_2a2":
-						parch = "2a2"
-					case "baremetal_2a4":
-						parch = "tx2"
-					case "baremetal_2a5":
-						parch = "qcom"
-					case "baremetal_hua":
-						parch = "hua"
-					case "c2.large.arm", "c2.large.anbox":
-						parch = "amp"
-					case "c3.large.arm":
-						parch = arch
-					default:
-						arch = "x86_64"
-						parch = "x86_64"
+					arch := "x86_64"
+					if strings.Contains(plan, ".arm") {
+						arch = "aarch64"
 					}
 
 					preface := prefaces[action]
 					preface = preface[:len(preface)-1] // drop extra \n at the end
-					script := fmt.Sprintf(preface+body, action, state, arch, parch, mac)
+					script := fmt.Sprintf(preface+body, action, state, arch, mac)
 					if script != got {
 						t.Fatalf("%s bad iPXE script:\n%v", plan, diff.LineDiff(script, got))
 					}
@@ -114,7 +97,6 @@ set dynamic_var2 dynamic_val2
 set action %s
 set state %s
 set arch %s
-set parch %s
 set bootdevmac %s
 set base-url http://install.ewr1.packet.net/misc/osie/current
 `,
@@ -137,7 +119,6 @@ imgfree
 set action %s
 set state %s
 set arch %s
-set parch %s
 set bootdevmac %s
 `,
 	"rescue": `#!ipxe
@@ -152,7 +133,6 @@ set dynamic_var2 dynamic_val2
 set action %s
 set state %s
 set arch %s
-set parch %s
 set bootdevmac %s
 set base-url http://install.` + facility + `.packet.net/misc/osie/current
 `,
@@ -166,25 +146,13 @@ var action2Plan2Body = map[string]map[string]string{
 
 var discoverBodies = map[string]string{
 	"c3.small.x86": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
-initrd ${base-url}/initramfs-${parch}
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 	"c3.large.arm": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-boot
-`,
-	"baremetal_2a2": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
-boot
-`,
-	"baremetal_hua": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=ttyS0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 initrd=initramfs-${arch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 }
@@ -192,59 +160,33 @@ boot
 var installBodies = map[string]string{
 	"c3.small.x86": `
 set base-url http://install.` + facility + `.packet.net/misc/osie/current
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt plan=c3.small.x86 manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
-initrd ${base-url}/initramfs-${parch}
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt plan=c3.small.x86 manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 	"c3.large.arm": `
 set base-url http://install.` + facility + `.packet.net/misc/osie/current
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 plan=c3.large.arm manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-boot
-`,
-	"baremetal_2a2": `
-set base-url http://install.` + facility + `.packet.net/misc/osie/current
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt plan=baremetal_2a2 manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
-boot
-`,
-	"baremetal_hua": `
-set base-url http://install.` + facility + `.packet.net/misc/osie/current
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt plan=baremetal_hua manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=ttyS0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 plan=c3.large.arm manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${arch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 	"custom-osie": `
 set base-url http://install.` + facility + `.packet.net/misc/osie/osie-v18.08.13.00
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_base_url=${base-url} packet_bootdev_mac=${bootdevmac} facility=ewr1 intel_iommu=on iommu=pt plan=custom-osie manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
-initrd ${base-url}/initramfs-${parch}
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_base_url=${base-url} packet_bootdev_mac=${bootdevmac} facility=ewr1 intel_iommu=on iommu=pt plan=custom-osie manufacturer=supermicro slug=ubuntu_16_04 initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 }
 
 var rescueBodies = map[string]string{
 	"c3.small.x86": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=tty0 console=ttyS1,115200
-initrd ${base-url}/initramfs-${parch}
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 	"c3.large.arm": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-boot
-`,
-	"baremetal_2a2": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=ttyAMA0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
-boot
-`,
-	"baremetal_hua": `
-kernel ${base-url}/vmlinuz-${parch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${parch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} parch=${parch} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` intel_iommu=on iommu=pt initrd=initramfs-${parch} console=ttyS0,115200
-initrd ${base-url}/initramfs-${parch}
-sleep 15
+kernel ${base-url}/vmlinuz-${arch} ip=dhcp modules=loop,squashfs,sd-mod,usb-storage alpine_repo=${base-url}/repo-${arch}/main modloop=${base-url}/modloop-${arch} tinkerbell=${tinkerbell} syslog_host=${syslog_host} packet_action=${action} packet_state=${state} osie_vendors_url=https://localhost packet_bootdev_mac=${bootdevmac} facility=` + facility + ` iommu.passthrough=1 initrd=initramfs-${arch} console=ttyAMA0,115200
+initrd ${base-url}/initramfs-${arch}
 boot
 `,
 }

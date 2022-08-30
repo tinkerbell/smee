@@ -61,14 +61,6 @@ func TestSetPXEFilename(t *testing.T) {
 			filename: "undionly.kpxe",
 		},
 		{
-			name: "hua",
-			plan: "hua", filename: "snp.efi",
-		},
-		{
-			name: "2a2",
-			plan: "2a2", filename: "snp.efi",
-		},
-		{
 			name: "arm",
 			arm:  true, filename: "snp.efi",
 		},

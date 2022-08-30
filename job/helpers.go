@@ -40,29 +40,6 @@ func (j Job) BootDriveHint() string {
 	return ""
 }
 
-func (j Job) PArch() string {
-	var parch string
-
-	switch j.PlanSlug() {
-	case "baremetal_2a2", "c1.large.arm.xda":
-		parch = "2a2"
-	case "baremetal_2a4":
-		parch = "tx2"
-	case "baremetal_2a5":
-		parch = "qcom"
-	case "baremetal_hua":
-		parch = "hua"
-	case "c2.large.arm", "c2.large.anbox":
-		parch = "amp"
-	}
-
-	if parch != "" {
-		return parch
-	}
-
-	return j.Arch()
-}
-
 func (j Job) InstanceID() string {
 	if i := j.instance; i != nil {
 		return i.ID
