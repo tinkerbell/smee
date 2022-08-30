@@ -80,8 +80,15 @@ func NewInstallers() Installers {
 
 // AllowPxe returns the value from the hardware data
 // in tink server defined at network.interfaces[].netboot.allow_pxe.
-func (j Job) AllowPxe() bool {
-	return j.hardware.HardwareAllowPXE(j.mac)
+func (j Job) AllowPXE() bool {
+	if j.hardware.HardwareAllowPXE(j.mac) {
+		return true
+	}
+	if j.InstanceID() == "" {
+		return false
+	}
+
+	return j.instance.AllowPXE
 }
 
 // ProvisionerEngineName returns the current provisioning engine name

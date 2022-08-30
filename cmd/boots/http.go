@@ -158,7 +158,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 	// without a tink workflow present.
-	if !j.AllowPxe() {
+	if !j.AllowPXE() {
 		w.WriteHeader(http.StatusNotFound)
 		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
 
