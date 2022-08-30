@@ -41,6 +41,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.11.1
 )
 
+require k8s.io/api v0.23.0
+
 require (
 	4d63.com/gochecknoglobals v0.1.0 // indirect
 	github.com/Antonboom/errname v0.1.6 // indirect
@@ -234,7 +236,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/tools v0.3.1 // indirect
-	k8s.io/api v0.23.0 // indirect
 	k8s.io/apiextensions-apiserver v0.23.0 // indirect
 	k8s.io/component-base v0.23.0 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
