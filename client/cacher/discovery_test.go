@@ -147,6 +147,17 @@ var cacherTests = map[string]struct {
 		},
 		json: noInstance,
 	},
+	"no data macs": {
+		mac:            "00:25:90:f6:2f:2d",
+		primaryDataMac: "00:00:00:00:00:00",
+		mode:           "management",
+		conf: client.IP{
+			Address: net.ParseIP("10.255.252.16"),
+			Gateway: net.ParseIP("10.255.252.1"),
+			Netmask: net.ParseIP("255.255.255.0"),
+		},
+		json: noMACData,
+	},
 	"management with instance": {
 		mac:            "00:25:90:f6:28:5b",
 		primaryDataMac: "00:25:90:e7:68:da",
@@ -253,6 +264,95 @@ const (
       "type": "ipmi"
     }
   ]
+}
+`
+	noMACData = `
+{
+  "arch": "x86_64",
+  "bonding_mode": 4,
+  "efi_boot": true,
+  "facility_code": "lab1",
+  "id": "d7e1feaf-d6d5-4d6c-8d16-5c6913be2dea",
+  "instance": {},
+  "ip_addresses": [
+    {
+      "address": "172.16.0.3",
+      "address_family": 4,
+      "enabled": true,
+      "gateway": "172.16.0.2",
+      "management": true,
+      "netmask": "255.255.255.252",
+      "public": false
+    }
+  ],
+  "management": {
+    "address": "10.255.252.16",
+    "gateway": "10.255.252.1",
+    "netmask": "255.255.255.0"
+  },
+  "manufacturer": {
+    "id": "f7dbf901-d210-4594-ab82-f529a36bdd70",
+    "slug": "supermicro"
+  },
+  "name": "sled5.mc1.d11.lab1.packet.net",
+  "network_ports": [
+    {
+      "connected_port": {
+        "data": {
+          "bond": null,
+          "mac": null
+        },
+        "id": "0b7fc8dc-33bf-4802-903f-55c4d076bfc7",
+        "name": "ge-0/0/4",
+        "type": "data"
+      },
+      "data": {
+        "bond": "bond0"
+      },
+      "id": "179b020a-74ba-4969-a97a-f8e03b3877c8",
+      "name": "eth0",
+      "type": "data"
+    },
+    {
+      "connected_port": {
+        "data": {
+          "bond": null,
+          "mac": null
+        },
+        "id": "216f9b60-6a99-460c-9e55-99becbd8776e",
+        "name": "ge-1/0/4",
+        "type": "data"
+      },
+      "data": {
+        "bond": "bond0"
+      },
+      "id": "f2088273-a38f-4005-ba11-845e8e2aa342",
+      "name": "eth1",
+      "type": "data"
+    },
+    {
+      "connected_port": {
+        "data": {
+          "bond": null,
+          "mac": null
+        },
+        "id": "c7389751-1699-4e17-ba1f-f1fb439aa666",
+        "name": "Fa0/5",
+        "type": "data"
+      },
+      "data": {
+        "bond": null,
+        "mac": "00:25:90:f6:2f:2d"
+      },
+      "id": "e6db1b93-f718-4bd1-9dea-05725a04a87a",
+      "name": "ipmi0",
+      "type": "ipmi"
+    }
+  ],
+  "plan_slug": "c1.small.x86",
+  "state": "in_use",
+  "type": "sled",
+  "vlan_id": null
 }
 `
 	noInstance = `

@@ -213,6 +213,10 @@ func (d DiscoveryCacher) PrimaryDataMAC() client.MACAddr {
 		if port.Type != "data" {
 			continue
 		}
+		if port.Data.MAC == nil {
+			continue
+		}
+
 		if port.Name == "eth0" {
 			mac = *port.Data.MAC
 
