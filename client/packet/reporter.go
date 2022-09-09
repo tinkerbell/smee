@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -121,7 +120,7 @@ func unmarshalResponse(res *http.Response, result interface{}) error {
 		_ = res.Body.Close()
 	}()
 	defer func() {
-		_, _ = io.Copy(ioutil.Discard, res.Body) // ensure all of the body is read so we can quickly reuse connection
+		_, _ = io.Copy(io.Discard, res.Body) // ensure all of the body is read so we can quickly reuse connection
 	}()
 
 	if res.StatusCode < 200 || res.StatusCode > 399 {

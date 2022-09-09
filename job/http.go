@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path"
 	"strings"
@@ -94,7 +93,7 @@ func (j Job) ServeProblemEndpoint(w http.ResponseWriter, req *http.Request) {
 }
 
 func readClose(r io.ReadCloser) (b []byte, err error) {
-	b, err = ioutil.ReadAll(r)
+	b, err = io.ReadAll(r)
 	r.Close()
 
 	return b, errors.Wrap(err, "reading file")
