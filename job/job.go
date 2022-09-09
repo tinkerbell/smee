@@ -154,7 +154,7 @@ func (c *Creator) CreateFromIP(ctx context.Context, ip net.IP) (context.Context,
 		return ctx, nil, errors.WithMessage(err, "discovering from ip address")
 	}
 	mac := d.GetMAC(ip)
-	if mac.String() == client.ZeroMAC.String() {
+	if mac.String() == client.MinMAC.String() {
 		c.logger.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
 	}
 	j.mac = mac

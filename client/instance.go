@@ -154,7 +154,7 @@ type Port struct {
 
 // MAC returns the physical hardware address, nil otherwise.
 func (p *Port) MAC() net.HardwareAddr {
-	if p.Data.MAC != nil && *p.Data.MAC != ZeroMAC {
+	if p.Data.MAC != nil && *p.Data.MAC != MinMAC {
 		return p.Data.MAC.HardwareAddr()
 	}
 

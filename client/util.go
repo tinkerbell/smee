@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ZeroMAC = MACAddr{}
-	OnesMAC = MACAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	MinMAC = MACAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	MaxMAC = MACAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 )
 
 type Getter interface {
@@ -37,7 +37,7 @@ func (m *MACAddr) UnmarshalText(text []byte) error {
 	if len(text) != len(example) {
 		return errors.Errorf("expected a 48-bit hardware address, got %q", text)
 	}
-	*m = ZeroMAC
+	*m = MinMAC
 
 	mac, err := net.ParseMAC(string(text))
 	if err != nil {
@@ -48,10 +48,10 @@ func (m *MACAddr) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (m MACAddr) IsZero() bool {
-	return bytes.Equal(m[:], ZeroMAC[:])
+func (m MACAddr) IsMin() bool {
+	return bytes.Equal(m[:], MinMAC[:])
 }
 
-func (m MACAddr) IsOnes() bool {
-	return bytes.Equal(m[:], OnesMAC[:])
+func (m MACAddr) IsMax() bool {
+	return bytes.Equal(m[:], MaxMAC[:])
 }
