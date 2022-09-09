@@ -28,7 +28,7 @@ func (m MACAddr) String() string {
 	return net.HardwareAddr(m[:]).String()
 }
 
-func (m *MACAddr) MarshalJSON() ([]byte, error) {
+func (m MACAddr) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + m.String() + `"`), nil
 }
 
