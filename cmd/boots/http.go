@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -260,7 +259,7 @@ func (s *BootsHTTPServer) serveProblem(w http.ResponseWriter, req *http.Request)
 }
 
 func readClose(r io.ReadCloser) (b []byte, err error) {
-	b, err = ioutil.ReadAll(r)
+	b, err = io.ReadAll(r)
 	err = errors.Wrap(err, "read data")
 	r.Close()
 

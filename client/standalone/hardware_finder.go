@@ -3,8 +3,8 @@ package standalone
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
@@ -18,7 +18,7 @@ type HardwareFinder struct {
 // NewHardwareFinder returns a Finder given a JSON file that is formatted as a slice of
 // DiscoverStandalone.
 func NewHardwareFinder(path string) (*HardwareFinder, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not read file %q", path)
 	}

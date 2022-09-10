@@ -208,11 +208,15 @@ func (d DiscoveryCacher) DiscoveredIP(mac string) *client.IP {
 
 // PrimaryDataMAC returns the mac associated with eth0, or as a fallback the lowest numbered non-bmc MAC address.
 func (d DiscoveryCacher) PrimaryDataMAC() client.MACAddr {
-	mac := client.OnesMAC
+	mac := client.MaxMAC
 	for _, port := range d.NetworkPorts {
 		if port.Type != "data" {
 			continue
 		}
+		if port.Data.MAC == nil {
+			continue
+		}
+
 		if port.Name == "eth0" {
 			mac = *port.Data.MAC
 
@@ -223,8 +227,8 @@ func (d DiscoveryCacher) PrimaryDataMAC() client.MACAddr {
 		}
 	}
 
-	if mac.IsOnes() {
-		return client.ZeroMAC
+	if mac.IsMax() {
+		mac = client.MinMAC
 	}
 
 	return mac
@@ -238,7 +242,7 @@ func (d DiscoveryCacher) ManagementMAC() client.MACAddr {
 		}
 	}
 
-	return client.ZeroMAC
+	return client.MinMAC
 }
 
 func (d DiscoveryCacher) Hostname() (string, error) {

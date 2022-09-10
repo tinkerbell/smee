@@ -72,7 +72,7 @@ func (d DiscoveryTinkerbellV1) GetMAC(ip net.IP) net.HardwareAddr {
 }
 
 func (d *DiscoveryTinkerbellV1) PrimaryDataMAC() client.MACAddr {
-	mac := client.OnesMAC
+	mac := client.MaxMAC
 	// TODO
 	return mac
 }

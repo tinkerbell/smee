@@ -155,7 +155,7 @@ func TestByMAC(t *testing.T) {
 								{
 									DHCP: client.DHCP{
 										MAC: func() *client.MACAddr {
-											return &client.ZeroMAC
+											return &client.MinMAC
 										}(),
 									},
 								},
@@ -169,7 +169,7 @@ func TestByMAC(t *testing.T) {
 		},
 		{
 			name: "happy path",
-			arg:  client.OnesMAC.HardwareAddr(),
+			arg:  client.MaxMAC.HardwareAddr(),
 			db: []*DiscoverStandalone{
 				{
 					HardwareStandalone: HardwareStandalone{
@@ -179,7 +179,7 @@ func TestByMAC(t *testing.T) {
 								{
 									DHCP: client.DHCP{
 										MAC: func() *client.MACAddr {
-											return &client.ZeroMAC
+											return &client.MinMAC
 										}(),
 									},
 								},
@@ -195,7 +195,7 @@ func TestByMAC(t *testing.T) {
 								{
 									DHCP: client.DHCP{
 										MAC: func() *client.MACAddr {
-											return &client.OnesMAC
+											return &client.MaxMAC
 										}(),
 									},
 								},
@@ -212,7 +212,7 @@ func TestByMAC(t *testing.T) {
 							{
 								DHCP: client.DHCP{
 									MAC: func() *client.MACAddr {
-										return &client.OnesMAC
+										return &client.MaxMAC
 									}(),
 								},
 							},
