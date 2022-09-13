@@ -204,17 +204,12 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 
 	var console string
 	if j.IsARM() {
+		// default serial console to ttyAMA0 for ARM.
 		console = "ttyAMA0"
-		if j.PlanSlug() == "baremetal_hua" {
-			console = "ttyS0"
-		}
 	} else {
 		s.Args("console=tty0")
-		if j.PlanSlug() == "d1p.optane.x86" || j.PlanSlug() == "d1f.optane.x86" || j.PlanSlug() == "w3amd.75xx24c.256.4320" {
-			console = "ttyS0"
-		} else {
-			console = "ttyS1"
-		}
+		// default serial console to ttyS1 for all other hardware.
+		console = "ttyS1"
 	}
 	s.Args("console=" + console + ",115200")
 }
