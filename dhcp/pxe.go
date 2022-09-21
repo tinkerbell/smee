@@ -127,10 +127,21 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 		propagation in opt43/slot69.
 	*/
 
-	pxeVendorOptions := dhcp4.OptionMap{
-		6:  []byte{0x8}, // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
-		69: binaryTpFromContext(ctx),
-	}.Serialize()
+	cur, ok := rep.GetOption(dhcp4.OptionVendorSpecific)
+	if !ok {
+		c := make(dhcp4.OptionMap, 0)
+		cur = c.Serialize()
+	}
+	p, _ := dhcp4.PacketFromBytes(cur)
+	p.OptionMap[6] = []byte{0x8} // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
+	p.OptionMap[69] = binaryTpFromContext(ctx)
+	pxeVendorOptions := p.Serialize()
+	/*
+		pxeVendorOptions := dhcp4.OptionMap{
+			6:  []byte{0x8}, // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
+			69: binaryTpFromContext(ctx),
+		}.Serialize()
+	*/
 
 	rep.SetOption(dhcp4.OptionVendorSpecific, pxeVendorOptions)
 
