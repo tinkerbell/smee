@@ -124,3 +124,8 @@ func (hs *HardwareStandalone) emptyInterface() client.NetworkInterface {
 func (hs *HardwareStandalone) GetTraceparent() string {
 	return hs.Traceparent
 }
+
+// GetVLANID returns the VLAN ID from the config.
+func (hs *HardwareStandalone) GetVLANID(net.HardwareAddr) string {
+	return ""
+}
