@@ -130,13 +130,14 @@ func (c *Config) SetOpt43SubOpt(subOpt dhcp4.Option, s string) {
 		c := make(dhcp4.OptionMap, 0)
 		cur = c.Serialize()
 	}
-	p, err := dhcp4.PacketFromBytes(cur)
-	if err != nil {
-		dhcplog.Error(errors.New("unable to parse option 43"))
+	// deserialize it into a dhcp4.OptionMap
+	n := make(dhcp4.OptionMap, 0)
+	if err := n.Deserialize(cur, nil); err != nil {
+		dhcplog.Info("unable to deserialize option 43")
 
 		return
 	}
-	p.OptionMap[subOpt] = []byte(s)
+	n.SetOption(subOpt, []byte(s))
 
-	c.opts.SetOption(dhcp4.OptionVendorSpecific, p.Serialize())
+	c.opts.SetOption(dhcp4.OptionVendorSpecific, n.Serialize())
 }

@@ -126,24 +126,24 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 		Options 64-127 are "boot server specific" so that's why we put traceparent
 		propagation in opt43/slot69.
 	*/
-
 	cur, ok := rep.GetOption(dhcp4.OptionVendorSpecific)
 	if !ok {
 		c := make(dhcp4.OptionMap, 0)
 		cur = c.Serialize()
 	}
-	p, _ := dhcp4.PacketFromBytes(cur)
-	p.OptionMap[6] = []byte{0x8} // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
-	p.OptionMap[69] = binaryTpFromContext(ctx)
-	pxeVendorOptions := p.Serialize()
-	/*
-		pxeVendorOptions := dhcp4.OptionMap{
+	pxeVendorOptions := dhcp4.OptionMap{
+		6:  []byte{0x8}, // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
+		69: binaryTpFromContext(ctx),
+	}
+	err := pxeVendorOptions.Deserialize(cur, nil) // merge the current option 43 with pxeVendorOptions.
+	if err != nil {
+		pxeVendorOptions = dhcp4.OptionMap{
 			6:  []byte{0x8}, // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
 			69: binaryTpFromContext(ctx),
-		}.Serialize()
-	*/
+		}
+	}
 
-	rep.SetOption(dhcp4.OptionVendorSpecific, pxeVendorOptions)
+	rep.SetOption(dhcp4.OptionVendorSpecific, pxeVendorOptions.Serialize())
 
 	return true
 }
