@@ -42,7 +42,7 @@ vmaccepteula
 rootpw --iscrypted {{ rootpw . }}
 # The install media is in the CD-ROM drive
 {{- if (firstDisk .) }}
-install --firstdisk={{ firstDisk . }} --overwritevmfs
+install --firstdisk="{{ firstDisk . }}" --overwritevmfs
 {{- else }}
 install --firstdisk --overwritevmfs
 {{- end }}
