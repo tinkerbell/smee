@@ -568,8 +568,8 @@ github.com/peterbourgon/ff/v3 v3.1.2/go.mod h1:XNJLY8EIl6MjMVjBS4F0+G0LYoAqs0DTa
 github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2 h1:JhzVVoYvbOACxoUmOs6V/G4D5nPVUW73rKvXxP4XUJc=
 github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0jef7pBehbT1qWhCMrIgbYNnFAZCqQ5LRc=
 github.com/pierrec/lz4 v2.6.1+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
-github.com/pin/tftp v0.0.0-20210809155059-0161c5dd2e96 h1:up6QoQMll+v1jdqjtGmN48/Il0dE3sIyilxXq7kfWJM=
-github.com/pin/tftp v0.0.0-20210809155059-0161c5dd2e96/go.mod h1:1kbtV8n0I3ujA7FewmPymdTyq7Lgk5UhmEy7pcrVVWU=
+github.com/pin/tftp/v3 v3.0.0 h1:o9cQpmWBSbgiaYXuN+qJAB12XBIv4dT7OuOONucn2l0=
+github.com/pin/tftp/v3 v3.0.0/go.mod h1:xwQaN4viYL019tM4i8iecm++5cGxSqen6AJEOEyEI0w=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -688,8 +688,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/tinkerbell/ipxedust v0.0.0-20220406180840-46f16b8d8fb0 h1:3BDMKxrnzQV43JdosIXs5sdrvX7IFSd8WpJQJm67czY=
-github.com/tinkerbell/ipxedust v0.0.0-20220406180840-46f16b8d8fb0/go.mod h1:ATJPOr8ZkaKkfMPi5DmTgmcu/jfftwlZX2/LYbW6hCo=
+github.com/tinkerbell/ipxedust v0.0.0-20220908192154-99b8049fc267 h1:NrzTwMqEVBsO3M8grHuR+NZ7Eec9fId/qk0VPjzAxQA=
+github.com/tinkerbell/ipxedust v0.0.0-20220908192154-99b8049fc267/go.mod h1:cVEXmx/dLajxEZWlR5HlPpuPLUi2lhIC3TOp9UL1yoU=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1 h1:K0bl3z+Lj7quCv0axvJo6sWc0ZW5u3pyZ+wG8jh3BPo=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
