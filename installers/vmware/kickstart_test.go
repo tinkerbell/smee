@@ -40,6 +40,7 @@ func TestFirstDisk(t *testing.T) {
 		{slug: "x1.small.x86", hint: "hint", want: "hint"},
 		{slug: "arbitrary_name", hint: "hint", want: "hint"},
 		{slug: "x2.xlarge.x86", hint: "hint", want: "hint"},
+		{slug: "n3.xlarge.x86", hint: "KXG60ZNV256G TOSHIBA", want: "KXG60ZNV256G TOS"},
 	}
 
 	for _, tc := range tests {
