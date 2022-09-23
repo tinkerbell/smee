@@ -124,20 +124,16 @@ func (c *Config) SetOpt43SubOpt(subOpt dhcp4.Option, s string) {
 	if s == "" {
 		return
 	}
+	n := make(dhcp4.OptionMap)
 	// get current option 43
 	cur, ok := c.opts.GetOption(dhcp4.OptionVendorSpecific)
-	if !ok {
-		c := make(dhcp4.OptionMap, 0)
-		cur = c.Serialize()
-	}
-	// deserialize it into a dhcp4.OptionMap
-	n := make(dhcp4.OptionMap, 0)
-	if err := n.Deserialize(cur, nil); err != nil {
-		dhcplog.Info("unable to deserialize option 43")
+	if ok {
+		if err := n.Deserialize(cur, nil); err != nil {
+			dhcplog.Info("unable to deserialize option 43")
 
-		return
+			return
+		}
 	}
 	n.SetOption(subOpt, []byte(s))
-
 	c.opts.SetOption(dhcp4.OptionVendorSpecific, n.Serialize())
 }
