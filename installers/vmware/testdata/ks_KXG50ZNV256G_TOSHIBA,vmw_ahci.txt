@@ -4,7 +4,7 @@ vmaccepteula
 # Set the root password for the DCUI and Tech Support Mode
 rootpw --iscrypted insecure
 # The install media is in the CD-ROM drive
-install --firstdisk=KXG50ZNV256G_TOSHIBA,vmw_ahci --overwritevmfs
+install --firstdisk="KXG50ZNV256G_TOSHIBA,vmw_ahci" --overwritevmfs
 # Set the network to DHCP on the proper network adapter based on its type
 network --bootproto=dhcp --device=00:00:ba:dd:be:ef
 reboot
