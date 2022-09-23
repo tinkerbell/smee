@@ -166,6 +166,10 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 		s.Args("packet_base_url=${base-url}")
 	}
 
+	if j.VLANID() != "" {
+		s.Args("vlan_id=" + j.VLANID())
+	}
+
 	if j.CanWorkflow() {
 		s.Args(i.workflowParams)
 		s.Args("instance_id=" + j.InstanceID())
