@@ -66,3 +66,8 @@ func (ds *DiscoverStandalone) Hardware() client.Hardware {
 func (ds *DiscoverStandalone) SetMAC(net.HardwareAddr) {
 	// TODO: set the MAC, not sure this is useful?
 }
+
+// GetVLANID gets the VLAN ID for the given MAC address.
+func (ds *DiscoverStandalone) GetVLANID(net.HardwareAddr) string {
+	return ""
+}

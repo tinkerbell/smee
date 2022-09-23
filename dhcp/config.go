@@ -118,3 +118,22 @@ func (c *Config) SetDNSServers(ips []net.IP) {
 	}
 	c.opts.SetOption(dhcp4.OptionDomainServer, b)
 }
+
+// SetOpt43SubOpt sets an option 43 sub-option. If option 43 is already set, the sub-option is appended.
+func (c *Config) SetOpt43SubOpt(subOpt dhcp4.Option, s string) {
+	if s == "" {
+		return
+	}
+	n := make(dhcp4.OptionMap)
+	// get current option 43
+	cur, ok := c.opts.GetOption(dhcp4.OptionVendorSpecific)
+	if ok {
+		if err := n.Deserialize(cur, nil); err != nil {
+			dhcplog.Info("unable to deserialize option 43")
+
+			return
+		}
+	}
+	n.SetOption(subOpt, []byte(s))
+	c.opts.SetOption(dhcp4.OptionVendorSpecific, n.Serialize())
+}

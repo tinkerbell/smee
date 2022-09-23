@@ -336,3 +336,14 @@ func (d *K8sDiscoverer) OperatingSystem() *client.OperatingSystem {
 func (d *K8sDiscoverer) GetTraceparent() string {
 	return ""
 }
+
+// GetVLANID gets the VLAN ID for the given MAC address.
+func (d *K8sDiscoverer) GetVLANID(mac net.HardwareAddr) string {
+	for _, iface := range d.hw.Spec.Interfaces {
+		if iface.DHCP != nil && iface.DHCP.MAC == mac.String() {
+			return iface.DHCP.VLANID
+		}
+	}
+
+	return ""
+}

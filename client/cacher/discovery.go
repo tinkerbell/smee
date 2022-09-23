@@ -388,3 +388,7 @@ func (h *HardwareCacher) instance() *client.Instance {
 func (h HardwareCacher) GetTraceparent() string {
 	return h.Traceparent
 }
+
+func (h HardwareCacher) GetVLANID(net.HardwareAddr) string {
+	return ""
+}

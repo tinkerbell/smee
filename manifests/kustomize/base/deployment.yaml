@@ -4,7 +4,7 @@ metadata:
   labels:
     app: tinkerbell-boots
   name: boots-deployment
-  namespace: tinkerbell
+  namespace: tink-system
 spec:
   selector:
     matchLabels:
@@ -28,19 +28,19 @@ spec:
             - name: HTTP_BIND
               value: ":80"
             - name: MIRROR_BASE_URL
-              value: http://192.168.2.150:8080
+              value: http://192.168.2.59:8080
             - name: PUBLIC_IP
-              value: 192.168.2.160
+              value: 192.168.2.59
             - name: PUBLIC_SYSLOG_FQDN
-              value: 192.168.2.160
+              value: 192.168.2.59
             - name: SYSLOG_BIND
               value: 0.0.0.0:514
             - name: TINKERBELL_GRPC_AUTHORITY
-              value: 192.168.2.150:42113
+              value: 192.168.2.59:42113
             - name: TINKERBELL_TLS
               value: "false"
-          image: quay.io/tinkerbell/boots:latest
-          imagePullPolicy: Always
+          image: boots:latest
+          imagePullPolicy: IfNotPresent
           name: tinkerbell-boots
           ports:
             - name: dhcp

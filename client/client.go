@@ -81,6 +81,7 @@ type Hardware interface {
 	HardwareState() HardwareState
 	HardwareOSIEVersion() string
 	HardwareUEFI(mac net.HardwareAddr) bool
+	GetVLANID(net.HardwareAddr) string
 	OSIEBaseURL(mac net.HardwareAddr) string
 	KernelPath(mac net.HardwareAddr) string
 	InitrdPath(mac net.HardwareAddr) string

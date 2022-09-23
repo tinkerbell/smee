@@ -226,5 +226,8 @@ func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, 
 		j.dhcp.SetHostname(hostname)
 	}
 
+	// set option 43.116 to vlan id. If dh.GetVLANID is "", then j.dhcp.SetOpt43SubOpt is a no-op.
+	j.dhcp.SetOpt43SubOpt(116, dh.GetVLANID(j.mac))
+
 	return ctx, nil
 }

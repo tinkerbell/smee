@@ -192,3 +192,7 @@ func (h *HardwareTinkerbellV1) instance() *client.Instance {
 func (h HardwareTinkerbellV1) GetTraceparent() string {
 	return ""
 }
+
+func (h HardwareTinkerbellV1) GetVLANID(net.HardwareAddr) string {
+	return ""
+}

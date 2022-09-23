@@ -166,3 +166,8 @@ func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, 
 
 	dhcp.SetFilename(rep, filename, j.NextServer, isHTTPClient, httpPrefix)
 }
+
+// VLANID returns the VLAN ID for the job.
+func (j *Job) VLANID() string {
+	return j.hardware.GetVLANID(j.mac)
+}
