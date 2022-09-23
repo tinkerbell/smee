@@ -2,6 +2,7 @@ package vmware
 
 import (
 	"io"
+	"math"
 	"net/http"
 	"text/template"
 
@@ -386,7 +387,8 @@ func rootpw(j job.Job) string {
 func firstDisk(j job.Job) string {
 	// Always respect the boot drive hint if one is provided
 	if hint := j.BootDriveHint(); hint != "" {
-		return hint
+		// Truncating hint to 16 characters to match VMware kickstart limitation.
+		return hint[:int(math.Min(16, float64(len(hint))))]
 	}
 
 	return equinixPlanDisk(j.PlanSlug(), j.PlanVersionSlug())
