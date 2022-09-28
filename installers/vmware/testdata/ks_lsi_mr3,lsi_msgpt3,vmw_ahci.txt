@@ -24,11 +24,6 @@ vim-cmd hostsvc/start_esx_shell
 # Add private network interface
 esxcli network vswitch standard portgroup add --portgroup-name='Private Network' --vswitch-name=vSwitch0
 esxcli network ip interface add --interface-name=vmk1 --portgroup-name='Private Network'
-# Set the iSCSI IQN
-iqn=$(cat /tmp/metadata | python -c "import sys, json; print(json.load(sys.stdin)['iqn'])")
-esxcli iscsi software set --enabled=true
-esxcli iscsi adapter set -A vmhba64 -n $iqn
-esxcli iscsi networkportal add -n vmk1 -A vmhba64
 # Configure IP addresses statically from metadata using python
 cat >> /tmp/netcfg.py <<EOF
 import sys
