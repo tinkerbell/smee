@@ -162,10 +162,6 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 		s.Args(i.hollowParams)
 	}
 
-	if isCustomOSIE(j) {
-		s.Args("packet_base_url=${base-url}")
-	}
-
 	if j.VLANID() != "" {
 		s.Args("vlan_id=" + j.VLANID())
 	}
@@ -174,6 +170,8 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 		s.Args(i.workflowParams)
 		s.Args("instance_id=" + j.InstanceID())
 		s.Args("worker_id=" + j.HardwareID().String())
+	} else {
+		s.Args("packet_base_url=${base-url}")
 	}
 
 	s.Args("packet_bootdev_mac=${bootdevmac}")
