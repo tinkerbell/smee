@@ -45,7 +45,7 @@ jobs:
       - name: compile binaries
         run: nix-shell --run 'make crosscompile'
 
-      - name: Docker Image Tag for Sha
+      - name: Figure out Docker Tags
         id: docker-image-tag
         run: |
           echo ::set-output name=tags::quay.io/tinkerbell/boots:latest,quay.io/tinkerbell/boots:sha-${GITHUB_SHA::8}
@@ -64,6 +64,17 @@ jobs:
           context: ./
           file: ./Dockerfile
           cache-from: type=registry,ref=quay.io/tinkerbell/boots:latest
-          push: ${{ startsWith(github.ref, 'refs/heads/main') }}
-          tags: ${{ steps.docker-image-tag.outputs.tags }}
           platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.docker-image-tag.outputs.tags }}
+
+      # looks just like Build Docker Images except with push:true and this will only run for builds for main
+      - name: Push Docker Images
+        uses: docker/build-push-action@v3
+        if: ${{ startsWith(github.ref, 'refs/heads/main') }}
+        with:
+          context: ./
+          file: ./Dockerfile
+          cache-from: type=registry,ref=quay.io/tinkerbell/boots:latest
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-image-tag.outputs.tags }}
