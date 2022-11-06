@@ -26,7 +26,7 @@ const (
 // * Workflows by worker address
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
-func NewCluster(config *rest.Config) (cluster.Cluster, error) {
+func NewCluster(config *rest.Config, namespace string) (cluster.Cluster, error) {
 	runtimescheme := runtime.NewScheme()
 
 	err := clientgoscheme.AddToScheme(runtimescheme)
@@ -41,6 +41,7 @@ func NewCluster(config *rest.Config) (cluster.Cluster, error) {
 
 	c, err := cluster.New(config, func(o *cluster.Options) {
 		o.Scheme = runtimescheme
+		o.Namespace = namespace
 	})
 	if err != nil {
 		return nil, err

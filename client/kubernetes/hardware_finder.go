@@ -46,7 +46,7 @@ func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Fi
 		return nil, err
 	}
 
-	cluster, err := NewCluster(config)
+	cluster, err := NewCluster(config, kubeNamespace)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
