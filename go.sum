@@ -688,8 +688,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/tinkerbell/ipxedust v0.0.0-20220908192154-99b8049fc267 h1:NrzTwMqEVBsO3M8grHuR+NZ7Eec9fId/qk0VPjzAxQA=
-github.com/tinkerbell/ipxedust v0.0.0-20220908192154-99b8049fc267/go.mod h1:cVEXmx/dLajxEZWlR5HlPpuPLUi2lhIC3TOp9UL1yoU=
+github.com/tinkerbell/ipxedust v0.0.0-20221102191636-767b29b5f3a2 h1:/JhnQWQfMfKy8dY+qhB9runithwiqQXE6lfFXM4cMSY=
+github.com/tinkerbell/ipxedust v0.0.0-20221102191636-767b29b5f3a2/go.mod h1:cVEXmx/dLajxEZWlR5HlPpuPLUi2lhIC3TOp9UL1yoU=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1 h1:K0bl3z+Lj7quCv0axvJo6sWc0ZW5u3pyZ+wG8jh3BPo=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
