@@ -8,7 +8,7 @@ import (
 	"github.com/tinkerbell/tink/pkg/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
@@ -26,7 +26,7 @@ const (
 // * Workflows by worker address
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
-func NewCluster(config *rest.Config, namespace string) (cluster.Cluster, error) {
+func NewCluster(config clientcmd.ClientConfig) (cluster.Cluster, error) {
 	runtimescheme := runtime.NewScheme()
 
 	err := clientgoscheme.AddToScheme(runtimescheme)
@@ -39,9 +39,19 @@ func NewCluster(config *rest.Config, namespace string) (cluster.Cluster, error) 
 		return nil, err
 	}
 
-	c, err := cluster.New(config, func(o *cluster.Options) {
+	ns, _, err := config.Namespace()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client namespace: %v", err)
+	}
+
+	cfg, err := config.ClientConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client config: %v", err)
+	}
+
+	c, err := cluster.New(cfg, func(o *cluster.Options) {
 		o.Scheme = runtimescheme
-		o.Namespace = namespace
+		o.Namespace = ns
 	})
 	if err != nil {
 		return nil, err
