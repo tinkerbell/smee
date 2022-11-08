@@ -27,6 +27,7 @@ type Finder struct {
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
 func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
+	// TODO(moadqassem): Maybe use the tinkerbell kubeclient instead of using this cluster client similar to hegel.
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{
 			ExplicitPath: kubeconfig,
@@ -41,12 +42,7 @@ func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Fi
 		},
 	)
 
-	config, err := ccfg.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	cluster, err := NewCluster(config)
+	cluster, err := NewCluster(ccfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
