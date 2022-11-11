@@ -22,7 +22,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/stretchr/testify v1.8.0
-	github.com/tinkerbell/ipxedust v0.0.0-20221102191636-767b29b5f3a2
+	github.com/tinkerbell/ipxedust v0.0.0-20221111195819-a8557c940863
 	github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.29.0
 	go.opentelemetry.io/otel v1.9.0
