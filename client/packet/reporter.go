@@ -91,7 +91,7 @@ func (c *Reporter) Patch(ctx context.Context, ref, mime string, body io.Reader, 
 }
 
 func (c *Reporter) Post(ctx context.Context, ref, mime string, body io.Reader, v interface{}) error {
-	req, err := http.NewRequest("POST", ref, body)
+	req, err := http.NewRequestWithContext(ctx, "POST", ref, body)
 	if err != nil {
 		return errors.Wrap(err, "setup POST request")
 	}
