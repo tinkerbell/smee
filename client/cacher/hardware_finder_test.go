@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"testing"
@@ -192,7 +191,7 @@ type fakeEMGetter struct {
 
 func (c *fakeEMGetter) Post(_ context.Context, _, _ string, body io.Reader, v interface{}) error {
 	var err error
-	c.body, err = ioutil.ReadAll(body)
+	c.body, err = io.ReadAll(body)
 	if err != nil {
 		panic(err)
 	}

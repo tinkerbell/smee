@@ -130,7 +130,16 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 		}
 	}
 
-	if err := http.ListenAndServe(addr, xffHandler); err != nil {
+	server := http.Server{
+		Addr:    addr,
+		Handler: xffHandler,
+
+		// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
+		// recommendation. Boots doesn't really have many headers so 20s should be plenty of time.
+		// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
+		ReadHeaderTimeout: 20 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
 		mainlog.Fatal(err)
 	}

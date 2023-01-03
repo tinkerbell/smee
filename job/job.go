@@ -132,14 +132,14 @@ func (c *Creator) CreateFromRemoteAddr(ctx context.Context, ip string) (context.
 		return ctx, nil, errors.Wrap(err, "splitting host:ip")
 	}
 
-	return c.CreateFromIP(ctx, net.ParseIP(host))
+	return c.createFromIP(ctx, net.ParseIP(host))
 }
 
-// CreateFromIP looksup hardware using the IP from cacher to create a job.
+// createFromIP looks up hardware using the IP from cacher to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
-func (c *Creator) CreateFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
+func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
 	j := &Job{
 		ip:                    ip,
 		start:                 time.Now(),

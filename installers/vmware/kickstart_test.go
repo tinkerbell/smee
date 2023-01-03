@@ -2,8 +2,8 @@ package vmware
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 	"strings"
 	"testing"
 
@@ -114,7 +114,7 @@ func TestScriptKickstart(t *testing.T) {
 
 							got := w.String()
 
-							bs, err := ioutil.ReadFile(fmt.Sprintf("testdata/ks_%s.txt", dc.want))
+							bs, err := os.ReadFile(fmt.Sprintf("testdata/ks_%s.txt", dc.want))
 							if err != nil {
 								t.Fatalf("readfile: %v", err)
 							}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -91,13 +90,14 @@ func TestServeEvents(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "http://example.com/foo", nil)
 		req.RemoteAddr = test.remote
-		req.Body = ioutil.NopCloser(strings.NewReader(test.body))
+		req.Body = io.NopCloser(strings.NewReader(test.body))
 		w := httptest.NewRecorder()
 
 		_, err := serveEvents(c, w, req)
 
 		resp := w.Result()
-		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close() //nolint: revive // this is needed in the testing loop.
+		body, _ := io.ReadAll(resp.Body)
 		if len(body) != 0 {
 			t.Fatal("expected empty body, got:", string(body))
 		}
