@@ -6,6 +6,8 @@ collaborators:
     permission: maintain
   - username: mmlb
     permission: maintain
+  - username: chrisdoherty4
+    permission: maintain
   # Approvers
   - username: nshalman
     permission: push
