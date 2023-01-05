@@ -43,9 +43,6 @@ $(toolsBins):
 	go install "$(CMD)"
 
 generated_go_files := \
-	client/cacher/mock_cacher/cacher_mock.go \
-	client/tinkerbell/mock_workflow/workflow_mock.go \
-	client/tinkerbell/mock_hardware/hardware_mock.go \
 	syslog/facility_string.go \
 	syslog/severity_string.go \
 
@@ -53,9 +50,6 @@ generated_go_files := \
 go_generate: $(generated_go_files)
 $(filter %_string.go,$(generated_go_files)): bin/stringer
 $(filter %_mock.go,$(generated_go_files)): bin/mockgen
-client/cacher/mock_cacher/cacher_mock.go: client/cacher/discovery.go
-client/tinkerbell/mock_workflow/workflow_mock.go: client/tinkerbell/discovery.go
-client/tinkerbell/mock_hardware/hardware_mock.go: client/tinkerbell/discovery.go
 syslog/facility_string.go: syslog/message.go
 syslog/severity_string.go: syslog/message.go
 $(generated_go_files): bin/goimports

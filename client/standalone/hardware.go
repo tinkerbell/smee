@@ -72,7 +72,7 @@ func (hs *HardwareStandalone) HardwareState() client.HardwareState {
 }
 
 func (hs *HardwareStandalone) HardwareOSIEVersion() string {
-	return "" // stubbed out in tink too
+	return hs.Metadata.Instance.GetServicesVersion().OSIE
 }
 
 func (hs *HardwareStandalone) HardwareUEFI(net.HardwareAddr) bool {
