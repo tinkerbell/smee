@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"strings"
@@ -39,7 +40,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
-	"inet.af/netaddr"
 )
 
 var (
@@ -151,7 +151,7 @@ func main() {
 	var nextServer net.IP
 	if cfg.ipxeRemoteTFTPAddr == "" { // use local iPXE binary service for TFTP
 		if cfg.ipxeTFTPEnabled {
-			ipportTFTP, err := netaddr.ParseIPPort(cfg.ipxe.TFTPAddr)
+			ipportTFTP, err := netip.ParseAddrPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
 				mainlog.Fatal(fmt.Errorf("%w: tftp addr must be an ip:port", err))
 			}
