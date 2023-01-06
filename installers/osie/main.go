@@ -15,10 +15,7 @@ type installer struct {
 	// defaultParams are passed to iPXE'd kernel always
 	defaultParams string
 	// workflowParams are passed to iPXE'd kernel when in tinkerbell or standalone mode and the hw indicates it can run workflows
-	workflowParams string
-	// hollowParams are passed to deprovisioning instances for hardware reporting
-	// TODO(mmlb): remove this EMism now that we can use extra-kernel-args
-	hollowParams        string
+	workflowParams      string
 	osieFullURLOverride string
 	extraIPXEVars       [][]string
 }
@@ -28,12 +25,8 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 	defaultParams := []string{
 		"ip=dhcp",
 		"modules=loop,squashfs,sd-mod,usb-storage",
-		"alpine_repo=${base-url}/repo-${arch}/main",
-		"modloop=${base-url}/modloop-${arch}",
 		"tinkerbell=${tinkerbell}",
 		"syslog_host=${syslog_host}",
-		"packet_action=${action}",
-		"packet_state=${state}",
 		"osie_vendors_url=" + conf.OsieVendorServicesURL,
 	}
 
@@ -46,14 +39,6 @@ func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, regist
 		defaultParams:       strings.Join(defaultParams, " "),
 		osieFullURLOverride: osiePathOverride,
 		extraIPXEVars:       dynamicIPXEVars,
-	}
-
-	if conf.HollowClientID != "" && conf.HollowClientRequestSecret != "" {
-		hollowParams := []string{
-			"hollow_client_id=" + conf.HollowClientID,
-			"hollow_client_request_secret=" + conf.HollowClientRequestSecret,
-		}
-		i.hollowParams = strings.Join(hollowParams, " ")
 	}
 
 	if dataModelVersion == "" {
@@ -157,11 +142,6 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 		s.Args("traceparent=00-" + sc.TraceID().String() + "-" + sc.SpanID().String() + "-" + sc.TraceFlags().String())
 	}
 
-	// Only provide the Hollow secrets for deprovisions
-	if j.HardwareState() == "deprovisioning" && i.hollowParams != "" {
-		s.Args(i.hollowParams)
-	}
-
 	if j.VLANID() != "" {
 		s.Args("vlan_id=" + j.VLANID())
 	}
@@ -174,7 +154,6 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 		s.Args("packet_base_url=${base-url}")
 	}
 
-	s.Args("packet_bootdev_mac=${bootdevmac}")
 	s.Args("facility=" + j.FacilityCode())
 
 	switch j.PlanSlug() {
