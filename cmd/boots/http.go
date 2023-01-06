@@ -74,9 +74,6 @@ func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern s
 	mux.HandleFunc("/_packet/pprof/trace", pprof.Trace)
 	mux.HandleFunc("/healthcheck", s.serveHealthchecker(GitRev, StartTime))
 	mux.Handle(otelFuncWrapper("/phone-home", s.servePhoneHome))
-	mux.Handle(otelFuncWrapper("/phone-home/key", job.ServePublicKey))
-	mux.Handle(otelFuncWrapper("/problem", s.serveProblem))
-	mux.Handle(otelFuncWrapper("/hardware-components", s.serveHardware))
 
 	// wrap the mux with an OpenTelemetry interceptor
 	otelHandler := otelhttp.NewHandler(mux, "boots-http")
@@ -147,42 +144,6 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	j.ServeFile(w, req.Clone(ctx), h.i)
 }
 
-func (s *BootsHTTPServer) serveHardware(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	labels := prometheus.Labels{"from": "http", "op": "hardware-components"}
-	metrics.JobsTotal.With(labels).Inc()
-	metrics.JobsInProgress.With(labels).Inc()
-	defer metrics.JobsInProgress.With(labels).Dec()
-	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
-	defer timer.ObserveDuration()
-
-	ctx, j, err := s.jobManager.CreateFromRemoteAddr(ctx, req.RemoteAddr)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
-
-		return
-	}
-
-	if j.CanWorkflow() {
-		activeWorkflows, err := s.workflowFinder.HasActiveWorkflow(ctx, j.HardwareID())
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			j.With("error", err).Info("failed to get workflows")
-
-			return
-		}
-		if !activeWorkflows {
-			w.WriteHeader(http.StatusNotFound)
-			j.Info("no active workflows")
-
-			return
-		}
-	}
-
-	j.AddHardware(w, req)
-}
-
 func (s *BootsHTTPServer) servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
 	metrics.JobsTotal.With(labels).Inc()
@@ -199,40 +160,4 @@ func (s *BootsHTTPServer) servePhoneHome(w http.ResponseWriter, req *http.Reques
 		return
 	}
 	j.ServePhoneHomeEndpoint(w, req)
-}
-
-func (s *BootsHTTPServer) serveProblem(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	labels := prometheus.Labels{"from": "http", "op": "problem"}
-	metrics.JobsTotal.With(labels).Inc()
-	metrics.JobsInProgress.With(labels).Inc()
-	defer metrics.JobsInProgress.With(labels).Dec()
-	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
-	defer timer.ObserveDuration()
-
-	_, j, err := s.jobManager.CreateFromRemoteAddr(ctx, req.RemoteAddr)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
-
-		return
-	}
-
-	if j.CanWorkflow() && s.workflowFinder != nil {
-		activeWorkflows, err := s.workflowFinder.HasActiveWorkflow(ctx, j.HardwareID())
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			j.With("error", err).Info("failed to get workflows")
-
-			return
-		}
-		if !activeWorkflows {
-			w.WriteHeader(http.StatusNotFound)
-			j.Info("no active workflows")
-
-			return
-		}
-	}
-
-	j.ServeProblemEndpoint(w, req)
 }
