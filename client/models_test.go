@@ -23,10 +23,10 @@ func TestServicesVersion(t *testing.T) {
 	} {
 		t.Run(test.desc, func(t *testing.T) {
 			i := Instance{
-				servicesVersion: test.SV,
+				ServicesVersion: test.SV,
 				UserData:        test.userdata,
 			}
-			got := i.ServicesVersion().OSIE
+			got := i.GetServicesVersion().OSIE
 			if got != test.osie {
 				t.Fatalf("incorrect services version returned, want=%q, got=%q", test.osie, got)
 			}

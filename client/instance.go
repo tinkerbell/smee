@@ -24,7 +24,7 @@ type Instance struct {
 	IPXEScriptURL   string           `json:"ipxe_script_url,omitempty"`
 	IPs             []IP             `json:"ip_addresses"`
 	UserData        string           `json:"userdata,omitempty"`
-	servicesVersion ServicesVersion
+	ServicesVersion ServicesVersion
 
 	// Same as PasswordHash
 	// Duplicated here, because CryptedRootPassword is in cacher/legacy mode
@@ -62,9 +62,9 @@ func (i *Instance) FindIP(pred func(IP) bool) *IP {
 	return nil
 }
 
-func (i *Instance) ServicesVersion() ServicesVersion {
-	if i.servicesVersion.OSIE != "" {
-		return i.servicesVersion
+func (i *Instance) GetServicesVersion() ServicesVersion {
+	if i.ServicesVersion.OSIE != "" {
+		return i.ServicesVersion
 	}
 
 	if i.UserData == "" {
@@ -88,26 +88,6 @@ func (i *Instance) ServicesVersion() ServicesVersion {
 	}
 
 	return ServicesVersion{}
-}
-
-func ManagementPublicIPv4IP(ip IP) bool {
-	return ip.Public && ip.Management && ip.Family == 4
-}
-
-func ManagementPrivateIPv4IP(ip IP) bool {
-	return !ip.Public && ip.Management && ip.Family == 4
-}
-
-type Event struct {
-	Type    string `json:"type"`
-	Body    string `json:"body,omitempty"`
-	Private bool   `json:"private"`
-}
-
-type UserEvent struct {
-	Code    string `json:"code"`
-	State   string `json:"state"`
-	Message string `json:"message"`
 }
 
 type ServicesVersion struct {

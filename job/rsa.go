@@ -34,19 +34,6 @@ func initRSA() {
 	rsaKeypair.pub = ssh.MarshalAuthorizedKey(pub)
 }
 
-func decryptPassword(b []byte) (string, error) {
-	if rsaKeypair.key == nil {
-		err := errors.New("missing RSA private key")
-		joblog.Fatal(err)
-	}
-	pass, err := rsaKeypair.key.Decrypt(rand.Reader, b, nil)
-	if err != nil {
-		return "", errors.Wrap(err, "decrypt submitted password")
-	}
-
-	return string(pass), nil
-}
-
 func ServePublicKey(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET", "HEAD":

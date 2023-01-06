@@ -3,15 +3,22 @@ package job
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
+	l "github.com/packethost/pkg/log"
 	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/cacher"
-	"github.com/tinkerbell/boots/client/tinkerbell"
+	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/conf"
 )
+
+func TestMain(m *testing.M) {
+	logger, _ := l.Init("github.com/tinkerbell/boots")
+	Init(logger)
+	os.Exit(m.Run())
+}
 
 func TestSetPXEFilename(t *testing.T) {
 	conf.PublicFQDN = "boots-testing.packet.net"
@@ -99,17 +106,24 @@ func TestSetPXEFilename(t *testing.T) {
 				ID:       tt.id,
 				State:    client.InstanceState(tt.iState),
 				AllowPXE: tt.allowPXE,
+				OS: &client.OperatingSystem{
+					OsSlug: tt.slug,
+				},
 				OSV: &client.OperatingSystem{
 					OsSlug: tt.slug,
 				},
 			}
 			j := Job{
 				Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
-				hardware: &cacher.HardwareCacher{
-					ID:       "$hardware_id",
-					State:    client.HardwareState(tt.hState),
-					PlanSlug: "baremetal_" + tt.plan,
-					Instance: instance,
+				hardware: &standalone.HardwareStandalone{
+					ID: "$hardware_id",
+					Metadata: client.Metadata{
+						State: client.HardwareState(tt.hState),
+						Facility: client.Facility{
+							PlanSlug: "baremetal_" + tt.plan,
+						},
+						Instance: instance,
+					},
 				},
 				instance:     instance,
 				NextServer:   conf.PublicIPv4,
@@ -142,8 +156,22 @@ func TestAllowPXE(t *testing.T) {
 		name := fmt.Sprintf("want=%t, hardware=%t, instance=%t, instance_id=%s", tt.want, tt.hw, tt.instance, tt.iid)
 		t.Run(name, func(t *testing.T) {
 			j := Job{
-				hardware: &cacher.HardwareCacher{
-					AllowPXE: tt.hw,
+				hardware: &standalone.HardwareStandalone{
+					ID: "$hardware_id",
+					Metadata: client.Metadata{
+						Instance: &client.Instance{
+							AllowPXE: tt.hw,
+						},
+					},
+					Network: client.Network{
+						Interfaces: []client.NetworkInterface{
+							{
+								Netboot: client.Netboot{
+									AllowPXE: tt.hw,
+								},
+							},
+						},
+					},
 				},
 				instance: &client.Instance{
 					ID:       tt.iid,
@@ -151,35 +179,6 @@ func TestAllowPXE(t *testing.T) {
 				},
 			}
 			got := j.AllowPXE()
-			if got != tt.want {
-				t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
-			}
-		})
-	}
-}
-
-func TestAreWeProvisioner(t *testing.T) {
-	for _, tt := range []struct {
-		name              string
-		want              bool
-		ProvisionerEngine string
-		env               string
-	}{
-		{name: "tink", want: true, ProvisionerEngine: "tinkerbell", env: "tinkerbell"},
-		{name: "mismatch", want: false, ProvisionerEngine: "tinkerbell", env: "packet"},
-		{name: "empty", want: true, ProvisionerEngine: "", env: "packet"},
-		{name: "empty env", want: false, ProvisionerEngine: "tinkerbell", env: ""},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			j := &Job{
-				hardware: &tinkerbell.HardwareTinkerbellV1{
-					Metadata: client.Metadata{
-						ProvisionerEngine: tt.ProvisionerEngine,
-					},
-				},
-				provisionerEngineName: tt.env,
-			}
-			got := j.areWeProvisioner()
 			if got != tt.want {
 				t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
 			}

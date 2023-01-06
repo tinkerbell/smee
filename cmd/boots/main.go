@@ -23,19 +23,14 @@ import (
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/cacher"
 	"github.com/tinkerbell/boots/client/kubernetes"
-	"github.com/tinkerbell/boots/client/packet"
 	"github.com/tinkerbell/boots/client/standalone"
-	"github.com/tinkerbell/boots/client/tinkerbell"
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
 	"github.com/tinkerbell/boots/installers"
 	"github.com/tinkerbell/boots/installers/customipxe"
-	"github.com/tinkerbell/boots/installers/flatcar"
 	"github.com/tinkerbell/boots/installers/osie"
-	"github.com/tinkerbell/boots/installers/vmware"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
@@ -48,7 +43,6 @@ import (
 )
 
 var (
-	apiBaseURL            = env.URL("API_BASE_URL", "https://api.packet.net")
 	provisionerEngineName = env.Get("PROVISIONER_ENGINE_NAME", "packet")
 
 	mainlog log.Logger
@@ -124,15 +118,11 @@ func main() {
 	syslog.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
 
-	reporter, err := getReporter(l)
+	workflowFinder, finder, err := getFinders(l, cfg)
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	workflowFinder, finder, err := getFinders(l, cfg, reporter)
-	if err != nil {
-		mainlog.Fatal(err)
-	}
-	jobManager := job.NewCreator(l, provisionerEngineName, reporter, finder)
+	jobManager := job.NewCreator(l, provisionerEngineName, finder)
 
 	go func() {
 		mainlog.With("addr", cfg.syslogAddr).Info("serving syslog")
@@ -203,7 +193,6 @@ func main() {
 	})
 
 	httpServer := &BootsHTTPServer{
-		reporter:       reporter,
 		finder:         finder,
 		jobManager:     jobManager,
 		workflowFinder: workflowFinder,
@@ -231,26 +220,12 @@ func main() {
 	}
 }
 
-func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.WorkflowFinder, client.HardwareFinder, error) {
+func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
 	var hf client.HardwareFinder
 	var wf client.WorkflowFinder = &client.NoOpWorkflowFinder{}
 	var err error
 
 	switch os.Getenv("DATA_MODEL_VERSION") {
-	case "":
-		hf, err = cacher.NewHardwareFinder(os.Getenv("FACILITY_CODE"), reporter)
-		if err != nil {
-			return nil, nil, err
-		}
-	case "1":
-		hf, err = tinkerbell.NewHardwareFinder()
-		if err != nil {
-			return nil, nil, err
-		}
-		wf, err = tinkerbell.NewWorkflowFinder()
-		if err != nil {
-			return nil, nil, err
-		}
 	case "standalone":
 		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
 		if saFile == "" {
@@ -261,7 +236,7 @@ func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.Workf
 			return nil, nil, err
 		}
 		// standalone uses Tinkerbell workflows
-		wf, err = tinkerbell.NewWorkflowFinder()
+		wf, err = standalone.NewWorkflowFinder()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -279,25 +254,6 @@ func getFinders(l log.Logger, c *config, reporter client.Reporter) (client.Workf
 	}
 
 	return wf, hf, nil
-}
-
-func getReporter(l log.Logger) (client.Reporter, error) {
-	dataModelVersion := os.Getenv("DATA_MODEL_VERSION")
-	switch dataModelVersion {
-	case "":
-		consumer := env.Get("API_CONSUMER_TOKEN")
-		if consumer == "" {
-			return nil, errors.New("required envvar missing: API_CONSUMER_TOKEN")
-		}
-		auth := env.Get("API_AUTH_TOKEN")
-		if auth == "" {
-			return nil, errors.Errorf("required envvar missing: API_AUTH_TOKEN")
-		}
-
-		return packet.NewReporter(l, apiBaseURL, consumer, auth)
-	default:
-		return client.NewNoOpReporter(l), nil
-	}
 }
 
 // parseDynamicIPXEVars will parse any number of variable definitions from a
@@ -433,12 +389,8 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 		return job.Installers{}, err
 	}
 
-	// register flatcar
-	o := flatcar.Installer(extraIPXEVars)
-	i.RegisterDistro("flatcar", o.BootScript("flatcar"))
-
 	// register custom ipxe
-	o = customipxe.Installer(extraIPXEVars)
+	o := customipxe.Installer(extraIPXEVars)
 	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
 	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
 
@@ -462,19 +414,6 @@ func (cf *config) registerInstallers() (job.Installers, error) {
 	)
 	i.RegisterDistro("discovery", o.BootScript("discover"))
 	i.RegisterDefaultInstaller(o.BootScript("default"))
-
-	// register vmware
-	v := vmware.Installer(extraIPXEVars)
-	i.RegisterSlug("vmware_esxi_5_5", v.BootScript("vmware_esxi_5_5"))
-	i.RegisterSlug("vmware_esxi_6_0", v.BootScript("vmware_esxi_6_0"))
-	i.RegisterSlug("vmware_esxi_6_5", v.BootScript("vmware_esxi_6_5"))
-	i.RegisterSlug("vmware_esxi_6_7", v.BootScript("vmware_esxi_6_7"))
-	i.RegisterSlug("vmware_esxi_7_0", v.BootScript("vmware_esxi_7_0"))
-	i.RegisterSlug("vmware_esxi_7_0U2a", v.BootScript("vmware_esxi_7_0U2a"))
-	i.RegisterSlug("vmware_esxi_6_5_vcf", v.BootScript("vmware_esxi_6_5_vcf"))
-	i.RegisterSlug("vmware_esxi_6_7_vcf", v.BootScript("vmware_esxi_6_7_vcf"))
-	i.RegisterSlug("vmware_esxi_7_0_vcf", v.BootScript("vmware_esxi_7_0_vcf"))
-	i.RegisterDistro("vmware", v.BootScript("vmware"))
 
 	return i, nil
 }

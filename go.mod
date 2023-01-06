@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
-	github.com/davecgh/go-spew v1.1.1
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/equinix-labs/otel-init-go v0.0.5
 	github.com/gammazero/workerpool v0.0.0-20200311205957-7b00833861c6
 	github.com/go-logr/logr v1.2.3
@@ -13,8 +13,6 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
-	github.com/hexops/gotextdiff v1.0.3
-	github.com/packethost/cacher v0.0.0-20200825140532-0b62e6726807
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
 	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0
 	github.com/peterbourgon/ff/v3 v3.1.2
@@ -32,7 +30,7 @@ require (
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/tools v0.1.12
 	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.48.0 // indirect
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 	k8s.io/apimachinery v0.23.0
 	k8s.io/client-go v0.23.0

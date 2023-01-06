@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/cacher"
+	"github.com/tinkerbell/boots/client/standalone"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -42,18 +42,33 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 
 	return Mock{
 		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
-		hardware: &cacher.HardwareCacher{
-			ID:              uuid.New().String(),
-			PlanSlug:        slug,
-			PlanVersionSlug: planVersion,
-			FacilityCode:    facility,
-			Arch:            arch,
-			State:           "provisionable",
-			UEFI:            uefi,
-			ServicesVersion: servicesVersion,
+		hardware: &standalone.HardwareStandalone{
+			ID: uuid.New().String(),
+			Metadata: client.Metadata{
+				Facility: client.Facility{
+					PlanSlug:        slug,
+					PlanVersionSlug: planVersion,
+					FacilityCode:    facility,
+				},
+				Instance: &client.Instance{
+					OS: &client.OperatingSystem{},
+				},
+				State: "provisionable",
+			},
+			Network: client.Network{
+				Interfaces: []client.NetworkInterface{
+					{
+						DHCP: client.DHCP{
+							UEFI: uefi,
+							Arch: arch,
+						},
+					},
+				},
+			},
 		},
 		instance: &client.Instance{
-			State: "provisioning",
+			State:           "provisioning",
+			ServicesVersion: servicesVersion,
 		},
 	}
 }
@@ -96,9 +111,9 @@ func (m *Mock) SetMAC(mac string) {
 
 func (m *Mock) SetManufacturer(slug string) {
 	hp := m.hardware
-	h, ok := hp.(*cacher.HardwareCacher)
+	h, ok := hp.(*standalone.HardwareStandalone)
 	if ok {
-		h.Manufacturer = client.Manufacturer{Slug: slug}
+		h.Metadata.Manufacturer = client.Manufacturer{Slug: slug}
 	}
 }
 
@@ -138,9 +153,9 @@ func (m *Mock) SetCustomData(data interface{}) {
 
 func (m *Mock) SetState(state string) {
 	hp := m.hardware
-	h, ok := hp.(*cacher.HardwareCacher)
+	h, ok := hp.(*standalone.HardwareStandalone)
 	if ok {
-		h.State = client.HardwareState(state)
+		h.Metadata.State = client.HardwareState(state)
 	}
 }
 
@@ -151,133 +166,4 @@ func (m *Mock) SetBootDriveHint(drive string) {
 func (m *Mock) SetRescue(b bool) {
 	i := m.instance
 	i.Rescue = b
-}
-
-func MakeHardwareWithInstance() (*cacher.DiscoveryCacher, []client.MACAddr, string) {
-	macIPMI := client.MACAddr([6]byte{0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x00})
-	mac0 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
-	mac1 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x01})
-	mac2 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x02})
-	mac3 := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x03})
-
-	instanceID := uuid.New().String()
-	d := &cacher.DiscoveryCacher{
-		HardwareCacher: &cacher.HardwareCacher{
-			ID:   uuid.New().String(),
-			Name: "TestSetupInstanceHardwareName",
-			NetworkPorts: []client.Port{
-				{
-					Type: "data",
-					Name: "eth0",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC:  &mac0,
-						Bond: "bond0",
-					},
-				},
-				{
-					Type: "data",
-					Name: "eth1",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC:  &mac1,
-						Bond: "bond0",
-					},
-				},
-				{
-					Type: "data",
-					Name: "eth2",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC:  &mac2,
-						Bond: "bond1",
-					},
-				},
-				{
-					Type: "data",
-					Name: "eth3",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC:  &mac3,
-						Bond: "bond1",
-					},
-				},
-				{
-					Type: "ipmi",
-					Name: "ipmi0",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC: &macIPMI,
-					},
-				},
-			},
-			Instance: &client.Instance{
-				ID:       instanceID,
-				Hostname: "TestSetupInstanceHostname",
-				IPs: []client.IP{
-					{
-						Address:    net.ParseIP("192.168.100.2"),
-						Gateway:    net.ParseIP("192.168.100.1"),
-						Netmask:    net.ParseIP("192.168.100.255"),
-						Family:     4,
-						Management: true,
-						Public:     true,
-					},
-					{
-						Address:    net.ParseIP("192.168.200.2"),
-						Gateway:    net.ParseIP("192.168.200.1"),
-						Netmask:    net.ParseIP("192.168.200.255"),
-						Family:     4,
-						Management: true,
-						Public:     false,
-					},
-				},
-			},
-			IPMI: client.IP{
-				Address:    net.ParseIP("192.168.0.2"),
-				Gateway:    net.ParseIP("192.168.0.1"),
-				Netmask:    net.ParseIP("192.168.0.255"),
-				Family:     4,
-				Management: true,
-				Public:     false,
-			},
-		},
-	}
-
-	return d, []client.MACAddr{macIPMI, mac0, mac1, mac2, mac3}, instanceID
-}
-
-func MakeHardwareWithoutInstance() (*cacher.DiscoveryCacher, client.MACAddr) {
-	mac := client.MACAddr([6]byte{0x00, 0xBA, 0xDD, 0xBE, 0xEF, 0x00})
-	d := &cacher.DiscoveryCacher{
-		HardwareCacher: &cacher.HardwareCacher{
-			ID:   uuid.New().String(),
-			Name: "TestSetupWithoutInstanceHardwareName",
-			NetworkPorts: []client.Port{
-				{
-					Type: "data",
-					Name: "eth0",
-					Data: struct {
-						MAC  *client.MACAddr `json:"mac"`
-						Bond string          `json:"bond"`
-					}{
-						MAC:  &mac,
-						Bond: "bond0",
-					},
-				},
-			},
-		},
-	}
-
-	return d, mac
 }

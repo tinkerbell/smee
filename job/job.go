@@ -23,17 +23,15 @@ type Manager interface {
 // Creator is a type that can create jobs.
 type Creator struct {
 	finder                client.HardwareFinder
-	reporter              client.Reporter
 	provisionerEngineName string
 	logger                log.Logger
 }
 
 // NewCreator returns a manager that can create jobs.
-func NewCreator(logger log.Logger, provisionerEngineName string, reporter client.Reporter, finder client.HardwareFinder) *Creator {
+func NewCreator(logger log.Logger, provisionerEngineName string, finder client.HardwareFinder) *Creator {
 	return &Creator{
 		finder:                finder,
 		provisionerEngineName: provisionerEngineName,
-		reporter:              reporter,
 		logger:                logger,
 	}
 }
@@ -52,14 +50,12 @@ type Job struct {
 	mac                   net.HardwareAddr
 	ip                    net.IP
 	start                 time.Time
-	mode                  Mode
 	dhcp                  dhcp.Config
 	hardware              client.Hardware
 	instance              *client.Instance
 	NextServer            net.IP
 	IpxeBaseURL           string
 	BootsBaseURL          string
-	reporter              client.Reporter
 }
 
 type Installers struct {
@@ -105,7 +101,6 @@ func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giad
 	j := &Job{
 		mac:                   mac,
 		start:                 time.Now(),
-		reporter:              c.reporter,
 		provisionerEngineName: c.provisionerEngineName,
 		Logger:                c.logger,
 	}
@@ -143,7 +138,6 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 	j := &Job{
 		ip:                    ip,
 		start:                 time.Now(),
-		reporter:              c.reporter,
 		provisionerEngineName: c.provisionerEngineName,
 		Logger:                c.logger,
 	}
@@ -165,15 +159,6 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 	}
 
 	return ctx, j, nil
-}
-
-// MarkDeviceActive marks the device active.
-func (j Job) MarkDeviceActive(ctx context.Context) {
-	if id := j.InstanceID(); id != "" {
-		if err := j.reporter.PostInstancePhoneHome(ctx, id); err != nil {
-			j.Error(err)
-		}
-	}
 }
 
 // setup initializes the job from the discovered hardware record with the DHCP
