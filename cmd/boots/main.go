@@ -222,7 +222,7 @@ func main() {
 
 func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
 	var hf client.HardwareFinder
-	var wf client.WorkflowFinder = &client.NoOpWorkflowFinder{}
+	var wf client.WorkflowFinder
 	var err error
 
 	switch os.Getenv("DATA_MODEL_VERSION") {
@@ -251,6 +251,9 @@ func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.Hardware
 		go func() {
 			_ = kf.Start(context.Background())
 		}()
+
+	default:
+		return nil, nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
 	}
 
 	return wf, hf, nil
