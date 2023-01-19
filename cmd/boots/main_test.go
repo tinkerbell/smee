@@ -160,6 +160,7 @@ FLAGS
   -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
   -ipxe-remote-http-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
   -ipxe-remote-tftp-addr  remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
+  -ipxe-script-patch      iPXE script fragment to patch into served iPXE binaries served via TFTP and HTTP
   -ipxe-tftp-addr         local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
   -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
   -ipxe-vars              additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.

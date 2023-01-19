@@ -88,6 +88,8 @@ type config struct {
 	// osiePathOverride allows a completely custom path/URL to be specified for OSIE/Hook images
 	// This will bypass the hardcoded path appending of 'misc/osie/current' to the path
 	osiePathOverride string
+	// iPXE script fragment to patch into binaries served over TFTP and HTTP
+	ipxeScriptPatch string
 }
 
 func main() {
@@ -161,6 +163,7 @@ func main() {
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
 				Timeout: cfg.ipxe.TFTPTimeout,
+				Patch:   []byte(cfg.ipxeScriptPatch),
 			}
 		}
 		nextServer = conf.PublicIPv4
@@ -179,7 +182,7 @@ func main() {
 	bootsBaseURL := conf.PublicFQDN
 	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
 		if cfg.ipxeHTTPEnabled {
-			ipxeHandler = ihttp.Handler{Log: lg}.Handle
+			ipxeHandler = ihttp.Handler{Log: lg, Patch: []byte(cfg.ipxeScriptPatch)}.Handle
 		}
 		ipxePattern = "/ipxe/"
 		ipxeBaseURL = conf.PublicFQDN + ipxePattern
@@ -373,6 +376,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
 	fs.StringVar(&cfg.osiePathOverride, "osie-path-override", "", "A custom URL for OSIE/Hook images.")
+	fs.StringVar(&cfg.ipxeScriptPatch, "ipxe-script-patch", "", "iPXE script fragment to patch into served iPXE binaries served via TFTP and HTTP")
 
 	return &ffcli.Command{
 		Name:       name,
