@@ -58,7 +58,7 @@ type config struct {
 	ipxe ipxedust.Command
 	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled
 	ipxeTFTPEnabled bool
-	// ipxeHTTPEnabled determines if local iPXE binaries served via TFTP are enabled
+	// ipxeHTTPEnabled determines if local iPXE binaries served via HTTP are enabled
 	ipxeHTTPEnabled bool
 	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
 	ipxeRemoteTFTPAddr string
