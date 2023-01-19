@@ -23,7 +23,6 @@ type installer struct {
 // Installer instantiates a new osie installer.
 func Installer(dataModelVersion, tinkGRPCAuth, extraKernelArgs, registry, registryUsername, registryPassword string, tinkTLS bool, osiePathOverride string, dynamicIPXEVars [][]string) job.BootScripter {
 	defaultParams := []string{
-		"ip=dhcp",
 		"modules=loop,squashfs,sd-mod,usb-storage",
 		"tinkerbell=${tinkerbell}",
 		"syslog_host=${syslog_host}",
@@ -144,6 +143,9 @@ func (i installer) kernelParams(ctx context.Context, action, _ string, j job.Job
 
 	if j.VLANID() != "" {
 		s.Args("vlan_id=" + j.VLANID())
+		s.Args("hw_addr=${mac}")
+	} else {
+		s.Args("ip=dhcp")
 	}
 
 	if j.CanWorkflow() {
