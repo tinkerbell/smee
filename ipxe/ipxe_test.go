@@ -6,30 +6,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-type auto struct {
-	Arch              string   // example x86_64
-	Console           string   // example ttyS1,115200
-	DownloadURL       string   // example https://location:8080/to/kernel/and/initrd
-	ExtraKernelParams []string // example tink_worker_image=quay.io/tinkerbell/tink-worker:v0.8.0
-	Facility          string
-	HWAddr            string // example 3c:ec:ef:4c:4f:54
-	SyslogHost        string
-	TinkerbellTLS     bool
-	TinkGRPCAuthority string // example 192.168.2.111:42113
-	TraceID           string
-	VLANID            string // string number between 1-4095
-	WorkerID          string // example 3c:ec:ef:4c:4f:54 or worker1
-}
-
 func TestGenerateTemplate(t *testing.T) {
 	tests := map[string]struct {
-		a       auto
+		h       Hook
 		script  string
 		want    string
 		wantErr bool
 	}{
 		"no vlan": {
-			a: auto{
+			h: Hook{
 				Arch:              "x86_64",
 				TinkGRPCAuthority: "1.2.3.4:42113",
 				TinkerbellTLS:     false,
@@ -58,7 +43,7 @@ boot
 `,
 		},
 		"with vlan": {
-			a: auto{
+			h: Hook{
 				Arch:              "x86_64",
 				TinkGRPCAuthority: "1.2.3.4:42113",
 				TinkerbellTLS:     false,
@@ -88,19 +73,19 @@ boot
 `,
 		},
 		"parse error": {
-			a:       auto{},
+			h:       Hook{},
 			script:  "bad {{ }",
 			wantErr: true,
 		},
 		"execute error": {
-			a:       auto{},
+			h:       Hook{},
 			script:  "{{ .A }}",
 			wantErr: true,
 		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := GenerateTemplate(tt.a, tt.script)
+			got, err := GenerateTemplate(tt.h, tt.script)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Auto.autoDotIPXE() error = %v, wantErr %v", err, tt.wantErr)
 				return
