@@ -84,7 +84,7 @@ func (j Job) defaultScript(span trace.Span) (string, error) {
 		auto.TraceID = sc.TraceID().String()
 	}
 
-	return ipxe.GenerateTemplate(auto, ipxe.AutoScript)
+	return ipxe.GenerateTemplate(auto, ipxe.HookScript)
 }
 
 func (j Job) customScript() (string, error) {

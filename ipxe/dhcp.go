@@ -55,7 +55,7 @@ const (
 
 func init() {
 	dhcp4.SetOptionFormatter(EncapsulatedOptions, func(b []byte) []interface{} {
-		return FormatOptions(ParseOptions(b))
+		return formatOptions(parseOptions(b))
 	})
 }
 
@@ -79,14 +79,14 @@ func IsTinkerbellIPXE(req *dhcp4.Packet) bool {
 
 // IsIPXE returns bool depending on if the request originated with a version of iPXE.
 func IsIPXE(req *dhcp4.Packet) bool {
-	if om := GetEncapsulatedOptions(req); om != nil && HasFeature(om, FeatureHTTP) {
+	if om := getEncapsulatedOptions(req); om != nil && hasFeature(om, FeatureHTTP) {
 		return true
 	}
 
 	return false
 }
 
-func FormatOptions(opts dhcp4.OptionMap) []interface{} {
+func formatOptions(opts dhcp4.OptionMap) []interface{} {
 	if opts == nil {
 		return nil
 	}
@@ -105,18 +105,18 @@ func FormatOptions(opts dhcp4.OptionMap) []interface{} {
 	return fields
 }
 
-func GetEncapsulatedOptions(opts dhcp4.OptionGetter) dhcp4.OptionMap {
+func getEncapsulatedOptions(opts dhcp4.OptionGetter) dhcp4.OptionMap {
 	if v, ok := opts.GetString(dhcp4.OptionUserClass); ok && v != "iPXE" {
 		return nil
 	}
 	if x, ok := opts.GetOption(EncapsulatedOptions); ok {
-		return ParseOptions(x)
+		return parseOptions(x)
 	}
 
 	return nil
 }
 
-func HasFeature(opts dhcp4.OptionGetter, feature dhcp4.Option) bool {
+func hasFeature(opts dhcp4.OptionGetter, feature dhcp4.Option) bool {
 	if opts == nil {
 		return false
 	}
@@ -125,7 +125,7 @@ func HasFeature(opts dhcp4.OptionGetter, feature dhcp4.Option) bool {
 	return ok && v == 1
 }
 
-func ParseOptions(b []byte) dhcp4.OptionMap {
+func parseOptions(b []byte) dhcp4.OptionMap {
 	nested := make(dhcp4.OptionMap)
 	if err := nested.Deserialize(b, &dhcp4.OptionMapDeserializeOptions{IgnoreMissingEndTag: true}); err != nil {
 		// clog.Warning(err)

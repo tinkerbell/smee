@@ -1,7 +1,7 @@
 package ipxe
 
-// AutoScript is the default iPXE script for loading Hook.
-var AutoScript = `#!ipxe
+// HookScript is the default iPXE script for loading Hook.
+var HookScript = `#!ipxe
 
 echo Loading the Tinkerbell iPXE script...
 {{- if .TraceID }}

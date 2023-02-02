@@ -40,7 +40,7 @@ func TestGenerateTemplate(t *testing.T) {
 				ExtraKernelParams: []string{"tink_worker_image=quay.io/tinkerbell/tink-worker:v0.8.0", "tinkerbell=packet"},
 				HWAddr:            "3c:ec:ef:4c:4f:54",
 			},
-			script: AutoScript,
+			script: HookScript,
 			want: `#!ipxe
 
 echo Loading the Tinkerbell iPXE script...
@@ -70,7 +70,7 @@ boot
 				HWAddr:            "3c:ec:ef:4c:4f:54",
 				VLANID:            "16",
 			},
-			script: AutoScript,
+			script: HookScript,
 			want: `#!ipxe
 
 echo Loading the Tinkerbell iPXE script...
