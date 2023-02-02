@@ -43,7 +43,7 @@ func TestGenerateTemplate(t *testing.T) {
 			script: HookScript,
 			want: `#!ipxe
 
-echo Loading the Tinkerbell iPXE script...
+echo Loading the Tinkerbell Hook iPXE script...
 
 set arch x86_64
 set download-url http://location:8080/to/kernel/and/initrd
@@ -73,7 +73,7 @@ boot
 			script: HookScript,
 			want: `#!ipxe
 
-echo Loading the Tinkerbell iPXE script...
+echo Loading the Tinkerbell Hook iPXE script...
 
 set arch x86_64
 set download-url http://location:8080/to/kernel/and/initrd
