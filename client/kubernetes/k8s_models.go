@@ -318,6 +318,26 @@ func (d *K8sDiscoverer) InitrdPath(net.HardwareAddr) string {
 	return ""
 }
 
+func (d *K8sDiscoverer) IPXEURL(net.HardwareAddr) string {
+	for _, iface := range d.hw.Spec.Interfaces {
+		if iface.Netboot != nil && iface.Netboot.IPXE != nil {
+			return iface.Netboot.IPXE.URL
+		}
+	}
+
+	return ""
+}
+
+func (d *K8sDiscoverer) IPXEScript(net.HardwareAddr) string {
+	for _, iface := range d.hw.Spec.Interfaces {
+		if iface.Netboot != nil && iface.Netboot.IPXE != nil {
+			return iface.Netboot.IPXE.Contents
+		}
+	}
+
+	return ""
+}
+
 func (d *K8sDiscoverer) OperatingSystem() *client.OperatingSystem {
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil && d.hw.Spec.Metadata.Instance.OperatingSystem != nil {
 		return &client.OperatingSystem{

@@ -25,6 +25,13 @@ type Creator struct {
 	finder                client.HardwareFinder
 	provisionerEngineName string
 	logger                log.Logger
+	ExtraKernelParams     []string
+	Registry              string
+	RegistryUsername      string
+	RegistryPassword      string
+	TinkServerTLS         bool
+	TinkServerGRPCAddr    string
+	OSIEURLOverride       string
 }
 
 // NewCreator returns a manager that can create jobs.
@@ -56,22 +63,13 @@ type Job struct {
 	NextServer            net.IP
 	IpxeBaseURL           string
 	BootsBaseURL          string
-}
-
-type Installers struct {
-	Default     BootScript
-	ByInstaller map[string]BootScript
-	ByDistro    map[string]BootScript
-	BySlug      map[string]BootScript
-}
-
-func NewInstallers() Installers {
-	return Installers{
-		Default:     nil,
-		ByInstaller: make(map[string]BootScript),
-		ByDistro:    make(map[string]BootScript),
-		BySlug:      make(map[string]BootScript),
-	}
+	ExtraKernelParams     []string
+	Registry              string
+	RegistryUsername      string
+	RegistryPassword      string
+	TinkServerTLS         bool
+	TinkServerGRPCAddr    string
+	OSIEURLOverride       string
 }
 
 // AllowPxe returns the value from the hardware data
@@ -140,6 +138,13 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 		start:                 time.Now(),
 		provisionerEngineName: c.provisionerEngineName,
 		Logger:                c.logger,
+		ExtraKernelParams:     c.ExtraKernelParams,
+		Registry:              c.Registry,
+		RegistryUsername:      c.RegistryUsername,
+		RegistryPassword:      c.RegistryPassword,
+		TinkServerTLS:         c.TinkServerTLS,
+		TinkServerGRPCAddr:    c.TinkServerGRPCAddr,
+		OSIEURLOverride:       c.OSIEURLOverride,
 	}
 
 	c.logger.With("ip", ip).Info("discovering from ip")

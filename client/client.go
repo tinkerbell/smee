@@ -87,4 +87,6 @@ type Hardware interface {
 	InitrdPath(mac net.HardwareAddr) string
 	OperatingSystem() *OperatingSystem
 	GetTraceparent() string
+	IPXEURL(mac net.HardwareAddr) string
+	IPXEScript(mac net.HardwareAddr) string
 }

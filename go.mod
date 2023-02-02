@@ -3,7 +3,6 @@ module github.com/tinkerbell/boots
 go 1.18
 
 require (
-	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/equinix-labs/otel-init-go v0.0.5
@@ -76,7 +75,6 @@ require (
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/rollbar/rollbar-go v1.0.2 // indirect
 	github.com/rs/zerolog v1.26.0 // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.34.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.4.1 // indirect

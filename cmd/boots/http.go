@@ -51,16 +51,15 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 }
 
 type jobHandler struct {
-	i          job.Installers
 	jobManager job.Manager
 }
 
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *BootsHTTPServer) ServeHTTP(i job.Installers, addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
+func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
-	jh := jobHandler{i: i, jobManager: s.jobManager}
+	jh := jobHandler{jobManager: s.jobManager}
 	mux.Handle(otelFuncWrapper("/", jh.serveJobFile))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
@@ -141,7 +140,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// otel: send a req.Clone with the updated context from the job's hw data
-	j.ServeFile(w, req.Clone(ctx), h.i)
+	j.ServeFile(w, req.Clone(ctx))
 }
 
 func (s *BootsHTTPServer) servePhoneHome(w http.ResponseWriter, req *http.Request) {
