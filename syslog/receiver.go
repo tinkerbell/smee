@@ -1,7 +1,9 @@
 package syslog
 
 import (
+	"encoding/json"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -104,13 +106,50 @@ func (r *Receiver) run() {
 	}
 }
 
+func parse(m *message) map[string]interface{} {
+	structured := make(map[string]interface{})
+	if m.Facility().String() != "" {
+		structured["facility"] = m.Facility().String()
+	}
+	if m.Severity().String() != "" {
+		structured["severity"] = m.Severity().String()
+	}
+	if string(m.hostname) != "" {
+		structured["hostname"] = string(m.hostname)
+	}
+	if string(m.app) != "" {
+		structured["app-name"] = string(m.app)
+	}
+	if string(m.procid) != "" {
+		structured["procid"] = string(m.procid)
+	}
+	if string(m.msgid) != "" {
+		structured["msgid"] = string(m.msgid)
+	}
+	if string(m.msg) != "" {
+		if strings.HasPrefix(string(m.msg), "{") {
+			var j map[string]interface{}
+			if err := json.Unmarshal(m.msg, &j); err == nil {
+				structured["msg"] = j
+			}
+		} else {
+			structured["msg"] = string(m.msg)
+		}
+	}
+	structured["host"] = m.host.String()
+
+	return structured
+}
+
 func (r *Receiver) runParser() {
 	for m := range r.parse {
 		if m.parse() {
+			structured := parse(m)
+			sl := sysloglog.With("msg", structured)
 			if m.Severity() == DEBUG {
-				sysloglog.Debug(m)
+				sl.Debug()
 			} else {
-				sysloglog.Info(m)
+				sl.Info()
 			}
 		} else {
 			sysloglog.Debug(m)
