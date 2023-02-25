@@ -6,7 +6,7 @@ import "net/url"
 // It will either chain to a URL or execute an iPXE script.
 var CustomScript = `#!ipxe
 
-echo Loading the Tinkerbell iPXE custom script...
+echo Loading custom Tinkerbell iPXE script...
 
 {{- if .Chain }}
 chain --autofree {{ .Chain }}

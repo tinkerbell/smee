@@ -5,7 +5,7 @@ import (
 	"html/template"
 )
 
-func GenerateTemplate[data any](d data, script string) (string, error) {
+func GenerateTemplate(d any, script string) (string, error) {
 	t := template.New("auto.ipxe")
 	t, err := t.Parse(script)
 	if err != nil {
