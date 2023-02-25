@@ -91,6 +91,14 @@ func (hs *HardwareStandalone) InitrdPath(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().Netboot.OSIE.Initrd
 }
 
+func (hs *HardwareStandalone) IPXEURL(net.HardwareAddr) string {
+	return hs.getPrimaryInterface().Netboot.IPXE.URL
+}
+
+func (hs *HardwareStandalone) IPXEScript(net.HardwareAddr) string {
+	return hs.getPrimaryInterface().Netboot.IPXE.Contents
+}
+
 func (hs *HardwareStandalone) OperatingSystem() *client.OperatingSystem {
 	return hs.Metadata.Instance.OS
 }

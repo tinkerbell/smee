@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-func (j Job) ServeFile(w http.ResponseWriter, req *http.Request, i Installers) {
+func (j Job) ServeFile(w http.ResponseWriter, req *http.Request) {
 	base := path.Base(req.URL.Path)
 
 	if name := strings.TrimSuffix(base, ".ipxe"); len(name) < len(base) {
-		j.serveBootScript(req.Context(), w, name, i)
+		j.serveBootScript(req.Context(), w, name)
 
 		return
 	}

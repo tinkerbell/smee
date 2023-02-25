@@ -29,9 +29,6 @@ import (
 	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/httplog"
-	"github.com/tinkerbell/boots/installers"
-	"github.com/tinkerbell/boots/installers/customipxe"
-	"github.com/tinkerbell/boots/installers/osie"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
@@ -115,7 +112,6 @@ func main() {
 	dhcp.Init(l)
 	conf.Init(l)
 	httplog.Init(l)
-	installers.Init(l)
 	job.Init(l)
 	syslog.Init(l)
 	mainlog.With("version", GitRev).Info("starting")
@@ -195,6 +191,18 @@ func main() {
 		return ipxe.ListenAndServe(ctx)
 	})
 
+	jobManager.ExtraKernelParams = strings.Split(cfg.extraKernelArgs, " ")
+	jobManager.Registry = env.Get("DOCKER_REGISTRY")
+	jobManager.RegistryUsername = env.Get("REGISTRY_USERNAME")
+	jobManager.RegistryPassword = env.Get("REGISTRY_PASSWORD")
+	jobManager.TinkServerTLS = env.Bool("TINKERBELL_TLS", true)
+	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
+	if env.Get("DATA_MODEL_VERSION") == "1" && authority == "" {
+		mainlog.Error(errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)"))
+	}
+	jobManager.TinkServerGRPCAddr = authority
+	jobManager.OSIEURLOverride = cfg.osiePathOverride
+
 	httpServer := &BootsHTTPServer{
 		finder:         finder,
 		jobManager:     jobManager,
@@ -208,12 +216,8 @@ func main() {
 	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 
-	i, err := cfg.registerInstallers()
-	if err != nil {
-		mainlog.Fatal(err)
-	}
 	mainlog.With("addr", cfg.httpAddr).Info("serving http")
-	go httpServer.ServeHTTP(i, cfg.httpAddr, ipxePattern, ipxeHandler)
+	go httpServer.ServeHTTP(cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
 	mainlog.Info("boots shutting down")
@@ -260,34 +264,6 @@ func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.Hardware
 	}
 
 	return wf, hf, nil
-}
-
-// parseDynamicIPXEVars will parse any number of variable definitions from a
-// string, and return a an array of two-element arrays which are the key/value
-// string pairs of the variable's name and value. These will later be injected
-// as variable definitions in the iPXE script. Variable order is preserved.
-func parseDynamicIPXEVars(v string) ([][]string, error) {
-	if v == "" {
-		return nil, nil
-	}
-
-	// extract multiple variable definitions by splitting first on spaces
-	allDefs := strings.Fields(v)
-	retVal := make([][]string, len(allDefs))
-
-	// iterate over each variable definition and split on '='
-	for i, el := range allDefs {
-		varDef := strings.SplitN(el, "=", 2)
-		if len(varDef) == 2 && varDef[0] != "" && varDef[1] != "" {
-			retVal[i] = varDef
-		} else {
-			err := errors.Errorf("unable to parse iPXE dynamic variable definitions from string %v", v)
-
-			return nil, err
-		}
-	}
-
-	return retVal, nil
 }
 
 // defaultLogger is zap logr implementation.
@@ -385,42 +361,4 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
 		UsageFunc:  customUsageFunc,
 	}
-}
-
-func (cf *config) registerInstallers() (job.Installers, error) {
-	// register installers
-	i := job.NewInstallers()
-
-	extraIPXEVars, err := parseDynamicIPXEVars(cf.ipxeVars)
-	if err != nil {
-		return job.Installers{}, err
-	}
-
-	// register custom ipxe
-	o := customipxe.Installer(extraIPXEVars)
-	i.RegisterDistro("custom_ipxe", o.BootScript("custom_ipxe"))
-	i.RegisterInstaller("custom_ipxe", o.BootScript("custom_ipxe"))
-
-	dataModelVersion := env.Get("DATA_MODEL_VERSION")
-	auth := env.Get("TINKERBELL_GRPC_AUTHORITY")
-	if dataModelVersion == "1" && auth == "" {
-		return job.Installers{}, errors.New("TINKERBELL_GRPC_AUTHORITY is required when in tinkerbell mode")
-	}
-
-	// register osie
-	o = osie.Installer(
-		dataModelVersion,
-		auth,
-		cf.extraKernelArgs,
-		env.Get("DOCKER_REGISTRY"),
-		env.Get("REGISTRY_USERNAME"),
-		env.Get("REGISTRY_PASSWORD"),
-		env.Bool("TINKERBELL_TLS", true),
-		cf.osiePathOverride,
-		extraIPXEVars,
-	)
-	i.RegisterDistro("discovery", o.BootScript("discover"))
-	i.RegisterDefaultInstaller(o.BootScript("default"))
-
-	return i, nil
 }
