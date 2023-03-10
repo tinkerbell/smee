@@ -663,8 +663,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/tinkerbell/ipxedust v0.0.0-20230210031627-6cd69ece53f3 h1:DQT7al3vvIy9tKDm5jg2ewLJyXCibgHJEdHRGqaTEK0=
-github.com/tinkerbell/ipxedust v0.0.0-20230210031627-6cd69ece53f3/go.mod h1:4TMjBQjpeLxfOb09nOf1RYiVRr1z5ZVw8eDuf6Pu5hw=
+github.com/tinkerbell/ipxedust v0.0.0-20230310190817-626c6f9fb069 h1:K6YYsxAbAPtssOK664k5aVlGDpsRHbnxRaGC36ZBz7A=
+github.com/tinkerbell/ipxedust v0.0.0-20230310190817-626c6f9fb069/go.mod h1:vMRa5eo8FZ4Vqq5xSUhzf8iHzdgjSjNeesYD1ZIfJF8=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1 h1:K0bl3z+Lj7quCv0axvJo6sWc0ZW5u3pyZ+wG8jh3BPo=
 github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
@@ -789,8 +789,8 @@ golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83/go.mod h1:jdWPYTVW3xRLrWP
 golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20210817164053-32db794688a5/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20210920023735-84f357641f63/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 h1:kUhD7nTDoI3fVd9G4ORWrbV5NY0liEs/Jg2pv5f+bBA=
-golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
+golang.org/x/crypto v0.1.0 h1:MDRAIl0xIo9Io2xV565hzXHw3zVseKrJKodhohM5CjU=
+golang.org/x/crypto v0.1.0/go.mod h1:RecgLatLF4+eUMCP1PoPZQb+cVrJcOPbHkTkbkB9sbw=
 golang.org/x/exp v0.0.0-20180321215751-8460e604b9de/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
