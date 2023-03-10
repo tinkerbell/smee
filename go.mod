@@ -19,13 +19,13 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
 	github.com/stretchr/testify v1.8.0
-	github.com/tinkerbell/ipxedust v0.0.0-20230210031627-6cd69ece53f3
+	github.com/tinkerbell/ipxedust v0.0.0-20230310190817-626c6f9fb069
 	github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.29.0
 	go.opentelemetry.io/otel v1.9.0
 	go.opentelemetry.io/otel/trace v1.9.0
 	go.uber.org/zap v1.22.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
+	golang.org/x/crypto v0.1.0
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/tools v0.1.12
 	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
