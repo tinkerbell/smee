@@ -154,8 +154,8 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() *client.MACAddr {
-											return &client.MinMAC
+										MAC: func() net.HardwareAddr {
+											return net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 										}(),
 									},
 								},
@@ -169,7 +169,7 @@ func TestByMAC(t *testing.T) {
 		},
 		{
 			name: "happy path",
-			arg:  client.MaxMAC.HardwareAddr(),
+			arg:  net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 			db: []*DiscoverStandalone{
 				{
 					HardwareStandalone: HardwareStandalone{
@@ -178,8 +178,8 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() *client.MACAddr {
-											return &client.MinMAC
+										MAC: func() net.HardwareAddr {
+											return net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 										}(),
 									},
 								},
@@ -194,8 +194,8 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() *client.MACAddr {
-											return &client.MaxMAC
+										MAC: func() net.HardwareAddr {
+											return net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 										}(),
 									},
 								},
@@ -211,8 +211,8 @@ func TestByMAC(t *testing.T) {
 						Interfaces: []client.NetworkInterface{
 							{
 								DHCP: client.DHCP{
-									MAC: func() *client.MACAddr {
-										return &client.MaxMAC
+									MAC: func() net.HardwareAddr {
+										return net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 									}(),
 								},
 							},

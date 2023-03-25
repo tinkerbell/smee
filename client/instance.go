@@ -2,6 +2,7 @@ package client
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"net"
 	"regexp"
@@ -51,43 +52,25 @@ type Device struct {
 	ID string `json:"id"`
 }
 
-// FindIP returns IP for an instance, nil otherwise.
-func (i *Instance) FindIP(pred func(IP) bool) *IP {
-	for _, ip := range i.IPs {
-		if pred(ip) {
-			return &ip
-		}
-	}
-
-	return nil
+// Metadata holds the hardware metadata.
+type Metadata struct {
+	State        HardwareState `json:"state"`
+	BondingMode  BondingMode   `json:"bonding_mode"`
+	Manufacturer Manufacturer  `json:"manufacturer"`
+	Instance     *Instance     `json:"instance"`
+	Custom       struct {
+		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
+		PrivateSubnets []string        `json:"private_subnets"`
+	} `json:"custom"`
+	Facility          Facility `json:"facility"`
+	ProvisionerEngine string   `json:"provisioner_engine"`
 }
 
-func (i *Instance) GetServicesVersion() ServicesVersion {
-	if i.ServicesVersion.OSIE != "" {
-		return i.ServicesVersion
-	}
-
-	if i.UserData == "" {
-		return ServicesVersion{}
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
-	for scanner.Scan() {
-		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
-		if len(matches) == 0 {
-			continue
-		}
-
-		var sv ServicesVersion
-		err := json.Unmarshal([]byte(matches[1]), &sv)
-		if err != nil {
-			return ServicesVersion{}
-		}
-
-		return sv
-	}
-
-	return ServicesVersion{}
+// Facility represents the facilty in use.
+type Facility struct {
+	PlanSlug        string `json:"plan_slug"`
+	PlanVersionSlug string `json:"plan_version_slug"`
+	FacilityCode    string `json:"facility_code"`
 }
 
 type ServicesVersion struct {
@@ -127,18 +110,9 @@ type Port struct {
 	Type PortType `json:"type"`
 	Name string   `json:"name"`
 	Data struct {
-		MAC  *MACAddr `json:"mac"`
-		Bond string   `json:"bond"`
+		MAC  net.HardwareAddr `json:"mac"`
+		Bond string           `json:"bond"`
 	} `json:"data"`
-}
-
-// MAC returns the physical hardware address, nil otherwise.
-func (p *Port) MAC() net.HardwareAddr {
-	if p.Data.MAC != nil && *p.Data.MAC != MinMAC {
-		return p.Data.MAC.HardwareAddr()
-	}
-
-	return nil
 }
 
 // PortType is type for a network port.
@@ -157,16 +131,16 @@ type NetworkInterface struct {
 
 // DHCP holds details for DHCP connection.
 type DHCP struct {
-	MAC         *MACAddr `json:"mac"`
-	IP          IP       `json:"ip"`
-	Hostname    string   `json:"hostname"`
-	LeaseTime   int      `json:"lease_time"`
-	NameServers []string `json:"name_servers"`
-	TimeServers []string `json:"time_servers"`
-	Arch        string   `json:"arch"`
-	UEFI        bool     `json:"uefi"`
-	IfaceName   string   `json:"iface_name"` // to be removed?
-	VLANID      string   `json:"vlan_id"`
+	MAC         net.HardwareAddr `json:"mac"`
+	IP          IP               `json:"ip"`
+	Hostname    string           `json:"hostname"`
+	LeaseTime   int              `json:"lease_time"`
+	NameServers []string         `json:"name_servers"`
+	TimeServers []string         `json:"time_servers"`
+	Arch        string           `json:"arch"`
+	UEFI        bool             `json:"uefi"`
+	IfaceName   string           `json:"iface_name"` // to be removed?
+	VLANID      string           `json:"vlan_id"`
 }
 
 // Netboot holds details for a hardware to boot over network.
@@ -192,47 +166,39 @@ type Network struct {
 	Interfaces []NetworkInterface `json:"interfaces,omitempty"`
 }
 
-// InterfacesByMac returns the NetworkInterface that contains the matching mac address
-// returns an empty NetworkInterface if not found.
-func (n Network) InterfaceByMac(mac net.HardwareAddr) NetworkInterface {
-	for _, i := range n.Interfaces {
-		if i.DHCP.MAC.String() == mac.String() {
-			return i
-		}
+func (i *Instance) GetServicesVersion() ServicesVersion {
+	if i.ServicesVersion.OSIE != "" {
+		return i.ServicesVersion
 	}
 
-	return NetworkInterface{}
-}
-
-// InterfacesByIp returns the NetworkInterface that contains the matching ip address
-// returns an empty NetworkInterface if not found.
-func (n Network) InterfaceByIP(ip net.IP) NetworkInterface {
-	for _, i := range n.Interfaces {
-		if i.DHCP.IP.Address.String() == ip.String() {
-			return i
-		}
+	if i.UserData == "" {
+		return ServicesVersion{}
 	}
 
-	return NetworkInterface{}
+	scanner := bufio.NewScanner(strings.NewReader(i.UserData))
+	for scanner.Scan() {
+		matches := servicesVersionUserdataRegex.FindStringSubmatch(scanner.Text())
+		if len(matches) == 0 {
+			continue
+		}
+
+		var sv ServicesVersion
+		err := json.Unmarshal([]byte(matches[1]), &sv)
+		if err != nil {
+			return ServicesVersion{}
+		}
+
+		return sv
+	}
+
+	return ServicesVersion{}
 }
 
-// Metadata holds the hardware metadata.
-type Metadata struct {
-	State        HardwareState `json:"state"`
-	BondingMode  BondingMode   `json:"bonding_mode"`
-	Manufacturer Manufacturer  `json:"manufacturer"`
-	Instance     *Instance     `json:"instance"`
-	Custom       struct {
-		PreinstalledOS OperatingSystem `json:"preinstalled_operating_system_version"`
-		PrivateSubnets []string        `json:"private_subnets"`
-	} `json:"custom"`
-	Facility          Facility `json:"facility"`
-	ProvisionerEngine string   `json:"provisioner_engine"`
-}
+// MAC returns the physical hardware address, nil otherwise.
+func (p *Port) MAC() net.HardwareAddr {
+	if p.Data.MAC != nil && !bytes.Equal(p.Data.MAC, net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}) {
+		return p.Data.MAC
+	}
 
-// Facility represents the facilty in use.
-type Facility struct {
-	PlanSlug        string `json:"plan_slug"`
-	PlanVersionSlug string `json:"plan_version_slug"`
-	FacilityCode    string `json:"facility_code"`
+	return nil
 }

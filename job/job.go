@@ -1,6 +1,7 @@
 package job
 
 import (
+	"bytes"
 	"context"
 	"net"
 	"time"
@@ -136,7 +137,7 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 		return ctx, nil, errors.WithMessage(err, "discovering from ip address")
 	}
 	mac := d.GetMAC(ip)
-	if mac.String() == client.MinMAC.String() {
+	if bytes.Equal(mac, net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}) {
 		c.logger.Error(errors.New("somehow got a zero mac"), "somehow got a zero mac", "ip", ip)
 
 		return ctx, nil, errors.New("somehow got a zero mac")

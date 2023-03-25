@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"net"
 	"testing"
 )
 
@@ -29,6 +31,32 @@ func TestServicesVersion(t *testing.T) {
 			got := i.GetServicesVersion().OSIE
 			if got != test.osie {
 				t.Fatalf("incorrect services version returned, want=%q, got=%q", test.osie, got)
+			}
+		})
+	}
+}
+
+func TestMAC(t *testing.T) {
+	tests := map[string]struct {
+		want net.HardwareAddr
+	}{
+		"empty": {},
+		"one":   {want: net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			p := &Port{
+				Data: struct {
+					MAC  net.HardwareAddr `json:"mac"`
+					Bond string           `json:"bond"`
+				}{
+					MAC: tt.want,
+				},
+			}
+			got := p.MAC()
+			if !bytes.Equal(got, tt.want) {
+				t.Fatalf("incorrect MAC returned, want=%q, got=%q", tt.want, got)
 			}
 		})
 	}
