@@ -112,7 +112,7 @@ func TestSetPXEFilename(t *testing.T) {
 				},
 			}
 			j := Job{
-				//Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+				// Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
 				Logger: logr.Discard(),
 				hardware: &standalone.HardwareStandalone{
 					ID: "$hardware_id",

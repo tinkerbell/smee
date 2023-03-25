@@ -13,13 +13,12 @@ import (
 	"github.com/tinkerbell/boots/client/standalone"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest"
 )
 
 type Mock Job
 
 // NewMock returns a mock Job with only minimal fields set, it is useful only for tests.
-func NewMock(t zaptest.TestingT, slug, facility string) Mock {
+func NewMock(slug, facility string) Mock {
 	slugs := strings.Split(slug, ":")
 	slug = slugs[0]
 	var planVersion string

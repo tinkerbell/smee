@@ -59,5 +59,5 @@ func TestGetCircuitID(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	metrics.Init()
-	os.Exit(m.Run()) //nolint:gocritic // this seems to be the correct pattern
+	os.Exit(m.Run())
 }

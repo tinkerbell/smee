@@ -34,10 +34,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	res := &ResponseWriter{ResponseWriter: w}
 	h.Handler.ServeHTTP(res, req) // process the request
-	d := time.Since(start)
 
 	if log {
-		h.Log.Info("response", "method", method, "uri", uri, "client", client, "duration", d, "status", res.StatusCode, "event", "ss")
+		h.Log.Info("response", "method", method, "uri", uri, "client", client, "duration", time.Since(start), "status", res.StatusCode, "event", "ss")
 	}
 }
 
@@ -77,10 +76,9 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 
 	start := time.Now()
 	res, err = t.RoundTripper.RoundTrip(req)
-	d := time.Since(start)
 
 	if res != nil {
-		t.Log.Info("response", "method", method, "uri", uri, "duration", d, "status", res.StatusCode, "event", "cs")
+		t.Log.Info("response", "method", method, "uri", uri, "duration", time.Since(start), "status", res.StatusCode, "event", "cs")
 	}
 
 	return
