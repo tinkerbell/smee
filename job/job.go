@@ -22,24 +22,22 @@ type Manager interface {
 
 // Creator is a type that can create jobs.
 type Creator struct {
-	finder                client.HardwareFinder
-	provisionerEngineName string
-	logger                log.Logger
-	ExtraKernelParams     []string
-	Registry              string
-	RegistryUsername      string
-	RegistryPassword      string
-	TinkServerTLS         bool
-	TinkServerGRPCAddr    string
-	OSIEURLOverride       string
+	finder             client.HardwareFinder
+	logger             log.Logger
+	ExtraKernelParams  []string
+	Registry           string
+	RegistryUsername   string
+	RegistryPassword   string
+	TinkServerTLS      bool
+	TinkServerGRPCAddr string
+	OSIEURLOverride    string
 }
 
 // NewCreator returns a manager that can create jobs.
-func NewCreator(logger log.Logger, provisionerEngineName string, finder client.HardwareFinder) *Creator {
+func NewCreator(logger log.Logger, finder client.HardwareFinder) *Creator {
 	return &Creator{
-		finder:                finder,
-		provisionerEngineName: provisionerEngineName,
-		logger:                logger,
+		finder: finder,
+		logger: logger,
 	}
 }
 
@@ -53,23 +51,22 @@ func Init(l log.Logger) {
 // Job holds per request data.
 type Job struct {
 	log.Logger
-	provisionerEngineName string
-	mac                   net.HardwareAddr
-	ip                    net.IP
-	start                 time.Time
-	dhcp                  dhcp.Config
-	hardware              client.Hardware
-	instance              *client.Instance
-	NextServer            net.IP
-	IpxeBaseURL           string
-	BootsBaseURL          string
-	ExtraKernelParams     []string
-	Registry              string
-	RegistryUsername      string
-	RegistryPassword      string
-	TinkServerTLS         bool
-	TinkServerGRPCAddr    string
-	OSIEURLOverride       string
+	mac                net.HardwareAddr
+	ip                 net.IP
+	start              time.Time
+	dhcp               dhcp.Config
+	hardware           client.Hardware
+	instance           *client.Instance
+	NextServer         net.IP
+	IpxeBaseURL        string
+	BootsBaseURL       string
+	ExtraKernelParams  []string
+	Registry           string
+	RegistryUsername   string
+	RegistryPassword   string
+	TinkServerTLS      bool
+	TinkServerGRPCAddr string
+	OSIEURLOverride    string
 }
 
 // AllowPxe returns the value from the hardware data
@@ -85,22 +82,15 @@ func (j Job) AllowPXE() bool {
 	return j.instance.AllowPXE
 }
 
-// ProvisionerEngineName returns the current provisioning engine name
-// as defined by the env var PROVISIONER_ENGINE_NAME supplied at runtime.
-func (j Job) ProvisionerEngineName() string {
-	return j.provisionerEngineName
-}
-
 // CreateFromDHCP looks up hardware using the MAC from cacher to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
 func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (context.Context, *Job, error) {
 	j := &Job{
-		mac:                   mac,
-		start:                 time.Now(),
-		provisionerEngineName: c.provisionerEngineName,
-		Logger:                c.logger,
+		mac:    mac,
+		start:  time.Now(),
+		Logger: c.logger,
 	}
 	d, err := c.finder.ByMAC(ctx, mac, giaddr, circuitID)
 	if err != nil {
@@ -134,17 +124,16 @@ func (c *Creator) CreateFromRemoteAddr(ctx context.Context, ip string) (context.
 // spans will be linked.
 func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
 	j := &Job{
-		ip:                    ip,
-		start:                 time.Now(),
-		provisionerEngineName: c.provisionerEngineName,
-		Logger:                c.logger,
-		ExtraKernelParams:     c.ExtraKernelParams,
-		Registry:              c.Registry,
-		RegistryUsername:      c.RegistryUsername,
-		RegistryPassword:      c.RegistryPassword,
-		TinkServerTLS:         c.TinkServerTLS,
-		TinkServerGRPCAddr:    c.TinkServerGRPCAddr,
-		OSIEURLOverride:       c.OSIEURLOverride,
+		ip:                 ip,
+		start:              time.Now(),
+		Logger:             c.logger,
+		ExtraKernelParams:  c.ExtraKernelParams,
+		Registry:           c.Registry,
+		RegistryUsername:   c.RegistryUsername,
+		RegistryPassword:   c.RegistryPassword,
+		TinkServerTLS:      c.TinkServerTLS,
+		TinkServerGRPCAddr: c.TinkServerGRPCAddr,
+		OSIEURLOverride:    c.OSIEURLOverride,
 	}
 
 	c.logger.With("ip", ip).Info("discovering from ip")

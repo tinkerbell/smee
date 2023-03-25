@@ -40,8 +40,6 @@ import (
 )
 
 var (
-	provisionerEngineName = env.Get("PROVISIONER_ENGINE_NAME", "packet")
-
 	mainlog log.Logger
 
 	GitRev    = "unknown (use make)"
@@ -120,7 +118,7 @@ func main() {
 	if err != nil {
 		mainlog.Fatal(err)
 	}
-	jobManager := job.NewCreator(l, provisionerEngineName, finder)
+	jobManager := job.NewCreator(l, finder)
 
 	go func() {
 		mainlog.With("addr", cfg.syslogAddr).Info("serving syslog")

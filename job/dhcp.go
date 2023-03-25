@@ -34,12 +34,6 @@ func IsSpecialOS(i *client.Instance) bool {
 func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) (bool, error) {
 	span := trace.SpanFromContext(ctx)
 
-	// If we are not the chosen provisioner for this piece of hardware
-	// do not respond to the DHCP request
-	if !j.areWeProvisioner() {
-		return false, nil
-	}
-
 	// setup reply
 	span.AddEvent("dhcp.NewReply")
 	// only DISCOVER and REQUEST get replies; reply is nil for ignored reqs
@@ -91,14 +85,6 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	}
 
 	return true
-}
-
-func (j Job) areWeProvisioner() bool {
-	if j.hardware.HardwareProvisioner() == "" {
-		return true
-	}
-
-	return j.hardware.HardwareProvisioner() == j.ProvisionerEngineName()
 }
 
 func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, isHTTPClient bool) {
