@@ -154,9 +154,7 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() net.HardwareAddr {
-											return net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-										}(),
+										MAC: "00:00:00:00:00:00",
 									},
 								},
 							},
@@ -178,9 +176,7 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() net.HardwareAddr {
-											return net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-										}(),
+										MAC: "00:00:00:00:00:00",
 									},
 								},
 							},
@@ -194,9 +190,7 @@ func TestByMAC(t *testing.T) {
 							Interfaces: []client.NetworkInterface{
 								{
 									DHCP: client.DHCP{
-										MAC: func() net.HardwareAddr {
-											return net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-										}(),
+										MAC: "ff:ff:ff:ff:ff:ff",
 									},
 								},
 							},
@@ -211,9 +205,7 @@ func TestByMAC(t *testing.T) {
 						Interfaces: []client.NetworkInterface{
 							{
 								DHCP: client.DHCP{
-									MAC: func() net.HardwareAddr {
-										return net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-									}(),
+									MAC: "ff:ff:ff:ff:ff:ff",
 								},
 							},
 						},

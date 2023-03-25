@@ -119,7 +119,7 @@ func (hs *HardwareStandalone) getPrimaryInterface() client.NetworkInterface {
 func (hs *HardwareStandalone) emptyInterface() client.NetworkInterface {
 	return client.NetworkInterface{
 		DHCP: client.DHCP{
-			MAC:         net.HardwareAddr{},
+			MAC:         "",
 			IP:          client.IP{},
 			NameServers: []string{},
 			TimeServers: []string{},

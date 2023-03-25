@@ -17,7 +17,12 @@ func (ds *DiscoverStandalone) Instance() *client.Instance {
 }
 
 func (ds *DiscoverStandalone) MAC() net.HardwareAddr {
-	return ds.getPrimaryInterface().DHCP.MAC
+	m, err := net.ParseMAC(ds.getPrimaryInterface().DHCP.MAC)
+	if err != nil {
+		return nil
+	}
+
+	return m
 }
 
 // TODO: figure out where this gets used and how to return a useful value.
@@ -32,12 +37,17 @@ func (ds *DiscoverStandalone) GetIP(net.HardwareAddr) client.IP {
 func (ds *DiscoverStandalone) GetMAC(ip net.IP) net.HardwareAddr {
 	for _, iface := range ds.Network.Interfaces {
 		if iface.DHCP.IP.Address.Equal(ip) {
-			return iface.DHCP.MAC
+			m, err := net.ParseMAC(iface.DHCP.MAC)
+			if err != nil {
+				return nil
+			}
+
+			return m
 		}
 	}
 
 	// no way to return error so return an empty interface
-	return ds.emptyInterface().DHCP.MAC
+	return nil
 }
 
 func (ds *DiscoverStandalone) DNSServers(net.HardwareAddr) []net.IP {
