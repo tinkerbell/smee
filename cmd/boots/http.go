@@ -22,10 +22,9 @@ import (
 )
 
 type BootsHTTPServer struct {
-	workflowFinder client.WorkflowFinder
-	finder         client.HardwareFinder
-	jobManager     job.Manager
-	logger         logr.Logger
+	finder     client.HardwareFinder
+	jobManager job.Manager
+	logger     logr.Logger
 }
 
 func (s *BootsHTTPServer) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {

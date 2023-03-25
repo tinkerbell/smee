@@ -91,21 +91,14 @@ func main() {
 	defer done()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
 	defer otelShutdown(ctx)
+	metrics.Init()
 
 	log := defaultLogger(cfg.logLevel)
-
-	metrics.Init()
 	log.Info("starting", "version", GitRev)
-
-	workflowFinder, finder, err := getFinders(log, cfg)
-	if err != nil {
-		panic(err)
-	}
-	jobManager := job.NewCreator(log, finder)
 
 	go func() {
 		log.Info("serving syslog", "addr", cfg.syslogAddr)
-		err = retry.Do(
+		err := retry.Do(
 			func() error {
 				_, err := syslog.StartReceiver(cfg.syslogAddr, 1)
 
@@ -170,6 +163,11 @@ func main() {
 		return ipxe.ListenAndServe(ctx)
 	})
 
+	finder, err := getHardwareFinder(log, cfg)
+	if err != nil {
+		panic(err)
+	}
+	jobManager := job.NewCreator(log, finder)
 	jobManager.ExtraKernelParams = strings.Split(cfg.extraKernelArgs, " ")
 	jobManager.Registry = env.Get("DOCKER_REGISTRY")
 	jobManager.RegistryUsername = env.Get("REGISTRY_USERNAME")
@@ -183,10 +181,9 @@ func main() {
 	jobManager.OSIEURLOverride = cfg.osiePathOverride
 
 	httpServer := &BootsHTTPServer{
-		finder:         finder,
-		jobManager:     jobManager,
-		workflowFinder: workflowFinder,
-		logger:         log,
+		finder:     finder,
+		jobManager: jobManager,
+		logger:     log,
 	}
 
 	dhcpServer := &BootsDHCPServer{
@@ -207,32 +204,25 @@ func main() {
 	}
 }
 
-func getFinders(l logr.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
+func getHardwareFinder(l logr.Logger, c *config) (client.HardwareFinder, error) {
 	var hf client.HardwareFinder
-	var wf client.WorkflowFinder
 	var err error
 
 	switch os.Getenv("DATA_MODEL_VERSION") {
 	case "standalone":
 		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
 		if saFile == "" {
-			return nil, nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
 		}
 		hf, err = standalone.NewHardwareFinder(saFile)
 		if err != nil {
-			return nil, nil, err
-		}
-		// standalone uses Tinkerbell workflows
-		wf, err = standalone.NewWorkflowFinder()
-		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	case "kubernetes":
 		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		wf = kf
 		hf = kf
 		// Start the client-side cache
 		go func() {
@@ -240,10 +230,10 @@ func getFinders(l logr.Logger, c *config) (client.WorkflowFinder, client.Hardwar
 		}()
 
 	default:
-		return nil, nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
+		return nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
 	}
 
-	return wf, hf, nil
+	return hf, nil
 }
 
 // defaultLogger is zap logr implementation.

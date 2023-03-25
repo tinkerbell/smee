@@ -16,11 +16,6 @@ type HardwareFinder interface {
 	ByMAC(context.Context, net.HardwareAddr, net.IP, string) (Discoverer, error)
 }
 
-// WorkflowFinder looks for a Tinkerbell workflow for a given HardwareID.
-type WorkflowFinder interface {
-	HasActiveWorkflow(context.Context, HardwareID) (bool, error)
-}
-
 type Component struct {
 	Type            string      `json:"type"`
 	Name            string      `json:"name"`
