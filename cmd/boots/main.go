@@ -18,7 +18,9 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/packethost/pkg/env"
+	plog "github.com/packethost/pkg/log"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
@@ -100,12 +102,13 @@ func main() {
 		log.Info("serving syslog", "addr", cfg.syslogAddr)
 		err := retry.Do(
 			func() error {
-				_, err := syslog.StartReceiver(cfg.syslogAddr, 1)
+				_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
 
 				return err
 			},
 		)
 		if err != nil {
+			log.Error(err, "retry syslog serve")
 			panic(errors.Wrap(err, "retry syslog serve"))
 		}
 	}()
@@ -123,10 +126,13 @@ func main() {
 		if cfg.ipxeTFTPEnabled {
 			ipportTFTP, err := netip.ParseAddrPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
+				log.Error(err, "tftp addr must be an ip:port")
 				panic(fmt.Errorf("%w: tftp addr must be an ip:port", err))
 			}
 			if ipportTFTP.Port() != 69 {
-				panic(fmt.Errorf("port for tftp addr must be 69, provided port: %d", ipportTFTP.Port()))
+				err := fmt.Errorf("port for tftp addr must be 69, provided port: %d", ipportTFTP.Port())
+				log.Error(err, "invalid port for tftp addr")
+				panic(err)
 			}
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
@@ -138,7 +144,9 @@ func main() {
 	} else { // use remote iPXE binary service for TFTP
 		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
 		if ip == nil {
-			panic(fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr))
+			err := fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr)
+			log.Error(err, "invalid IP for remote TFTP server")
+			panic(err)
 		}
 		nextServer = ip
 		log.Info("serving iPXE binaries from remote TFTP server", "addr", nextServer.String())
@@ -165,6 +173,7 @@ func main() {
 
 	finder, err := getHardwareFinder(log, cfg)
 	if err != nil {
+		log.Error(err, "get hardware finder")
 		panic(err)
 	}
 	jobManager := job.NewCreator(log, finder)
@@ -175,7 +184,9 @@ func main() {
 	jobManager.TinkServerTLS = env.Bool("TINKERBELL_TLS", true)
 	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
 	if env.Get("DATA_MODEL_VERSION") == "1" && authority == "" {
-		panic(errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)"))
+		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
+		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
+		panic(err)
 	}
 	jobManager.TinkServerGRPCAddr = authority
 	jobManager.OSIEURLOverride = cfg.osiePathOverride
@@ -188,9 +199,20 @@ func main() {
 
 	dhcpServer := &BootsDHCPServer{
 		jobmanager: jobManager,
+		Logger:     log,
 	}
 
 	log.Info("serving dhcp", "addr", cfg.dhcpAddr)
+	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
+	_ = flag.Set("log-level", cfg.logLevel)
+
+	// this is still need so that github.com/packethost/dhcp4-go doesn't panic
+	l, err := plog.Init("github.com/tinkerbell/boots")
+	if err != nil {
+		panic(nil)
+	}
+	defer l.Close()
+	dhcp4.Init(l.Package("dhcp"))
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 
 	log.Info("serving http", "addr", cfg.httpAddr)
@@ -200,6 +222,7 @@ func main() {
 	log.Info("boots shutting down")
 	err = g.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
+		log.Error(err, "boots shutdown")
 		panic(err)
 	}
 }

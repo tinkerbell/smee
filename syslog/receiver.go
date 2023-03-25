@@ -24,7 +24,7 @@ type Receiver struct {
 	Logger logr.Logger
 }
 
-func StartReceiver(laddr string, parsers int) (*Receiver, error) {
+func StartReceiver(logger logr.Logger, laddr string, parsers int) (*Receiver, error) {
 	if parsers < 1 {
 		parsers = 1
 	}
@@ -40,9 +40,10 @@ func StartReceiver(laddr string, parsers int) (*Receiver, error) {
 	}
 
 	s := &Receiver{
-		c:     c,
-		parse: make(chan *message, parsers),
-		done:  make(chan struct{}),
+		c:      c,
+		parse:  make(chan *message, parsers),
+		done:   make(chan struct{}),
+		Logger: logger,
 	}
 
 	for i := 0; i < parsers; i++ {

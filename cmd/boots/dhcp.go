@@ -48,6 +48,7 @@ func (s *BootsDHCPServer) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL 
 		},
 	)
 	if err != nil {
+		s.Logger.Error(err, "failed to serve dhcp")
 		panic(errors.Wrap(err, "retry dhcp serve"))
 	}
 }

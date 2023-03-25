@@ -87,15 +87,18 @@ func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler
 			AllowedSubnets: conf.TrustedProxies,
 		})
 		if err != nil {
+			s.logger.Error(err, "failed to create new xff object")
 			panic(fmt.Errorf("failed to create new xff object: %v", err))
 		}
 
 		xffHandler = xffmw.Handler(&httplog.Handler{
 			Handler: otelHandler,
+			Log:     s.logger,
 		})
 	} else {
 		xffHandler = &httplog.Handler{
 			Handler: otelHandler,
+			Log:     s.logger,
 		}
 	}
 
@@ -110,6 +113,7 @@ func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler
 	}
 	if err := server.ListenAndServe(); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
+		s.logger.Error(err, "listen and serve http")
 		panic(err)
 	}
 }
