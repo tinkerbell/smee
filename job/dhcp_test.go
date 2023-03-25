@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	l "github.com/packethost/pkg/log"
 	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/standalone"
@@ -15,8 +15,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	logger, _ := l.Init("github.com/tinkerbell/boots")
-	Init(logger)
 	os.Exit(m.Run())
 }
 
@@ -94,7 +92,7 @@ func TestSetPXEFilename(t *testing.T) {
 		},
 	}
 
-	for i, tt := range setPXEFilenameTests {
+	for _, tt := range setPXEFilenameTests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("%+v", tt)
 
@@ -114,7 +112,8 @@ func TestSetPXEFilename(t *testing.T) {
 				},
 			}
 			j := Job{
-				Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+				//Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+				Logger: logr.Discard(),
 				hardware: &standalone.HardwareStandalone{
 					ID: "$hardware_id",
 					Metadata: client.Metadata{

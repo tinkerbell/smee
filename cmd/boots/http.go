@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -23,6 +25,7 @@ type BootsHTTPServer struct {
 	workflowFinder client.WorkflowFinder
 	finder         client.HardwareFinder
 	jobManager     job.Manager
+	logger         logr.Logger
 }
 
 func (s *BootsHTTPServer) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
@@ -39,7 +42,7 @@ func (s *BootsHTTPServer) serveHealthchecker(rev string, start time.Time) http.H
 		}
 		if err := json.NewEncoder(w).Encode(&res); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			mainlog.Error(errors.Wrap(err, "marshaling healtcheck json"))
+			s.logger.Error(errors.Wrap(err, "marshaling healtcheck json"), "marshaling healtcheck json")
 		}
 	}
 }
@@ -52,6 +55,7 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 
 type jobHandler struct {
 	jobManager job.Manager
+	logger     logr.Logger
 }
 
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
@@ -59,7 +63,7 @@ type jobHandler struct {
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
 func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler func(http.ResponseWriter, *http.Request)) {
 	mux := http.NewServeMux()
-	jh := jobHandler{jobManager: s.jobManager}
+	jh := jobHandler{jobManager: s.jobManager, logger: s.logger}
 	mux.Handle(otelFuncWrapper("/", jh.serveJobFile))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
@@ -84,7 +88,7 @@ func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler
 			AllowedSubnets: conf.TrustedProxies,
 		})
 		if err != nil {
-			mainlog.Fatal(err, "failed to create new xff object")
+			panic(fmt.Errorf("failed to create new xff object: %v", err))
 		}
 
 		xffHandler = xffmw.Handler(&httplog.Handler{
@@ -107,7 +111,7 @@ func (s *BootsHTTPServer) ServeHTTP(addr string, ipxePattern string, ipxeHandler
 	}
 	if err := server.ListenAndServe(); err != nil {
 		err = errors.Wrap(err, "listen and serve http")
-		mainlog.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -122,7 +126,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	ctx, j, err := h.jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		mainlog.With("client", req.RemoteAddr).Error(err, "no job found for client address")
+		h.logger.Error(err, "no job found for client address", "client", req.RemoteAddr)
 
 		return
 	}
@@ -134,7 +138,7 @@ func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
 	// without a tink workflow present.
 	if !j.AllowPXE() {
 		w.WriteHeader(http.StatusNotFound)
-		mainlog.With("client", req.RemoteAddr).Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false")
+		h.logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false", "client", req.RemoteAddr)
 
 		return
 	}
@@ -154,7 +158,7 @@ func (s *BootsHTTPServer) servePhoneHome(w http.ResponseWriter, req *http.Reques
 	_, j, err := s.jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
-		mainlog.With("client", req.RemoteAddr, "error", err).Info("no job found for client address")
+		s.logger.Info("no job found for client address", "client", req.RemoteAddr, "error", err)
 
 		return
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/gammazero/workerpool"
+	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
@@ -22,6 +23,8 @@ import (
 
 type BootsDHCPServer struct {
 	jobmanager job.Manager
+
+	Logger logr.Logger
 }
 
 // ServeDHCP starts the DHCP server.
@@ -35,6 +38,7 @@ func (s *BootsDHCPServer) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL 
 		ipxeBaseURL:  ipxeBaseURL,
 		bootsBaseURL: bootsBaseURL,
 		jobmanager:   s.jobmanager,
+		logger:       s.Logger,
 	}
 	defer handler.pool.Stop()
 
@@ -44,7 +48,7 @@ func (s *BootsDHCPServer) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL 
 		},
 	)
 	if err != nil {
-		mainlog.Fatal(errors.Wrap(err, "retry dhcp serve"))
+		panic(errors.Wrap(err, "retry dhcp serve"))
 	}
 }
 
@@ -54,6 +58,7 @@ type dhcpHandler struct {
 	ipxeBaseURL  string
 	bootsBaseURL string
 	jobmanager   job.Manager
+	logger       logr.Logger
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
@@ -63,14 +68,14 @@ func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
 	if conf.ShouldIgnoreOUI(mac.String()) {
-		mainlog.With("mac", mac).Info("mac is in ignore list")
+		d.logger.Info("mac is in ignore list", "mac", mac)
 
 		return
 	}
 
 	gi := req.GetGIAddr()
 	if conf.ShouldIgnoreGI(gi.String()) {
-		mainlog.With("giaddr", gi).Info("giaddr is in ignore list")
+		d.logger.Info("giaddr is in ignore list", "giaddr", gi)
 
 		return
 	}
@@ -83,9 +88,9 @@ func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 
 	circuitID, err := getCircuitID(req)
 	if err != nil {
-		mainlog.With("mac", mac).Error(err, "error parsing option82")
+		d.logger.Error(err, "error parsing option82", "mac", mac)
 	} else {
-		mainlog.With("mac", mac, "circuitID", circuitID).Info("parsed option82/circuitid")
+		d.logger.Info("parsed option82/circuitid", "mac", mac, "circuitID", circuitID)
 	}
 
 	tracer := otel.Tracer("DHCP")
@@ -98,7 +103,7 @@ func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 
 	ctx, j, err := d.jobmanager.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
-		mainlog.With("type", req.GetMessageType(), "mac", mac).Error(err, "retrieved job is empty")
+		d.logger.Error(err, "retrieved job is empty", "type", req.GetMessageType(), "mac", mac)
 		metrics.JobsInProgress.With(labels).Dec()
 		timer.ObserveDuration()
 		span.SetStatus(codes.Error, err.Error())
@@ -119,7 +124,7 @@ func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 			metrics.DHCPTotal.WithLabelValues("send", "DHCPOFFER", gi.String()).Inc()
 		} else {
 			if err != nil {
-				j.Error(err)
+				d.logger.Error(err, "error")
 				span.SetStatus(codes.Error, err.Error())
 			} else {
 				span.SetStatus(codes.Ok, "no offer made")

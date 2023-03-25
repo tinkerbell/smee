@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/packethost/dhcp4-go"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/metrics"
 )
 
@@ -59,12 +58,6 @@ func TestGetCircuitID(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	l, err := log.Init("github.com/tinkerbell/boots")
-	if err != nil {
-		panic(nil)
-	}
-	defer l.Close()
-	mainlog = l.Package("main")
-	metrics.Init(l)
+	metrics.Init()
 	os.Exit(m.Run()) //nolint:gocritic // this seems to be the correct pattern
 }

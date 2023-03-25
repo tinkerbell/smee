@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/ipxe"
@@ -100,12 +101,12 @@ func IsHTTPClient(req *dhcp4.Packet) bool {
 	return ok && strings.HasPrefix(classID, "HTTPClient")
 }
 
-func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
+func SetupPXE(ctx context.Context, log logr.Logger, rep, req *dhcp4.Packet) bool {
 	if !IsPXE(req) {
 		return false // not a PXE client
 	}
-	if !copyGUID(rep, req) {
-		dhcplog.With("mac", req.GetCHAddr(), "xid", req.GetXID()).Info("no client GUID provided")
+	if !copyGUID(log, rep, req) {
+		log.Info("no client GUID provided", "mac", req.GetCHAddr(), "xid", req.GetXID())
 	}
 
 	/*
@@ -131,7 +132,7 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	cur, ok := rep.GetOption(dhcp4.OptionVendorSpecific)
 	if ok {
 		if err := pxeVendorOptions.Deserialize(cur, nil); err != nil {
-			dhcplog.With("mac", req.GetCHAddr()).Info("failed to deserialize any existing vendor options: %v", err)
+			log.Info("failed to deserialize any existing vendor options", "mac", req.GetCHAddr(), "err", err)
 		}
 	}
 	pxeVendorOptions[6] = []byte{0x8} // PXE_DISCOVERY_CONTROL: Attempt to tell PXE to boot faster.
@@ -142,7 +143,7 @@ func SetupPXE(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	return true
 }
 
-func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpClient bool, httpServerFQDN string) {
+func SetFilename(log logr.Logger, rep *dhcp4.Packet, filename string, nextServer net.IP, httpClient bool, httpServerFQDN string) {
 	rep.SetSIAddr(nextServer.To4()) // next-server: IP address of the TFTP/HTTP Server.
 
 	if httpClient {
@@ -155,17 +156,19 @@ func SetFilename(rep *dhcp4.Packet, filename string, nextServer net.IP, httpClie
 	if len(filename) > len(file) {
 		err := errors.New("filename too long, would be truncated")
 		// req CHaddr and XID == req's
-		dhcplog.With("mac", rep.GetCHAddr(), "xid", rep.GetXID(), "filename", filename).Fatal(err)
+		log.Error(err, "filename too long, would be truncated", "mac", rep.GetCHAddr(), "xid", rep.GetXID(), "filename", filename)
+
+		return
 	}
 	copy(file, filename) // filename: Executable (or iPXE script) to boot from.
 }
 
-func copyGUID(rep, req *dhcp4.Packet) bool {
+func copyGUID(log logr.Logger, rep, req *dhcp4.Packet) bool {
 	if guid, ok := req.GetOption(dhcp4.OptionUUIDGUID); ok {
 		// only accepts 16-byte client GUIDs and type 0x0000
 		// e.g. dhcpcd on Linux uses 36 bytes and type 0x00ff so it will be ignored
 		if len(guid) != 17 || guid[0] != 0 {
-			dhcplog.With("guid", guid, "mac", req.GetCHAddr(), "xid", req.GetXID()).Error(errors.New("unsupported or malformed client GUID"))
+			log.Error(errors.New("unsupported or malformed client GUID"), "unsupported or malformed client GUID", "mac", req.GetCHAddr(), "xid", req.GetXID(), "guid", guid)
 		} else {
 			rep.SetOption(dhcp4.OptionUUIDGUID, guid)
 

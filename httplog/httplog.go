@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 )
 
 type Handler struct {
 	http.Handler
+
+	Log logr.Logger
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -26,7 +29,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log = false
 	}
 	if log {
-		httplog.With("event", "sr", "method", method, "uri", uri, "client", client).Debug()
+		h.Log.V(1).Info("request", "method", method, "uri", uri, "client", client, "event", "sr")
 	}
 
 	res := &ResponseWriter{ResponseWriter: w}
@@ -34,7 +37,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	d := time.Since(start)
 
 	if log {
-		httplog.With("event", "ss", "method", method, "uri", uri, "client", client, "duration", d, "status", res.StatusCode).Info()
+		h.Log.Info("response", "method", method, "uri", uri, "client", client, "duration", d, "status", res.StatusCode, "event", "ss")
 	}
 }
 
@@ -61,6 +64,8 @@ func (w *ResponseWriter) WriteHeader(code int) {
 
 type Transport struct {
 	http.RoundTripper
+
+	Log logr.Logger
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error) {
@@ -68,14 +73,14 @@ func (t *Transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		method = req.Method
 		uri    = req.URL.String()
 	)
-	httplog.With("event", "cs", "method", method, "uri", uri).Debug()
+	t.Log.V(1).Info("request", "method", method, "uri", uri, "event", "cs")
 
 	start := time.Now()
 	res, err = t.RoundTripper.RoundTrip(req)
 	d := time.Since(start)
 
 	if res != nil {
-		httplog.With("event", "cr", "method", method, "uri", uri, "duration", d, "status", res.StatusCode).Info()
+		t.Log.Info("response", "method", method, "uri", uri, "duration", d, "status", res.StatusCode, "event", "cs")
 	}
 
 	return

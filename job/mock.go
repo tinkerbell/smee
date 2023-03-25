@@ -2,13 +2,17 @@ package job
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strings"
 
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/google/uuid"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/standalone"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -38,10 +42,10 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 		servicesVersion.OSIE = "osie-v18.08.13.00"
 	}
 
-	mockLog := log.Test(t, "job.Mock")
+	mockLog := defaultLogger("debug")
 
 	return Mock{
-		Logger: mockLog.With("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
+		Logger: mockLog.WithValues("mock", true, "slug", slug, "arch", arch, "uefi", uefi),
 		hardware: &standalone.HardwareStandalone{
 			ID: uuid.New().String(),
 			Metadata: client.Metadata{
@@ -73,8 +77,26 @@ func NewMock(t zaptest.TestingT, slug, facility string) Mock {
 	}
 }
 
+// defaultLogger is zap logr implementation.
+func defaultLogger(level string) logr.Logger {
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	switch level {
+	case "debug":
+		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	default:
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	}
+	zapLogger, err := config.Build()
+	if err != nil {
+		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
+	}
+
+	return zapr.NewLogger(zapLogger)
+}
+
 func NewMockFromDiscovery(d client.Discoverer, mac net.HardwareAddr) Mock {
-	mockLog, _ := log.Init("job.Mock")
+	mockLog := defaultLogger("debug")
 	j := Job{Logger: mockLog, mac: mac}
 	_, _ = j.setup(context.Background(), d)
 

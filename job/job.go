@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/equinix-labs/otel-init-go/otelhelpers"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
@@ -23,7 +23,7 @@ type Manager interface {
 // Creator is a type that can create jobs.
 type Creator struct {
 	finder             client.HardwareFinder
-	logger             log.Logger
+	logger             logr.Logger
 	ExtraKernelParams  []string
 	Registry           string
 	RegistryUsername   string
@@ -34,29 +34,23 @@ type Creator struct {
 }
 
 // NewCreator returns a manager that can create jobs.
-func NewCreator(logger log.Logger, finder client.HardwareFinder) *Creator {
+func NewCreator(logger logr.Logger, finder client.HardwareFinder) *Creator {
 	return &Creator{
 		finder: finder,
 		logger: logger,
 	}
 }
 
-var joblog log.Logger
-
-func Init(l log.Logger) {
-	joblog = l.Package("job")
-	initRSA()
-}
-
 // Job holds per request data.
 type Job struct {
-	log.Logger
-	mac                net.HardwareAddr
-	ip                 net.IP
-	start              time.Time
-	dhcp               dhcp.Config
-	hardware           client.Hardware
-	instance           *client.Instance
+	mac      net.HardwareAddr
+	ip       net.IP
+	start    time.Time
+	dhcp     dhcp.Config
+	hardware client.Hardware
+	instance *client.Instance
+
+	Logger             logr.Logger
 	NextServer         net.IP
 	IpxeBaseURL        string
 	BootsBaseURL       string
@@ -136,14 +130,16 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 		OSIEURLOverride:    c.OSIEURLOverride,
 	}
 
-	c.logger.With("ip", ip).Info("discovering from ip")
+	c.logger.Info("discovering from ip", "ip", ip)
 	d, err := c.finder.ByIP(ctx, ip)
 	if err != nil {
 		return ctx, nil, errors.WithMessage(err, "discovering from ip address")
 	}
 	mac := d.GetMAC(ip)
 	if mac.String() == client.MinMAC.String() {
-		c.logger.With("ip", ip).Fatal(errors.New("somehow got a zero mac"))
+		c.logger.Error(errors.New("somehow got a zero mac"), "somehow got a zero mac", "ip", ip)
+
+		return ctx, nil, errors.New("somehow got a zero mac")
 	}
 	j.mac = mac
 
@@ -164,7 +160,7 @@ func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context,
 func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, error) {
 	dh := d.Hardware()
 
-	j.Logger = j.Logger.With("mac", j.mac, "hardware.id", dh.HardwareID())
+	j.Logger = j.Logger.WithValues("mac", j.mac, "hardware.id", dh.HardwareID())
 
 	// When there is a traceparent in the hw record, create a link on the current
 	// trace and replace ctx with one that is parented to the traceparent.
@@ -185,7 +181,7 @@ func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, 
 	if j.instance == nil {
 		j.instance = &client.Instance{}
 	} else {
-		j.Logger = j.Logger.With("instance.id", j.InstanceID())
+		j.Logger = j.Logger.WithValues("instance.id", j.InstanceID())
 	}
 
 	ip := d.GetIP(j.mac)

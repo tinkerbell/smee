@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
@@ -20,13 +20,13 @@ import (
 type Finder struct {
 	clientFunc   func() crclient.Client
 	cacheStarter func(context.Context) error
-	logger       log.Logger
+	logger       logr.Logger
 }
 
 // NewFinder returns a HardwareFinder that discovers hardware from Kubernetes.
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
-func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
+func NewFinder(logger logr.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
 	// TODO(moadqassem): Maybe use the tinkerbell kubeclient instead of using this cluster client similar to hegel.
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{

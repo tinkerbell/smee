@@ -27,7 +27,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			err := errors.Errorf("boot script %q not found", name)
-			j.With("script", name).Error(err)
+			j.Logger.Error(err, "error", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
 			return
@@ -36,7 +36,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		err := errors.Errorf("boot script %q not found", name)
-		j.With("script", name).Error(err)
+		j.Logger.Error(err, "error", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
@@ -44,7 +44,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
 	if _, err := w.Write(script); err != nil {
-		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
+		j.Logger.Error(errors.Wrap(err, "unable to write boot script"), "unable to write boot script", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
