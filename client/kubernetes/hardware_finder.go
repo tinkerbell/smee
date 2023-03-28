@@ -4,13 +4,11 @@ import (
 	"context"
 	"net"
 
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
-	"github.com/tinkerbell/tink/pkg/convert"
-	"github.com/tinkerbell/tink/protos/workflow"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,13 +18,13 @@ import (
 type Finder struct {
 	clientFunc   func() crclient.Client
 	cacheStarter func(context.Context) error
-	logger       log.Logger
+	logger       logr.Logger
 }
 
 // NewFinder returns a HardwareFinder that discovers hardware from Kubernetes.
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
-func NewFinder(logger log.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
+func NewFinder(logger logr.Logger, k8sAPI, kubeconfig, kubeNamespace string) (*Finder, error) {
 	// TODO(moadqassem): Maybe use the tinkerbell kubeclient instead of using this cluster client similar to hegel.
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{
@@ -101,37 +99,4 @@ func (f *Finder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.IP, _ st
 	}
 
 	return NewK8sDiscoverer(&hardwareList.Items[0]), nil
-}
-
-// HasActiveWorkflow finds if an active workflow exists for a particular hardware ID.
-func (f *Finder) HasActiveWorkflow(ctx context.Context, hwID client.HardwareID) (bool, error) {
-	if hwID == "" {
-		return false, errors.New("missing hardware id")
-	}
-
-	stored := &v1alpha1.WorkflowList{}
-	err := f.clientFunc().List(ctx, stored, &crclient.MatchingFields{
-		controllers.WorkflowWorkerNonTerminalStateIndex: hwID.String(),
-	})
-	if err != nil {
-		return false, errors.Wrap(err, "failed to list workflows")
-	}
-
-	wfContexts := []*workflow.WorkflowContext{}
-	for _, wf := range stored.Items {
-		wf := wf
-		wfContexts = append(wfContexts, convert.WorkflowToWorkflowContext(&wf))
-	}
-
-	wcl := &workflow.WorkflowContextList{
-		WorkflowContexts: wfContexts,
-	}
-
-	for _, wf := range wcl.WorkflowContexts {
-		if wf.CurrentActionState == workflow.State_STATE_PENDING || wf.CurrentActionState == workflow.State_STATE_RUNNING {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

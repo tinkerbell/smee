@@ -12,11 +12,7 @@ var rescueOS = &client.OperatingSystem{
 	Version: "3",
 }
 
-func (j Job) IsARM() bool {
-	return j.Arch() == "aarch64"
-}
-
-func (j Job) IsUEFI() bool {
+func (j *Job) IsUEFI() bool {
 	if h := j.hardware; h != nil {
 		return h.HardwareUEFI(j.mac)
 	}
@@ -24,7 +20,7 @@ func (j Job) IsUEFI() bool {
 	return false
 }
 
-func (j Job) Arch() string {
+func (j *Job) Arch() string {
 	if h := j.hardware; h != nil {
 		return h.HardwareArch(j.mac)
 	}
@@ -32,15 +28,7 @@ func (j Job) Arch() string {
 	return ""
 }
 
-func (j Job) BootDriveHint() string {
-	if i := j.instance; i != nil {
-		return i.BootDriveHint
-	}
-
-	return ""
-}
-
-func (j Job) InstanceID() string {
+func (j *Job) InstanceID() string {
 	if i := j.instance; i != nil {
 		return i.ID
 	}
@@ -48,64 +36,7 @@ func (j Job) InstanceID() string {
 	return ""
 }
 
-func (j Job) Rescue() bool {
-	if i := j.instance; i != nil {
-		return i.Rescue
-	}
-
-	return false
-}
-
-// UserData returns instance.UserData.
-func (j Job) UserData() string {
-	if i := j.instance; i != nil {
-		return i.UserData
-	}
-
-	return ""
-}
-
-// IPXEScriptURL returns the value of instance.IPXEScriptURL.
-func (j Job) IPXEScriptURL() string {
-	if i := j.instance; i != nil {
-		return i.IPXEScriptURL
-	}
-
-	return ""
-}
-
-func (j Job) InstanceIPs() []client.IP {
-	if i := j.instance; i != nil {
-		return i.IPs
-	}
-
-	return nil
-}
-
-// PasswordHash will return the password hash from the job instance if it exists
-// PasswordHash first tries returning CryptedRootPassword if it exists and falls back to returning PasswordHash.
-func (j Job) PasswordHash() string {
-	if j.instance == nil {
-		return ""
-	}
-	// TODO: remove this EMism
-	if j.instance.CryptedRootPassword != "" {
-		return j.instance.CryptedRootPassword
-	}
-
-	return j.instance.PasswordHash
-}
-
-// CustomData returns instance.CustomData.
-func (j Job) CustomData() interface{} {
-	if i := j.instance; i != nil && i.CustomData != nil {
-		return i.CustomData
-	}
-
-	return nil
-}
-
-func (j Job) OperatingSystem() *client.OperatingSystem {
+func (j *Job) OperatingSystem() *client.OperatingSystem {
 	if i := j.instance; i != nil {
 		if i.Rescue {
 			return rescueOS
@@ -117,43 +48,7 @@ func (j Job) OperatingSystem() *client.OperatingSystem {
 	return nil
 }
 
-func (j Job) ID() string {
-	return j.mac.String()
-}
-
-func (j Job) Interfaces() []client.Port {
-	if h := j.hardware; h != nil {
-		return h.Interfaces()
-	}
-
-	return nil
-}
-
-func (j Job) InterfaceName(i int) string {
-	if ifaces := j.Interfaces(); len(ifaces) > i {
-		return ifaces[i].Name
-	}
-
-	return ""
-}
-
-func (j Job) InterfaceMAC(i int) net.HardwareAddr {
-	if ifaces := j.Interfaces(); len(ifaces) > i {
-		return ifaces[i].MAC()
-	}
-
-	return nil
-}
-
-func (j Job) HardwareID() client.HardwareID {
-	if h := j.hardware; h != nil {
-		return h.HardwareID()
-	}
-
-	return ""
-}
-
-func (j Job) FacilityCode() string {
+func (j *Job) FacilityCode() string {
 	if h := j.hardware; h != nil {
 		return h.HardwareFacilityCode()
 	}
@@ -161,37 +56,13 @@ func (j Job) FacilityCode() string {
 	return ""
 }
 
-func (j Job) PlanSlug() string {
-	if h := j.hardware; h != nil {
-		return h.HardwarePlanSlug()
-	}
-
-	return ""
-}
-
-func (j Job) PlanVersionSlug() string {
-	if h := j.hardware; h != nil {
-		return h.HardwarePlanVersionSlug()
-	}
-
-	return ""
-}
-
-func (j Job) Manufacturer() string {
-	if h := j.hardware; h != nil {
-		return h.HardwareManufacturer()
-	}
-
-	return ""
-}
-
 // PrimaryNIC returns the mac address of the NIC we expect to be dhcp/pxe'ing.
-func (j Job) PrimaryNIC() net.HardwareAddr {
+func (j *Job) PrimaryNIC() net.HardwareAddr {
 	return j.mac
 }
 
 // HardwareState will return (enrolled burn_in preinstallable preinstalling failed_preinstall provisionable provisioning deprovisioning in_use).
-func (j Job) HardwareState() string {
+func (j *Job) HardwareState() string {
 	if h := j.hardware; h != nil && h.HardwareID() != "" {
 		return string(h.HardwareState())
 	}
@@ -200,7 +71,7 @@ func (j Job) HardwareState() string {
 }
 
 // OSIEVersion returns any non-standard osie versions specified in either the instance proper or in userdata or attached to underlying hardware.
-func (j Job) OSIEVersion() string {
+func (j *Job) OSIEVersion() string {
 	if i := j.instance; i != nil {
 		ov := i.GetServicesVersion().OSIE
 		if ov != "" {
@@ -215,30 +86,9 @@ func (j Job) OSIEVersion() string {
 	return h.HardwareOSIEVersion()
 }
 
-// CanWorkflow checks if workflow is allowed.
-func (j Job) CanWorkflow() bool {
-	return j.hardware.HardwareAllowWorkflow(j.mac)
-}
-
-func (j Job) OSIEBaseURL() string {
+func (j *Job) OSIEBaseURL() string {
 	if h := j.hardware; h != nil {
 		return j.hardware.OSIEBaseURL(j.mac)
-	}
-
-	return ""
-}
-
-func (j Job) KernelPath() string {
-	if h := j.hardware; h != nil {
-		return j.hardware.KernelPath(j.mac)
-	}
-
-	return ""
-}
-
-func (j Job) InitrdPath() string {
-	if h := j.hardware; h != nil {
-		return j.hardware.InitrdPath(j.mac)
 	}
 
 	return ""

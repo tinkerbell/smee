@@ -56,7 +56,8 @@ $(generated_go_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
 
-# this is quick and its really only for rebuilding when dev'ing, I wish go would
-# output deps in make syntax like gcc does... oh well this is good enough
-cmd/boots/boots: $(shell git ls-files | grep -v -e vendor -e '_test.go' -e 'mock' | grep '.go$$' ) syslog/facility_string.go syslog/severity_string.go
+cmd/boots/boots: syslog/facility_string.go syslog/severity_string.go cleanup
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+
+cleanup:
+	rm -f cmd/boots/boots cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64

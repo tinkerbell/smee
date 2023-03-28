@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 )
 
@@ -15,15 +16,15 @@ var syslogMessagePool = sync.Pool{
 }
 
 type Receiver struct {
-	c *net.UDPConn
-
+	c     *net.UDPConn
 	parse chan *message
+	done  chan struct{}
+	err   error
 
-	done chan struct{}
-	err  error
+	Logger logr.Logger
 }
 
-func StartReceiver(laddr string, parsers int) (*Receiver, error) {
+func StartReceiver(logger logr.Logger, laddr string, parsers int) (*Receiver, error) {
 	if parsers < 1 {
 		parsers = 1
 	}
@@ -39,9 +40,10 @@ func StartReceiver(laddr string, parsers int) (*Receiver, error) {
 	}
 
 	s := &Receiver{
-		c:     c,
-		parse: make(chan *message, parsers),
-		done:  make(chan struct{}),
+		c:      c,
+		parse:  make(chan *message, parsers),
+		done:   make(chan struct{}),
+		Logger: logger,
 	}
 
 	for i := 0; i < parsers; i++ {
@@ -81,7 +83,7 @@ func (r *Receiver) run() {
 			var ok bool
 			msg, ok = syslogMessagePool.Get().(*message)
 			if !ok {
-				sysloglog.Error(errors.New("error type asserting pool item into message"))
+				r.Logger.Error(errors.New("error type asserting pool item into message"), "error type asserting pool item into message")
 
 				continue
 			}
@@ -90,7 +92,7 @@ func (r *Receiver) run() {
 		if err != nil {
 			err = errors.Wrap(err, "error reading udp message")
 			if _, ok := err.(net.Error); ok {
-				sysloglog.Error(err)
+				r.Logger.Error(err, "error reading udp message")
 
 				continue
 			}
@@ -145,14 +147,14 @@ func (r *Receiver) runParser() {
 	for m := range r.parse {
 		if m.parse() {
 			structured := parse(m)
-			sl := sysloglog.With("msg", structured)
+			sl := r.Logger.WithValues("msg", structured)
 			if m.Severity() == DEBUG {
-				sl.Debug()
+				sl.V(1).Info("msg", "msg", m)
 			} else {
-				sl.Info()
+				sl.Info("msg", "msg", m)
 			}
 		} else {
-			sysloglog.Debug(m)
+			r.Logger.V(1).Info("msg", "msg", m)
 		}
 		m.reset()
 		syslogMessagePool.Put(m)

@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
 )
@@ -11,6 +12,8 @@ import (
 type Config struct {
 	addr net.IP
 	opts dhcp4.OptionMap
+
+	Log logr.Logger
 }
 
 func (c *Config) ApplyTo(rep *dhcp4.Packet) bool {
@@ -26,37 +29,6 @@ func (c *Config) ApplyTo(rep *dhcp4.Packet) bool {
 	return true
 }
 
-func (c *Config) Address() net.IP {
-	return c.addr
-}
-
-func (c *Config) Netmask() net.IP {
-	nm, ok := c.opts.GetIP(dhcp4.OptionSubnetMask)
-	if !ok {
-		return nil
-	}
-
-	return nm
-}
-
-func (c *Config) Gateway() net.IP {
-	gw, ok := c.opts.GetIP(dhcp4.OptionRouter)
-	if !ok {
-		return nil
-	}
-
-	return gw
-}
-
-func (c *Config) Hostname() string {
-	hn, ok := c.opts.GetString(dhcp4.OptionHostname)
-	if !ok {
-		return ""
-	}
-
-	return hn
-}
-
 func (c *Config) Setup(address, netmask, gateway net.IP) {
 	if v4 := address.To4(); v4 != nil {
 		c.addr = v4
@@ -70,7 +42,7 @@ func (c *Config) Setup(address, netmask, gateway net.IP) {
 			c.opts.SetIP(dhcp4.OptionRouter, gateway)
 		}
 	} else {
-		dhcplog.With("address", address).Error(errors.New("address is not an IPv4 address"))
+		c.Log.Error(errors.New("address is not an IPv4 address"), "address is not an IPv4 address", "address", address)
 		c.addr = nil
 		c.opts = nil
 	}
@@ -90,7 +62,7 @@ func (c *Config) SetHostname(s string) {
 func (c *Config) SetDHCPServer(ip net.IP) {
 	v4 := ip.To4()
 	if v4 == nil {
-		dhcplog.With("address", ip).Error(errors.New("address is not an IPv4 address"))
+		c.Log.Error(errors.New("address is not an IPv4 address"), "address is not an IPv4 address", "address", ip)
 
 		return
 	}
@@ -105,14 +77,14 @@ func (c *Config) SetDNSServers(ips []net.IP) {
 	for _, ip := range ips {
 		v4 := ip.To4()
 		if v4 == nil {
-			dhcplog.With("address", ip).Info("skipping non IPv4 dns server address")
+			c.Log.Info("skipping non IPv4 dns server address", "address", ip)
 
 			continue
 		}
 		b = append(b, v4...)
 	}
 	if len(b) == 0 {
-		dhcplog.Error(errors.New("no IPv4 dns server address supplied"))
+		c.Log.Error(errors.New("no IPv4 dns server address supplied"), "no IPv4 dns server address supplied")
 
 		return
 	}
@@ -129,7 +101,7 @@ func (c *Config) SetOpt43SubOpt(subOpt dhcp4.Option, s string) {
 	cur, ok := c.opts.GetOption(dhcp4.OptionVendorSpecific)
 	if ok {
 		if err := n.Deserialize(cur, nil); err != nil {
-			dhcplog.Info("unable to deserialize option 43")
+			c.Log.Info("unable to deserialize option 43")
 
 			return
 		}

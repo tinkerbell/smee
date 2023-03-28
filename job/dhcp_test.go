@@ -6,17 +6,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	l "github.com/packethost/pkg/log"
-	assert "github.com/stretchr/testify/require"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/conf"
 )
 
 func TestMain(m *testing.M) {
-	logger, _ := l.Init("github.com/tinkerbell/boots")
-	Init(logger)
 	os.Exit(m.Run())
 }
 
@@ -94,7 +91,7 @@ func TestSetPXEFilename(t *testing.T) {
 		},
 	}
 
-	for i, tt := range setPXEFilenameTests {
+	for _, tt := range setPXEFilenameTests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("%+v", tt)
 
@@ -114,7 +111,7 @@ func TestSetPXEFilename(t *testing.T) {
 				},
 			}
 			j := Job{
-				Logger: joblog.With("index", i, "hState", tt.hState, "id", tt.id, "iState", tt.iState, "slug", tt.slug, "plan", tt.plan, "allowPXE", tt.allowPXE, "packet", tt.packet, "arm", tt.arm, "uefi", tt.uefi, "filename", tt.filename),
+				Logger: logr.Discard(),
 				hardware: &standalone.HardwareStandalone{
 					ID: "$hardware_id",
 					Metadata: client.Metadata{
@@ -182,41 +179,6 @@ func TestAllowPXE(t *testing.T) {
 			if got != tt.want {
 				t.Fatalf("unexpected return, want: %t, got %t", tt.want, got)
 			}
-		})
-	}
-}
-
-func TestIsSpecialOS(t *testing.T) {
-	t.Run("nil instance", func(t *testing.T) {
-		special := IsSpecialOS(nil)
-		assert.Equal(t, false, special)
-	})
-
-	for name, want := range map[string]bool{
-		"custom_ipxe": true,
-		"custom":      true,
-		"vmware_foo":  true,
-		"flatcar_foo": false,
-	} {
-		t.Run("OS-"+name, func(t *testing.T) {
-			instance := &client.Instance{
-				OS: &client.OperatingSystem{
-					Slug: name,
-				},
-				OSV: &client.OperatingSystem{},
-			}
-			got := IsSpecialOS(instance)
-			assert.Equal(t, want, got)
-		})
-		t.Run("OSV-"+name, func(t *testing.T) {
-			instance := &client.Instance{
-				OS: &client.OperatingSystem{},
-				OSV: &client.OperatingSystem{
-					Slug: name,
-				},
-			}
-			got := IsSpecialOS(instance)
-			assert.Equal(t, want, got)
 		})
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
+	stdhttp "net/http"
 	"net/netip"
 	"os"
 	"os/signal"
@@ -18,8 +18,9 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/packethost/pkg/env"
-	"github.com/packethost/pkg/log"
+	plog "github.com/packethost/pkg/log"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
@@ -27,8 +28,8 @@ import (
 	"github.com/tinkerbell/boots/client/kubernetes"
 	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/conf"
-	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/httplog"
+	"github.com/tinkerbell/boots/dhcp/server"
+	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
@@ -40,10 +41,6 @@ import (
 )
 
 var (
-	provisionerEngineName = env.Get("PROVISIONER_ENGINE_NAME", "packet")
-
-	mainlog log.Logger
-
 	GitRev    = "unknown (use make)"
 	StartTime = time.Now()
 )
@@ -94,52 +91,32 @@ func main() {
 	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
 	_ = cli.Parse(os.Args[1:])
 
-	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
-	_ = flag.Set("log-level", cfg.logLevel)
-	l, err := log.Init("github.com/tinkerbell/boots")
-	if err != nil {
-		panic(nil)
-	}
-	defer l.Close()
-	mainlog = l.Package("main")
-
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
 	defer done()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
 	defer otelShutdown(ctx)
+	metrics.Init()
 
-	metrics.Init(l)
-	dhcp.Init(l)
-	conf.Init(l)
-	httplog.Init(l)
-	job.Init(l)
-	syslog.Init(l)
-	mainlog.With("version", GitRev).Info("starting")
-
-	workflowFinder, finder, err := getFinders(l, cfg)
-	if err != nil {
-		mainlog.Fatal(err)
-	}
-	jobManager := job.NewCreator(l, provisionerEngineName, finder)
+	log := defaultLogger(cfg.logLevel)
+	log.Info("starting", "version", GitRev)
 
 	go func() {
-		mainlog.With("addr", cfg.syslogAddr).Info("serving syslog")
-		err = retry.Do(
+		log.Info("serving syslog", "addr", cfg.syslogAddr)
+		err := retry.Do(
 			func() error {
-				_, err := syslog.StartReceiver(cfg.syslogAddr, 1)
+				_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
 
 				return err
 			},
 		)
 		if err != nil {
-			mainlog.Fatal(errors.Wrap(err, "retry syslog serve"))
+			log.Error(err, "retry syslog serve")
+			panic(errors.Wrap(err, "retry syslog serve"))
 		}
 	}()
 
 	g, ctx := errgroup.WithContext(ctx)
-	lg := defaultLogger(cfg.logLevel)
-	lg = lg.WithValues("service", "github.com/tinkerbell/boots")
-	lg = lg.WithName("github.com/tinkerbell/ipxedust")
+	lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
 	ipxe := &ipxedust.Server{
 		Log:                  lg,
 		EnableTFTPSinglePort: true,
@@ -151,10 +128,13 @@ func main() {
 		if cfg.ipxeTFTPEnabled {
 			ipportTFTP, err := netip.ParseAddrPort(cfg.ipxe.TFTPAddr)
 			if err != nil {
-				mainlog.Fatal(fmt.Errorf("%w: tftp addr must be an ip:port", err))
+				log.Error(err, "tftp addr must be an ip:port")
+				panic(fmt.Errorf("%w: tftp addr must be an ip:port", err))
 			}
 			if ipportTFTP.Port() != 69 {
-				mainlog.With("providedPort", ipportTFTP.Port()).Fatal(fmt.Errorf("port for tftp addr must be 69"))
+				err := fmt.Errorf("port for tftp addr must be 69, provided port: %d", ipportTFTP.Port())
+				log.Error(err, "invalid port for tftp addr")
+				panic(err)
 			}
 			ipxe.TFTP = ipxedust.ServerSpec{
 				Addr:    ipportTFTP,
@@ -166,13 +146,15 @@ func main() {
 	} else { // use remote iPXE binary service for TFTP
 		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
 		if ip == nil {
-			mainlog.Fatal(fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr))
+			err := fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr)
+			log.Error(err, "invalid IP for remote TFTP server")
+			panic(err)
 		}
 		nextServer = ip
-		mainlog.With("addr", nextServer.String()).Info("serving iPXE binaries from remote TFTP server")
+		log.Info("serving iPXE binaries from remote TFTP server", "addr", nextServer.String())
 	}
 
-	var ipxeHandler func(http.ResponseWriter, *http.Request)
+	var ipxeHandler stdhttp.HandlerFunc
 	var ipxePattern string
 	var ipxeBaseURL string
 	bootsBaseURL := conf.PublicFQDN
@@ -182,15 +164,21 @@ func main() {
 		}
 		ipxePattern = "/ipxe/"
 		ipxeBaseURL = conf.PublicFQDN + ipxePattern
-		mainlog.With("addr", ipxeBaseURL).Info("serving iPXE binaries from local HTTP server")
+		log.Info("serving iPXE binaries from local HTTP server", "addr", ipxeBaseURL)
 	} else { // use remote iPXE binary service for HTTP
 		ipxeBaseURL = cfg.ipxeRemoteHTTPAddr
-		mainlog.With("addr", ipxeBaseURL).Info("serving iPXE binaries from remote HTTP server")
+		log.Info("serving iPXE binaries from remote HTTP server", "addr", ipxeBaseURL)
 	}
 	g.Go(func() error {
 		return ipxe.ListenAndServe(ctx)
 	})
 
+	finder, err := getHardwareFinder(log, cfg)
+	if err != nil {
+		log.Error(err, "get hardware finder")
+		panic(err)
+	}
+	jobManager := job.NewCreator(log, finder)
 	jobManager.ExtraKernelParams = strings.Split(cfg.extraKernelArgs, " ")
 	jobManager.Registry = env.Get("DOCKER_REGISTRY")
 	jobManager.RegistryUsername = env.Get("REGISTRY_USERNAME")
@@ -198,61 +186,70 @@ func main() {
 	jobManager.TinkServerTLS = env.Bool("TINKERBELL_TLS", true)
 	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
 	if env.Get("DATA_MODEL_VERSION") == "1" && authority == "" {
-		mainlog.Error(errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)"))
+		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
+		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
+		panic(err)
 	}
 	jobManager.TinkServerGRPCAddr = authority
 	jobManager.OSIEURLOverride = cfg.osiePathOverride
 
-	httpServer := &BootsHTTPServer{
-		finder:         finder,
-		jobManager:     jobManager,
-		workflowFinder: workflowFinder,
+	httpServer := &http.Config{
+		GitRev:     GitRev,
+		StartTime:  StartTime,
+		Finder:     finder,
+		JobManager: jobManager,
+		Logger:     log,
 	}
 
-	dhcpServer := &BootsDHCPServer{
-		jobmanager: jobManager,
+	dhcpServer := &server.Handler{
+		JobManager: jobManager,
+		Logger:     log,
 	}
 
-	mainlog.With("addr", cfg.dhcpAddr).Info("serving dhcp")
+	log.Info("serving dhcp", "addr", cfg.dhcpAddr)
+	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
+	_ = flag.Set("log-level", cfg.logLevel)
+
+	// this is still need so that github.com/packethost/dhcp4-go doesn't panic
+	l, err := plog.Init("github.com/tinkerbell/boots")
+	if err != nil {
+		panic(nil)
+	}
+	defer l.Close()
+	dhcp4.Init(l.Package("dhcp"))
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 
-	mainlog.With("addr", cfg.httpAddr).Info("serving http")
+	log.Info("serving http", "addr", cfg.httpAddr)
 	go httpServer.ServeHTTP(cfg.httpAddr, ipxePattern, ipxeHandler)
 
 	<-ctx.Done()
-	mainlog.Info("boots shutting down")
+	log.Info("boots shutting down")
 	err = g.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
-		mainlog.Fatal(err)
+		log.Error(err, "boots shutdown")
+		panic(err)
 	}
 }
 
-func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.HardwareFinder, error) {
+func getHardwareFinder(l logr.Logger, c *config) (client.HardwareFinder, error) {
 	var hf client.HardwareFinder
-	var wf client.WorkflowFinder
 	var err error
 
 	switch os.Getenv("DATA_MODEL_VERSION") {
 	case "standalone":
 		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
 		if saFile == "" {
-			return nil, nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
+			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
 		}
 		hf, err = standalone.NewHardwareFinder(saFile)
 		if err != nil {
-			return nil, nil, err
-		}
-		// standalone uses Tinkerbell workflows
-		wf, err = standalone.NewWorkflowFinder()
-		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	case "kubernetes":
 		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		wf = kf
 		hf = kf
 		// Start the client-side cache
 		go func() {
@@ -260,10 +257,10 @@ func getFinders(l log.Logger, c *config) (client.WorkflowFinder, client.Hardware
 		}()
 
 	default:
-		return nil, nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
+		return nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
 	}
 
-	return wf, hf, nil
+	return hf, nil
 }
 
 // defaultLogger is zap logr implementation.

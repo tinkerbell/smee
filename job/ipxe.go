@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name string) {
+func (j *Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name string) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("boots.script_name", name))
 	var script []byte
@@ -27,7 +27,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			err := errors.Errorf("boot script %q not found", name)
-			j.With("script", name).Error(err)
+			j.Logger.Error(err, "error", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
 			return
@@ -36,7 +36,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		err := errors.Errorf("boot script %q not found", name)
-		j.With("script", name).Error(err)
+		j.Logger.Error(err, "error", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
@@ -44,7 +44,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
 	if _, err := w.Write(script); err != nil {
-		j.With("script", name).Error(errors.Wrap(err, "unable to write boot script"))
+		j.Logger.Error(errors.Wrap(err, "unable to write boot script"), "unable to write boot script", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
@@ -52,7 +52,7 @@ func (j Job) serveBootScript(ctx context.Context, w http.ResponseWriter, name st
 }
 
 // osieDownloadURL returns the value of Custom OSIE Service Version or just /current.
-func (j Job) osieDownloadURL(osieURL string, osieFullURLOverride string) string {
+func (j *Job) osieDownloadURL(osieURL string, osieFullURLOverride string) string {
 	if osieFullURLOverride != "" {
 		return osieFullURLOverride
 	}
@@ -66,7 +66,7 @@ func (j Job) osieDownloadURL(osieURL string, osieFullURLOverride string) string 
 	return osieURL + "/current"
 }
 
-func (j Job) defaultScript(span trace.Span) (string, error) {
+func (j *Job) defaultScript(span trace.Span) (string, error) {
 	auto := ipxe.Hook{
 		Arch:              j.Arch(),
 		Console:           "",
@@ -87,7 +87,7 @@ func (j Job) defaultScript(span trace.Span) (string, error) {
 	return ipxe.GenerateTemplate(auto, ipxe.HookScript)
 }
 
-func (j Job) customScript() (string, error) {
+func (j *Job) customScript() (string, error) {
 	if chain := j.hardware.IPXEURL(j.mac); chain != "" {
 		u, err := url.Parse(chain)
 		if err != nil {

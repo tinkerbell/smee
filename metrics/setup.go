@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"github.com/packethost/pkg/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -23,7 +22,7 @@ var (
 	JobsInProgress *prometheus.GaugeVec
 )
 
-func Init(log.Logger) {
+func Init() {
 	DHCPTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "dhcp_total",
 		Help: "Number of DHCP Requests handled.",
