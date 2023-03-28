@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
+	stdhttp "net/http"
 	"net/netip"
 	"os"
 	"os/signal"
@@ -28,6 +28,7 @@ import (
 	"github.com/tinkerbell/boots/client/kubernetes"
 	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/conf"
+	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
@@ -152,7 +153,7 @@ func main() {
 		log.Info("serving iPXE binaries from remote TFTP server", "addr", nextServer.String())
 	}
 
-	var ipxeHandler func(http.ResponseWriter, *http.Request)
+	var ipxeHandler stdhttp.HandlerFunc
 	var ipxePattern string
 	var ipxeBaseURL string
 	bootsBaseURL := conf.PublicFQDN
@@ -191,10 +192,12 @@ func main() {
 	jobManager.TinkServerGRPCAddr = authority
 	jobManager.OSIEURLOverride = cfg.osiePathOverride
 
-	httpServer := &BootsHTTPServer{
-		finder:     finder,
-		jobManager: jobManager,
-		logger:     log,
+	httpServer := &http.Config{
+		GitRev:     GitRev,
+		StartTime:  StartTime,
+		Finder:     finder,
+		JobManager: jobManager,
+		Logger:     log,
 	}
 
 	dhcpServer := &BootsDHCPServer{
