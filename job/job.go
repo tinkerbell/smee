@@ -64,9 +64,9 @@ type Job struct {
 	OSIEURLOverride    string
 }
 
-// AllowPxe returns the value from the hardware data
+// AllowPXE returns the value from the hardware data
 // in tink server defined at network.interfaces[].netboot.allow_pxe.
-func (j Job) AllowPXE() bool {
+func (j *Job) AllowPXE() bool {
 	if j.hardware.HardwareAllowPXE(j.mac) {
 		return true
 	}

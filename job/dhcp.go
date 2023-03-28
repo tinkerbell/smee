@@ -3,35 +3,18 @@ package job
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/dhcp"
 	"github.com/tinkerbell/boots/ipxe"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func IsSpecialOS(i *client.Instance) bool {
-	if i == nil {
-		return false
-	}
-	var slug string
-	if i.OSV.Slug != "" {
-		slug = i.OSV.Slug
-	}
-	if i.OS.Slug != "" {
-		slug = i.OS.Slug
-	}
-
-	return slug == "custom_ipxe" || slug == "custom" || strings.HasPrefix(slug, "vmware")
-}
-
 // ServeDHCP responds to DHCP packets. Returns true if it replied. Returns false
 // if it did not reply, often for good reason. If it was an error, error will be
 // set.
-func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) (bool, error) {
+func (j *Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Packet) (bool, error) {
 	span := trace.SpanFromContext(ctx)
 
 	// setup reply
@@ -56,7 +39,7 @@ func (j Job) ServeDHCP(ctx context.Context, w dhcp4.ReplyWriter, req *dhcp4.Pack
 	return true, nil
 }
 
-func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
+func (j *Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	span := trace.SpanFromContext(ctx)
 	if !j.dhcp.ApplyTo(rep) {
 		return false
@@ -87,7 +70,7 @@ func (j Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 	return true
 }
 
-func (j Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, isHTTPClient bool) {
+func (j *Job) setPXEFilename(rep *dhcp4.Packet, isTinkerbellIPXE, isARM, isUEFI, isHTTPClient bool) {
 	if j.HardwareState() == "in_use" {
 		if j.InstanceID() == "" {
 			j.Logger.Error(errors.New("setPXEFilename called on a job with no instance"), "setPXEFilename called on a job with no instance")

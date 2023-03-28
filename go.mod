@@ -11,14 +11,13 @@ require (
 	github.com/go-logr/zapr v1.2.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
 	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sebest/xff v0.0.0-20160910043805-6c115e0ffa35
-	github.com/stretchr/testify v1.8.0
 	github.com/tinkerbell/ipxedust v0.0.0-20230310190817-626c6f9fb069
 	github.com/tinkerbell/tink v0.7.1-0.20220916173048-e3975fbcf4e1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.29.0
@@ -65,7 +64,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pin/tftp/v3 v3.0.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
@@ -73,6 +71,7 @@ require (
 	github.com/rollbar/rollbar-go v1.0.2 // indirect
 	github.com/rs/zerolog v1.26.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.4.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.4.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.4.1 // indirect

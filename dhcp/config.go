@@ -29,37 +29,6 @@ func (c *Config) ApplyTo(rep *dhcp4.Packet) bool {
 	return true
 }
 
-func (c *Config) Address() net.IP {
-	return c.addr
-}
-
-func (c *Config) Netmask() net.IP {
-	nm, ok := c.opts.GetIP(dhcp4.OptionSubnetMask)
-	if !ok {
-		return nil
-	}
-
-	return nm
-}
-
-func (c *Config) Gateway() net.IP {
-	gw, ok := c.opts.GetIP(dhcp4.OptionRouter)
-	if !ok {
-		return nil
-	}
-
-	return gw
-}
-
-func (c *Config) Hostname() string {
-	hn, ok := c.opts.GetString(dhcp4.OptionHostname)
-	if !ok {
-		return ""
-	}
-
-	return hn
-}
-
 func (c *Config) Setup(address, netmask, gateway net.IP) {
 	if v4 := address.To4(); v4 != nil {
 		c.addr = v4
