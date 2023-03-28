@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -21,23 +21,29 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type BootsDHCPServer struct {
-	jobmanager job.Manager
+type Handler struct {
+	JobManager Manager
 
 	Logger logr.Logger
+}
+
+// JobManager creates jobs.
+type Manager interface {
+	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *job.Job, error)
+	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *job.Job, error)
 }
 
 // ServeDHCP starts the DHCP server.
 // It takes the next server address (nextServer) for serving iPXE binaries via TFTP
 // and an IP:Port (httpServerFQDN) for serving iPXE binaries via HTTP.
-func (s *BootsDHCPServer) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
+func (s *Handler) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
 	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
 	handler := dhcpHandler{
 		pool:         workerpool.New(poolSize),
 		nextServer:   nextServer,
 		ipxeBaseURL:  ipxeBaseURL,
 		bootsBaseURL: bootsBaseURL,
-		jobmanager:   s.jobmanager,
+		jobManager:   s.JobManager,
 		logger:       s.Logger,
 	}
 	defer handler.pool.Stop()
@@ -58,7 +64,7 @@ type dhcpHandler struct {
 	nextServer   net.IP
 	ipxeBaseURL  string
 	bootsBaseURL string
-	jobmanager   job.Manager
+	jobManager   Manager
 	logger       logr.Logger
 }
 
@@ -102,7 +108,7 @@ func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 		trace.WithAttributes(attribute.String("CircuitID", circuitID)),
 	)
 
-	ctx, j, err := d.jobmanager.CreateFromDHCP(ctx, mac, gi, circuitID)
+	ctx, j, err := d.jobManager.CreateFromDHCP(ctx, mac, gi, circuitID)
 	if err != nil {
 		d.logger.Error(err, "retrieved job is empty", "type", req.GetMessageType(), "mac", mac)
 		metrics.JobsInProgress.With(labels).Dec()

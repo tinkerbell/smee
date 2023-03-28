@@ -15,12 +15,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// JobManager creates jobs.
-type Manager interface {
-	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *Job, error)
-	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *Job, error)
-}
-
 // Creator is a type that can create jobs.
 type Creator struct {
 	finder             client.HardwareFinder

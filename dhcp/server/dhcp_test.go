@@ -1,11 +1,9 @@
-package main
+package server
 
 import (
-	"os"
 	"testing"
 
 	"github.com/packethost/dhcp4-go"
-	"github.com/tinkerbell/boots/metrics"
 )
 
 func TestGetCircuitID(t *testing.T) {
@@ -55,9 +53,4 @@ func TestGetCircuitID(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestMain(m *testing.M) {
-	metrics.Init()
-	os.Exit(m.Run())
 }

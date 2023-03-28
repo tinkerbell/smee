@@ -1,8 +1,10 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -24,13 +26,19 @@ type Config struct {
 	GitRev     string
 	StartTime  time.Time
 	Finder     client.HardwareFinder
-	JobManager job.Manager
+	JobManager Manager
 	Logger     logr.Logger
 }
 
 type jobHandler struct {
-	jobManager job.Manager
+	jobManager Manager
 	logger     logr.Logger
+}
+
+// JobManager creates jobs.
+type Manager interface {
+	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *job.Job, error)
+	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *job.Job, error)
 }
 
 func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {

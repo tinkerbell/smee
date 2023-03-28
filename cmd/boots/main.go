@@ -28,6 +28,7 @@ import (
 	"github.com/tinkerbell/boots/client/kubernetes"
 	"github.com/tinkerbell/boots/client/standalone"
 	"github.com/tinkerbell/boots/conf"
+	"github.com/tinkerbell/boots/dhcp/server"
 	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
@@ -200,8 +201,8 @@ func main() {
 		Logger:     log,
 	}
 
-	dhcpServer := &BootsDHCPServer{
-		jobmanager: jobManager,
+	dhcpServer := &server.Handler{
+		JobManager: jobManager,
 		Logger:     log,
 	}
 
