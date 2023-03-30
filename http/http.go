@@ -128,7 +128,7 @@ func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.Han
 	}
 }
 
-func (s *Config) servePhoneHome(w http.ResponseWriter, req *http.Request) {
+func (s *Config) servePhoneHome(w http.ResponseWriter, _ *http.Request) {
 	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
 	metrics.JobsTotal.With(labels).Inc()
 	metrics.JobsInProgress.With(labels).Inc()
