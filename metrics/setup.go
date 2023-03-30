@@ -8,11 +8,6 @@ import (
 var (
 	DHCPTotal *prometheus.CounterVec
 
-	CacherDuration           prometheus.ObserverVec
-	CacherCacheHits          *prometheus.CounterVec
-	CacherTotal              *prometheus.CounterVec
-	CacherRequestsInProgress *prometheus.GaugeVec
-
 	DiscoverDuration    prometheus.ObserverVec
 	HardwareDiscovers   *prometheus.CounterVec
 	DiscoversInProgress *prometheus.GaugeVec
@@ -41,32 +36,10 @@ func Init() {
 	}
 	initCounterLabels(DHCPTotal, labelValues)
 
-	CacherDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "cacher_request_duration_seconds",
-		Help:    "Duration of cacher requests.",
-		Buckets: prometheus.LinearBuckets(.01, .05, 10),
-	}, []string{"from"})
-	CacherCacheHits = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "cacher_cache_hits",
-		Help: "Number of requests which returned data from cacher.",
-	}, []string{"from"})
-	CacherTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "cacher_total",
-		Help: "Total number of requests to the cacher service.",
-	}, []string{"from"})
-	CacherRequestsInProgress = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "cacher_requests_in_progress",
-		Help: "Number of cacher requests that have yet to receive a response.",
-	}, []string{"from"})
-
 	labelValues = []prometheus.Labels{
 		{"from": "dhcp"},
 		{"from": "ip"},
 	}
-	initObserverLabels(CacherDuration, labelValues)
-	initCounterLabels(CacherCacheHits, labelValues)
-	initCounterLabels(CacherTotal, labelValues)
-	initGaugeLabels(CacherRequestsInProgress, labelValues)
 
 	DiscoverDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "discover_duration_seconds",

@@ -64,7 +64,7 @@ func (j *Job) AllowPXE() bool {
 	return j.instance.AllowPXE
 }
 
-// CreateFromDHCP looks up hardware using the MAC from cacher to create a job.
+// CreateFromDHCP looks up hardware using the MAC to create a job.
 // OpenTelemetry: If a hardware record is available and has an in-band traceparent
 // specified, the returned context will have that trace set as its parent and the
 // spans will be linked.
@@ -111,7 +111,7 @@ func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, 
 		trace.WithLinks(fromLink, trace.LinkFromContext(ctx))
 	}
 
-	// mac is needed to find the hostname for DiscoveryCacher
+	// mac is needed to find the hostname for Discovery
 	d.SetMAC(j.mac)
 
 	// (kdeng3849) is this necessary?
