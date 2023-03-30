@@ -17,15 +17,11 @@ import (
 
 // Creator is a type that can create jobs.
 type Creator struct {
-	finder             client.HardwareFinder
-	logger             logr.Logger
-	ExtraKernelParams  []string
-	Registry           string
-	RegistryUsername   string
-	RegistryPassword   string
-	TinkServerTLS      bool
-	TinkServerGRPCAddr string
-	OSIEURLOverride    string
+	finder           client.HardwareFinder
+	logger           logr.Logger
+	Registry         string
+	RegistryUsername string
+	RegistryPassword string
 }
 
 // NewCreator returns a manager that can create jobs.
@@ -45,17 +41,13 @@ type Job struct {
 	hardware client.Hardware
 	instance *client.Instance
 
-	Logger             logr.Logger
-	NextServer         net.IP
-	IpxeBaseURL        string
-	BootsBaseURL       string
-	ExtraKernelParams  []string
-	Registry           string
-	RegistryUsername   string
-	RegistryPassword   string
-	TinkServerTLS      bool
-	TinkServerGRPCAddr string
-	OSIEURLOverride    string
+	Logger           logr.Logger
+	NextServer       net.IP
+	IpxeBaseURL      string
+	BootsBaseURL     string
+	Registry         string
+	RegistryUsername string
+	RegistryPassword string
 }
 
 // AllowPXE returns the value from the hardware data
@@ -113,16 +105,12 @@ func (c *Creator) CreateFromRemoteAddr(ctx context.Context, ip string) (context.
 // spans will be linked.
 func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
 	j := &Job{
-		ip:                 ip,
-		start:              time.Now(),
-		Logger:             c.logger,
-		ExtraKernelParams:  c.ExtraKernelParams,
-		Registry:           c.Registry,
-		RegistryUsername:   c.RegistryUsername,
-		RegistryPassword:   c.RegistryPassword,
-		TinkServerTLS:      c.TinkServerTLS,
-		TinkServerGRPCAddr: c.TinkServerGRPCAddr,
-		OSIEURLOverride:    c.OSIEURLOverride,
+		ip:               ip,
+		start:            time.Now(),
+		Logger:           c.logger,
+		Registry:         c.Registry,
+		RegistryUsername: c.RegistryUsername,
+		RegistryPassword: c.RegistryPassword,
 	}
 
 	c.logger.Info("discovering from ip", "ip", ip)

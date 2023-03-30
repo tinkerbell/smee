@@ -1,4 +1,4 @@
-package ipxe
+package dhcp
 
 import (
 	"fmt"
@@ -77,8 +77,8 @@ func IsTinkerbellIPXE(req *dhcp4.Packet) bool {
 	return string(uc) == "Tinkerbell"
 }
 
-// IsIPXE returns bool depending on if the request originated with a version of iPXE.
-func IsIPXE(req *dhcp4.Packet) bool {
+// isIPXE returns bool depending on if the request originated with a version of iPXE.
+func isIPXE(req *dhcp4.Packet) bool {
 	if om := getEncapsulatedOptions(req); om != nil && hasFeature(om, FeatureHTTP) {
 		return true
 	}

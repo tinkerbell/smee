@@ -7,6 +7,7 @@ import (
 	"net"
 	stdhttp "net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -48,41 +49,40 @@ var (
 const name = "boots"
 
 type config struct {
-	// ipxe holds the config for serving ipxe binaries
+	// ipxe holds the config for serving ipxe binaries.
 	ipxe ipxedust.Command
-	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled
+	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled.
 	ipxeTFTPEnabled bool
-	// ipxeHTTPEnabled determines if local iPXE binaries served via HTTP are enabled
+	// ipxeHTTPEnabled determines if local iPXE binaries served via HTTP are enabled.
 	ipxeHTTPEnabled bool
-	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries
+	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries.
 	ipxeRemoteTFTPAddr string
-	// ipxeRemoteHTTPAddr is the address and port of the remote HTTP server serving iPXE binaries
+	// ipxeRemoteHTTPAddr is the address and port of the remote HTTP server serving iPXE binaries.
 	ipxeRemoteHTTPAddr string
 	// ipxeVars are additional variable definitions to include in all iPXE installer
 	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
 	// e.g. 'var1=val1 var2=val2'. Note that settings which require spaces (e.g, scriptlets)
 	// are not yet supported.
 	ipxeVars string
-	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets
+	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets.
 	httpAddr string
-	// dhcpAddr is the local address for the DHCP server
+	// dhcpAddr is the local address for the DHCP server.
 	dhcpAddr string
-	// syslogAddr is the local address for the syslog server
+	// syslogAddr is the local address for the syslog server.
 	syslogAddr string
-	// loglevel is the log level for boots
+	// loglevel is the log level for boots.
 	logLevel string
-	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE
+	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
 	extraKernelArgs string
-	// kubeConfig is the path to a kubernetes config file
+	// kubeConfig is the path to a kubernetes config file.
 	kubeconfig string
-	// kubeAPI is the Kubernetes API URL
+	// kubeAPI is the Kubernetes API URL.
 	kubeAPI string
 	// kubeNamespace is an override for the namespace the kubernetes client will watch.
 	kubeNamespace string
-	// osiePathOverride allows a completely custom path/URL to be specified for OSIE/Hook images
-	// This will bypass the hardcoded path appending of 'misc/osie/current' to the path
-	osiePathOverride string
-	// iPXE script fragment to patch into binaries served over TFTP and HTTP
+	// osieURL is the URL at which OSIE/Hook images live.
+	osieURL string
+	// iPXE script fragment to patch into binaries served over TFTP and HTTP.
 	ipxeScriptPatch string
 }
 
@@ -179,26 +179,31 @@ func main() {
 		panic(err)
 	}
 	jobManager := job.NewCreator(log, finder)
-	jobManager.ExtraKernelParams = strings.Split(cfg.extraKernelArgs, " ")
 	jobManager.Registry = env.Get("DOCKER_REGISTRY")
 	jobManager.RegistryUsername = env.Get("REGISTRY_USERNAME")
 	jobManager.RegistryPassword = env.Get("REGISTRY_PASSWORD")
-	jobManager.TinkServerTLS = env.Bool("TINKERBELL_TLS", true)
 	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
 	if env.Get("DATA_MODEL_VERSION") == "1" && authority == "" {
 		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
 		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
 		panic(err)
 	}
-	jobManager.TinkServerGRPCAddr = authority
-	jobManager.OSIEURLOverride = cfg.osiePathOverride
 
+	osieURL, err := url.Parse(cfg.osieURL)
+	if err != nil {
+		log.Error(err, "osie url")
+		panic(err)
+	}
 	httpServer := &http.Config{
-		GitRev:     GitRev,
-		StartTime:  StartTime,
-		Finder:     finder,
-		JobManager: jobManager,
-		Logger:     log,
+		GitRev:             GitRev,
+		StartTime:          StartTime,
+		Finder:             finder,
+		Logger:             log,
+		OSIEURL:            osieURL,
+		ExtraKernelParams:  strings.Split(cfg.extraKernelArgs, " "),
+		PublicSyslogFQDN:   conf.PublicSyslogFQDN,
+		TinkServerTLS:      env.Bool("TINKERBELL_TLS", false),
+		TinkServerGRPCAddr: authority,
 	}
 
 	dhcpServer := &server.Handler{
@@ -348,7 +353,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
 	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
-	fs.StringVar(&cfg.osiePathOverride, "osie-path-override", "", "A custom URL for OSIE/Hook images.")
+	fs.StringVar(&cfg.osieURL, "osie-path-override", "", "A custom URL for OSIE/Hook images.")
 	fs.StringVar(&cfg.ipxeScriptPatch, "ipxe-script-patch", "", "iPXE script fragment to patch into served iPXE binaries served via TFTP and HTTP")
 
 	return &ffcli.Command{

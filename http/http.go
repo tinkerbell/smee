@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"runtime"
 	"time"
 
@@ -17,22 +18,22 @@ import (
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/conf"
+	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type Config struct {
-	GitRev     string
-	StartTime  time.Time
-	Finder     client.HardwareFinder
-	JobManager Manager
-	Logger     logr.Logger
-}
-
-type jobHandler struct {
-	jobManager Manager
-	logger     logr.Logger
+	GitRev             string
+	StartTime          time.Time
+	Finder             client.HardwareFinder
+	Logger             logr.Logger
+	OSIEURL            *url.URL
+	ExtraKernelParams  []string
+	PublicSyslogFQDN   string
+	TinkServerTLS      bool
+	TinkServerGRPCAddr string
 }
 
 // JobManager creates jobs.
@@ -71,8 +72,8 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
 func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.HandlerFunc) {
 	mux := http.NewServeMux()
-	jh := jobHandler{jobManager: s.JobManager, logger: s.Logger}
-	mux.Handle(otelFuncWrapper("/", jh.serveJobFile))
+	jh := ipxe.Handler{Logger: s.Logger, Finder: s.Finder}
+	mux.Handle(otelFuncWrapper("/", jh.HandlerFunc()))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
 	}
@@ -127,38 +128,6 @@ func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.Han
 	}
 }
 
-func (h *jobHandler) serveJobFile(w http.ResponseWriter, req *http.Request) {
-	labels := prometheus.Labels{"from": "http", "op": "file"}
-	metrics.JobsTotal.With(labels).Inc()
-	metrics.JobsInProgress.With(labels).Inc()
-	defer metrics.JobsInProgress.With(labels).Dec()
-	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
-	defer timer.ObserveDuration()
-
-	ctx, j, err := h.jobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		h.logger.Error(err, "no job found for client address", "client", req.RemoteAddr)
-
-		return
-	}
-	// This gates serving PXE file by
-	// 1. the existence of a hardware record in tink server
-	// AND
-	// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
-	// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
-	// without a tink workflow present.
-	if !j.AllowPXE() {
-		w.WriteHeader(http.StatusNotFound)
-		h.logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false", "client", req.RemoteAddr)
-
-		return
-	}
-
-	// otel: send a req.Clone with the updated context from the job's hw data
-	j.ServeFile(w, req.Clone(ctx))
-}
-
 func (s *Config) servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
 	metrics.JobsTotal.With(labels).Inc()
@@ -167,12 +136,6 @@ func (s *Config) servePhoneHome(w http.ResponseWriter, req *http.Request) {
 	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	_, j, err := s.JobManager.CreateFromRemoteAddr(req.Context(), req.RemoteAddr)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		s.Logger.Info("no job found for client address", "client", req.RemoteAddr, "error", err)
-
-		return
-	}
-	j.ServePhoneHomeEndpoint(w, req)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte{})
 }
