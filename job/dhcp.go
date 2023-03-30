@@ -58,7 +58,7 @@ func (j *Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 
 		isTinkerbellIPXE := dhcp.IsTinkerbellIPXE(req)
 		if isTinkerbellIPXE {
-			dhcp.Setup(rep)
+			dhcp.Setup(rep, j.PublicSyslogIPv4)
 		}
 
 		j.setPXEFilename(rep, isTinkerbellIPXE, isARM, isUEFI, dhcp.IsHTTPClient(req))

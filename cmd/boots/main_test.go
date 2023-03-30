@@ -27,6 +27,7 @@ func TestParser(t *testing.T) {
 		dhcpAddr:           "0.0.0.0:67",
 		syslogAddr:         "0.0.0.0:514",
 		logLevel:           "info",
+		osieURL:            "https://tinkerbell.org/hook/",
 	}
 	got := &config{}
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
@@ -37,6 +38,7 @@ func TestParser(t *testing.T) {
 		"-http-addr", "192.168.2.225:8080",
 		"-dhcp-addr", "0.0.0.0:67",
 		"-syslog-addr", "0.0.0.0:514",
+		"-osie-url", "https://tinkerbell.org/hook/",
 	}
 	cli := newCLI(got, fs)
 	cli.Parse(args)
@@ -84,7 +86,7 @@ FLAGS
   -kubeconfig             The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
   -kubernetes             The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
   -log-level              log level. (default "info")
-  -osie-path-override     A custom URL for OSIE/Hook images.
+  -osie-url               URL where OSIE/Hook images are located.
   -syslog-addr            IP and port to listen on for syslog messages. (default "%[1]v:514")
 `, defaultIP)
 	c := &config{}

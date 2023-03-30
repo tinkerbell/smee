@@ -17,7 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/ipxe"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
@@ -34,6 +33,7 @@ type Config struct {
 	PublicSyslogFQDN   string
 	TinkServerTLS      bool
 	TinkServerGRPCAddr string
+	TrustedProxies     []string
 }
 
 // JobManager creates jobs.
@@ -92,9 +92,9 @@ func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.Han
 
 	// add X-Forwarded-For support if trusted proxies are configured
 	var xffHandler http.Handler
-	if len(conf.TrustedProxies) > 0 {
+	if len(s.TrustedProxies) > 0 {
 		xffmw, err := xff.New(xff.Options{
-			AllowedSubnets: conf.TrustedProxies,
+			AllowedSubnets: s.TrustedProxies,
 		})
 		if err != nil {
 			s.Logger.Error(err, "failed to create new xff object")

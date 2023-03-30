@@ -10,9 +10,9 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
-	"text/tabwriter"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -20,15 +20,11 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/pkg/env"
 	plog "github.com/packethost/pkg/log"
-	"github.com/peterbourgon/ff/v3"
-	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/kubernetes"
 	"github.com/tinkerbell/boots/client/standalone"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp/server"
 	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/boots/job"
@@ -42,8 +38,17 @@ import (
 )
 
 var (
-	GitRev    = "unknown (use make)"
-	StartTime = time.Now()
+	// GitRev is the git revision of the build. It is set by the Makefile.
+	GitRev = "unknown (use make)"
+
+	startTime        = time.Now()
+	publicIPv4       = mustPublicIPv4()
+	publicFQDN       = getStringEnv("PUBLIC_FQDN", publicIPv4.String())
+	publicSyslogIPv4 = mustPublicSyslogIPv4()
+	publicSyslogFQDN = getStringEnv("PUBLIC_SYSLOG_FQDN", publicSyslogIPv4.String())
+	syslogBind       = getStringEnv("SYSLOG_BIND", publicIPv4.String()+":514")
+	httpBind         = getStringEnv("HTTP_BIND", publicIPv4.String()+":80")
+	bootpBind        = getStringEnv("BOOTP_BIND", publicIPv4.String()+":67")
 )
 
 const name = "boots"
@@ -142,7 +147,7 @@ func main() {
 				Patch:   []byte(cfg.ipxeScriptPatch),
 			}
 		}
-		nextServer = conf.PublicIPv4
+		nextServer = publicIPv4
 	} else { // use remote iPXE binary service for TFTP
 		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
 		if ip == nil {
@@ -157,13 +162,12 @@ func main() {
 	var ipxeHandler stdhttp.HandlerFunc
 	var ipxePattern string
 	var ipxeBaseURL string
-	bootsBaseURL := conf.PublicFQDN
 	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
 		if cfg.ipxeHTTPEnabled {
 			ipxeHandler = ihttp.Handler{Log: lg, Patch: []byte(cfg.ipxeScriptPatch)}.Handle
 		}
 		ipxePattern = "/ipxe/"
-		ipxeBaseURL = conf.PublicFQDN + ipxePattern
+		ipxeBaseURL = publicFQDN + ipxePattern
 		log.Info("serving iPXE binaries from local HTTP server", "addr", ipxeBaseURL)
 	} else { // use remote iPXE binary service for HTTP
 		ipxeBaseURL = cfg.ipxeRemoteHTTPAddr
@@ -179,11 +183,13 @@ func main() {
 		panic(err)
 	}
 	jobManager := job.NewCreator(log, finder)
-	jobManager.Registry = env.Get("DOCKER_REGISTRY")
-	jobManager.RegistryUsername = env.Get("REGISTRY_USERNAME")
-	jobManager.RegistryPassword = env.Get("REGISTRY_PASSWORD")
-	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
-	if env.Get("DATA_MODEL_VERSION") == "1" && authority == "" {
+	jobManager.DHCPServerIP = publicIPv4
+	jobManager.PublicSyslogIPv4 = publicSyslogIPv4
+	jobManager.Registry = getStringEnv("DOCKER_REGISTRY")
+	jobManager.RegistryUsername = getStringEnv("REGISTRY_USERNAME")
+	jobManager.RegistryPassword = getStringEnv("REGISTRY_PASSWORD")
+	authority := getStringEnv("TINKERBELL_GRPC_AUTHORITY")
+	if getStringEnv("DATA_MODEL_VERSION") == "1" && authority == "" {
 		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
 		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
 		panic(err)
@@ -196,19 +202,21 @@ func main() {
 	}
 	httpServer := &http.Config{
 		GitRev:             GitRev,
-		StartTime:          StartTime,
+		StartTime:          startTime,
 		Finder:             finder,
 		Logger:             log,
 		OSIEURL:            osieURL,
 		ExtraKernelParams:  strings.Split(cfg.extraKernelArgs, " "),
-		PublicSyslogFQDN:   conf.PublicSyslogFQDN,
-		TinkServerTLS:      env.Bool("TINKERBELL_TLS", false),
+		PublicSyslogFQDN:   publicSyslogFQDN,
+		TinkServerTLS:      getBoolEnv("TINKERBELL_TLS", false),
 		TinkServerGRPCAddr: authority,
+		TrustedProxies:     parseTrustedProxies(),
 	}
 
 	dhcpServer := &server.Handler{
 		JobManager: jobManager,
 		Logger:     log,
+		PoolSize:   getIntEnv("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2),
 	}
 
 	log.Info("serving dhcp", "addr", cfg.dhcpAddr)
@@ -218,10 +226,13 @@ func main() {
 	// this is still need so that github.com/packethost/dhcp4-go doesn't panic
 	l, err := plog.Init("github.com/tinkerbell/boots")
 	if err != nil {
-		panic(nil)
+		panic(err)
 	}
 	defer l.Close()
 	dhcp4.Init(l.Package("dhcp"))
+	// bootsBaseURL is the hostname/ip + uri path to the http service serving iPXE binaries,
+	// this is used when a netboot client identifies itself as HTTPClient.
+	bootsBaseURL := publicFQDN
 	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
 
 	log.Info("serving http", "addr", cfg.httpAddr)
@@ -284,83 +295,4 @@ func defaultLogger(level string) logr.Logger {
 	}
 
 	return zapr.NewLogger(zapLogger)
-}
-
-// customUsageFunc is a custom UsageFunc used for all commands.
-func customUsageFunc(c *ffcli.Command) string {
-	var b strings.Builder
-
-	fmt.Fprintf(&b, "USAGE\n")
-	if c.ShortUsage != "" {
-		fmt.Fprintf(&b, "  %s\n", c.ShortUsage)
-	} else {
-		fmt.Fprintf(&b, "  %s\n", c.Name)
-	}
-	fmt.Fprintf(&b, "\n")
-
-	if c.LongHelp != "" {
-		fmt.Fprintf(&b, "%s\n\n", c.LongHelp)
-	}
-
-	if len(c.Subcommands) > 0 {
-		fmt.Fprintf(&b, "SUBCOMMANDS\n")
-		tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
-		for _, subcommand := range c.Subcommands {
-			fmt.Fprintf(tw, "  %s\t%s\n", subcommand.Name, subcommand.ShortHelp)
-		}
-		tw.Flush()
-		fmt.Fprintf(&b, "\n")
-	}
-
-	if countFlags(c.FlagSet) > 0 {
-		fmt.Fprintf(&b, "FLAGS\n")
-		tw := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
-		c.FlagSet.VisitAll(func(f *flag.Flag) {
-			format := "  -%s\t%s\n"
-			values := []interface{}{f.Name, f.Usage}
-			if def := f.DefValue; def != "" {
-				format = "  -%s\t%s (default %q)\n"
-				values = []interface{}{f.Name, f.Usage, def}
-			}
-			fmt.Fprintf(tw, format, values...)
-		})
-		tw.Flush()
-		fmt.Fprintf(&b, "\n")
-	}
-
-	return strings.TrimSpace(b.String()) + "\n"
-}
-
-func countFlags(fs *flag.FlagSet) (n int) {
-	fs.VisitAll(func(*flag.Flag) { n++ })
-
-	return n
-}
-
-func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
-	fs.StringVar(&cfg.ipxe.TFTPAddr, "ipxe-tftp-addr", "0.0.0.0:69", "local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).")
-	fs.DurationVar(&cfg.ipxe.TFTPTimeout, "ipxe-tftp-timeout", time.Second*5, "local iPXE TFTP server requests timeout.")
-	fs.BoolVar(&cfg.ipxeTFTPEnabled, "ipxe-enable-tftp", true, "enable serving iPXE binaries via TFTP.")
-	fs.BoolVar(&cfg.ipxeHTTPEnabled, "ipxe-enable-http", true, "enable serving iPXE binaries via HTTP.")
-	fs.StringVar(&cfg.ipxeRemoteTFTPAddr, "ipxe-remote-tftp-addr", "", "remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.")
-	fs.StringVar(&cfg.ipxeRemoteHTTPAddr, "ipxe-remote-http-addr", "", "remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.")
-	fs.StringVar(&cfg.ipxeVars, "ipxe-vars", "", "additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.")
-	fs.StringVar(&cfg.httpAddr, "http-addr", conf.HTTPBind, "local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
-	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
-	fs.StringVar(&cfg.dhcpAddr, "dhcp-addr", conf.BOOTPBind, "IP and port to listen on for DHCP.")
-	fs.StringVar(&cfg.syslogAddr, "syslog-addr", conf.SyslogBind, "IP and port to listen on for syslog messages.")
-	fs.StringVar(&cfg.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
-	fs.StringVar(&cfg.kubeconfig, "kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
-	fs.StringVar(&cfg.kubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
-	fs.StringVar(&cfg.kubeNamespace, "kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
-	fs.StringVar(&cfg.osieURL, "osie-path-override", "", "A custom URL for OSIE/Hook images.")
-	fs.StringVar(&cfg.ipxeScriptPatch, "ipxe-script-patch", "", "iPXE script fragment to patch into served iPXE binaries served via TFTP and HTTP")
-
-	return &ffcli.Command{
-		Name:       name,
-		ShortUsage: "Run Boots server for provisioning",
-		FlagSet:    fs,
-		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
-		UsageFunc:  customUsageFunc,
-	}
 }

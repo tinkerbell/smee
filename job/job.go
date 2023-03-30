@@ -10,7 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/dhcp"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,6 +21,8 @@ type Creator struct {
 	Registry         string
 	RegistryUsername string
 	RegistryPassword string
+	DHCPServerIP     net.IP
+	PublicSyslogIPv4 net.IP
 }
 
 // NewCreator returns a manager that can create jobs.
@@ -42,7 +43,9 @@ type Job struct {
 	instance *client.Instance
 
 	Logger           logr.Logger
+	DHCPServerIP     net.IP
 	NextServer       net.IP
+	PublicSyslogIPv4 net.IP
 	IpxeBaseURL      string
 	BootsBaseURL     string
 	Registry         string
@@ -173,7 +176,7 @@ func (j *Job) setup(ctx context.Context, d client.Discoverer) (context.Context, 
 	}
 	j.dhcp.Setup(ip.Address, ip.Netmask, ip.Gateway)
 	j.dhcp.SetLeaseTime(d.LeaseTime(j.mac))
-	j.dhcp.SetDHCPServer(conf.PublicIPv4) // used for the unicast DHCPREQUEST
+	j.dhcp.SetDHCPServer(j.DHCPServerIP) // used for the unicast DHCPREQUEST
 	j.dhcp.SetDNSServers(d.DNSServers(j.mac))
 
 	hostname, err := d.Hostname()
