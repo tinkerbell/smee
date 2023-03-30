@@ -1,7 +1,6 @@
 package job
 
 import (
-	"bytes"
 	"context"
 	"net"
 	"time"
@@ -36,7 +35,6 @@ func NewCreator(logger logr.Logger, finder client.HardwareFinder) *Creator {
 // Job holds per request data.
 type Job struct {
 	mac      net.HardwareAddr
-	ip       net.IP
 	start    time.Time
 	dhcp     dhcp.Config
 	hardware client.Hardware
@@ -72,9 +70,14 @@ func (j *Job) AllowPXE() bool {
 // spans will be linked.
 func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giaddr net.IP, circuitID string) (context.Context, *Job, error) {
 	j := &Job{
-		mac:    mac,
-		start:  time.Now(),
-		Logger: c.logger,
+		mac:              mac,
+		start:            time.Now(),
+		Logger:           c.logger,
+		Registry:         c.Registry,
+		RegistryUsername: c.RegistryUsername,
+		RegistryPassword: c.RegistryPassword,
+		DHCPServerIP:     c.DHCPServerIP,
+		PublicSyslogIPv4: c.PublicSyslogIPv4,
 	}
 	d, err := c.finder.ByMAC(ctx, mac, giaddr, circuitID)
 	if err != nil {
@@ -87,54 +90,6 @@ func (c *Creator) CreateFromDHCP(ctx context.Context, mac net.HardwareAddr, giad
 	}
 
 	return newCtx, j, nil
-}
-
-// CreateFromRemoteAddr looks up hardware using the IP from cacher to create a job.
-// OpenTelemetry: If a hardware record is available and has an in-band traceparent
-// specified, the returned context will have that trace set as its parent and the
-// spans will be linked.
-func (c *Creator) CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *Job, error) {
-	host, _, err := net.SplitHostPort(ip)
-	if err != nil {
-		return ctx, nil, errors.Wrap(err, "splitting host:ip")
-	}
-
-	return c.createFromIP(ctx, net.ParseIP(host))
-}
-
-// createFromIP looks up hardware using the IP from cacher to create a job.
-// OpenTelemetry: If a hardware record is available and has an in-band traceparent
-// specified, the returned context will have that trace set as its parent and the
-// spans will be linked.
-func (c *Creator) createFromIP(ctx context.Context, ip net.IP) (context.Context, *Job, error) {
-	j := &Job{
-		ip:               ip,
-		start:            time.Now(),
-		Logger:           c.logger,
-		Registry:         c.Registry,
-		RegistryUsername: c.RegistryUsername,
-		RegistryPassword: c.RegistryPassword,
-	}
-
-	c.logger.Info("discovering from ip", "ip", ip)
-	d, err := c.finder.ByIP(ctx, ip)
-	if err != nil {
-		return ctx, nil, errors.WithMessage(err, "discovering from ip address")
-	}
-	mac := d.GetMAC(ip)
-	if bytes.Equal(mac, net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}) {
-		c.logger.Error(errors.New("somehow got a zero mac"), "somehow got a zero mac", "ip", ip)
-
-		return ctx, nil, errors.New("somehow got a zero mac")
-	}
-	j.mac = mac
-
-	ctx, err = j.setup(ctx, d)
-	if err != nil {
-		return ctx, nil, err
-	}
-
-	return ctx, j, nil
 }
 
 // setup initializes the job from the discovered hardware record with the DHCP

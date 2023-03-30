@@ -25,9 +25,8 @@ type Handler struct {
 	PoolSize   int
 }
 
-// JobManager creates jobs.
+// Manager creates jobs.
 type Manager interface {
-	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *job.Job, error)
 	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *job.Job, error)
 }
 
