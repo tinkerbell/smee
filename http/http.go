@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
-	"net/url"
 	"runtime"
 	"time"
 
@@ -28,7 +27,7 @@ type Config struct {
 	StartTime          time.Time
 	Finder             client.HardwareFinder
 	Logger             logr.Logger
-	OSIEURL            *url.URL
+	OSIEURL            string
 	ExtraKernelParams  []string
 	PublicSyslogFQDN   string
 	TinkServerTLS      bool
@@ -72,7 +71,15 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
 func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.HandlerFunc) {
 	mux := http.NewServeMux()
-	jh := ipxe.Handler{Logger: s.Logger, Finder: s.Finder}
+	jh := ipxe.Handler{
+		Logger:             s.Logger,
+		Finder:             s.Finder,
+		OSIEURL:            s.OSIEURL,
+		ExtraKernelParams:  s.ExtraKernelParams,
+		PublicSyslogFQDN:   s.PublicSyslogFQDN,
+		TinkServerTLS:      s.TinkServerTLS,
+		TinkServerGRPCAddr: s.TinkServerGRPCAddr,
+	}
 	mux.Handle(otelFuncWrapper("/", jh.HandlerFunc()))
 	if ipxeHandler != nil {
 		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))

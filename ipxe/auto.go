@@ -20,7 +20,7 @@ import (
 type Handler struct {
 	Logger             logr.Logger
 	Finder             client.HardwareFinder
-	OSIEURL            *url.URL
+	OSIEURL            string
 	ExtraKernelParams  []string
 	PublicSyslogFQDN   string
 	TinkServerTLS      bool
@@ -42,7 +42,14 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 		defer timer.ObserveDuration()
 
-		ip := net.ParseIP(r.RemoteAddr)
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.Logger.Error(errors.Wrap(err, "splitting host:ip"), "error parsing client address", "client", r.RemoteAddr)
+
+			return
+		}
+		ip := net.ParseIP(host)
 		ctx := r.Context()
 		// get hardware record
 		hw, err := h.Finder.ByIP(ctx, ip)
@@ -65,21 +72,16 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 			return
 		}
 
-		h.serveBootScript(ctx, w, r.URL.Path, r.RemoteAddr)
+		h.serveBootScript(ctx, w, path.Base(r.URL.Path), ip.String(), hw)
 	}
 }
 
-func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string) {
+func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw client.Discoverer) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("boots.script_name", name))
 	var script []byte
 	switch name {
-	case "auto":
-		// get hardware record
-		hw, err := h.Finder.ByIP(ctx, net.ParseIP(ip))
-		if err != nil {
-			break
-		}
+	case "auto.ipxe":
 		// check if the custom script should be used
 		if cs, err := h.customScript(hw, ip); err == nil {
 			script = []byte(cs)
@@ -117,10 +119,10 @@ func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string
 	auto := Hook{
 		Arch:              hw.Hardware().HardwareArch(hw.GetMAC(net.ParseIP(ip))),
 		Console:           "",
-		DownloadURL:       h.OSIEURL.String(),
+		DownloadURL:       h.OSIEURL,
 		ExtraKernelParams: h.ExtraKernelParams,
 		Facility:          hw.Hardware().HardwareFacilityCode(),
-		HWAddr:            string(hw.GetMAC(net.ParseIP(ip))),
+		HWAddr:            hw.GetMAC(net.ParseIP(ip)).String(),
 		SyslogHost:        h.PublicSyslogFQDN,
 		TinkerbellTLS:     h.TinkServerTLS,
 		TinkGRPCAuthority: h.TinkServerGRPCAddr,

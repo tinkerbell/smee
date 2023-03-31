@@ -7,7 +7,6 @@ import (
 	"net"
 	stdhttp "net/http"
 	"net/netip"
-	"net/url"
 	"os"
 	"os/signal"
 	"runtime"
@@ -195,17 +194,12 @@ func main() {
 		panic(err)
 	}
 
-	osieURL, err := url.Parse(cfg.osieURL)
-	if err != nil {
-		log.Error(err, "osie url")
-		panic(err)
-	}
 	httpServer := &http.Config{
 		GitRev:             GitRev,
 		StartTime:          startTime,
 		Finder:             finder,
 		Logger:             log,
-		OSIEURL:            osieURL,
+		OSIEURL:            cfg.osieURL,
 		ExtraKernelParams:  strings.Split(cfg.extraKernelArgs, " "),
 		PublicSyslogFQDN:   publicSyslogFQDN,
 		TinkServerTLS:      getBoolEnv("TINKERBELL_TLS", false),
