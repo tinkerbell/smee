@@ -53,7 +53,7 @@ const (
 )
 
 type message struct {
-	buf  [1024]byte
+	buf  [2048]byte
 	size int
 	time time.Time
 	host net.IP

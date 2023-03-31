@@ -149,9 +149,9 @@ func (r *Receiver) runParser() {
 			structured := parse(m)
 			sl := r.Logger.WithValues("msg", structured)
 			if m.Severity() == DEBUG {
-				sl.V(1).Info("msg", "msg", m)
+				sl.V(1).Info("msg")
 			} else {
-				sl.Info("msg", "msg", m)
+				sl.Info("msg")
 			}
 		} else {
 			r.Logger.V(1).Info("msg", "msg", m)
