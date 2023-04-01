@@ -4,7 +4,7 @@ nodes:
   - role: control-plane
     extraPortMappings:
       - containerPort: 67
-        hostPort: 6767
+        hostPort: 67
         listenAddress: "0.0.0.0"
         protocol: udp
       - containerPort: 69

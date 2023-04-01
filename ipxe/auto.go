@@ -45,7 +45,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.Logger.Error(errors.Wrap(err, "splitting host:ip"), "error parsing client address", "client", r.RemoteAddr)
+			h.Logger.Info("unable to parse client address", "client", r.RemoteAddr)
 
 			return
 		}
@@ -55,7 +55,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		hw, err := h.Finder.ByIP(ctx, ip)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-			h.Logger.Error(err, "no job found for client address", "client", r.RemoteAddr)
+			h.Logger.Info("no job found for client address", "client", ip, "details", err.Error())
 
 			return
 		}
@@ -113,6 +113,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 
 		return
 	}
+	span.SetStatus(codes.Ok, "boot script served")
 }
 
 func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string) (string, error) {

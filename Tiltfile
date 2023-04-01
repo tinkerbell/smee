@@ -3,7 +3,7 @@ local_resource(
   'make cmd/boots/boots-linux-amd64'
 )
 docker_build(
-    'quay.io/tinkerbell/boots',
+    'boots',
     '.',
     dockerfile='Dockerfile',
     only=['./cmd/boots']

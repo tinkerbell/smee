@@ -7,7 +7,7 @@ images:
   - name: quay.io/tinkerbell/boots
     newTag: latest
 resources:
-  - github.com/tinkerbell/tink/config/crd?ref=main
+  - github.com/tinkerbell/tink/config/crd?ref=v0.8.0
   - namespace.yaml
   - rbac.yaml
   - deployment.yaml

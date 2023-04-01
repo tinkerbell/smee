@@ -27,16 +27,16 @@ spec:
               value: "lab1"
             - name: HTTP_BIND
               value: ":80"
-            - name: MIRROR_BASE_URL
-              value: http://192.168.2.59:8080
+            - name: BOOTS_OSIE_URL
+              value: http://192.168.2.50:8080
             - name: PUBLIC_IP
-              value: 192.168.2.59
+              value: 192.168.2.50
             - name: PUBLIC_SYSLOG_FQDN
-              value: 192.168.2.59
+              value: 192.168.2.50
             - name: SYSLOG_BIND
               value: 0.0.0.0:514
             - name: TINKERBELL_GRPC_AUTHORITY
-              value: 192.168.2.59:42113
+              value: 192.168.2.50:42113
             - name: TINKERBELL_TLS
               value: "false"
           image: boots:latest
