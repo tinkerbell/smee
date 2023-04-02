@@ -4,33 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net"
-	stdhttp "net/http"
-	"net/netip"
 	"os"
 	"os/signal"
-	"runtime"
-	"strings"
 	"syscall"
-	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	dhcp4 "github.com/packethost/dhcp4-go"
-	plog "github.com/packethost/pkg/log"
+	"github.com/peterbourgon/ff/v3"
+	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/kubernetes"
-	"github.com/tinkerbell/boots/client/standalone"
-	"github.com/tinkerbell/boots/dhcp/server"
-	"github.com/tinkerbell/boots/http"
-	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/backend"
+	"github.com/tinkerbell/boots/backend/kubernetes"
+	"github.com/tinkerbell/boots/backend/standalone"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
-	"github.com/tinkerbell/ipxedust"
-	"github.com/tinkerbell/ipxedust/ihttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
@@ -39,61 +27,53 @@ import (
 var (
 	// GitRev is the git revision of the build. It is set by the Makefile.
 	GitRev = "unknown (use make)"
-
-	startTime        = time.Now()
-	publicIPv4       = mustPublicIPv4()
-	publicFQDN       = getStringEnv("PUBLIC_FQDN", publicIPv4.String())
-	publicSyslogIPv4 = mustPublicSyslogIPv4()
-	publicSyslogFQDN = getStringEnv("PUBLIC_SYSLOG_FQDN", publicSyslogIPv4.String())
-	syslogBind       = getStringEnv("SYSLOG_BIND", publicIPv4.String()+":514")
-	httpBind         = getStringEnv("HTTP_BIND", publicIPv4.String()+":80")
-	bootpBind        = getStringEnv("BOOTP_BIND", publicIPv4.String()+":67")
 )
 
 const name = "boots"
 
 type config struct {
-	// ipxe holds the config for serving ipxe binaries.
-	ipxe ipxedust.Command
-	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled.
-	ipxeTFTPEnabled bool
-	// ipxeHTTPEnabled determines if local iPXE binaries served via HTTP are enabled.
-	ipxeHTTPEnabled bool
-	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries.
-	ipxeRemoteTFTPAddr string
-	// ipxeRemoteHTTPAddr is the address and port of the remote HTTP server serving iPXE binaries.
-	ipxeRemoteHTTPAddr string
-	// ipxeVars are additional variable definitions to include in all iPXE installer
-	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
-	// e.g. 'var1=val1 var2=val2'. Note that settings which require spaces (e.g, scriptlets)
-	// are not yet supported.
-	ipxeVars string
-	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets.
-	httpAddr string
-	// dhcpAddr is the local address for the DHCP server.
-	dhcpAddr string
-	// syslogAddr is the local address for the syslog server.
-	syslogAddr string
 	// loglevel is the log level for boots.
 	logLevel string
-	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
-	extraKernelArgs string
-	// kubeConfig is the path to a kubernetes config file.
-	kubeconfig string
-	// kubeAPI is the Kubernetes API URL.
-	kubeAPI string
-	// kubeNamespace is an override for the namespace the kubernetes client will watch.
-	kubeNamespace string
-	// osieURL is the URL at which OSIE/Hook images live.
-	osieURL string
-	// iPXE script fragment to patch into binaries served over TFTP and HTTP.
-	ipxeScriptPatch string
+	// syslogAddr is the local address to listen on for the syslog server.
+	syslogAddr string
+	// backend to use for retrieving hardware data.
+	backend    string
+	k8s        *k8sConfig
+	standalone *standaloneConfig
+	dhcp       *dhcpConfig
+	ipxe       *ipxeConfig
+	http       *httpConfig
+}
+
+type k8sConfig struct {
+	// config is the path to a kubernetes config file.
+	config string
+	// api is the Kubernetes API URL.
+	api string
+	// namespace is an override for the namespace the kubernetes client will watch.
+	namespace string
+}
+
+type standaloneConfig struct {
+	// file is the path to a JSON file containing hardware data.
+	file string
 }
 
 func main() {
-	cfg := &config{}
-	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
-	_ = cli.Parse(os.Args[1:])
+	cfg := &config{
+		k8s:        &k8sConfig{},
+		standalone: &standaloneConfig{},
+		dhcp:       &dhcpConfig{},
+		ipxe:       &ipxeConfig{},
+		http:       &httpConfig{},
+	}
+	fs := flag.NewFlagSet(name, flag.ExitOnError)
+	cli := newCLI(cfg, fs)
+	if err := cli.Parse(os.Args[1:]); err != nil {
+		//fmt.Printf("type %T\n", err)
+		//fmt.Printf("error parsing cli, %v\n", err)
+		os.Exit(1)
+	}
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
 	defer done()
@@ -104,173 +84,73 @@ func main() {
 	log := defaultLogger(cfg.logLevel)
 	log.Info("starting", "version", GitRev)
 
-	go func() {
-		log.Info("serving syslog", "addr", cfg.syslogAddr)
-		err := retry.Do(
-			func() error {
-				_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
-
-				return err
-			},
-		)
-		if err != nil {
-			log.Error(err, "retry syslog serve")
-			panic(errors.Wrap(err, "retry syslog serve"))
-		}
-	}()
-
 	g, ctx := errgroup.WithContext(ctx)
-	lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
-	ipxe := &ipxedust.Server{
-		Log:                  lg,
-		EnableTFTPSinglePort: true,
-		TFTP:                 ipxedust.ServerSpec{Disabled: true},
-		HTTP:                 ipxedust.ServerSpec{Disabled: true},
-	}
-	var nextServer net.IP
-	if cfg.ipxeRemoteTFTPAddr == "" { // use local iPXE binary service for TFTP
-		if cfg.ipxeTFTPEnabled {
-			ipportTFTP, err := netip.ParseAddrPort(cfg.ipxe.TFTPAddr)
-			if err != nil {
-				log.Error(err, "tftp addr must be an ip:port")
-				panic(fmt.Errorf("%w: tftp addr must be an ip:port", err))
-			}
-			if ipportTFTP.Port() != 69 {
-				err := fmt.Errorf("port for tftp addr must be 69, provided port: %d", ipportTFTP.Port())
-				log.Error(err, "invalid port for tftp addr")
-				panic(err)
-			}
-			ipxe.TFTP = ipxedust.ServerSpec{
-				Addr:    ipportTFTP,
-				Timeout: cfg.ipxe.TFTPTimeout,
-				Patch:   []byte(cfg.ipxeScriptPatch),
-			}
-		}
-		nextServer = publicIPv4
-	} else { // use remote iPXE binary service for TFTP
-		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
-		if ip == nil {
-			err := fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr)
-			log.Error(err, "invalid IP for remote TFTP server")
-			panic(err)
-		}
-		nextServer = ip
-		log.Info("serving iPXE binaries from remote TFTP server", "addr", nextServer.String())
-	}
-
-	var ipxeHandler stdhttp.HandlerFunc
-	var ipxePattern string
-	var ipxeBaseURL string
-	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
-		if cfg.ipxeHTTPEnabled {
-			ipxeHandler = ihttp.Handler{Log: lg, Patch: []byte(cfg.ipxeScriptPatch)}.Handle
-		}
-		ipxePattern = "/ipxe/"
-		ipxeBaseURL = publicFQDN + ipxePattern
-		log.Info("serving iPXE binaries from local HTTP server", "addr", ipxeBaseURL)
-	} else { // use remote iPXE binary service for HTTP
-		ipxeBaseURL = cfg.ipxeRemoteHTTPAddr
-		log.Info("serving iPXE binaries from remote HTTP server", "addr", ipxeBaseURL)
-	}
 	g.Go(func() error {
-		return ipxe.ListenAndServe(ctx)
+		log.Info("starting syslog server", "addr", cfg.syslogAddr)
+		_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
+		return err
 	})
 
-	finder, err := getHardwareFinder(log, cfg)
-	if err != nil {
-		log.Error(err, "get hardware finder")
-		panic(err)
-	}
-	jobManager := job.NewCreator(log, finder)
-	jobManager.DHCPServerIP = publicIPv4
-	jobManager.PublicSyslogIPv4 = publicSyslogIPv4
-	jobManager.Registry = getStringEnv("DOCKER_REGISTRY")
-	jobManager.RegistryUsername = getStringEnv("REGISTRY_USERNAME")
-	jobManager.RegistryPassword = getStringEnv("REGISTRY_PASSWORD")
-	authority := getStringEnv("TINKERBELL_GRPC_AUTHORITY")
-	if getStringEnv("DATA_MODEL_VERSION") == "1" && authority == "" {
-		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
-		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
-		panic(err)
-	}
+	g.Go(func() error {
+		log.Info("starting tftp server", "addr", cfg.ipxe.TFTP.Addr)
+		lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
+		fn, err := cfg.ipxe.tftpServer(lg)
+		if err != nil {
+			return nil
+		}
+		return fn(ctx)
+	})
 
-	httpServer := &http.Config{
-		GitRev:             GitRev,
-		StartTime:          startTime,
-		Finder:             finder,
-		Logger:             log,
-		OSIEURL:            cfg.osieURL,
-		ExtraKernelParams:  strings.Split(cfg.extraKernelArgs, " "),
-		PublicSyslogFQDN:   publicSyslogFQDN,
-		TinkServerTLS:      getBoolEnv("TINKERBELL_TLS", false),
-		TinkServerGRPCAddr: authority,
-		TrustedProxies:     parseTrustedProxies(),
-	}
+	g.Go(func() error {
+		log.Info("starting http server", "addr", cfg.http.addr /*"ipxeURL", ipxeBaseURL*/)
+		ipxeURIPrefix := "/ipxe/"
+		finder, err := getHardwareFinder(log, cfg)
+		if err != nil {
+			log.Info("error getting hardware finder", "err", err)
 
-	dhcpServer := &server.Handler{
-		JobManager: jobManager,
-		Logger:     log,
-		PoolSize:   getIntEnv("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2),
-	}
+			return err
+		}
+		return cfg.http.serveHTTP(ctx, log, ipxeURIPrefix, cfg.ipxe.binaryHandlerFunc(log), finder)
+	})
 
-	log.Info("serving dhcp", "addr", cfg.dhcpAddr)
-	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
-	_ = flag.Set("log-level", cfg.logLevel)
-
-	// this is still need so that github.com/packethost/dhcp4-go doesn't panic
-	l, err := plog.Init("github.com/tinkerbell/boots")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-	dhcp4.Init(l.Package("dhcp"))
-	// bootsBaseURL is the hostname/ip + uri path to the http service serving iPXE binaries,
-	// this is used when a netboot client identifies itself as HTTPClient.
-	bootsBaseURL := publicFQDN
-	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
-
-	log.Info("serving http", "addr", cfg.httpAddr)
-	go httpServer.ServeHTTP(cfg.httpAddr, ipxePattern, ipxeHandler)
+	g.Go(func() error {
+		backend, err := cfg.k8s.kubeBackend(ctx)
+		if err != nil {
+			return errors.New("failed to create kubernetes backend")
+		}
+		log.Info("starting dhcp server", "addr", cfg.dhcp.listener)
+		cfg.dhcp.handler.Backend = backend
+		return cfg.dhcp.serveDHCP(ctx, log)
+	})
 
 	<-ctx.Done()
 	log.Info("boots shutting down")
-	err = g.Wait()
-	if err != nil && !errors.Is(err, context.Canceled) {
-		log.Error(err, "boots shutdown")
-		panic(err)
+	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		log.Info("boots shutdown", "err", err)
 	}
 }
 
-func getHardwareFinder(l logr.Logger, c *config) (client.HardwareFinder, error) {
-	var hf client.HardwareFinder
-	var err error
+func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
+	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
+	fs.StringVar(&cfg.syslogAddr, "syslog-addr", "", "IP and port to listen on for syslog messages.")
+	fs.StringVar(&cfg.backend, "backend", "kubernetes", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.")
+	fs.StringVar(&cfg.k8s.config, "kubeconfig", "", "The Kubernetes config file location. Only applies if backend is kubernetes.")
+	fs.StringVar(&cfg.k8s.api, "kubeapi", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if backend is kubernetes.")
+	fs.StringVar(&cfg.k8s.namespace, "kubenamespace", "", "An optional Kubernetes namespace override to query hardware data from.")
+	fs.StringVar(&cfg.standalone.file, "standalone-file", "", "The path to a JSON file containing hardware data. Only applies if backend is standalone.")
+	cfg.ipxe.addFlags(fs)
+	cfg.dhcp.addFlags(fs)
+	cfg.http.addFlags(fs)
 
-	switch os.Getenv("DATA_MODEL_VERSION") {
-	case "standalone":
-		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
-		if saFile == "" {
-			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
-		}
-		hf, err = standalone.NewHardwareFinder(saFile)
-		if err != nil {
-			return nil, err
-		}
-	case "kubernetes":
-		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
-		if err != nil {
-			return nil, err
-		}
-		hf = kf
-		// Start the client-side cache
-		go func() {
-			_ = kf.Start(context.Background())
-		}()
-
-	default:
-		return nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
+	return &ffcli.Command{
+		Name:       name,
+		ShortUsage: "Run Boots server for provisioning",
+		FlagSet:    fs,
+		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
+		Exec: func(context.Context, []string) error {
+			return nil
+		},
 	}
-
-	return hf, nil
 }
 
 // defaultLogger is zap logr implementation.
@@ -289,4 +169,32 @@ func defaultLogger(level string) logr.Logger {
 	}
 
 	return zapr.NewLogger(zapLogger)
+}
+
+func getHardwareFinder(l logr.Logger, c *config) (backend.HardwareFinder, error) {
+	var hf backend.HardwareFinder
+	var err error
+
+	switch c.backend {
+	case "standalone":
+		hf, err = standalone.NewHardwareFinder(c.standalone.file)
+		if err != nil {
+			return nil, err
+		}
+	case "kubernetes":
+		kf, err := kubernetes.NewFinder(l, c.k8s.api, c.k8s.config, c.k8s.namespace)
+		if err != nil {
+			return nil, err
+		}
+		hf = kf
+		// Start the client-side cache
+		go func() {
+			_ = kf.Start(context.Background())
+		}()
+
+	default:
+		return nil, fmt.Errorf("must specify either standalone or kubernetes backend")
+	}
+
+	return hf, nil
 }

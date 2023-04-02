@@ -1,44 +1,37 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
-	"net/http/pprof"
 	"runtime"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
-	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/ipxe"
-	"github.com/tinkerbell/boots/job"
-	"github.com/tinkerbell/boots/metrics"
+	"github.com/tinkerbell/boots/backend"
+	"github.com/tinkerbell/boots/http/ipxe"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type Config struct {
-	GitRev             string
-	StartTime          time.Time
-	Finder             client.HardwareFinder
-	Logger             logr.Logger
-	OSIEURL            string
-	ExtraKernelParams  []string
-	PublicSyslogFQDN   string
-	TinkServerTLS      bool
-	TinkServerGRPCAddr string
-	TrustedProxies     []string
+	GitRev         string
+	StartTime      time.Time
+	Logger         logr.Logger
+	TrustedProxies []string
+	IPXEScript     *IPXEScript
 }
 
-// JobManager creates jobs.
-type Manager interface {
-	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *job.Job, error)
-	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *job.Job, error)
+type IPXEScript struct {
+	Finder             backend.HardwareFinder
+	Logger             logr.Logger
+	OsieURL            string
+	ExtraKernelParams  []string
+	SyslogFQDN         string
+	TinkServerTLS      bool
+	TinkServerGRPCAddr string
 }
 
 func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
@@ -69,30 +62,23 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.HandlerFunc) {
-	mux := http.NewServeMux()
-	jh := ipxe.Handler{
+func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxePattern string, ipxeBinaryHandler http.HandlerFunc) error {
+	jh := ipxe.ScriptHandler{
 		Logger:             s.Logger,
-		Finder:             s.Finder,
-		OSIEURL:            s.OSIEURL,
-		ExtraKernelParams:  s.ExtraKernelParams,
-		PublicSyslogFQDN:   s.PublicSyslogFQDN,
-		TinkServerTLS:      s.TinkServerTLS,
-		TinkServerGRPCAddr: s.TinkServerGRPCAddr,
+		Finder:             s.IPXEScript.Finder,
+		OSIEURL:            s.IPXEScript.OsieURL,
+		ExtraKernelParams:  s.IPXEScript.ExtraKernelParams,
+		PublicSyslogFQDN:   s.IPXEScript.SyslogFQDN,
+		TinkServerTLS:      s.IPXEScript.TinkServerTLS,
+		TinkServerGRPCAddr: s.IPXEScript.TinkServerGRPCAddr,
 	}
+	mux := http.NewServeMux()
 	mux.Handle(otelFuncWrapper("/", jh.HandlerFunc()))
-	if ipxeHandler != nil {
-		mux.Handle(otelFuncWrapper(ipxePattern, ipxeHandler))
+	if ipxeBinaryHandler != nil {
+		mux.Handle(otelFuncWrapper(ipxePattern, ipxeBinaryHandler))
 	}
 	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/_packet/healthcheck", s.serveHealthchecker(s.GitRev, s.StartTime))
-	mux.HandleFunc("/_packet/pprof/", pprof.Index)
-	mux.HandleFunc("/_packet/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/_packet/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/_packet/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/_packet/pprof/trace", pprof.Trace)
 	mux.HandleFunc("/healthcheck", s.serveHealthchecker(s.GitRev, s.StartTime))
-	mux.Handle(otelFuncWrapper("/phone-home", s.servePhoneHome))
 
 	// wrap the mux with an OpenTelemetry interceptor
 	otelHandler := otelhttp.NewHandler(mux, "boots-http")
@@ -105,7 +91,7 @@ func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.Han
 		})
 		if err != nil {
 			s.Logger.Error(err, "failed to create new xff object")
-			panic(fmt.Errorf("failed to create new xff object: %v", err))
+			return fmt.Errorf("failed to create new xff object: %w", err)
 		}
 
 		xffHandler = xffmw.Handler(&loggingMiddleware{
@@ -119,30 +105,12 @@ func (s *Config) ServeHTTP(addr string, ipxePattern string, ipxeHandler http.Han
 		}
 	}
 
-	server := http.Server{
-		Addr:    addr,
-		Handler: xffHandler,
+	srv.Addr = addr
+	srv.Handler = xffHandler
+	// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
+	// recommendation. Boots doesn't really have many headers so 20s should be plenty of time.
+	// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
+	srv.ReadHeaderTimeout = 20 * time.Second
 
-		// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
-		// recommendation. Boots doesn't really have many headers so 20s should be plenty of time.
-		// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
-		ReadHeaderTimeout: 20 * time.Second,
-	}
-	if err := server.ListenAndServe(); err != nil {
-		err = errors.Wrap(err, "listen and serve http")
-		s.Logger.Error(err, "listen and serve http")
-		panic(err)
-	}
-}
-
-func (s *Config) servePhoneHome(w http.ResponseWriter, _ *http.Request) {
-	labels := prometheus.Labels{"from": "http", "op": "phone-home"}
-	metrics.JobsTotal.With(labels).Inc()
-	metrics.JobsInProgress.With(labels).Inc()
-	defer metrics.JobsInProgress.With(labels).Dec()
-	timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
-	defer timer.ObserveDuration()
-
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte{})
+	return srv.ListenAndServe()
 }

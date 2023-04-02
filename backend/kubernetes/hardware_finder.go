@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
 	"k8s.io/client-go/tools/clientcmd"
@@ -58,7 +58,7 @@ func (f *Finder) Start(ctx context.Context) error {
 }
 
 // ByIP returns a Discoverer for a particular IP.
-func (f *Finder) ByIP(ctx context.Context, ip net.IP) (client.Discoverer, error) {
+func (f *Finder) ByIP(ctx context.Context, ip net.IP) (backend.Discoverer, error) {
 	hardwareList := &v1alpha1.HardwareList{}
 
 	err := f.clientFunc().List(ctx, hardwareList, &crclient.MatchingFields{
@@ -80,7 +80,7 @@ func (f *Finder) ByIP(ctx context.Context, ip net.IP) (client.Discoverer, error)
 }
 
 // ByMAC returns a Discoverer for a particular MAC address.
-func (f *Finder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.IP, _ string) (client.Discoverer, error) {
+func (f *Finder) ByMAC(ctx context.Context, mac net.HardwareAddr, _ net.IP, _ string) (backend.Discoverer, error) {
 	hardwareList := &v1alpha1.HardwareList{}
 
 	err := f.clientFunc().List(ctx, hardwareList, &crclient.MatchingFields{

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 )
 
 func TestByIP(t *testing.T) {
@@ -25,11 +25,11 @@ func TestByIP(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc123",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
-										IP: client.IP{
+									DHCP: backend.DHCP{
+										IP: backend.IP{
 											Address: net.ParseIP("192.168.1.2"),
 										},
 									},
@@ -49,11 +49,11 @@ func TestByIP(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc12",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
-										IP: client.IP{
+									DHCP: backend.DHCP{
+										IP: backend.IP{
 											Address: net.ParseIP("192.168.1.2"),
 										},
 									},
@@ -65,11 +65,11 @@ func TestByIP(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc123",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
-										IP: client.IP{
+									DHCP: backend.DHCP{
+										IP: backend.IP{
 											Address: net.ParseIP("192.168.1.1"),
 										},
 									},
@@ -82,11 +82,11 @@ func TestByIP(t *testing.T) {
 			want: &DiscoverStandalone{
 				HardwareStandalone: HardwareStandalone{
 					ID: "abc123",
-					Network: client.Network{
-						Interfaces: []client.NetworkInterface{
+					Network: backend.Network{
+						Interfaces: []backend.NetworkInterface{
 							{
-								DHCP: client.DHCP{
-									IP: client.IP{
+								DHCP: backend.DHCP{
+									IP: backend.IP{
 										Address: net.ParseIP("192.168.1.1"),
 									},
 								},
@@ -150,10 +150,10 @@ func TestByMAC(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc123",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
+									DHCP: backend.DHCP{
 										MAC: "00:00:00:00:00:00",
 									},
 								},
@@ -172,10 +172,10 @@ func TestByMAC(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc12",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
+									DHCP: backend.DHCP{
 										MAC: "00:00:00:00:00:00",
 									},
 								},
@@ -186,10 +186,10 @@ func TestByMAC(t *testing.T) {
 				{
 					HardwareStandalone: HardwareStandalone{
 						ID: "abc123",
-						Network: client.Network{
-							Interfaces: []client.NetworkInterface{
+						Network: backend.Network{
+							Interfaces: []backend.NetworkInterface{
 								{
-									DHCP: client.DHCP{
+									DHCP: backend.DHCP{
 										MAC: "ff:ff:ff:ff:ff:ff",
 									},
 								},
@@ -201,10 +201,10 @@ func TestByMAC(t *testing.T) {
 			want: &DiscoverStandalone{
 				HardwareStandalone: HardwareStandalone{
 					ID: "abc123",
-					Network: client.Network{
-						Interfaces: []client.NetworkInterface{
+					Network: backend.Network{
+						Interfaces: []backend.NetworkInterface{
 							{
-								DHCP: client.DHCP{
+								DHCP: backend.DHCP{
 									MAC: "ff:ff:ff:ff:ff:ff",
 								},
 							},

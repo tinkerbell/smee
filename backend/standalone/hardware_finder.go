@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 )
 
 // HardwareFinder is a type for statically looking up hardware.
@@ -34,7 +34,7 @@ func NewHardwareFinder(path string) (*HardwareFinder, error) {
 }
 
 // ByIP returns a Discoverer for a particular IP.
-func (f *HardwareFinder) ByIP(_ context.Context, ip net.IP) (client.Discoverer, error) {
+func (f *HardwareFinder) ByIP(_ context.Context, ip net.IP) (backend.Discoverer, error) {
 	for _, d := range f.db {
 		for _, hip := range d.HardwareIPs() {
 			if hip.Address.Equal(ip) {
@@ -47,7 +47,7 @@ func (f *HardwareFinder) ByIP(_ context.Context, ip net.IP) (client.Discoverer, 
 }
 
 // ByMAC returns a Discoverer for a particular MAC address.
-func (f *HardwareFinder) ByMAC(_ context.Context, mac net.HardwareAddr, _ net.IP, _ string) (client.Discoverer, error) {
+func (f *HardwareFinder) ByMAC(_ context.Context, mac net.HardwareAddr, _ net.IP, _ string) (backend.Discoverer, error) {
 	for _, d := range f.db {
 		if d.MAC().String() == mac.String() {
 			return d, nil

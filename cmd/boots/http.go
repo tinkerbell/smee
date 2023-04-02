@@ -1,0 +1,108 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"net"
+	stdhttp "net/http"
+	"strings"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	"github.com/tinkerbell/boots/backend"
+	"github.com/tinkerbell/boots/http"
+	"golang.org/x/sync/errgroup"
+)
+
+var startTime = time.Now()
+
+type httpConfig struct {
+	// addr is the address to listen on for the http server.
+	addr string
+	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
+	extraKernelArgs string
+	// osieURL is the URL at which OSIE/Hook images live.
+	osieURL string
+	// tinkServerTLS is whether the tink server is using TLS.
+	tinkServerTLS bool
+	// tinkServerGRPCAddr is the address of the tink server.
+	tinkServerGRPCAddr string
+	// trustedProxies is a list of trusted proxies.
+	trustedProxies []string
+
+	// ipxeVars are additional variable definitions to include in all iPXE installer
+	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
+	// e.g. 'var1=val1 var2=val2'. Note that settings which require spaces (e.g, scriptlets)
+	// are not yet supported.
+	ipxeVars string
+}
+
+func (h *httpConfig) addFlags(fs *flag.FlagSet) {
+	fs.StringVar(&h.ipxeVars, "ipxe-vars", "", "[http] additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.")
+	fs.StringVar(&h.addr, "http-addr", "", "[http] local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
+	fs.StringVar(&h.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
+	fs.StringVar(&h.osieURL, "osie-url", "", "[http] URL where OSIE/Hook images are located.")
+	fs.BoolVar(&h.tinkServerTLS, "tink-server-tls", false, "[http] Whether the tink server is using TLS.")
+	fs.StringVar(&h.tinkServerGRPCAddr, "tink-server-grpc-addr", "", "[http] Address of the tink server.")
+	fs.Func("trusted-proxies", "[http] Comma-separated list of trusted proxies.", func(s string) error {
+		var result []string
+		for _, cidr := range strings.Split(s, ",") {
+			cidr = strings.TrimSpace(cidr)
+			if cidr == "" {
+				continue
+			}
+			_, _, err := net.ParseCIDR(cidr)
+			if err != nil {
+				// Its not a cidr, but maybe its an IP
+				if ip := net.ParseIP(cidr); ip != nil {
+					if ip.To4() != nil {
+						cidr += "/32"
+					} else {
+						cidr += "/128"
+					}
+				} else {
+					// not an IP
+					return errors.New("invalid ip cidr in TRUSTED_PROXIES cidr=" + cidr)
+				}
+			}
+			result = append(result, cidr)
+		}
+		h.trustedProxies = result
+
+		return nil
+	})
+}
+
+func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeURIPrefix string, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
+	httpServer := &http.Config{
+		GitRev:         GitRev,
+		StartTime:      startTime,
+		Logger:         log,
+		TrustedProxies: c.trustedProxies,
+		IPXEScript: &http.IPXEScript{
+			Finder:             finder,
+			Logger:             log,
+			OsieURL:            c.osieURL,
+			ExtraKernelParams:  strings.Split(c.extraKernelArgs, " "),
+			SyslogFQDN:         "",
+			TinkServerTLS:      c.tinkServerTLS,
+			TinkServerGRPCAddr: c.tinkServerGRPCAddr,
+		},
+	}
+
+	srv := &stdhttp.Server{}
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return httpServer.ServeHTTP(srv, c.addr, ipxeURIPrefix, ipxeBinaryHandler)
+	})
+	<-ctx.Done()
+	go srv.Shutdown(ctx)
+	time.AfterFunc(time.Second*5, func() { srv.Close() })
+	err := g.Wait()
+	if errors.Is(err, stdhttp.ErrServerClosed) {
+		err = nil
+	}
+	log.Info("shutting down http server")
+	return err
+}

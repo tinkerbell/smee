@@ -4,16 +4,16 @@ import (
 	"net"
 	"time"
 
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 )
 
-func tinkOsToDiscovererOS(in *v1alpha1.MetadataInstanceOperatingSystem) *client.OperatingSystem {
+func tinkOsToDiscovererOS(in *v1alpha1.MetadataInstanceOperatingSystem) *backend.OperatingSystem {
 	if in == nil {
 		return nil
 	}
 
-	return &client.OperatingSystem{
+	return &backend.OperatingSystem{
 		Slug:     in.Slug,
 		Distro:   in.Distro,
 		Version:  in.Version,
@@ -22,12 +22,12 @@ func tinkOsToDiscovererOS(in *v1alpha1.MetadataInstanceOperatingSystem) *client.
 	}
 }
 
-func tinkIPToDiscovererIP(in *v1alpha1.MetadataInstanceIP) *client.IP {
+func tinkIPToDiscovererIP(in *v1alpha1.MetadataInstanceIP) *backend.IP {
 	if in == nil {
 		return nil
 	}
 
-	return &client.IP{
+	return &backend.IP{
 		Address:    net.ParseIP(in.Address),
 		Netmask:    net.ParseIP(in.Netmask),
 		Gateway:    net.ParseIP(in.Gateway),
@@ -37,19 +37,19 @@ func tinkIPToDiscovererIP(in *v1alpha1.MetadataInstanceIP) *client.IP {
 	}
 }
 
-func (d *K8sDiscoverer) Instance() *client.Instance {
+func (d *K8sDiscoverer) Instance() *backend.Instance {
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil {
-		return &client.Instance{
+		return &backend.Instance{
 			ID:            d.hw.Spec.Metadata.Instance.ID,
-			State:         client.InstanceState(d.hw.Spec.Metadata.Instance.State),
+			State:         backend.InstanceState(d.hw.Spec.Metadata.Instance.State),
 			Hostname:      d.hw.Spec.Metadata.Instance.Hostname,
 			AllowPXE:      d.hw.Spec.Metadata.Instance.AllowPxe,
 			Rescue:        d.hw.Spec.Metadata.Instance.Rescue,
 			OS:            tinkOsToDiscovererOS(d.hw.Spec.Metadata.Instance.OperatingSystem),
 			AlwaysPXE:     d.hw.Spec.Metadata.Instance.AlwaysPxe,
 			IPXEScriptURL: d.hw.Spec.Metadata.Instance.IpxeScriptURL,
-			IPs: func(in []*v1alpha1.MetadataInstanceIP) []client.IP {
-				resp := []client.IP{}
+			IPs: func(in []*v1alpha1.MetadataInstanceIP) []backend.IP {
+				resp := []backend.IP{}
 				for _, ip := range in {
 					resp = append(resp, *tinkIPToDiscovererIP(ip))
 				}
@@ -84,11 +84,11 @@ func (d *K8sDiscoverer) Mode() string {
 	return "hardware"
 }
 
-func (d *K8sDiscoverer) GetIP(addr net.HardwareAddr) client.IP {
+func (d *K8sDiscoverer) GetIP(addr net.HardwareAddr) backend.IP {
 	for _, iface := range d.hw.Spec.Interfaces {
 		if iface.DHCP != nil && iface.DHCP.MAC != "" && iface.DHCP.IP != nil {
 			if addr.String() == iface.DHCP.MAC {
-				return client.IP{
+				return backend.IP{
 					Address: net.ParseIP(iface.DHCP.IP.Address),
 					Netmask: net.ParseIP(iface.DHCP.IP.Netmask),
 					Gateway: net.ParseIP(iface.DHCP.IP.Gateway),
@@ -102,7 +102,7 @@ func (d *K8sDiscoverer) GetIP(addr net.HardwareAddr) client.IP {
 		}
 	}
 
-	return client.IP{}
+	return backend.IP{}
 }
 
 func (d *K8sDiscoverer) GetMAC(ip net.IP) net.HardwareAddr {
@@ -154,11 +154,11 @@ func (d *K8sDiscoverer) Hostname() (string, error) {
 	return "", nil
 }
 
-func (d *K8sDiscoverer) Hardware() client.Hardware { return d }
+func (d *K8sDiscoverer) Hardware() backend.Hardware { return d }
 
 func (d *K8sDiscoverer) SetMAC(net.HardwareAddr) {}
 
-func NewK8sDiscoverer(hw *v1alpha1.Hardware) client.Discoverer {
+func NewK8sDiscoverer(hw *v1alpha1.Hardware) backend.Discoverer {
 	return &K8sDiscoverer{hw: hw}
 }
 
@@ -167,8 +167,8 @@ type K8sDiscoverer struct {
 }
 
 var (
-	_ client.Discoverer = &K8sDiscoverer{}
-	_ client.Hardware   = &K8sDiscoverer{}
+	_ backend.Discoverer = &K8sDiscoverer{}
+	_ backend.Hardware   = &K8sDiscoverer{}
 )
 
 func (d *K8sDiscoverer) HardwareAllowWorkflow(mac net.HardwareAddr) bool {
@@ -201,12 +201,12 @@ func (d *K8sDiscoverer) HardwareArch(net.HardwareAddr) string {
 	return ""
 }
 
-func (d *K8sDiscoverer) HardwareBondingMode() client.BondingMode {
+func (d *K8sDiscoverer) HardwareBondingMode() backend.BondingMode {
 	if d.hw.Spec.Metadata != nil {
-		return client.BondingMode(d.hw.Spec.Metadata.BondingMode)
+		return backend.BondingMode(d.hw.Spec.Metadata.BondingMode)
 	}
 
-	return client.BondingMode(0)
+	return backend.BondingMode(0)
 }
 
 func (d *K8sDiscoverer) HardwareFacilityCode() string {
@@ -217,16 +217,16 @@ func (d *K8sDiscoverer) HardwareFacilityCode() string {
 	return ""
 }
 
-func (d *K8sDiscoverer) HardwareID() client.HardwareID {
+func (d *K8sDiscoverer) HardwareID() backend.HardwareID {
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil {
-		return client.HardwareID(d.hw.Spec.Metadata.Instance.ID)
+		return backend.HardwareID(d.hw.Spec.Metadata.Instance.ID)
 	}
 
-	return client.HardwareID("")
+	return backend.HardwareID("")
 }
 
-func (d *K8sDiscoverer) HardwareIPs() []client.IP {
-	resp := []client.IP{}
+func (d *K8sDiscoverer) HardwareIPs() []backend.IP {
+	resp := []backend.IP{}
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil {
 		for _, ip := range d.hw.Spec.Metadata.Instance.Ips {
 			resp = append(resp, *tinkIPToDiscovererIP(ip))
@@ -236,7 +236,7 @@ func (d *K8sDiscoverer) HardwareIPs() []client.IP {
 	return resp
 }
 
-func (d *K8sDiscoverer) Interfaces() []client.Port { return nil }
+func (d *K8sDiscoverer) Interfaces() []backend.Port { return nil }
 
 func (d *K8sDiscoverer) HardwareManufacturer() string {
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Manufacturer != nil {
@@ -266,9 +266,9 @@ func (d *K8sDiscoverer) HardwarePlanVersionSlug() string {
 	return ""
 }
 
-func (d *K8sDiscoverer) HardwareState() client.HardwareState {
+func (d *K8sDiscoverer) HardwareState() backend.HardwareState {
 	if d.hw.Spec.Metadata != nil {
-		return client.HardwareState(d.hw.Spec.Metadata.State)
+		return backend.HardwareState(d.hw.Spec.Metadata.State)
 	}
 
 	return ""
@@ -338,9 +338,9 @@ func (d *K8sDiscoverer) IPXEScript(net.HardwareAddr) string {
 	return ""
 }
 
-func (d *K8sDiscoverer) OperatingSystem() *client.OperatingSystem {
+func (d *K8sDiscoverer) OperatingSystem() *backend.OperatingSystem {
 	if d.hw.Spec.Metadata != nil && d.hw.Spec.Metadata.Instance != nil && d.hw.Spec.Metadata.Instance.OperatingSystem != nil {
-		return &client.OperatingSystem{
+		return &backend.OperatingSystem{
 			Slug:     d.hw.Spec.Metadata.Instance.OperatingSystem.Slug,
 			Distro:   d.hw.Spec.Metadata.Instance.OperatingSystem.Distro,
 			Version:  d.hw.Spec.Metadata.Instance.OperatingSystem.Version,

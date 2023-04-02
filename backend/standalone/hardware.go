@@ -3,14 +3,14 @@ package standalone
 import (
 	"net"
 
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 )
 
 // HardwareStandalone implements the Hardware interface for standalone operation.
 type HardwareStandalone struct {
 	ID          string          `json:"id"`
-	Network     client.Network  `json:"network"`
-	Metadata    client.Metadata `json:"metadata"`
+	Network     backend.Network  `json:"network"`
+	Metadata    backend.Metadata `json:"metadata"`
 	Traceparent string          `json:"traceparent"`
 }
 
@@ -26,7 +26,7 @@ func (hs *HardwareStandalone) HardwareArch(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().DHCP.Arch
 }
 
-func (hs *HardwareStandalone) HardwareBondingMode() client.BondingMode {
+func (hs *HardwareStandalone) HardwareBondingMode() backend.BondingMode {
 	return hs.Metadata.BondingMode
 }
 
@@ -34,12 +34,12 @@ func (hs *HardwareStandalone) HardwareFacilityCode() string {
 	return hs.Metadata.Facility.FacilityCode
 }
 
-func (hs *HardwareStandalone) HardwareID() client.HardwareID {
-	return client.HardwareID(hs.ID)
+func (hs *HardwareStandalone) HardwareID() backend.HardwareID {
+	return backend.HardwareID(hs.ID)
 }
 
-func (hs *HardwareStandalone) HardwareIPs() []client.IP {
-	out := make([]client.IP, len(hs.Network.Interfaces))
+func (hs *HardwareStandalone) HardwareIPs() []backend.IP {
+	out := make([]backend.IP, len(hs.Network.Interfaces))
 	for i, v := range hs.Network.Interfaces {
 		out[i] = v.DHCP.IP
 	}
@@ -47,8 +47,8 @@ func (hs *HardwareStandalone) HardwareIPs() []client.IP {
 	return out
 }
 
-func (hs *HardwareStandalone) Interfaces() []client.Port {
-	return []client.Port{} // stubbed out in tink too
+func (hs *HardwareStandalone) Interfaces() []backend.Port {
+	return []backend.Port{} // stubbed out in tink too
 }
 
 func (hs *HardwareStandalone) HardwareManufacturer() string {
@@ -67,7 +67,7 @@ func (hs *HardwareStandalone) HardwarePlanVersionSlug() string {
 	return hs.Metadata.Facility.PlanVersionSlug
 }
 
-func (hs *HardwareStandalone) HardwareState() client.HardwareState {
+func (hs *HardwareStandalone) HardwareState() backend.HardwareState {
 	return hs.Metadata.State
 }
 
@@ -99,7 +99,7 @@ func (hs *HardwareStandalone) IPXEScript(net.HardwareAddr) string {
 	return hs.getPrimaryInterface().Netboot.IPXE.Contents
 }
 
-func (hs *HardwareStandalone) OperatingSystem() *client.OperatingSystem {
+func (hs *HardwareStandalone) OperatingSystem() *backend.OperatingSystem {
 	return hs.Metadata.Instance.OS
 }
 
@@ -108,7 +108,7 @@ func (hs *HardwareStandalone) OperatingSystem() *client.OperatingSystem {
 // empty. Other models have more sophisticated interface selection but this
 // model is mostly intended for test so this might behave in unexpected ways
 // with more complex configurations and need more logic added.
-func (hs *HardwareStandalone) getPrimaryInterface() client.NetworkInterface {
+func (hs *HardwareStandalone) getPrimaryInterface() backend.NetworkInterface {
 	if len(hs.Network.Interfaces) >= 1 {
 		return hs.Network.Interfaces[0]
 	}
@@ -116,15 +116,15 @@ func (hs *HardwareStandalone) getPrimaryInterface() client.NetworkInterface {
 	return hs.emptyInterface()
 }
 
-func (hs *HardwareStandalone) emptyInterface() client.NetworkInterface {
-	return client.NetworkInterface{
-		DHCP: client.DHCP{
+func (hs *HardwareStandalone) emptyInterface() backend.NetworkInterface {
+	return backend.NetworkInterface{
+		DHCP: backend.DHCP{
 			MAC:         "",
-			IP:          client.IP{},
+			IP:          backend.IP{},
 			NameServers: []string{},
 			TimeServers: []string{},
 		},
-		Netboot: client.Netboot{},
+		Netboot: backend.Netboot{},
 	}
 }
 

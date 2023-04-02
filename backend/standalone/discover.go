@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 )
 
 // DiscoveryStandalone implements the Discovery interface for standalone operation.
@@ -12,7 +12,7 @@ type DiscoverStandalone struct {
 	HardwareStandalone
 }
 
-func (ds *DiscoverStandalone) Instance() *client.Instance {
+func (ds *DiscoverStandalone) Instance() *backend.Instance {
 	return ds.HardwareStandalone.Metadata.Instance
 }
 
@@ -30,7 +30,7 @@ func (ds *DiscoverStandalone) Mode() string {
 	return "hardware"
 }
 
-func (ds *DiscoverStandalone) GetIP(net.HardwareAddr) client.IP {
+func (ds *DiscoverStandalone) GetIP(net.HardwareAddr) backend.IP {
 	return ds.getPrimaryInterface().DHCP.IP
 }
 
@@ -69,7 +69,7 @@ func (ds *DiscoverStandalone) Hostname() (string, error) {
 	return ds.getPrimaryInterface().DHCP.Hostname, nil
 }
 
-func (ds *DiscoverStandalone) Hardware() client.Hardware {
+func (ds *DiscoverStandalone) Hardware() backend.Hardware {
 	return &ds.HardwareStandalone
 }
 

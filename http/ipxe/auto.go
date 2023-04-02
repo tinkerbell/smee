@@ -10,16 +10,16 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Handler struct {
+type ScriptHandler struct {
 	Logger             logr.Logger
-	Finder             client.HardwareFinder
+	Finder             backend.HardwareFinder
 	OSIEURL            string
 	ExtraKernelParams  []string
 	PublicSyslogFQDN   string
@@ -27,7 +27,7 @@ type Handler struct {
 	TinkServerGRPCAddr string
 }
 
-func (h *Handler) HandlerFunc() http.HandlerFunc {
+func (h *ScriptHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if path.Base(r.URL.Path) != "auto.ipxe" {
 			h.Logger.Info("not found", "path", r.URL.Path)
@@ -76,7 +76,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw client.Discoverer) {
+func (h *ScriptHandler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw backend.Discoverer) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("boots.script_name", name))
 	var script []byte
@@ -116,7 +116,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 	span.SetStatus(codes.Ok, "boot script served")
 }
 
-func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string) (string, error) {
+func (h *ScriptHandler) defaultScript(span trace.Span, hw backend.Discoverer, ip string) (string, error) {
 	auto := Hook{
 		Arch:              hw.Hardware().HardwareArch(hw.GetMAC(net.ParseIP(ip))),
 		Console:           "",
@@ -138,7 +138,7 @@ func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string
 }
 
 // customScript returns the custom script or chain URL if defined in the hardware data otherwise an error.
-func (h *Handler) customScript(hw client.Discoverer, ip string) (string, error) {
+func (h *ScriptHandler) customScript(hw backend.Discoverer, ip string) (string, error) {
 	mac := hw.GetMAC(net.ParseIP(ip))
 	if chain := hw.Hardware().IPXEURL(mac); chain != "" {
 		u, err := url.Parse(chain)

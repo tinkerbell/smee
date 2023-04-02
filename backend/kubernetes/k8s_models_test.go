@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/tinkerbell/boots/client"
+	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,7 +15,7 @@ func TestInstance(t *testing.T) {
 	cases := []struct {
 		name  string
 		input *v1alpha1.Hardware
-		want  *client.Instance
+		want  *backend.Instance
 	}{
 		{
 			name: "nil metadata",
@@ -96,14 +96,14 @@ func TestInstance(t *testing.T) {
 				},
 				Status: v1alpha1.HardwareStatus{},
 			},
-			want: &client.Instance{
+			want: &backend.Instance{
 				ID:            "i-abcdef",
 				State:         "active",
 				Hostname:      "ip-1-2-3-4.dns.local",
 				AllowPXE:      true,
-				OS:            &client.OperatingSystem{Distro: "ubuntu", Version: "20.04", OsSlug: "ubuntu_20_04"},
+				OS:            &backend.OperatingSystem{Distro: "ubuntu", Version: "20.04", OsSlug: "ubuntu_20_04"},
 				IPXEScriptURL: "http://mumble.mumble.pxe/os",
-				IPs: []client.IP{
+				IPs: []backend.IP{
 					{
 						Address: net.ParseIP("172.16.10.100"),
 						Netmask: net.ParseIP("255.255.255.0"),
@@ -121,7 +121,7 @@ func TestInstance(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			d := NewK8sDiscoverer(tc.input)
 			got := d.Instance()
-			if diff := cmp.Diff(got, tc.want, cmpopts.IgnoreUnexported(client.Instance{})); diff != "" {
+			if diff := cmp.Diff(got, tc.want, cmpopts.IgnoreUnexported(backend.Instance{})); diff != "" {
 				t.Fatal(diff)
 			}
 		})
