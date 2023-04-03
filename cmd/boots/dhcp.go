@@ -36,7 +36,7 @@ func (d *dhcpConfig) serveDHCP(ctx context.Context, log logr.Logger) error {
 		return e
 	})
 	<-ctx.Done()
-	listener.Shutdown()
+	_ = listener.Shutdown()
 	err := g.Wait()
 	log.Info("shutting down dhcp server")
 	return err
@@ -91,7 +91,7 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 		return nil
 	})
 	// This sets the default value for the flag when coupled with fs.Func.
-	fs.Set("dhcp-addr", "0.0.0.0:67")
+	_ = fs.Set("dhcp-addr", "0.0.0.0:67")
 
 	fs.Func("dhcp-public-ip", "[dhcp] public IP address where Boots will be available. Used for DHCP option 54", func(s string) error {
 		var p netaddr.IP
@@ -115,7 +115,7 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 		d.handler.Netboot.IPXEScriptURL = &url.URL{Scheme: "http", Host: p.String(), Path: "/auto.ipxe"}
 		return nil
 	})
-	fs.Set("dhcp-public-ip", "0.0.0.0")
+	_ = fs.Set("dhcp-public-ip", "0.0.0.0")
 	fs.Func("ipxe-remote-tftp-addr", "[dhcp] remote IP:Port where iPXE binaries are served via TFTP.", func(s string) error {
 		if s == "" {
 			return nil

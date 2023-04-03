@@ -77,30 +77,30 @@ func (h *httpConfig) addFlags(fs *flag.FlagSet) {
 	})
 }
 
-func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
+func (h *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
 	httpServer := &http.Config{
 		GitRev:         GitRev,
 		StartTime:      startTime,
 		Logger:         log,
-		TrustedProxies: c.trustedProxies,
+		TrustedProxies: h.trustedProxies,
 		IPXEScript: &http.IPXEScript{
 			Finder:             finder,
 			Logger:             log,
-			OsieURL:            c.osieURL,
-			ExtraKernelParams:  strings.Split(c.extraKernelArgs, " "),
-			SyslogFQDN:         c.publicSyslogIP,
-			TinkServerTLS:      c.tinkServerTLS,
-			TinkServerGRPCAddr: c.tinkServerGRPCAddr,
+			OsieURL:            h.osieURL,
+			ExtraKernelParams:  strings.Split(h.extraKernelArgs, " "),
+			SyslogFQDN:         h.publicSyslogIP,
+			TinkServerTLS:      h.tinkServerTLS,
+			TinkServerGRPCAddr: h.tinkServerGRPCAddr,
 		},
 	}
 
-	srv := &stdhttp.Server{}
+	srv := &stdhttp.Server{} //nolint: gosec // Slowloris is handled by httpServer.ServeHTTP
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		return httpServer.ServeHTTP(srv, c.addr, ipxeBinaryHandler)
+		return httpServer.ServeHTTP(srv, h.addr, ipxeBinaryHandler)
 	})
 	<-ctx.Done()
-	go srv.Shutdown(ctx)
+	go func() { _ = srv.Shutdown(ctx) }()
 	time.AfterFunc(time.Second*5, func() { srv.Close() })
 	err := g.Wait()
 	if errors.Is(err, stdhttp.ErrServerClosed) {

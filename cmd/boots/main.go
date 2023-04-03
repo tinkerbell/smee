@@ -24,12 +24,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	// GitRev is the git revision of the build. It is set by the Makefile.
-	GitRev = "unknown (use make)"
-)
-
 const name = "boots"
+
+// GitRev is the git revision of the build. It is set by the Makefile.
+var GitRev = "unknown (use make)"
 
 type config struct {
 	// loglevel is the log level for boots.
@@ -71,8 +69,7 @@ func main() {
 	fs := flag.NewFlagSet(name, flag.ExitOnError)
 	cli := newCLI(cfg, fs)
 	if err := cli.Parse(os.Args[1:]); err != nil {
-		//fmt.Printf("type %T\n", err)
-		//fmt.Printf("error parsing cli, %v\n", err)
+		fmt.Printf("error parsing cli, %v\n", err)
 		os.Exit(1)
 	}
 
@@ -101,7 +98,7 @@ func main() {
 		lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
 		fn, err := cfg.ipxe.tftpServer(lg)
 		if err != nil {
-			return nil
+			return err
 		}
 		return fn(ctx)
 	})

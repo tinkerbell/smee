@@ -39,7 +39,7 @@ func (i *ipxeConfig) addTFTPFlags(fs *flag.FlagSet) {
 		return nil
 	})
 	// This sets the default value for the flag when coupled with fs.Func.
-	fs.Set("ipxe-tftp-addr", "0.0.0.0:69")
+	_ = fs.Set("ipxe-tftp-addr", "0.0.0.0:69")
 
 	// tftp timeout
 	fs.DurationVar(&i.TFTP.Timeout, "ipxe-tftp-timeout", time.Second*5, "[ipxe] local iPXE TFTP server requests timeout.")
