@@ -2,10 +2,10 @@ package ipxe
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -29,12 +29,6 @@ type ScriptHandler struct {
 
 func (h *ScriptHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if path.Base(r.URL.Path) != "auto.ipxe" {
-			h.Logger.Info("not found", "path", r.URL.Path)
-			w.WriteHeader(http.StatusNotFound)
-
-			return
-		}
 		labels := prometheus.Labels{"from": "http", "op": "file"}
 		metrics.JobsTotal.With(labels).Inc()
 		metrics.JobsInProgress.With(labels).Inc()
@@ -72,43 +66,31 @@ func (h *ScriptHandler) HandlerFunc() http.HandlerFunc {
 			return
 		}
 
-		h.serveBootScript(ctx, w, path.Base(r.URL.Path), ip.String(), hw)
+		h.serveBootScript(ctx, w, ip.String(), hw)
 	}
 }
 
-func (h *ScriptHandler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw backend.Discoverer) {
+func (h *ScriptHandler) serveBootScript(ctx context.Context, w http.ResponseWriter, ip string, hw backend.Discoverer) {
 	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.String("boots.script_name", name))
-	var script []byte
-	switch name {
-	case "auto.ipxe":
-		// check if the custom script should be used
-		if cs, err := h.customScript(hw, ip); err == nil {
-			script = []byte(cs)
-			break
-		}
-		s, err := h.defaultScript(span, hw, ip)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			err := errors.Errorf("boot script %q not found", name)
-			h.Logger.Error(err, "error", "script", name)
-			span.SetStatus(codes.Error, err.Error())
-
-			return
-		}
-		script = []byte(s)
-	default:
+	span.SetAttributes(attribute.String("boots.script_name", "auto.ipxe"))
+	s, err := h.defaultScript(span, hw, ip)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		err := errors.Errorf("boot script %q not found", name)
-		h.Logger.Error(err, "error", "script", name)
+		err := fmt.Errorf("error generating ipxe script: %w", err)
+		h.Logger.Error(err, "error generating ipxe script")
 		span.SetStatus(codes.Error, err.Error())
 
 		return
 	}
+	script := []byte(s)
+	// check if the custom script should be used
+	if cs, err := h.customScript(hw, ip); err == nil {
+		script = []byte(cs)
+	}
 	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
 	if _, err := w.Write(script); err != nil {
-		h.Logger.Error(errors.Wrap(err, "unable to write boot script"), "unable to write boot script", "script", name)
+		h.Logger.Error(errors.Wrap(err, "unable to send ipxe script"), "unable to send ipxe script", "client", ip, "script", string(script))
 		span.SetStatus(codes.Error, err.Error())
 
 		return

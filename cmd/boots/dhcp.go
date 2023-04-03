@@ -21,6 +21,7 @@ import (
 type dhcpConfig struct {
 	// listener is the local address for the DHCP server to listen on.
 	listener netaddr.IPPort
+	enabled  bool
 	handler  reservation.Handler
 }
 
@@ -74,6 +75,7 @@ func (k *k8sConfig) kubeBackend(ctx context.Context) (reservation.BackendReader,
 }
 
 func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
+	fs.BoolVar(&d.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP service")
 	fs.Func("dhcp-addr", "[dhcp] IP and port to listen on for DHCP.", func(s string) error {
 		if s == "" {
 			d.listener = netaddr.MustParseIPPort("0.0.0.0:67")
@@ -109,8 +111,8 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 
 		d.handler.IPAddr = p
 		d.handler.Netboot.IPXEBinServerTFTP = netaddr.IPPortFrom(p, 69)
-		d.handler.Netboot.IPXEBinServerHTTP = &url.URL{Scheme: "http", Host: p.String() + ":8080"}
-		d.handler.Netboot.IPXEScriptURL = &url.URL{Scheme: "http", Host: p.String() + ":8080", Path: "/auto.ipxe"}
+		d.handler.Netboot.IPXEBinServerHTTP = &url.URL{Scheme: "http", Host: p.String()}
+		d.handler.Netboot.IPXEScriptURL = &url.URL{Scheme: "http", Host: p.String(), Path: "/auto.ipxe"}
 		return nil
 	})
 	fs.Set("dhcp-public-ip", "0.0.0.0")

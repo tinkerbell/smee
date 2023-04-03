@@ -62,7 +62,7 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxePattern string, ipxeBinaryHandler http.HandlerFunc) error {
+func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxeBinaryHandler http.HandlerFunc) error {
 	jh := ipxe.ScriptHandler{
 		Logger:             s.Logger,
 		Finder:             s.IPXEScript.Finder,
@@ -73,9 +73,9 @@ func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxePattern string, ip
 		TinkServerGRPCAddr: s.IPXEScript.TinkServerGRPCAddr,
 	}
 	mux := http.NewServeMux()
-	mux.Handle(otelFuncWrapper("/", jh.HandlerFunc()))
+	mux.Handle(otelFuncWrapper("/auto.ipxe", jh.HandlerFunc()))
 	if ipxeBinaryHandler != nil {
-		mux.Handle(otelFuncWrapper(ipxePattern, ipxeBinaryHandler))
+		mux.Handle(otelFuncWrapper("/", ipxeBinaryHandler))
 	}
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/healthcheck", s.serveHealthchecker(s.GitRev, s.StartTime))

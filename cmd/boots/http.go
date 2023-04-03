@@ -30,6 +30,8 @@ type httpConfig struct {
 	tinkServerGRPCAddr string
 	// trustedProxies is a list of trusted proxies.
 	trustedProxies []string
+	// publicSyslogIP is the public IP address of the syslog server.
+	publicSyslogIP string
 
 	// ipxeVars are additional variable definitions to include in all iPXE installer
 	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
@@ -41,10 +43,11 @@ type httpConfig struct {
 func (h *httpConfig) addFlags(fs *flag.FlagSet) {
 	fs.StringVar(&h.ipxeVars, "ipxe-vars", "", "[http] additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.")
 	fs.StringVar(&h.addr, "http-addr", "", "[http] local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
-	fs.StringVar(&h.extraKernelArgs, "extra-kernel-args", "", "Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
+	fs.StringVar(&h.extraKernelArgs, "extra-kernel-args", "", "[http] Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
 	fs.StringVar(&h.osieURL, "osie-url", "", "[http] URL where OSIE/Hook images are located.")
 	fs.BoolVar(&h.tinkServerTLS, "tink-server-tls", false, "[http] Whether the tink server is using TLS.")
 	fs.StringVar(&h.tinkServerGRPCAddr, "tink-server-grpc-addr", "", "[http] Address of the tink server.")
+	fs.StringVar(&h.publicSyslogIP, "public-syslog-ip", "", "[http] Public IP address of the syslog server.")
 	fs.Func("trusted-proxies", "[http] Comma-separated list of trusted proxies.", func(s string) error {
 		var result []string
 		for _, cidr := range strings.Split(s, ",") {
@@ -74,7 +77,7 @@ func (h *httpConfig) addFlags(fs *flag.FlagSet) {
 	})
 }
 
-func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeURIPrefix string, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
+func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
 	httpServer := &http.Config{
 		GitRev:         GitRev,
 		StartTime:      startTime,
@@ -85,7 +88,7 @@ func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeURIPref
 			Logger:             log,
 			OsieURL:            c.osieURL,
 			ExtraKernelParams:  strings.Split(c.extraKernelArgs, " "),
-			SyslogFQDN:         "",
+			SyslogFQDN:         c.publicSyslogIP,
 			TinkServerTLS:      c.tinkServerTLS,
 			TinkServerGRPCAddr: c.tinkServerGRPCAddr,
 		},
@@ -94,7 +97,7 @@ func (c *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeURIPref
 	srv := &stdhttp.Server{}
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		return httpServer.ServeHTTP(srv, c.addr, ipxeURIPrefix, ipxeBinaryHandler)
+		return httpServer.ServeHTTP(srv, c.addr, ipxeBinaryHandler)
 	})
 	<-ctx.Done()
 	go srv.Shutdown(ctx)

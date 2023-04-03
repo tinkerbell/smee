@@ -33,7 +33,8 @@ const name = "boots"
 
 type config struct {
 	// loglevel is the log level for boots.
-	logLevel string
+	logLevel      string
+	syslogEnabled bool
 	// syslogAddr is the local address to listen on for the syslog server.
 	syslogAddr string
 	// backend to use for retrieving hardware data.
@@ -86,9 +87,13 @@ func main() {
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		log.Info("starting syslog server", "addr", cfg.syslogAddr)
-		_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
-		return err
+		if cfg.syslogEnabled {
+			log.Info("starting syslog server", "addr", cfg.syslogAddr)
+			_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
+			return err
+		}
+
+		return nil
 	})
 
 	g.Go(func() error {
@@ -103,24 +108,28 @@ func main() {
 
 	g.Go(func() error {
 		log.Info("starting http server", "addr", cfg.http.addr /*"ipxeURL", ipxeBaseURL*/)
-		ipxeURIPrefix := "/ipxe/"
 		finder, err := getHardwareFinder(log, cfg)
 		if err != nil {
 			log.Info("error getting hardware finder", "err", err)
 
 			return err
 		}
-		return cfg.http.serveHTTP(ctx, log, ipxeURIPrefix, cfg.ipxe.binaryHandlerFunc(log), finder)
+		return cfg.http.serveHTTP(ctx, log, cfg.ipxe.binaryHandlerFunc(log), finder)
 	})
 
 	g.Go(func() error {
-		backend, err := cfg.k8s.kubeBackend(ctx)
-		if err != nil {
-			return errors.New("failed to create kubernetes backend")
+		if cfg.dhcp.enabled {
+			backend, err := cfg.k8s.kubeBackend(ctx)
+			if err != nil {
+				return errors.New("failed to create kubernetes backend")
+			}
+			log.Info("starting dhcp server", "addr", cfg.dhcp.listener)
+			cfg.dhcp.handler.Backend = backend
+			// TODO: validate the config
+			return cfg.dhcp.serveDHCP(ctx, log)
 		}
-		log.Info("starting dhcp server", "addr", cfg.dhcp.listener)
-		cfg.dhcp.handler.Backend = backend
-		return cfg.dhcp.serveDHCP(ctx, log)
+
+		return nil
 	})
 
 	<-ctx.Done()
@@ -132,7 +141,8 @@ func main() {
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
-	fs.StringVar(&cfg.syslogAddr, "syslog-addr", "", "IP and port to listen on for syslog messages.")
+	fs.BoolVar(&cfg.syslogEnabled, "syslog-enabled", true, "[syslog] Enable syslog server.")
+	fs.StringVar(&cfg.syslogAddr, "syslog-addr", "", "[syslog] IP and port to listen on for syslog messages.")
 	fs.StringVar(&cfg.backend, "backend", "kubernetes", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.")
 	fs.StringVar(&cfg.k8s.config, "kubeconfig", "", "The Kubernetes config file location. Only applies if backend is kubernetes.")
 	fs.StringVar(&cfg.k8s.api, "kubeapi", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if backend is kubernetes.")
