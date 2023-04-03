@@ -43,6 +43,7 @@ services:
       BOOTS_STANDALONE_JSON: /test-standalone-hardware.json
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
+      BOOTS_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
     volumes:
       - ./test/standalone-hardware.json:/test-standalone-hardware.json
       - ./test/start-boots.sh:/start-boots.sh

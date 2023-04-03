@@ -3,22 +3,17 @@ package job
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"net"
 	"testing"
 
 	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/client/standalone"
-	"github.com/tinkerbell/boots/conf"
 )
 
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
-}
-
 func TestSetPXEFilename(t *testing.T) {
-	conf.PublicFQDN = "boots-testing.packet.net"
+	publicFQDN := "boots-testing.packet.net"
 
 	setPXEFilenameTests := []struct {
 		name       string
@@ -75,7 +70,7 @@ func TestSetPXEFilename(t *testing.T) {
 		{
 			name: "x86 uefi http client",
 			uefi: true, allowPXE: true, httpClient: true,
-			filename: "http://" + conf.PublicFQDN + "/ipxe/ipxe.efi",
+			filename: "http://" + publicFQDN + "/ipxe/ipxe.efi",
 		},
 		{
 			name:     "all defaults",
@@ -87,7 +82,7 @@ func TestSetPXEFilename(t *testing.T) {
 		},
 		{
 			name:   "packet iPXE PXE allowed",
-			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + conf.PublicFQDN + "/auto.ipxe",
+			packet: true, id: "$instance_id", allowPXE: true, filename: "http://" + publicFQDN + "/auto.ipxe",
 		},
 	}
 
@@ -123,9 +118,9 @@ func TestSetPXEFilename(t *testing.T) {
 					},
 				},
 				instance:     instance,
-				NextServer:   conf.PublicIPv4,
-				IpxeBaseURL:  conf.PublicFQDN + "/ipxe",
-				BootsBaseURL: conf.PublicFQDN,
+				NextServer:   net.IPv4(127, 0, 0, 1),
+				IpxeBaseURL:  publicFQDN + "/ipxe",
+				BootsBaseURL: publicFQDN,
 			}
 			rep := dhcp4.NewPacket(42)
 			j.setPXEFilename(&rep, tt.packet, tt.arm, tt.uefi, tt.httpClient)

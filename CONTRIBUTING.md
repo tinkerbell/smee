@@ -175,7 +175,6 @@ make vet
    export TINKERBELL_CERT_URL=http://tinkerbell.tinkerbell:42114/cert
    # FACILITY_CODE is needed for ?
    export FACILITY_CODE=onprem
-   # DATA_MODEL_VERSION is need to set "tinkerbell" mode instead of "cacher" mode
    export DATA_MODEL_VERSION=1
    # API_AUTH_TOKEN, API_CONSUMER_TOKEN are needed to by pass panicking in cmd/boots/main.go main func
    export API_AUTH_TOKEN=none

@@ -7,7 +7,6 @@ import (
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/dhcp"
-	"github.com/tinkerbell/boots/ipxe"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -57,9 +56,9 @@ func (j *Job) configureDHCP(ctx context.Context, rep, req *dhcp4.Packet) bool {
 			j.Logger.Info("uefi mismatch, using dhcp", "dhcp", isUEFI, "job", j.IsUEFI())
 		}
 
-		isTinkerbellIPXE := ipxe.IsTinkerbellIPXE(req)
+		isTinkerbellIPXE := dhcp.IsTinkerbellIPXE(req)
 		if isTinkerbellIPXE {
-			ipxe.Setup(rep)
+			dhcp.Setup(rep, j.PublicSyslogIPv4)
 		}
 
 		j.setPXEFilename(rep, isTinkerbellIPXE, isARM, isUEFI, dhcp.IsHTTPClient(req))

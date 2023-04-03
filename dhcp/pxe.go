@@ -9,7 +9,6 @@ import (
 	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/ipxe"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -91,7 +90,7 @@ func IsPXE(req *dhcp4.Packet) bool {
 
 // IsHTTPClient returns a boolean of whether the client supports HTTP fetching.
 func IsHTTPClient(req *dhcp4.Packet) bool {
-	if ipxe.IsIPXE(req) {
+	if isIPXE(req) {
 		// assume every iPXE client supports HTTP
 		return true
 	}

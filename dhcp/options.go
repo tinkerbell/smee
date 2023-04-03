@@ -1,11 +1,11 @@
-package ipxe
+package dhcp
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/tinkerbell/boots/conf"
 )
 
 const (
@@ -63,9 +63,9 @@ var encapOptions = dhcp4.OptionMap{
 	OptionNoPXEDHCP: []byte{1}, // ipxe.no-pxedhcp: Attempt to tell iPXE to boot faster.
 }.Serialize()
 
-func Setup(rep *dhcp4.Packet) {
+func Setup(rep *dhcp4.Packet, publicSyslogIPv4 net.IP) {
 	rep.SetOption(EncapsulatedOptions, encapOptions)
-	rep.SetIP(dhcp4.OptionLogServer, conf.PublicSyslogIPv4) // Have iPXE send syslog to me.
+	rep.SetIP(dhcp4.OptionLogServer, publicSyslogIPv4) // Have iPXE send syslog to me.
 }
 
 // IsTinkerbellIPXE returns bool depending on if the DHCP request originated from an iPXE binary with its user-class (opt 77) set to "Tinkerbell"
@@ -77,8 +77,8 @@ func IsTinkerbellIPXE(req *dhcp4.Packet) bool {
 	return string(uc) == "Tinkerbell"
 }
 
-// IsIPXE returns bool depending on if the request originated with a version of iPXE.
-func IsIPXE(req *dhcp4.Packet) bool {
+// isIPXE returns bool depending on if the request originated with a version of iPXE.
+func isIPXE(req *dhcp4.Packet) bool {
 	if om := getEncapsulatedOptions(req); om != nil && hasFeature(om, FeatureHTTP) {
 		return true
 	}

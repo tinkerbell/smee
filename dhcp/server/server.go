@@ -3,16 +3,14 @@ package server
 import (
 	"context"
 	"net"
-	"runtime"
+	"strings"
 
 	"github.com/avast/retry-go"
 	"github.com/gammazero/workerpool"
 	"github.com/go-logr/logr"
 	dhcp4 "github.com/packethost/dhcp4-go"
-	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/boots/conf"
 	"github.com/tinkerbell/boots/job"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/otel"
@@ -23,28 +21,26 @@ import (
 
 type Handler struct {
 	JobManager Manager
-
-	Logger logr.Logger
+	Logger     logr.Logger
+	PoolSize   int
 }
 
-// JobManager creates jobs.
+// Manager creates jobs.
 type Manager interface {
-	CreateFromRemoteAddr(ctx context.Context, ip string) (context.Context, *job.Job, error)
 	CreateFromDHCP(context.Context, net.HardwareAddr, net.IP, string) (context.Context, *job.Job, error)
 }
 
 // ServeDHCP starts the DHCP server.
 // It takes the next server address (nextServer) for serving iPXE binaries via TFTP
 // and an IP:Port (httpServerFQDN) for serving iPXE binaries via HTTP.
-func (s *Handler) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
-	poolSize := env.Int("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2)
+func (h *Handler) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, bootsBaseURL string) {
 	handler := dhcpHandler{
-		pool:         workerpool.New(poolSize),
+		pool:         workerpool.New(h.PoolSize),
 		nextServer:   nextServer,
 		ipxeBaseURL:  ipxeBaseURL,
 		bootsBaseURL: bootsBaseURL,
-		jobManager:   s.JobManager,
-		logger:       s.Logger,
+		jobManager:   h.JobManager,
+		logger:       h.Logger,
 	}
 	defer handler.pool.Stop()
 
@@ -54,7 +50,7 @@ func (s *Handler) ServeDHCP(addr string, nextServer net.IP, ipxeBaseURL string, 
 		},
 	)
 	if err != nil {
-		s.Logger.Error(err, "failed to serve dhcp")
+		h.Logger.Error(err, "failed to serve dhcp")
 		panic(errors.Wrap(err, "retry dhcp serve"))
 	}
 }
@@ -66,22 +62,91 @@ type dhcpHandler struct {
 	bootsBaseURL string
 	jobManager   Manager
 	logger       logr.Logger
+	ignoredMACS  string
+	ignoredIPs   string
 }
 
 func (d dhcpHandler) ServeDHCP(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	d.pool.Submit(func() { d.serve(w, req) })
 }
 
+func (d dhcpHandler) shouldIgnoreOUI(mac string) bool {
+	ignoredOUIs := d.getIgnoredMACs()
+	if ignoredOUIs == nil {
+		return false
+	}
+	oui := strings.ToLower(mac[:8])
+	_, ok := ignoredOUIs[oui]
+
+	return ok
+}
+
+func (d dhcpHandler) getIgnoredMACs() map[string]struct{} {
+	macs := d.ignoredMACS
+	if macs == "" {
+		return nil
+	}
+
+	slice := strings.Split(macs, ",")
+	if len(slice) == 0 {
+		return nil
+	}
+
+	ignore := map[string]struct{}{}
+	for _, oui := range slice {
+		_, err := net.ParseMAC(oui + ":00:00:00")
+		if err != nil {
+			panic(errors.Errorf("invalid oui in TINK_IGNORED_OUIS oui=%s", oui))
+		}
+		oui = strings.ToLower(oui)
+		ignore[oui] = struct{}{}
+	}
+
+	return ignore
+}
+
+func (d dhcpHandler) shouldIgnoreGI(ip string) bool {
+	ignoredGIs := d.getIgnoredGIs()
+	if ignoredGIs == nil {
+		return false
+	}
+	_, ok := ignoredGIs[ip]
+
+	return ok
+}
+
+func (d dhcpHandler) getIgnoredGIs() map[string]struct{} {
+	ips := d.ignoredIPs
+	if ips == "" {
+		return nil
+	}
+
+	slice := strings.Split(ips, ",")
+	if len(slice) == 0 {
+		return nil
+	}
+
+	ignore := map[string]struct{}{}
+	for _, ip := range slice {
+		if net.ParseIP(ip) == nil {
+			panic(errors.Errorf("invalid ip address in TINK_IGNORED_GIS ip=%s", ip))
+		}
+		ignore[ip] = struct{}{}
+	}
+
+	return ignore
+}
+
 func (d dhcpHandler) serve(w dhcp4.ReplyWriter, req *dhcp4.Packet) {
 	mac := req.GetCHAddr()
-	if conf.ShouldIgnoreOUI(mac.String()) {
+	if d.shouldIgnoreOUI(mac.String()) {
 		d.logger.Info("mac is in ignore list", "mac", mac)
 
 		return
 	}
 
 	gi := req.GetGIAddr()
-	if conf.ShouldIgnoreGI(gi.String()) {
+	if d.shouldIgnoreGI(gi.String()) {
 		d.logger.Info("giaddr is in ignore list", "giaddr", gi)
 
 		return

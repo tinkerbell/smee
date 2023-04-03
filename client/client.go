@@ -12,7 +12,7 @@ type HardwareFinder interface {
 	ByMAC(context.Context, net.HardwareAddr, net.IP, string) (Discoverer, error)
 }
 
-// Discoverer interface is the base for cacher and tinkerbell hardware discovery.
+// Discoverer interface is the base for tinkerbell and standalone hardware discovery.
 type Discoverer interface {
 	Instance() *Instance
 	MAC() net.HardwareAddr
