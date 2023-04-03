@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 
 	"github.com/go-logr/logr"
@@ -13,14 +14,13 @@ import (
 	"github.com/tinkerbell/dhcp/backend/kube"
 	"github.com/tinkerbell/dhcp/handler/reservation"
 	"golang.org/x/sync/errgroup"
-	"inet.af/netaddr"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type dhcpConfig struct {
 	// listener is the local address for the DHCP server to listen on.
-	listener netaddr.IPPort
+	listener netip.AddrPort
 	enabled  bool
 	handler  reservation.Handler
 }
@@ -78,11 +78,11 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&d.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP service")
 	fs.Func("dhcp-addr", "[dhcp] IP and port to listen on for DHCP.", func(s string) error {
 		if s == "" {
-			d.listener = netaddr.MustParseIPPort("0.0.0.0:67")
+			d.listener = netip.MustParseAddrPort("0.0.0.0:67")
 
 			return nil
 		}
-		v, err := netaddr.ParseIPPort(s)
+		v, err := netip.ParseAddrPort(s)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 	_ = fs.Set("dhcp-addr", "0.0.0.0:67")
 
 	fs.Func("dhcp-public-ip", "[dhcp] public IP address where Boots will be available. Used for DHCP option 54", func(s string) error {
-		var p netaddr.IP
+		var p netip.Addr
 		if s == "" || s == "0.0.0.0" {
 			var err error
 			p, err = autoDetectPublicIP()
@@ -103,14 +103,14 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 			}
 		} else {
 			var err error
-			p, err = netaddr.ParseIP(s)
+			p, err = netip.ParseAddr(s)
 			if err != nil {
 				return fmt.Errorf("'-public-ip', invalid address: %v", s)
 			}
 		}
 
 		d.handler.IPAddr = p
-		d.handler.Netboot.IPXEBinServerTFTP = netaddr.IPPortFrom(p, 69)
+		d.handler.Netboot.IPXEBinServerTFTP = netip.AddrPortFrom(p, 69)
 		d.handler.Netboot.IPXEBinServerHTTP = &url.URL{Scheme: "http", Host: p.String()}
 		d.handler.Netboot.IPXEScriptURL = &url.URL{Scheme: "http", Host: p.String(), Path: "/auto.ipxe"}
 		return nil
@@ -120,7 +120,7 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 		if s == "" {
 			return nil
 		}
-		v, err := netaddr.ParseIPPort(s)
+		v, err := netip.ParseAddrPort(s)
 		if err != nil {
 			return err
 		}
@@ -155,11 +155,11 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 	})
 }
 
-func autoDetectPublicIP() (netaddr.IP, error) {
+func autoDetectPublicIP() (netip.Addr, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		err = errors.Wrap(err, "unable to auto-detect public IPv4")
-		return netaddr.IP{}, err
+		return netip.Addr{}, err
 	}
 	for _, addr := range addrs {
 		ip, ok := addr.(*net.IPNet)
@@ -171,7 +171,7 @@ func autoDetectPublicIP() (netaddr.IP, error) {
 			continue
 		}
 
-		p, ok := netaddr.FromStdIP(v4)
+		p, ok := netip.AddrFromSlice(v4.To4())
 		if !ok {
 			continue
 		}
@@ -179,5 +179,5 @@ func autoDetectPublicIP() (netaddr.IP, error) {
 		return p, nil
 	}
 
-	return netaddr.IP{}, errors.New("unable to auto-detect public IPv4")
+	return netip.Addr{}, errors.New("unable to auto-detect public IPv4")
 }
