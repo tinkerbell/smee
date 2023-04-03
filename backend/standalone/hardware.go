@@ -8,10 +8,10 @@ import (
 
 // HardwareStandalone implements the Hardware interface for standalone operation.
 type HardwareStandalone struct {
-	ID          string          `json:"id"`
+	ID          string           `json:"id"`
 	Network     backend.Network  `json:"network"`
 	Metadata    backend.Metadata `json:"metadata"`
-	Traceparent string          `json:"traceparent"`
+	Traceparent string           `json:"traceparent"`
 }
 
 func (hs *HardwareStandalone) HardwareAllowPXE(net.HardwareAddr) bool {
