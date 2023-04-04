@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/dhcp/handler"
-	"golang.org/x/sync/errgroup"
 )
 
 var startTime = time.Now()
@@ -42,7 +41,7 @@ type httpConfig struct {
 
 func (h *httpConfig) addFlags(fs *flag.FlagSet) {
 	fs.StringVar(&h.ipxeVars, "ipxe-vars", "", "[http] additional variable definitions to include in all iPXE installer scripts. Separate multiple var definitions with spaces, e.g. 'var1=val1 var2=val2'.")
-	fs.StringVar(&h.addr, "http-addr", "", "[http] local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
+	fs.StringVar(&h.addr, "http-addr", "0.0.0.0:80", "[http] local IP and port to listen on for the serving iPXE binaries and files via HTTP.")
 	fs.StringVar(&h.extraKernelArgs, "extra-kernel-args", "", "[http] Extra set of kernel args (k=v k=v) that are appended to the kernel cmdline when booting via iPXE.")
 	fs.StringVar(&h.osieURL, "osie-url", "", "[http] URL where OSIE/Hook images are located.")
 	fs.BoolVar(&h.tinkServerTLS, "tink-server-tls", false, "[http] Whether the tink server is using TLS.")
@@ -94,18 +93,7 @@ func (h *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryH
 		},
 	}
 
-	srv := &stdhttp.Server{} //nolint: gosec // Slowloris is handled by httpServer.ServeHTTP
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		return httpServer.ServeHTTP(srv, h.addr, ipxeBinaryHandler)
-	})
-	<-ctx.Done()
-	go func() { _ = srv.Shutdown(ctx) }()
-	time.AfterFunc(time.Second*5, func() { srv.Close() })
-	err := g.Wait()
-	if errors.Is(err, stdhttp.ErrServerClosed) {
-		err = nil
-	}
+	err := httpServer.ServeHTTP(ctx, h.addr, ipxeBinaryHandler)
 	log.Info("shutting down http server")
 	return err
 }

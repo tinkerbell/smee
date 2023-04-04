@@ -112,8 +112,10 @@ func (h *ScriptHandler) defaultScript(span trace.Span, d *data.DHCP, n *data.Net
 		VLANID:            d.VLANID,
 		WorkerID:          d.MACAddress.String(),
 	}
-	if sc := span.SpanContext(); sc.IsSampled() {
-		auto.TraceID = sc.TraceID().String()
+	if span != nil {
+		if sc := span.SpanContext(); sc.IsSampled() {
+			auto.TraceID = sc.TraceID().String()
+		}
 	}
 
 	return GenerateTemplate(auto, HookScript)

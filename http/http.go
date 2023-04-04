@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -62,7 +63,7 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxeBinaryHandler http.HandlerFunc) error {
+func (s *Config) ServeHTTP(ctx context.Context, addr string, ipxeBinaryHandler http.HandlerFunc) error {
 	jh := ipxe.ScriptHandler{
 		Logger:             s.Logger,
 		Backend:            s.IPXEScript.Finder,
@@ -74,17 +75,17 @@ func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxeBinaryHandler http
 	}
 	mux := http.NewServeMux()
 	mux.Handle(otelFuncWrapper("/auto.ipxe", jh.HandlerFunc()))
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/healthz", s.serveHealthchecker(s.GitRev, s.StartTime))
 	if ipxeBinaryHandler != nil {
 		mux.Handle(otelFuncWrapper("/", ipxeBinaryHandler))
 	}
-	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/healthcheck", s.serveHealthchecker(s.GitRev, s.StartTime))
 
 	// wrap the mux with an OpenTelemetry interceptor
 	otelHandler := otelhttp.NewHandler(mux, "boots-http")
 
 	// add X-Forwarded-For support if trusted proxies are configured
-	var xffHandler http.Handler
+	var bHandler http.Handler
 	if len(s.TrustedProxies) > 0 {
 		xffmw, err := xff.New(xff.Options{
 			AllowedSubnets: s.TrustedProxies,
@@ -94,23 +95,55 @@ func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxeBinaryHandler http
 			return fmt.Errorf("failed to create new xff object: %w", err)
 		}
 
-		xffHandler = xffmw.Handler(&loggingMiddleware{
+		bHandler = xffmw.Handler(&loggingMiddleware{
 			handler: otelHandler,
 			log:     s.Logger,
 		})
 	} else {
-		xffHandler = &loggingMiddleware{
+		bHandler = &loggingMiddleware{
 			handler: otelHandler,
 			log:     s.Logger,
 		}
 	}
 
-	srv.Addr = addr
-	srv.Handler = xffHandler
-	// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
-	// recommendation. Boots doesn't really have many headers so 20s should be plenty of time.
-	// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
-	srv.ReadHeaderTimeout = 20 * time.Second
+	srv := http.Server{
+		Addr:    addr,
+		Handler: bHandler,
 
-	return srv.ListenAndServe()
+		// Mitigate Slowloris attacks. 20 seconds is based on Apache's recommended 20-40
+		// recommendation. Hegel doesn't really have many headers so 20s should be plenty of time.
+		// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
+		ReadHeaderTimeout: 20 * time.Second,
+	}
+
+	errChan := make(chan error, 1)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errChan <- err
+		}
+	}()
+
+	// Wait until we're told to shutdown.
+	select {
+	case <-ctx.Done():
+	case e := <-errChan:
+		return e
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Attempt a graceful shutdown with timeout.
+	//nolint:contextcheck // We can't derive from the original context as it's already done.
+	if err := srv.Shutdown(ctx); err != nil {
+		srv.Close()
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			return errors.New("timed out waiting for graceful shutdown")
+		}
+
+		return err
+	}
+
+	return nil
 }

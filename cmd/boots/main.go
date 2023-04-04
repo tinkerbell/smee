@@ -62,7 +62,7 @@ func main() {
 	defer otelShutdown(ctx)
 	metrics.Init()
 
-	log := defaultLogger(cfg.logLevel)
+	log := defaultLogger(cfg.logLevel).WithName("github.com/tinkerbell/boots")
 	log.Info("starting", "version", GitRev)
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -79,9 +79,8 @@ func main() {
 
 	g.Go(func() error {
 		log.Info("starting tftp server", "addr", cfg.ipxe.TFTP.Addr)
-		lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
 		// TODO: validate the config
-		fn, err := cfg.ipxe.tftpServer(lg)
+		fn, err := cfg.ipxe.tftpServer(log)
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,99 @@
+package ipxe
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"testing"
+
+	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
+	"github.com/tinkerbell/dhcp/data"
+	"go.opentelemetry.io/otel/trace"
+)
+
+func buildCustomScript(s string) string {
+	return fmt.Sprintf("#!ipxe\n\necho Loading custom Tinkerbell iPXE script...\n%s\n", s)
+}
+
+func TestCustomScript(t *testing.T) {
+	tests := map[string]struct {
+		input *data.Netboot
+		want  string
+		err   bool
+	}{
+		"custom script":      {input: &data.Netboot{IPXEScript: "echo custom script\nautoboot"}, want: "echo custom script\nautoboot"},
+		"custom chain":       {input: &data.Netboot{IPXEScriptURL: &url.URL{Scheme: "http", Host: "127.0.0.1", Path: "/ipxe"}}, want: "chain --autofree http://127.0.0.1/ipxe"},
+		"nil input":          {input: nil, err: true},
+		"no script or chain": {input: &data.Netboot{}, err: true},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			h := &ScriptHandler{}
+			got, err := h.customScript(tt.input)
+			if tt.err && err == nil {
+				t.Fatal("expected error")
+			}
+			if err != nil && !tt.err {
+				t.Fatalf("did not expect error: %v", err)
+			}
+
+			if !tt.err {
+				if diff := cmp.Diff(got, buildCustomScript(tt.want)); diff != "" {
+					t.Fatal(diff)
+				}
+			}
+		})
+	}
+}
+
+func TestDefaultScript(t *testing.T) {
+	hook := `#!ipxe
+
+set syslog 127.0.0.1
+
+echo Loading the Tinkerbell Hook iPXE script...
+echo Debug TraceID: 00010203040506070000000000000000
+
+set arch x86_64
+set download-url http://127.0.0.1:8080/osie
+
+kernel ${download-url}/vmlinuz-${arch} vlan_id=100 console=ttyS0 \
+facility=onprem syslog_host=127.0.0.1 grpc_authority=127.0.0.1:42113 tinkerbell_tls=false worker_id=00:00:00:00:00:00 hw_addr=00:00:00:00:00:00 \
+modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+
+initrd ${download-url}/initramfs-${arch}
+
+boot
+`
+	tests := map[string]struct {
+		input  *data.DHCP
+		input2 *data.Netboot
+		want   string
+	}{
+		"no facility": {input: &data.DHCP{Arch: "x86_64", MACAddress: []byte{0o0, 0o0, 0o0, 0o0, 0o0, 0o0}, VLANID: "100"}, input2: &data.Netboot{Facility: "onprem"}, want: hook},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			h := &ScriptHandler{
+				Logger:             logr.Discard(),
+				OSIEURL:            "http://127.0.0.1:8080/osie",
+				ExtraKernelParams:  []string{"console=ttyS0"},
+				PublicSyslogFQDN:   "127.0.0.1",
+				TinkServerTLS:      false,
+				TinkServerGRPCAddr: "127.0.0.1:42113",
+			}
+			span := trace.NewSpanContext(trace.SpanContextConfig{TraceID: [16]byte{0, 1, 2, 3, 4, 5, 6, 7}, TraceFlags: trace.FlagsSampled})
+			ctx := trace.ContextWithSpanContext(context.Background(), span)
+
+			got, err := h.defaultScript(trace.SpanFromContext(ctx), tt.input, tt.input2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Fatal(diff)
+			}
+		})
+	}
+}

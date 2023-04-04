@@ -3,11 +3,9 @@ package http
 import (
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 type loggingMiddleware struct {
@@ -22,43 +20,32 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		method = req.Method
 		uri    = req.RequestURI
 		client = clientIP(req.RemoteAddr)
+		logger = h.log.WithValues("method", method, "uri", uri, "client", client)
 	)
 
-	log := true
-	if uri == "/metrics" || strings.HasPrefix(uri, "/_packet") {
-		log = false
-	}
-	if log {
-		h.log.V(1).Info("request", "method", method, "uri", uri, "client", client, "event", "sr")
+	if uri != "/metrics" && uri != "/healthz" {
+		logger.V(1).Info("request")
 	}
 
-	res := &responseWriter{ResponseWriter: w}
-	h.handler.ServeHTTP(res, req) // process the request
+	recorder := &statusRecorder{
+		ResponseWriter: w,
+		Status:         200,
+	}
+	h.handler.ServeHTTP(recorder, req) // process the request
 
-	if log {
-		h.log.Info("response", "method", method, "uri", uri, "client", client, "duration", time.Since(start), "status", res.statusCode, "event", "ss")
+	if uri != "/metrics" && uri != "/healthz" {
+		logger.V(1).Info("response", "duration", time.Since(start), "statusCode", recorder.Status)
 	}
 }
 
-type responseWriter struct {
+type statusRecorder struct {
 	http.ResponseWriter
-	statusCode int
+	Status int
 }
 
-func (w *responseWriter) Write(b []byte) (int, error) {
-	if w.statusCode == 0 {
-		w.statusCode = 200
-	}
-	n, err := w.ResponseWriter.Write(b)
-
-	return n, errors.Wrap(err, "writing response")
-}
-
-func (w *responseWriter) WriteHeader(code int) {
-	if w.statusCode == 0 {
-		w.statusCode = code
-	}
-	w.ResponseWriter.WriteHeader(code)
+func (s *statusRecorder) WriteHeader(status int) {
+	s.Status = status
+	s.ResponseWriter.WriteHeader(status)
 }
 
 func clientIP(str string) string {
