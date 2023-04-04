@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/boots/http"
+	"github.com/tinkerbell/dhcp/handler"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -77,7 +77,7 @@ func (h *httpConfig) addFlags(fs *flag.FlagSet) {
 	})
 }
 
-func (h *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryHandler stdhttp.HandlerFunc, finder backend.HardwareFinder) error {
+func (h *httpConfig) serveHTTP(ctx context.Context, log logr.Logger, ipxeBinaryHandler stdhttp.HandlerFunc, finder handler.BackendReader) error {
 	httpServer := &http.Config{
 		GitRev:         GitRev,
 		StartTime:      startTime,

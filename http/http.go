@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sebest/xff"
-	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/boots/http/ipxe"
+	"github.com/tinkerbell/dhcp/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -25,7 +25,7 @@ type Config struct {
 }
 
 type IPXEScript struct {
-	Finder             backend.HardwareFinder
+	Finder             handler.BackendReader
 	Logger             logr.Logger
 	OsieURL            string
 	ExtraKernelParams  []string
@@ -65,7 +65,7 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 func (s *Config) ServeHTTP(srv *http.Server, addr string, ipxeBinaryHandler http.HandlerFunc) error {
 	jh := ipxe.ScriptHandler{
 		Logger:             s.Logger,
-		Finder:             s.IPXEScript.Finder,
+		Backend:            s.IPXEScript.Finder,
 		OSIEURL:            s.IPXEScript.OsieURL,
 		ExtraKernelParams:  s.IPXEScript.ExtraKernelParams,
 		PublicSyslogFQDN:   s.IPXEScript.SyslogFQDN,

@@ -14,9 +14,6 @@ import (
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/backend"
-	"github.com/tinkerbell/boots/backend/kubernetes"
-	"github.com/tinkerbell/boots/backend/standalone"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
 	"go.uber.org/zap"
@@ -30,7 +27,7 @@ const name = "boots"
 var GitRev = "unknown (use make)"
 
 type config struct {
-	// loglevel is the log level for boots.
+	// loglevel is the log level for Boots.
 	logLevel      string
 	syslogEnabled bool
 	// syslogAddr is the local address to listen on for the syslog server.
@@ -42,20 +39,6 @@ type config struct {
 	dhcp       *dhcpConfig
 	ipxe       *ipxeConfig
 	http       *httpConfig
-}
-
-type k8sConfig struct {
-	// config is the path to a kubernetes config file.
-	config string
-	// api is the Kubernetes API URL.
-	api string
-	// namespace is an override for the namespace the kubernetes client will watch.
-	namespace string
-}
-
-type standaloneConfig struct {
-	// file is the path to a JSON file containing hardware data.
-	file string
 }
 
 func main() {
@@ -86,6 +69,7 @@ func main() {
 	g.Go(func() error {
 		if cfg.syslogEnabled {
 			log.Info("starting syslog server", "addr", cfg.syslogAddr)
+			// TODO: validate the config
 			_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
 			return err
 		}
@@ -96,6 +80,7 @@ func main() {
 	g.Go(func() error {
 		log.Info("starting tftp server", "addr", cfg.ipxe.TFTP.Addr)
 		lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
+		// TODO: validate the config
 		fn, err := cfg.ipxe.tftpServer(lg)
 		if err != nil {
 			return err
@@ -105,7 +90,8 @@ func main() {
 
 	g.Go(func() error {
 		log.Info("starting http server", "addr", cfg.http.addr /*"ipxeURL", ipxeBaseURL*/)
-		finder, err := getHardwareFinder(log, cfg)
+		// TODO: validate the config
+		finder, err := getBackend(ctx, log, cfg)
 		if err != nil {
 			log.Info("error getting hardware finder", "err", err)
 
@@ -130,10 +116,12 @@ func main() {
 	})
 
 	<-ctx.Done()
-	log.Info("boots shutting down")
+	log.Info("Boots shutting down")
+	keysAndValues := []interface{}{}
 	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
-		log.Info("boots shutdown", "err", err)
+		keysAndValues = append(keysAndValues, "err", err)
 	}
+	log.Info("Boots shutdown", keysAndValues...)
 }
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
@@ -141,10 +129,10 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.BoolVar(&cfg.syslogEnabled, "syslog-enabled", true, "[syslog] Enable syslog server.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", "", "[syslog] IP and port to listen on for syslog messages.")
 	fs.StringVar(&cfg.backend, "backend", "kubernetes", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.")
-	fs.StringVar(&cfg.k8s.config, "kubeconfig", "", "The Kubernetes config file location. Only applies if backend is kubernetes.")
-	fs.StringVar(&cfg.k8s.api, "kubeapi", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if backend is kubernetes.")
-	fs.StringVar(&cfg.k8s.namespace, "kubenamespace", "", "An optional Kubernetes namespace override to query hardware data from.")
-	fs.StringVar(&cfg.standalone.file, "standalone-file", "", "The path to a JSON file containing hardware data. Only applies if backend is standalone.")
+	fs.StringVar(&cfg.k8s.config, "kubeconfig", "", "[k8s] The Kubernetes config file location. Only applies if backend is kubernetes.")
+	fs.StringVar(&cfg.k8s.api, "kubeapi", "", "[k8s] The Kubernetes API URL, used for in-cluster client construction. Only applies if backend is kubernetes.")
+	fs.StringVar(&cfg.k8s.namespace, "kubenamespace", "", "[k8s] An optional Kubernetes namespace override to query hardware data from.")
+	fs.StringVar(&cfg.standalone.file, "standalone-file", "", "[standalone] The path to a JSON file containing hardware data. Only applies if backend is standalone.")
 	cfg.ipxe.addFlags(fs)
 	cfg.dhcp.addFlags(fs)
 	cfg.http.addFlags(fs)
@@ -176,32 +164,4 @@ func defaultLogger(level string) logr.Logger {
 	}
 
 	return zapr.NewLogger(zapLogger)
-}
-
-func getHardwareFinder(l logr.Logger, c *config) (backend.HardwareFinder, error) {
-	var hf backend.HardwareFinder
-	var err error
-
-	switch c.backend {
-	case "standalone":
-		hf, err = standalone.NewHardwareFinder(c.standalone.file)
-		if err != nil {
-			return nil, err
-		}
-	case "kubernetes":
-		kf, err := kubernetes.NewFinder(l, c.k8s.api, c.k8s.config, c.k8s.namespace)
-		if err != nil {
-			return nil, err
-		}
-		hf = kf
-		// Start the client-side cache
-		go func() {
-			_ = kf.Start(context.Background())
-		}()
-
-	default:
-		return nil, fmt.Errorf("must specify either standalone or kubernetes backend")
-	}
-
-	return hf, nil
 }

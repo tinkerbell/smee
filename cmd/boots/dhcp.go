@@ -11,11 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/dhcp"
-	"github.com/tinkerbell/dhcp/backend/kube"
 	"github.com/tinkerbell/dhcp/handler/reservation"
-	"golang.org/x/sync/errgroup"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type dhcpConfig struct {
@@ -30,48 +26,9 @@ func (d *dhcpConfig) serveDHCP(ctx context.Context, log logr.Logger) error {
 	d.handler.Log = log
 	d.handler.Netboot.Enabled = true
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		e := listener.ListenAndServe(&d.handler)
-		return e
-	})
-	<-ctx.Done()
-	_ = listener.Shutdown()
-	err := g.Wait()
+	err := listener.ListenAndServe(ctx, &d.handler)
 	log.Info("shutting down dhcp server")
 	return err
-}
-
-func (k *k8sConfig) kubeBackend(ctx context.Context) (reservation.BackendReader, error) {
-	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{
-			ExplicitPath: k.config,
-		},
-		&clientcmd.ConfigOverrides{
-			ClusterInfo: clientcmdapi.Cluster{
-				Server: k.api,
-			},
-			Context: clientcmdapi.Context{
-				Namespace: k.namespace,
-			},
-		},
-	)
-
-	config, err := ccfg.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	kb, err := kube.NewBackend(config)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		_ = kb.Start(ctx)
-	}()
-
-	return kb, nil
 }
 
 func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
