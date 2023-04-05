@@ -94,7 +94,7 @@ func (c *Config) ServeHTTP(ctx context.Context, addr string, ipxeBinaryHandler h
 			return fmt.Errorf("failed to create new xff object: %w", err)
 		}
 
-		bHandler = xffmw.Handler(&loggingMiddleware{
+		bHandler = xffmw.handler(&loggingMiddleware{
 			handler: otelHandler,
 			log:     c.Logger,
 		})
