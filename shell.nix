@@ -2,9 +2,8 @@ let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs";
-  #branch@date: nixos-unstable-small@2022-04-18
-  rev = "e33fe968df5a2503290682278399b1198f7ba56f";
-  sha256 = "0kr30yj9825jx4zzcyn43c398mx3l63ndgfrg1y9v3d739mfgyw3";
+  rev = "8ad5e8132c5dcf977e308e7bf5517cc6cc0bf7d8";
+  sha256 = "17v6wigks04x1d63a2wcd7cc4z9ca6qr0f4xvw1pdw83f8a3c0nj";
 }) { } }:
 
 with pkgs;
@@ -13,7 +12,7 @@ mkShell {
   buildInputs = [
     git
     gnumake
-    go_1_18
+    go_1_20
     nixfmt
     nodePackages.prettier
     perl
