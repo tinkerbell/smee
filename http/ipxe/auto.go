@@ -2,12 +2,12 @@ package ipxe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/dhcp/data"
@@ -90,7 +90,7 @@ func (h *ScriptHandler) serveBootScript(ctx context.Context, w http.ResponseWrit
 	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
 	if _, err := w.Write(script); err != nil {
-		h.Logger.Error(errors.Wrap(err, "unable to send ipxe script"), "unable to send ipxe script", "client", d.IPAddress, "script", string(script))
+		h.Logger.Error(fmt.Errorf("unable to send ipxe script: %w", err), "unable to send ipxe script", "client", d.IPAddress, "script", string(script))
 		span.SetStatus(codes.Error, err.Error())
 
 		return

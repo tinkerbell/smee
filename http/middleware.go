@@ -24,7 +24,7 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	)
 
 	if uri != "/metrics" && uri != "/healthz" {
-		logger.V(1).Info("request")
+		logger.Info("request")
 	}
 
 	recorder := &statusRecorder{
@@ -34,7 +34,7 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	h.handler.ServeHTTP(recorder, req) // process the request
 
 	if uri != "/metrics" && uri != "/healthz" {
-		logger.V(1).Info("response", "duration", time.Since(start), "statusCode", recorder.Status)
+		logger.Info("response", "duration", time.Since(start), "statusCode", recorder.Status)
 	}
 }
 
@@ -51,7 +51,7 @@ func (s *statusRecorder) WriteHeader(status int) {
 func clientIP(str string) string {
 	host, _, err := net.SplitHostPort(str)
 	if err != nil {
-		return "?"
+		return "unable to parse client IP"
 	}
 
 	return host

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net"
 	stdhttp "net/http"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/http"
 	"github.com/tinkerbell/dhcp/handler"
 )

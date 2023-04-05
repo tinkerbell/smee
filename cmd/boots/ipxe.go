@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"net/netip"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
 )

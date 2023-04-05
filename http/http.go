@@ -3,15 +3,14 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sebest/xff"
 	"github.com/tinkerbell/boots/http/ipxe"
 	"github.com/tinkerbell/dhcp/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -35,7 +34,7 @@ type IPXEScript struct {
 	TinkServerGRPCAddr string
 }
 
-func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
+func (c *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		res := struct {
@@ -49,7 +48,7 @@ func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFun
 		}
 		if err := json.NewEncoder(w).Encode(&res); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			s.Logger.Error(errors.Wrap(err, "marshaling healtcheck json"), "marshaling healtcheck json")
+			c.Logger.Error(fmt.Errorf("error marshaling healthcheck json: %w", err), "marshaling healtcheck json")
 		}
 	}
 }
@@ -63,20 +62,20 @@ func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Reque
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *Config) ServeHTTP(ctx context.Context, addr string, ipxeBinaryHandler http.HandlerFunc) error {
+func (c *Config) ServeHTTP(ctx context.Context, addr string, ipxeBinaryHandler http.HandlerFunc) error {
 	jh := ipxe.ScriptHandler{
-		Logger:             s.Logger,
-		Backend:            s.IPXEScript.Finder,
-		OSIEURL:            s.IPXEScript.OsieURL,
-		ExtraKernelParams:  s.IPXEScript.ExtraKernelParams,
-		PublicSyslogFQDN:   s.IPXEScript.SyslogFQDN,
-		TinkServerTLS:      s.IPXEScript.TinkServerTLS,
-		TinkServerGRPCAddr: s.IPXEScript.TinkServerGRPCAddr,
+		Logger:             c.Logger,
+		Backend:            c.IPXEScript.Finder,
+		OSIEURL:            c.IPXEScript.OsieURL,
+		ExtraKernelParams:  c.IPXEScript.ExtraKernelParams,
+		PublicSyslogFQDN:   c.IPXEScript.SyslogFQDN,
+		TinkServerTLS:      c.IPXEScript.TinkServerTLS,
+		TinkServerGRPCAddr: c.IPXEScript.TinkServerGRPCAddr,
 	}
 	mux := http.NewServeMux()
 	mux.Handle(otelFuncWrapper("/auto.ipxe", jh.HandlerFunc()))
 	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/healthz", s.serveHealthchecker(s.GitRev, s.StartTime))
+	mux.HandleFunc("/healthz", c.serveHealthchecker(c.GitRev, c.StartTime))
 	if ipxeBinaryHandler != nil {
 		mux.Handle(otelFuncWrapper("/", ipxeBinaryHandler))
 	}
@@ -86,23 +85,23 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, ipxeBinaryHandler h
 
 	// add X-Forwarded-For support if trusted proxies are configured
 	var bHandler http.Handler
-	if len(s.TrustedProxies) > 0 {
-		xffmw, err := xff.New(xff.Options{
-			AllowedSubnets: s.TrustedProxies,
+	if len(c.TrustedProxies) > 0 {
+		xffmw, err := newXFF(xffOptions{
+			AllowedSubnets: c.TrustedProxies,
 		})
 		if err != nil {
-			s.Logger.Error(err, "failed to create new xff object")
+			c.Logger.Error(err, "failed to create new xff object")
 			return fmt.Errorf("failed to create new xff object: %w", err)
 		}
 
 		bHandler = xffmw.Handler(&loggingMiddleware{
 			handler: otelHandler,
-			log:     s.Logger,
+			log:     c.Logger,
 		})
 	} else {
 		bHandler = &loggingMiddleware{
 			handler: otelHandler,
-			log:     s.Logger,
+			log:     c.Logger,
 		}
 	}
 

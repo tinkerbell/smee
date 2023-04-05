@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -9,7 +10,6 @@ import (
 	"net/url"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/dhcp"
 	"github.com/tinkerbell/dhcp/handler/reservation"
 )
@@ -115,7 +115,7 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 func autoDetectPublicIP() (netip.Addr, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		err = errors.Wrap(err, "unable to auto-detect public IPv4")
+		err = fmt.Errorf("unable to auto-detect public IPv4: %w", err)
 		return netip.Addr{}, err
 	}
 	for _, addr := range addrs {
