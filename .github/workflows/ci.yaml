@@ -22,6 +22,10 @@ jobs:
         with:
           lfs: true
 
+      - name: Workaround for disk space issue
+        # fixes "write /run/user/1001/: no space left on device" error
+        run: sudo mount -o remount,size=3G /run/user/1001 || true
+
       - name: Install nix
         uses: cachix/install-nix-action@v18
         with:
