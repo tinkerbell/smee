@@ -19,7 +19,7 @@ func toMasks(ips []string) (masks []net.IPNet, err error) {
 	return
 }
 
-// checks if a net.IP is in a list of net.IPNet
+// checks if a net.IP is in a list of net.IPNet.
 func ipInMasks(ip net.IP, masks []net.IPNet) bool {
 	for _, mask := range masks {
 		if mask.Contains(ip) {
@@ -87,7 +87,7 @@ type xffOptions struct {
 	Debug bool
 }
 
-// xff http handler
+// xff http handler.
 type xff struct {
 	// Set to true if all IPs or Subnets are allowed.
 	allowAll bool
