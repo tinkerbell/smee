@@ -25,7 +25,7 @@ func (i *ipxeConfig) addFlags(fs *flag.FlagSet) {
 
 func (i *ipxeConfig) addTFTPFlags(fs *flag.FlagSet) {
 	// tftp listener addr
-	fs.Func("ipxe-tftp-addr", "[ipxe] local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).", func(s string) error {
+	fs.Func("ipxe-tftp-bind-addr", "[ipxe] local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69).", func(s string) error {
 		if s == "" {
 			i.TFTP.Addr = netip.MustParseAddrPort("0.0.0.0:69")
 			return nil
@@ -39,7 +39,7 @@ func (i *ipxeConfig) addTFTPFlags(fs *flag.FlagSet) {
 		return nil
 	})
 	// This sets the default value for the flag when coupled with fs.Func.
-	_ = fs.Set("ipxe-tftp-addr", "0.0.0.0:69")
+	_ = fs.Set("ipxe-tftp-bind-addr", "0.0.0.0:69")
 
 	// tftp timeout
 	fs.DurationVar(&i.TFTP.Timeout, "ipxe-tftp-timeout", time.Second*5, "[ipxe] local iPXE TFTP server requests timeout.")
@@ -81,4 +81,11 @@ func (i *ipxeConfig) tftpServer(log logr.Logger) (func(ctx context.Context) erro
 	}
 	i.Log = log
 	return i.ListenAndServe, nil
+}
+
+func (i *ipxeConfig) validate() error {
+	if i.TFTP.Disabled && i.disableHTTP {
+		return errors.New("iPXE tftp and http disabled")
+	}
+	return nil
 }

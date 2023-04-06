@@ -31,61 +31,32 @@ func (d *dhcpConfig) serveDHCP(ctx context.Context, log logr.Logger) error {
 	return err
 }
 
+func (d *dhcpConfig) String() string {
+	if d.handler.Netboot.IPXEScriptURL != nil {
+		return d.handler.Netboot.IPXEScriptURL.String()
+	}
+	return ""
+}
+
+func (d *dhcpConfig) Set(s string) error {
+	if s == "" {
+		return errors.New("ipxe-script-url cannot be empty")
+	}
+	if u, err := url.Parse(s); err != nil {
+		return err
+	} else {
+		*d.handler.Netboot.IPXEScriptURL = *u
+	}
+	return nil
+}
+
 func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&d.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP service")
-	fs.Func("dhcp-addr", "[dhcp] IP and port to listen on for DHCP.", func(s string) error {
-		if s == "" {
-			d.listener = netip.MustParseAddrPort("0.0.0.0:67")
-
-			return nil
-		}
-		v, err := netip.ParseAddrPort(s)
-		if err != nil {
-			return err
-		}
-		d.listener = v
-
-		return nil
-	})
-	// This sets the default value for the flag when coupled with fs.Func.
-	_ = fs.Set("dhcp-addr", "0.0.0.0:67")
-
-	fs.Func("dhcp-public-ip", "[dhcp] public IP address where Boots will be available. Used for DHCP option 54", func(s string) error {
-		var p netip.Addr
-		if s == "" || s == "0.0.0.0" {
-			var err error
-			p, err = autoDetectPublicIP()
-			if err != nil {
-				return fmt.Errorf("'-public-ip', unable to auto-detect: %v", err)
-			}
-		} else {
-			var err error
-			p, err = netip.ParseAddr(s)
-			if err != nil {
-				return fmt.Errorf("'-public-ip', invalid address: %v", s)
-			}
-		}
-
-		d.handler.IPAddr = p
-		d.handler.Netboot.IPXEBinServerTFTP = netip.AddrPortFrom(p, 69)
-		d.handler.Netboot.IPXEBinServerHTTP = &url.URL{Scheme: "http", Host: p.String()}
-		d.handler.Netboot.IPXEScriptURL = &url.URL{Scheme: "http", Host: p.String(), Path: "/auto.ipxe"}
-		return nil
-	})
-	_ = fs.Set("dhcp-public-ip", "0.0.0.0")
-	fs.Func("ipxe-remote-tftp-addr", "[dhcp] remote IP:Port where iPXE binaries are served via TFTP.", func(s string) error {
-		if s == "" {
-			return nil
-		}
-		v, err := netip.ParseAddrPort(s)
-		if err != nil {
-			return err
-		}
-		d.handler.Netboot.IPXEBinServerTFTP = v
-
-		return nil
-	})
-	fs.Func("ipxe-remote-http-addr", "[dhcp] remote URL where iPXE binaries are served via HTTP.", func(s string) error {
+	fs.TextVar(&d.listener, "dhcp-bind-addr", netip.MustParseAddrPort("0.0.0.0:67"), "[dhcp] IP and port to bind and listen on for DHCP.")
+	fs.TextVar(&d.handler.IPAddr, "dhcp-public-ip", autoDetectPublicIP(), "[dhcp] IP address from where clients can interact with DHCP (DHCP option 54).")
+	fs.TextVar(&d.handler.Netboot.IPXEBinServerTFTP, "ipxe-tftp-addr", netip.AddrPort{}, "[dhcp][required] IP:Port where tftp clients can fetch iPXE binaries.")
+	// fs.Var(d, "ipxe-script-url", "[dhcp] URL where clients can fetch the iPXE script.")
+	fs.Func("ipxe-http-url", "[dhcp][required] URL where HTTP clients can fetch iPXE binaries.", func(s string) error {
 		if s == "" {
 			return nil
 		}
@@ -98,9 +69,10 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 
 		return nil
 	})
-	fs.Func("ipxe-script-url", "[dhcp] remote URL where iPXE script is served.", func(s string) error {
+
+	fs.Func("ipxe-script-url", "[dhcp] URL where clients can fetch the iPXE script.", func(s string) error {
 		if s == "" {
-			return nil
+			return fmt.Errorf("ipxe-script-url is required")
 		}
 		u, err := url.Parse(s)
 		if err != nil {
@@ -110,13 +82,13 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 
 		return nil
 	})
+
 }
 
-func autoDetectPublicIP() (netip.Addr, error) {
+func autoDetectPublicIP() netip.Addr {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		err = fmt.Errorf("unable to auto-detect public IPv4: %w", err)
-		return netip.Addr{}, err
+		return netip.Addr{}
 	}
 	for _, addr := range addrs {
 		ip, ok := addr.(*net.IPNet)
@@ -133,8 +105,28 @@ func autoDetectPublicIP() (netip.Addr, error) {
 			continue
 		}
 
-		return p, nil
+		return p
 	}
 
-	return netip.Addr{}, errors.New("unable to auto-detect public IPv4")
+	return netip.Addr{}
+}
+
+// required fields.
+// d.Handler.IPAddr is required for DHCP option 54.
+func (d *dhcpConfig) validate() error {
+	if !d.enabled {
+		return nil
+	}
+	if !d.listener.IsValid() {
+		return errors.New("dhcp listener address is required")
+	}
+	if !d.handler.IPAddr.IsValid() {
+		return errors.New("dhcp public IP address is required")
+	}
+	if d.handler.Netboot.IPXEScriptURL == nil {
+		return errors.New("ipxe-script-url is required")
+	}
+	// if d.handler.Net
+
+	return nil
 }

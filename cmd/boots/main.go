@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
@@ -54,6 +55,10 @@ func main() {
 	if err := cli.Parse(os.Args[1:]); err != nil {
 		fmt.Printf("error parsing cli, %v\n", err)
 		os.Exit(1)
+	}
+	if err := cfg.validateAll(fs); err != nil {
+		fmt.Printf("error validating config: %v\n", err)
+		os.Exit(2)
 	}
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
@@ -127,10 +132,22 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	fs.StringVar(&cfg.logLevel, "log-level", "info", "log level.")
 	fs.BoolVar(&cfg.syslogEnabled, "syslog-enabled", true, "[syslog] Enable syslog server.")
 	fs.StringVar(&cfg.syslogAddr, "syslog-addr", "", "[syslog] IP and port to listen on for syslog messages.")
-	fs.StringVar(&cfg.backend, "backend", "kubernetes", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.")
+	// fs.StringVar(&cfg.backend, "backend", "kubernetes", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.")
+	fs.Func("backend", "The backend to use for retrieving hardware data. Valid options are: standalone, kubernetes.", func(s string) error {
+		switch strings.ToLower(s) {
+		case "kubernetes":
+			cfg.k8s.enabled = true
+		case "standalone":
+			cfg.standalone.enabled = true
+		default:
+			return errors.New("invalid backend")
+		}
+
+		return nil
+	})
 	fs.StringVar(&cfg.k8s.config, "kubeconfig", "", "[k8s] The Kubernetes config file location. Only applies if backend is kubernetes.")
 	fs.StringVar(&cfg.k8s.api, "kubeapi", "", "[k8s] The Kubernetes API URL, used for in-cluster client construction. Only applies if backend is kubernetes.")
-	fs.StringVar(&cfg.k8s.namespace, "kubenamespace", "", "[k8s] An optional Kubernetes namespace override to query hardware data from.")
+	fs.StringVar(&cfg.k8s.namespace, "kubenamespace", "", "[k8s] A Kubernetes namespace from which hardware data is queried.")
 	fs.StringVar(&cfg.standalone.file, "standalone-file", "", "[standalone] The path to a JSON file containing hardware data. Only applies if backend is standalone.")
 	cfg.ipxe.addFlags(fs)
 	cfg.dhcp.addFlags(fs)
@@ -145,6 +162,48 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 			return nil
 		},
 	}
+}
+
+func formatErr(err, e error) error {
+	if err != nil {
+		err = fmt.Errorf("\n%w\n%w", e, err)
+	} else {
+		err = fmt.Errorf("\n%w\n", e)
+	}
+
+	return err
+}
+
+func (c *config) validateAll(fs *flag.FlagSet) error {
+	if !c.k8s.enabled && !c.standalone.enabled {
+		c.k8s.enabled = true
+	}
+	var err error
+	if e := c.ipxe.validate(); e != nil {
+		err = formatErr(err, e)
+	}
+
+	if e := c.dhcp.validate(); e != nil {
+		err = formatErr(err, e)
+	}
+
+	if e := c.http.validate(); e != nil {
+		err = formatErr(err, e)
+	}
+
+	if e := c.k8s.validate(fs); e != nil {
+		err = formatErr(err, e)
+	}
+
+	if e := c.standalone.validate(fs); e != nil {
+		err = formatErr(err, e)
+	}
+
+	if err != nil {
+		fs.Usage()
+	}
+
+	return err
 }
 
 // defaultLogger is zap logr implementation.

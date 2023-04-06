@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -19,11 +20,13 @@ type k8sConfig struct {
 	api string
 	// namespace is an override for the namespace the kubernetes client will watch.
 	namespace string
+	enabled   bool
 }
 
 type standaloneConfig struct {
 	// file is the path to a JSON file containing hardware data.
-	file string
+	file    string
+	enabled bool
 }
 
 func getBackend(ctx context.Context, log logr.Logger, c *config) (handler.BackendReader, error) {
@@ -88,4 +91,33 @@ func (s *standaloneConfig) standaloneBackend(ctx context.Context, logger logr.Lo
 	go f.Start(ctx)
 
 	return f, nil
+}
+
+func (k *k8sConfig) validate(fs *flag.FlagSet) error {
+	if k.enabled {
+		if k.config == "" && k.api == "" {
+			return fmt.Errorf("one of kubernetes config or api is required")
+		}
+
+		if k.namespace == "" {
+			v := fs.Lookup("kubenamespace")
+			fmt.Println("=========")
+			fmt.Println(v)
+			fmt.Println("=========")
+			return fmt.Errorf("-%v ...\t%v is required", v.Name, v.Usage)
+		}
+	}
+
+	return nil
+}
+
+func (s *standaloneConfig) validate(fs *flag.FlagSet) error {
+	if s.enabled {
+		if s.file == "" {
+			v := fs.Lookup("standalonefile")
+			return fmt.Errorf("%v is required", v.Usage)
+		}
+	}
+
+	return nil
 }
