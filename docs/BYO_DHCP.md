@@ -10,9 +10,9 @@ In order to facilitate network booting machines, Tinkerbell runs its own DHCP se
 
 There is a 2 step interaction between a netboot client and a DHCP service in order to kick off the provisioning process.
 
-- __Step 1__: The machine broadcasts a requests to network boot. The DHCP service then provides the machine with the location of the Tinkerbell iPXE binary. The machine then downloads and boots into the Tinkerbell iPXE binary.
+- **Step 1**: The machine broadcasts a requests to network boot. The DHCP service then provides the machine with the location of the Tinkerbell iPXE binary. The machine then downloads and boots into the Tinkerbell iPXE binary.
 
-- __Step 2__: The machine again broadcasts a request to network boot. The DHCP service then provides the machine with the location of the Tinkerbell iPXE script. The machine then downloads and runs the Tinkerbell iPXE script. This Tinkerbell iPXE script loads the HookOS into memory.
+- **Step 2**: The machine again broadcasts a request to network boot. The DHCP service then provides the machine with the location of the Tinkerbell iPXE script. The machine then downloads and runs the Tinkerbell iPXE script. This Tinkerbell iPXE script loads the HookOS into memory.
 
 ![process](BYO_DHCP.png)
 
@@ -43,20 +43,20 @@ kea.json
 
 ```json
 {
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "tinkerbell",
-                "test": "substring(option[77].hex,0,10) == 'Tinkerbell'",
-                "boot-file-name": "http://192.168.2.112/auto.ipxe"
-            },
-            {
-                "name": "default",
-                "test": "not(substring(option[77].hex,0,10) == 'Tinkerbell')",
-                "boot-file-name": "ipxe.efi"
-            }
-        ],
-    }
+  "Dhcp4": {
+    "client-classes": [
+      {
+        "name": "tinkerbell",
+        "test": "substring(option[77].hex,0,10) == 'Tinkerbell'",
+        "boot-file-name": "http://192.168.2.112/auto.ipxe"
+      },
+      {
+        "name": "default",
+        "test": "not(substring(option[77].hex,0,10) == 'Tinkerbell')",
+        "boot-file-name": "ipxe.efi"
+      }
+    ]
+  }
 }
 ```
 
