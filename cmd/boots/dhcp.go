@@ -42,11 +42,12 @@ func (d *dhcpConfig) Set(s string) error {
 	if s == "" {
 		return errors.New("ipxe-script-url cannot be empty")
 	}
-	if u, err := url.Parse(s); err != nil {
+	u, err := url.Parse(s)
+	if err != nil {
 		return err
-	} else {
-		*d.handler.Netboot.IPXEScriptURL = *u
 	}
+	*d.handler.Netboot.IPXEScriptURL = *u
+
 	return nil
 }
 
@@ -82,7 +83,6 @@ func (d *dhcpConfig) addFlags(fs *flag.FlagSet) {
 
 		return nil
 	})
-
 }
 
 func autoDetectPublicIP() netip.Addr {

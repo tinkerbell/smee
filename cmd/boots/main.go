@@ -168,7 +168,7 @@ func formatErr(err, e error) error {
 	if err != nil {
 		err = fmt.Errorf("\n%w\n%w", e, err)
 	} else {
-		err = fmt.Errorf("\n%w\n", e)
+		err = fmt.Errorf("\n%w", e)
 	}
 
 	return err
