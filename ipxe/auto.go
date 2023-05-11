@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -100,7 +99,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 		s, err := h.defaultScript(span, hw, ip)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			err := errors.Wrap(err, fmt.Sprintf("boot script %q not found", name))
+			err := errors.Wrap(err, "error with default ipxe script")
 			h.Logger.Error(err, "error", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
@@ -171,12 +170,12 @@ func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string
 func (h *Handler) customScript(hw client.Discoverer, ip string) (string, error) {
 	mac := hw.GetMAC(net.ParseIP(ip))
 	if chain := hw.Hardware().IPXEURL(mac); chain != "" {
-		if !strings.HasPrefix(chain, "http") && !strings.HasPrefix(chain, "https") {
-			return "", errors.New("invalid custom chain URL")
-		}
 		u, err := url.Parse(chain)
 		if err != nil {
 			return "", errors.Wrap(err, "invalid custom chain URL")
+		}
+		if u.Scheme != "http" && u.Scheme != "https" {
+			return "", fmt.Errorf("invalid URL scheme: %v", u.Scheme)
 		}
 		c := Custom{Chain: u}
 		return GenerateTemplate(c, CustomScript)
