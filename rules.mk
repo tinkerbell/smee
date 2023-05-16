@@ -36,6 +36,12 @@ endif
 # parses tools.go and returns the tool name prefixed with bin/
 toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
 
+mocks: client/mock.go
+
+.PHONY: client/mock.go
+client/mock.go:
+	go run github.com/matryer/moq@v0.3.1 -fmt goimports -rm -out $@ -stub ./client Discoverer Hardware
+
 # build cli tools defined in tools.go
 $(toolsBins): go.mod go.sum tools.go
 $(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
