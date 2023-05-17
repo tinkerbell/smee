@@ -2,6 +2,7 @@ package ipxe
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -76,27 +77,46 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 	}
 }
 
+func customScriptFound(hw client.Discoverer, ip string) bool {
+	if hw == nil {
+		return false
+	}
+	mac := hw.GetMAC(net.ParseIP(ip))
+
+	return hw.Hardware().IPXEURL(mac) != "" || hw.Hardware().IPXEScript(mac) != ""
+}
+
 func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw client.Discoverer) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("boots.script_name", name))
 	var script []byte
+	// check if the custom script should be used
+	if customScriptFound(hw, ip) {
+		name = "custom.ipxe"
+	}
 	switch name {
 	case "auto.ipxe":
-		// check if the custom script should be used
-		if cs, err := h.customScript(hw, ip); err == nil {
-			script = []byte(cs)
-			break
-		}
 		s, err := h.defaultScript(span, hw, ip)
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			err := errors.Errorf("boot script %q not found", name)
+			w.WriteHeader(http.StatusInternalServerError)
+			err := errors.Wrap(err, "error with default ipxe script")
 			h.Logger.Error(err, "error", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
 			return
 		}
 		script = []byte(s)
+	case "custom.ipxe":
+		cs, err := h.customScript(hw, ip)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := errors.Wrap(err, "error with custom ipxe script")
+			h.Logger.Error(err, "error", "script", name)
+			span.SetStatus(codes.Error, err.Error())
+
+			return
+		}
+		script = []byte(cs)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		err := errors.Errorf("boot script %q not found", name)
@@ -116,18 +136,28 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 }
 
 func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string) (string, error) {
+	mac := hw.GetMAC(net.ParseIP(ip))
+	arch := hw.Hardware().HardwareArch(mac)
+	if arch == "" {
+		arch = "x86_64"
+	}
+	wID := mac.String()
+	if hw.Instance() != nil && hw.Instance().ID != "" {
+		wID = hw.Instance().ID
+	}
+
 	auto := Hook{
-		Arch:              hw.Hardware().HardwareArch(hw.GetMAC(net.ParseIP(ip))),
+		Arch:              arch,
 		Console:           "",
 		DownloadURL:       h.OSIEURL,
 		ExtraKernelParams: h.ExtraKernelParams,
 		Facility:          hw.Hardware().HardwareFacilityCode(),
-		HWAddr:            hw.GetMAC(net.ParseIP(ip)).String(),
+		HWAddr:            mac.String(),
 		SyslogHost:        h.PublicSyslogFQDN,
 		TinkerbellTLS:     h.TinkServerTLS,
 		TinkGRPCAuthority: h.TinkServerGRPCAddr,
-		VLANID:            hw.Hardware().GetVLANID(hw.GetMAC(net.ParseIP(ip))),
-		WorkerID:          hw.Instance().ID,
+		VLANID:            hw.Hardware().GetVLANID(mac),
+		WorkerID:          wID,
 	}
 	if sc := span.SpanContext(); sc.IsSampled() {
 		auto.TraceID = sc.TraceID().String()
@@ -143,6 +173,9 @@ func (h *Handler) customScript(hw client.Discoverer, ip string) (string, error) 
 		u, err := url.Parse(chain)
 		if err != nil {
 			return "", errors.Wrap(err, "invalid custom chain URL")
+		}
+		if u.Scheme != "http" && u.Scheme != "https" {
+			return "", fmt.Errorf("invalid URL scheme: %v", u.Scheme)
 		}
 		c := Custom{Chain: u}
 		return GenerateTemplate(c, CustomScript)

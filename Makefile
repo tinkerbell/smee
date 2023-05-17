@@ -7,7 +7,7 @@ boots: cmd/boots/boots ## Compile boots for host OS and Architecture
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 
-gen: $(generated_go_files) ## Generate go generate'd files
+gen: $(generated_go_files) mocks ## Generate go generate'd files
 
 tools: $(toolsBins) ## Builds cli tools defined in tools.go
 
