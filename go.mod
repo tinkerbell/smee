@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.2
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/packethost/dhcp4-go v0.0.0-20190402165401-39c137f31ad3
 	github.com/packethost/pkg v0.0.0-20210325161133-868299771ae0
@@ -27,8 +27,8 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/tools v0.1.12
-	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
-	google.golang.org/grpc v1.48.0 // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	google.golang.org/grpc v1.53.0 // indirect
 	k8s.io/apimachinery v0.23.0
 	k8s.io/client-go v0.23.0
 	knative.dev/pkg v0.0.0-20211119170723-a99300deff34 // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -83,7 +83,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
+	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
