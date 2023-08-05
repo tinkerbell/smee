@@ -92,17 +92,16 @@ func TestParser(t *testing.T) {
 
 func TestCustomUsageFunc(t *testing.T) {
 	defaultIP := detectPublicIPv4("")
-
 	want := fmt.Sprintf(`USAGE
   Run Boots server for provisioning
 
 FLAGS
-  -backend-file               [dhcp] enable the DHCP file backend (default "false")
-  -backend-file-path          [dhcp] DHCP file backend hardware file path
-  -backend-kube               [dhcp] enable DHCP kubernetes backend (default "true")
-  -backend-kube-api           The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
-  -backend-kube-namespace     An optional Kubernetes namespace override to query hardware data from.
-  -backend-kubeconfig         The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
+  -backend-file               [backend] enable the DHCP file backend (default "false")
+  -backend-file-path          [backend] the hardware yaml file path for the file backend
+  -backend-kube               [backend] enable the kubernetes backend (default "true")
+  -backend-kube-api           [backend] the Kubernetes API URL, used for in-cluster client construction. Only applies if the kube backend is enabled
+  -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from.
+  -backend-kubeconfig         [backend] the Kubernetes config file location. Only applies if the kube backend is enabled
   -dhcp                       [dhcp] enable DHCP server(receiver) (default "true")
   -dhcp-addr                  [dhcp] local IP and port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-http-ipxe-binary-ip   [dhcp] http ipxe binary server IP address to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
