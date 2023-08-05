@@ -30,16 +30,34 @@ USAGE
   Run Boots server for provisioning
 
 FLAGS
-  -dhcp-addr              IP and port to listen on for DHCP. (default "172.17.0.3:67")
-  -http-addr              local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "172.17.0.3:80")
-  -ipxe-enable-http       enable serving iPXE binaries via HTTP. (default "true")
-  -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
-  -ipxe-remote-http-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
-  -ipxe-remote-tftp-addr  remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
-  -ipxe-tftp-addr         local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
-  -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
-  -log-level              log level. (default "info")
-  -syslog-addr            IP and port to listen on for syslog messages. (default "172.17.0.3:514")
+  -backend-file               [backend] enable the DHCP file backend (default "false")
+  -backend-file-path          [backend] DHCP file backend hardware file path
+  -backend-kube               [backend] enable DHCP kubernetes backend (default "true")
+  -backend-kube-api           [backend] the Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.
+  -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from.
+  -backend-kubeconfig         [backend] the Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.
+  -dhcp                       [dhcp] enable DHCP server(receiver) (default "true")
+  -dhcp-addr                  [dhcp] local IP and port to listen on for DHCP requests (default "0.0.0.0:67")
+  -dhcp-http-ipxe-binary-ip   [dhcp] http ipxe binary server IP address to use in DHCP packets (default "http://172.17.0.3:8080/ipxe/")
+  -dhcp-http-ipxe-script-url  [dhcp] http ipxe script server URL to use in DHCP packets (default "http://172.17.0.3/auto.ipxe")
+  -dhcp-ip-for-packet         [dhcp] ip address to use in DHCP packets (opt 54, etc) (default "172.17.0.3")
+  -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.3")
+  -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.3:69")
+  -extra-kernel-args          [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script.
+  -http-addr                  [http] local IP and port to listen on for iPXE http script requests (default "172.17.0.3:80")
+  -http-ipxe-binary           [http] enable iPXE http binary server(receiver) (default "true")
+  -http-ipxe-script           [http] enable iPXE http script server(receiver) (default "true")
+  -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
+  -log-level                  log level (debug, info) (default "info")
+  -osie-url                   [http] url where OSIE(Hook) images are located.
+  -syslog                     [syslog] enable syslog server(receiver) (default "true")
+  -syslog-addr                [syslog] local IP and port to listen on for syslog messages (default "172.17.0.3:514")
+  -tftp                       [tftp] enable iPXE tftp binary server(receiver) (default "true")
+  -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "172.17.0.3:69")
+  -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
+  -tink-server                [http] ip:port for the Tink server.
+  -tink-server-tls            [http] use TLS for Tink server. (default "false")
+  -trusted-proxies            [http] comma separated list of trusted proxies
 ```
 
 You can use NixOS shell, which will have Go and others

@@ -99,12 +99,12 @@ func dhcpFlags(c *config, fs *flag.FlagSet) {
 }
 
 func backendFlags(c *config, fs *flag.FlagSet) {
-	fs.BoolVar(&c.backends.file.Enabled, "backend-file", false, "[dhcp] enable the DHCP file backend")
-	fs.StringVar(&c.backends.file.FilePath, "backend-file-path", "", "[dhcp] DHCP file backend hardware file path")
-	fs.BoolVar(&c.backends.kubernetes.Enabled, "backend-kube", true, "[dhcp] enable DHCP kubernetes backend")
-	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kubeconfig", "", "The Kubernetes config file location. Only applies if DATA_MODEL_VERSION=kubernetes.")
-	fs.StringVar(&c.backends.kubernetes.APIURL, "backend-kube-api", "", "The Kubernetes API URL, used for in-cluster client construction. Only applies if DATA_MODEL_VERSION=kubernetes.")
-	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "An optional Kubernetes namespace override to query hardware data from.")
+	fs.BoolVar(&c.backends.file.Enabled, "backend-file", false, "[backend] enable the DHCP file backend")
+	fs.StringVar(&c.backends.file.FilePath, "backend-file-path", "", "[backend] the hardware yaml file path for the file backend")
+	fs.BoolVar(&c.backends.kubernetes.Enabled, "backend-kube", true, "[backend] enable the kubernetes backend")
+	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kubeconfig", "", "[backend] the Kubernetes config file location. Only applies if the kube backend is enabled")
+	fs.StringVar(&c.backends.kubernetes.APIURL, "backend-kube-api", "", "[backend] the Kubernetes API URL, used for in-cluster client construction. Only applies if the kube backend is enabled")
+	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "[backend] an optional Kubernetes namespace override to query hardware data from.")
 }
 
 func setFlags(c *config, fs *flag.FlagSet) {
