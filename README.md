@@ -24,7 +24,7 @@ Build/Run Boots
 # make the binary
 make boots
 # run boots
-./cmd/boots/boots -h
+./boots -h
 
 USAGE
   Run Boots server for provisioning
@@ -76,7 +76,7 @@ export BOOTS_STANDALONE_JSON=./test/standalone-hardware.json
 
 # to run on your laptop as a regular user
 # DHCP won't work but useful for smoke testing and iterating on http/tftp/syslog
-./cmd/boots/boots \
+./boots \
 	-http-addr 127.0.0.1:9000 \
 	-syslog-addr 127.0.0.1:9001 \
 	-tftp-addr 127.0.0.01:9002 \
@@ -85,5 +85,5 @@ export BOOTS_STANDALONE_JSON=./test/standalone-hardware.json
 # or run it in a container
 # NOTE: not sure the NET_ADMIN cap is necessary
 docker run -ti --cap-add=NET_ADMIN --volume $(pwd):/boots alpine:3.14
-/boots/cmd/boots -dhcp-addr 0.0.0.0:67
+/boots -dhcp-addr 0.0.0.0:67
 ```

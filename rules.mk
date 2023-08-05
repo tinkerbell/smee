@@ -20,11 +20,11 @@ GitRev := $(shell git rev-parse --short HEAD)
 SOURCE_DATE_EPOCH := $(shell git log -1 --pretty=%ct)
 export SOURCE_DATE_EPOCH
 
-crossbinaries := cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
-cmd/boots/boots-linux-amd64: FLAGS=GOARCH=amd64
-cmd/boots/boots-linux-arm64: FLAGS=GOARCH=arm64
-cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64: boots
-	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+crossbinaries := boots-linux-amd64 boots-linux-arm64
+boots-linux-amd64: FLAGS=GOARCH=amd64
+boots-linux-arm64: FLAGS=GOARCH=arm64
+boots-linux-amd64 boots-linux-arm64: boots
+	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ .
 
 ifeq ($(origin GOBIN), undefined)
 GOBIN := ${PWD}/bin
@@ -35,12 +35,6 @@ endif
 
 # parses tools.go and returns the tool name prefixed with bin/
 toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
-
-mocks: client/mock.go
-
-.PHONY: client/mock.go
-client/mock.go:
-	go run github.com/matryer/moq@v0.3.1 -fmt goimports -rm -out $@ -stub ./client Discoverer Hardware
 
 # build cli tools defined in tools.go
 $(toolsBins): go.mod go.sum tools.go
@@ -55,15 +49,14 @@ generated_go_files := \
 # go generate
 go_generate: $(generated_go_files)
 $(filter %_string.go,$(generated_go_files)): bin/stringer
-$(filter %_mock.go,$(generated_go_files)): bin/mockgen
 syslog/facility_string.go: syslog/message.go
 syslog/severity_string.go: syslog/message.go
 $(generated_go_files): bin/goimports
 	go generate -run="$(@F)" ./...
 	goimports -w $@
 
-cmd/boots/boots: syslog/facility_string.go syslog/severity_string.go cleanup
-	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+boots: syslog/facility_string.go syslog/severity_string.go cleanup
+	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ .
 
 cleanup:
-	rm -f cmd/boots/boots cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
+	rm -f boots boots-linux-amd64 boots-linux-arm64

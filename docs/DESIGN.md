@@ -88,7 +88,7 @@ The contents of the auto.ipxe script is determined through the following steps:
 
 To register an Installer, at a minimum, the following is required
 
-1. A [blank import](https://github.com/golang/go/wiki/CodeReviewComments#import-blank) for your Installer should be added to `cmd/boots/main.go`
+1. A [blank import](https://github.com/golang/go/wiki/CodeReviewComments#import-blank) for your Installer should be added to `main.go`
 2. Your Installer pkg needs an `func init()` that calls `job.RegisterSlug("InstallerName", funcThatReturnsAnIPXEScript)`
 
 ### Testing Installers

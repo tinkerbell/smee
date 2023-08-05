@@ -1,4 +1,4 @@
-package ipxe
+package script
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/boots/client"
 	"github.com/tinkerbell/boots/metrics"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -20,12 +19,28 @@ import (
 
 type Handler struct {
 	Logger             logr.Logger
-	Finder             client.HardwareFinder
+	Finder             Finder
 	OSIEURL            string
 	ExtraKernelParams  []string
 	PublicSyslogFQDN   string
 	TinkServerTLS      bool
 	TinkServerGRPCAddr string
+}
+
+type Data struct {
+	AllowNetboot  bool // If true, the client will be provided netboot options in the DHCP offer/ack.
+	Console       string
+	MACAddress    net.HardwareAddr
+	Arch          string
+	VLANID        string
+	WorkflowID    string
+	Facility      string
+	IPXEScript    string
+	IPXEScriptURL *url.URL
+}
+
+type Finder interface {
+	Find(context.Context, net.IP) (Data, error)
 }
 
 func (h *Handler) HandlerFunc() http.HandlerFunc {
@@ -52,51 +67,36 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		}
 		ip := net.ParseIP(host)
 		ctx := r.Context()
-		// get hardware record
-		hw, err := h.Finder.ByIP(ctx, ip)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			h.Logger.Error(err, "no job found for client address", "client", r.RemoteAddr)
-
-			return
-		}
+		// Should we serve a custom ipxe script?
 		// This gates serving PXE file by
 		// 1. the existence of a hardware record in tink server
 		// AND
 		// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 		// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 		// without a tink workflow present.
-		if !hw.Hardware().HardwareAllowPXE(hw.GetMAC(ip)) {
+		hw, err := h.Finder.Find(ctx, ip)
+		if err != nil || !hw.AllowNetboot {
 			w.WriteHeader(http.StatusNotFound)
-			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe; allow_pxe: false", "client", r.RemoteAddr)
+			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
 
 			return
 		}
 
-		h.serveBootScript(ctx, w, path.Base(r.URL.Path), ip.String(), hw)
+		h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
 	}
 }
 
-func customScriptFound(hw client.Discoverer, ip string) bool {
-	if hw == nil {
-		return false
-	}
-	mac := hw.GetMAC(net.ParseIP(ip))
-
-	return hw.Hardware().IPXEURL(mac) != "" || hw.Hardware().IPXEScript(mac) != ""
-}
-
-func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, ip string, hw client.Discoverer) {
+func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw Data) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("boots.script_name", name))
 	var script []byte
 	// check if the custom script should be used
-	if customScriptFound(hw, ip) {
+	if hw.IPXEScriptURL != nil || hw.IPXEScript != "" {
 		name = "custom.ipxe"
 	}
 	switch name {
 	case "auto.ipxe":
-		s, err := h.defaultScript(span, hw, ip)
+		s, err := h.defaultScript(span, hw)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			err := errors.Wrap(err, "error with default ipxe script")
@@ -107,7 +107,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 		}
 		script = []byte(s)
 	case "custom.ipxe":
-		cs, err := h.customScript(hw, ip)
+		cs, err := h.customScript(hw)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			err := errors.Wrap(err, "error with custom ipxe script")
@@ -135,15 +135,16 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 	}
 }
 
-func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string) (string, error) {
-	mac := hw.GetMAC(net.ParseIP(ip))
-	arch := hw.Hardware().HardwareArch(mac)
+func (h *Handler) defaultScript(span trace.Span, hw Data) (string, error) {
+	mac := hw.MACAddress
+	arch := hw.Arch
 	if arch == "" {
 		arch = "x86_64"
 	}
+	// The worker ID will default to the mac address or use the one specified.
 	wID := mac.String()
-	if hw.Instance() != nil && hw.Instance().ID != "" {
-		wID = hw.Instance().ID
+	if hw.WorkflowID != "" {
+		wID = hw.WorkflowID
 	}
 
 	auto := Hook{
@@ -151,12 +152,12 @@ func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string
 		Console:           "",
 		DownloadURL:       h.OSIEURL,
 		ExtraKernelParams: h.ExtraKernelParams,
-		Facility:          hw.Hardware().HardwareFacilityCode(),
+		Facility:          hw.Facility,
 		HWAddr:            mac.String(),
 		SyslogHost:        h.PublicSyslogFQDN,
 		TinkerbellTLS:     h.TinkServerTLS,
 		TinkGRPCAuthority: h.TinkServerGRPCAddr,
-		VLANID:            hw.Hardware().GetVLANID(mac),
+		VLANID:            hw.VLANID,
 		WorkerID:          wID,
 	}
 	if sc := span.SpanContext(); sc.IsSampled() {
@@ -167,20 +168,15 @@ func (h *Handler) defaultScript(span trace.Span, hw client.Discoverer, ip string
 }
 
 // customScript returns the custom script or chain URL if defined in the hardware data otherwise an error.
-func (h *Handler) customScript(hw client.Discoverer, ip string) (string, error) {
-	mac := hw.GetMAC(net.ParseIP(ip))
-	if chain := hw.Hardware().IPXEURL(mac); chain != "" {
-		u, err := url.Parse(chain)
-		if err != nil {
-			return "", errors.Wrap(err, "invalid custom chain URL")
+func (h *Handler) customScript(hw Data) (string, error) {
+	if chain := hw.IPXEScriptURL; chain != nil && chain.String() != "" {
+		if chain.Scheme != "http" && chain.Scheme != "https" {
+			return "", fmt.Errorf("invalid URL scheme: %v", chain.Scheme)
 		}
-		if u.Scheme != "http" && u.Scheme != "https" {
-			return "", fmt.Errorf("invalid URL scheme: %v", u.Scheme)
-		}
-		c := Custom{Chain: u}
+		c := Custom{Chain: chain}
 		return GenerateTemplate(c, CustomScript)
 	}
-	if script := hw.Hardware().IPXEScript(mac); script != "" {
+	if script := hw.IPXEScript; script != "" {
 		c := Custom{Script: script}
 		return GenerateTemplate(c, CustomScript)
 	}

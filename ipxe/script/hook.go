@@ -1,4 +1,4 @@
-package ipxe
+package script
 
 // HookScript is the default iPXE script for loading Hook.
 var HookScript = `#!ipxe

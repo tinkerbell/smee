@@ -14,6 +14,6 @@
 # start boots and explicitly bind DHCP to broadcast address otherwise
 # boots will start up fine but not see the DHCP requests
 # TODO: probably move boots to just use the envvars for otel
-/usr/bin/boots -dhcp-addr 0.0.0.0:67 &
+/usr/bin/boots &
 
 sleep 100000
