@@ -29,23 +29,14 @@ services:
         ipv4_address: 192.168.99.42
     mac_address: 02:00:00:00:00:01
     environment:
-      DATA_MODEL_VERSION: standalone
-      API_CONSUMER_TOKEN: none
-      API_AUTH_TOKEN: none
-      FACILITY_CODE: onprem
-      MIRROR_HOST: 192.168.99.99
-      PUBLIC_FQDN: 192.168.99.100
-      DOCKER_REGISTRY: 192.168.99.101:5000
-      REGISTRY_USERNAME: admin
-      REGISTRY_PASSWORD: secret
-      TINKERBELL_GRPC_AUTHORITY: tinkerbell.tinkerbell:42113
-      TINKERBELL_CERT_URL: http://tinkerbell.tinkerbell:42114/cert
-      BOOTS_STANDALONE_JSON: /test-standalone-hardware.json
+      BOOTS_TINK_SERVER: tinkerbell.tinkerbell:42113
+      BOOTS_BACKEND_FILE: true
+      BOOTS_BACKEND_FILE_PATH: /hardware.yaml
+      BOOTS_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
-      BOOTS_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
     volumes:
-      - ./test/standalone-hardware.json:/test-standalone-hardware.json
+      - ./test/hardware.yaml:/hardware.yaml
       - ./test/start-boots.sh:/start-boots.sh
     cap_add:
       - NET_ADMIN

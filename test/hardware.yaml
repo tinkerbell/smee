@@ -1,0 +1,17 @@
+---
+02:00:00:00:00:ff:
+  ipAddress: "192.168.99.43"
+  subnetMask: "255.255.255.0"
+  defaultGateway: "192.168.99.1"
+  nameServers:
+    - "8.8.8.8"
+  hostname: "boots-test-client"
+  domainName: "example.com"
+  broadcastAddress: "192.168.2.255"
+  ntpServers:
+    - "132.163.96.2"
+  leaseTime: 86400
+  domainSearch:
+    - "example.com"
+  netboot:
+    allowPxe: true

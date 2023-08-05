@@ -3,8 +3,8 @@
 *.test
 .idea*/**
 /bin/
-/cmd/boots/boots
-/cmd/boots/boots-*-*
+/boots
+boots-*-*
 coverage.txt
 .vscode
 
