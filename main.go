@@ -18,7 +18,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/backend"
 	"github.com/tinkerbell/boots/ipxe/bhttp"
 	"github.com/tinkerbell/boots/ipxe/script"
 	"github.com/tinkerbell/boots/metrics"
@@ -91,8 +90,8 @@ type dhcpConfig struct {
 }
 
 type dhcpBackends struct {
-	file       backend.File
-	kubernetes backend.Kube
+	file       File
+	kubernetes Kube
 }
 
 func main() {

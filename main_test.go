@@ -7,26 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/boots/backend"
 )
-
-/*
-
-	ipxe: ipxedust.Command{
-		TFTPAddr:             "0.0.0.0:69",
-		TFTPTimeout:          time.Second * 5,
-		EnableTFTPSinglePort: false,
-	},
-	ipxeTFTPEnabled:    true,
-	ipxeHTTPEnabled:    true,
-	ipxeRemoteTFTPAddr: "192.168.2.225",
-	ipxeRemoteHTTPAddr: "192.168.2.225:8080",
-	httpAddr:           "192.168.2.225:8080",
-	dhcpAddr:           "0.0.0.0:67",
-	syslogAddr:         "0.0.0.0:514",
-	logLevel:           "info",
-	osieURL:            "https://tinkerbell.org/hook/",
-*/
 
 func TestParser(t *testing.T) {
 	want := config{
@@ -57,8 +38,8 @@ func TestParser(t *testing.T) {
 		},
 		logLevel: "info",
 		backends: dhcpBackends{
-			file:       backend.File{},
-			kubernetes: backend.Kube{Enabled: true},
+			file:       File{},
+			kubernetes: Kube{Enabled: true},
 		},
 	}
 	got := config{}
