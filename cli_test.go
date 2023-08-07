@@ -77,34 +77,34 @@ func TestCustomUsageFunc(t *testing.T) {
   Run Boots server for provisioning
 
 FLAGS
-  -backend-file               [backend] enable the DHCP file backend (default "false")
+  -log-level                  log level (debug, info) (default "info")
   -backend-file-path          [backend] the hardware yaml file path for the file backend
-  -backend-kube               [backend] enable the kubernetes backend (default "true")
-  -backend-kube-api           [backend] the Kubernetes API URL, used for in-cluster client construction. Only applies if the kube backend is enabled
-  -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from.
-  -backend-kubeconfig         [backend] the Kubernetes config file location. Only applies if the kube backend is enabled
-  -dhcp                       [dhcp] enable DHCP server(receiver) (default "true")
+  -backend-kube-api           [backend] the Kubernetes API URL, used for in-cluster client construction, kube backend only
+  -backend-kube-enabled       [backend] enable the kubernetes backend for DHCP and the HTTP iPXE script (default "true")
+  -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
+  -backend-kubeconfig         [backend] the Kubernetes config file location, kube backend only
+  -backend-file-enabled       [backend] enable the file backend for DHCP and the HTTP iPXE script (default "false")
   -dhcp-addr                  [dhcp] local IP and port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-http-ipxe-binary-ip   [dhcp] http ipxe binary server IP address to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
   -dhcp-http-ipxe-script-url  [dhcp] http ipxe script server URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
   -dhcp-ip-for-packet         [dhcp] ip address to use in DHCP packets (opt 54, etc) (default "%[1]v")
   -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
   -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v:69")
-  -extra-kernel-args          [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script.
+  -dhcp-enabled               [dhcp] enable DHCP server (default "true")
   -http-addr                  [http] local IP and port to listen on for iPXE http script requests (default "%[1]v:80")
-  -http-ipxe-binary           [http] enable iPXE http binary server(receiver) (default "true")
-  -http-ipxe-script           [http] enable iPXE http script server(receiver) (default "true")
-  -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
-  -log-level                  log level (debug, info) (default "info")
-  -osie-url                   [http] url where OSIE(Hook) images are located.
-  -syslog                     [syslog] enable syslog server(receiver) (default "true")
-  -syslog-addr                [syslog] local IP and port to listen on for syslog messages (default "%[1]v:514")
-  -tftp                       [tftp] enable iPXE tftp binary server(receiver) (default "true")
-  -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "%[1]v:69")
-  -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
-  -tink-server                [http] ip:port for the Tink server.
-  -tink-server-tls            [http] use TLS for Tink server. (default "false")
+  -tink-server                [http] ip:port for the Tink server
+  -http-ipxe-script-enabled   [http] enable iPXE http script server) (default "true")
   -trusted-proxies            [http] comma separated list of trusted proxies
+  -extra-kernel-args          [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
+  -osie-url                   [http] url where OSIE(Hook) images are located
+  -tink-server-tls            [http] use TLS for Tink server (default "false")
+  -http-ipxe-binary-enabled   [http] enable iPXE http binary server (default "true")
+  -syslog-enabled             [syslog] enable syslog server(receiver) (default "true")
+  -syslog-addr                [syslog] local IP and port to listen on for syslog messages (default "%[1]v:514")
+  -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
+  -tftp-enbled                [tftp] enable iPXE tftp binary server) (default "true")
+  -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
+  -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "%[1]v:69")
 `, defaultIP)
 
 	c := &config{}
