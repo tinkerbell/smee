@@ -53,12 +53,10 @@ func customUsageFunc(c *ffcli.Command) string {
 			flags = append(flags, f1)
 		})
 
-		sort.Slice(flags, func(i, j int) bool {
+		sort.SliceStable(flags, func(i, j int) bool {
 			// sort by the service name between the brackets "[]" found in the usage string.
 			r := regexp.MustCompile(`^\[(.*?)\]`)
-			iflag := r.FindString(flags[i].usage)
-			jflag := r.FindString(flags[j].usage)
-			return iflag < jflag
+			return r.FindString(flags[i].usage) < r.FindString(flags[j].usage)
 		})
 		for _, elem := range flags {
 			if elem.defaultValue != "" {
@@ -120,7 +118,7 @@ func backendFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.backends.file.Enabled, "backend-file-enabled", false, "[backend] enable the file backend for DHCP and the HTTP iPXE script")
 	fs.StringVar(&c.backends.file.FilePath, "backend-file-path", "", "[backend] the hardware yaml file path for the file backend")
 	fs.BoolVar(&c.backends.kubernetes.Enabled, "backend-kube-enabled", true, "[backend] enable the kubernetes backend for DHCP and the HTTP iPXE script")
-	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kubeconfig", "", "[backend] the Kubernetes config file location, kube backend only")
+	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kube-config", "", "[backend] the Kubernetes config file location, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.APIURL, "backend-kube-api", "", "[backend] the Kubernetes API URL, used for in-cluster client construction, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "[backend] an optional Kubernetes namespace override to query hardware data from, kube backend only")
 }
