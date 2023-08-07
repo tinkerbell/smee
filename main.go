@@ -188,17 +188,19 @@ func main() {
 		handlers["/"] = jh.HandlerFunc()
 	}
 
-	// start the http server for ipxe binaries and scripts
-	httpServer := &bhttp.Config{
-		GitRev:         GitRev,
-		StartTime:      startTime,
-		Logger:         log,
-		TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
+	if len(handlers) > 0 {
+		// start the http server for ipxe binaries and scripts
+		httpServer := &bhttp.Config{
+			GitRev:         GitRev,
+			StartTime:      startTime,
+			Logger:         log,
+			TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
+		}
+		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
+		g.Go(func() error {
+			return httpServer.ServeHTTP(ctx, cfg.ipxeHTTPScript.bindAddr, handlers)
+		})
 	}
-	log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
-	g.Go(func() error {
-		return httpServer.ServeHTTP(ctx, cfg.ipxeHTTPScript.bindAddr, handlers)
-	})
 
 	// dhcp server
 	if cfg.dhcp.enabled {
