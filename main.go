@@ -123,13 +123,13 @@ func main() {
 		})
 	}
 
-	tftpServer := &ipxedust.Server{
-		Log:                  log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
-		HTTP:                 ipxedust.ServerSpec{Disabled: true}, // disabled because below we use the http handlerfunc instead.
-		EnableTFTPSinglePort: true,
-	}
 	// tftp
 	if cfg.tftp.enabled {
+		tftpServer := &ipxedust.Server{
+			Log:                  log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
+			HTTP:                 ipxedust.ServerSpec{Disabled: true}, // disabled because below we use the http handlerfunc instead.
+			EnableTFTPSinglePort: true,
+		}
 		tftpServer.EnableTFTPSinglePort = true
 		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err != nil {
 			log.Error(err, "invalid bind address")
@@ -152,6 +152,7 @@ func main() {
 	handlers := map[string]http.HandlerFunc{}
 	// http ipxe binaries
 	if cfg.ipxeHTTPBinary.enabled {
+		// serve ipxe binaries from the "/ipxe/" URI.
 		handlers["/ipxe/"] = ihttp.Handler{
 			Log:   log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
 			Patch: []byte(cfg.tftp.ipxeScriptPatch),
@@ -160,31 +161,32 @@ func main() {
 
 	// http ipxe script
 	if cfg.ipxeHTTPScript.enabled {
-		f := static{}
+		i := ipxeScript{}
 		switch {
 		case cfg.backends.file.Enabled:
 			b, err := cfg.backends.file.Backend(ctx, log)
 			if err != nil {
 				panic(fmt.Errorf("failed to run file backend: %w", err))
 			}
-			f.backend = b
+			i.backend = b
 		default: // default backend is kubernetes
 			b, err := cfg.backends.kubernetes.Backend(ctx)
 			if err != nil {
 				panic(fmt.Errorf("failed to run kubernetes backend: %w", err))
 			}
-			f.backend = b
+			i.backend = b
 		}
 
 		jh := script.Handler{
 			Logger:             log,
-			Finder:             f,
+			Finder:             i,
 			OSIEURL:            cfg.ipxeHTTPScript.hookURL,
 			ExtraKernelParams:  strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
 			PublicSyslogFQDN:   cfg.dhcp.syslogIP,
 			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
 			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
 		}
+		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
 	}
 
@@ -283,11 +285,16 @@ func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Liste
 	return &dhcp.Listener{Addr: bindAddr}, dh, nil
 }
 
-type static struct {
+// ipxeScript is is needed to be able to translate the handler.BackendReader
+// returned data to the script.Data struct.
+type ipxeScript struct {
 	backend handler.BackendReader
 }
 
-func (s static) Find(ctx context.Context, ip net.IP) (script.Data, error) {
+// Find implements the script.Finder interface.
+// It uses the handler.BackendReader to get the (hardware) data and then
+// translates it to the script.Data struct.
+func (s ipxeScript) Find(ctx context.Context, ip net.IP) (script.Data, error) {
 	d, n, err := s.backend.GetByIP(ctx, ip)
 	if err != nil {
 		return script.Data{}, err
