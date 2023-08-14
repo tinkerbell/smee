@@ -3,7 +3,7 @@ all: help
 -include lint.mk
 -include rules.mk
 
-boots: boots ## Compile boots for host OS and Architecture
+build: boots ## Compile boots for host OS and Architecture
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 
