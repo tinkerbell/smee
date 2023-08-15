@@ -103,7 +103,7 @@ FLAGS
   -syslog-enabled             [syslog] enable syslog server(receiver) (default "true")
   -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
   -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "%[1]v:69")
-  -tftp-enbled                [tftp] enable iPXE tftp binary server) (default "true")
+  -tftp-enabled               [tftp] enable iPXE tftp binary server) (default "true")
   -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
 `, defaultIP)
 
