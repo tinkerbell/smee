@@ -84,7 +84,7 @@ func syslogFlags(c *config, fs *flag.FlagSet) {
 }
 
 func tftpFlags(c *config, fs *flag.FlagSet) {
-	fs.BoolVar(&c.tftp.enabled, "tftp-enbled", true, "[tftp] enable iPXE tftp binary server)")
+	fs.BoolVar(&c.tftp.enabled, "tftp-enabled", true, "[tftp] enable iPXE tftp binary server)")
 	fs.StringVar(&c.tftp.bindAddr, "tftp-addr", detectPublicIPv4(":69"), "[tftp] local IP and port to listen on for iPXE tftp binary requests")
 	fs.DurationVar(&c.tftp.timeout, "tftp-timeout", time.Second*5, "[tftp] iPXE tftp binary server requests timeout")
 	fs.StringVar(&c.tftp.ipxeScriptPatch, "ipxe-script-patch", "", "[tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP")
