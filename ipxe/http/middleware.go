@@ -1,4 +1,4 @@
-package bhttp
+package http
 
 import (
 	"net"
