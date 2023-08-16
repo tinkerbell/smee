@@ -1,12 +1,12 @@
 package http
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 type loggingMiddleware struct {
@@ -50,7 +50,7 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 	}
 	n, err := w.ResponseWriter.Write(b)
 
-	return n, errors.Wrap(err, "writing response")
+	return n, fmt.Errorf("writing response: %w", err)
 }
 
 func (w *responseWriter) WriteHeader(code int) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/netip"
@@ -15,7 +16,6 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/boots/ipxe/http"
 	"github.com/tinkerbell/boots/ipxe/script"
 	"github.com/tinkerbell/boots/metrics"
@@ -131,7 +131,7 @@ func main() {
 		tftpServer.EnableTFTPSinglePort = true
 		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err != nil {
 			log.Error(err, "invalid bind address")
-			panic(errors.Wrap(err, "invalid bind address"))
+			panic(fmt.Errorf("invalid bind address: %w", err))
 		} else {
 			tftpServer.TFTP = ipxedust.ServerSpec{
 				Disabled: false,
@@ -209,7 +209,7 @@ func main() {
 		listener, dh, err := cfg.dhcpListener(ctx, log)
 		if err != nil {
 			log.Error(err, "failed to create dhcp listener")
-			panic(errors.Wrap(err, "failed to create dhcp listener"))
+			panic(fmt.Errorf("failed to create dhcp listener: %w", err))
 		}
 		log.Info("starting dhcp server", "bind_addr", cfg.dhcp.bindAddr)
 		g.Go(func() error {

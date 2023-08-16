@@ -3,13 +3,14 @@ package syslog
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 var syslogMessagePool = sync.Pool{
@@ -32,12 +33,12 @@ func StartReceiver(ctx context.Context, logger logr.Logger, laddr string, parser
 
 	addr, err := net.ResolveUDPAddr("udp4", laddr)
 	if err != nil {
-		return errors.Wrap(err, "resolve syslog udp listen address")
+		return fmt.Errorf("resolve syslog udp listen address: %w", err)
 	}
 
 	c, err := net.ListenUDP("udp4", addr)
 	if err != nil {
-		return errors.Wrap(err, "listen on syslog udp address")
+		return fmt.Errorf("listen on syslog udp address: %w", err)
 	}
 
 	s := &Receiver{
@@ -95,7 +96,7 @@ func (r *Receiver) run(ctx context.Context) {
 		}
 		n, from, err := r.c.ReadFromUDP(msg.buf[:])
 		if err != nil {
-			err = errors.Wrap(err, "error reading udp message")
+			err = fmt.Errorf("error reading udp message: %w", err)
 			if _, ok := err.(net.Error); ok {
 				r.Logger.Error(err, "error reading udp message")
 

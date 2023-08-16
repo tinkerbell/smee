@@ -4,6 +4,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/packethost/xff"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -83,7 +83,6 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		err = errors.Wrap(err, "listen and serve http")
 		s.Logger.Error(err, "listen and serve http")
 		return err
 	}
@@ -105,7 +104,7 @@ func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFun
 		}
 		if err := json.NewEncoder(w).Encode(&res); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			s.Logger.Error(errors.Wrap(err, "marshaling healthcheck json"), "marshaling healthcheck json")
+			s.Logger.Error(err, "marshaling healthcheck json")
 		}
 	}
 }
