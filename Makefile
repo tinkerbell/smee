@@ -9,8 +9,6 @@ crosscompile: $(crossbinaries) ## Compile boots for all architectures
 
 gen: $(generated_go_files) ## Generate go generate'd files
 
-tools: $(toolsBins) ## Builds cli tools defined in tools.go
-
 IMAGE_TAG ?= boots:latest
 image: boots-linux-amd64 ## Build docker image
 	docker build -t $(IMAGE_TAG) .
@@ -24,10 +22,10 @@ coverage: test ## Show test coverage
 vet: ## Run go vet
 	go vet ./...
 
-goimports: bin/goimports gen ## Run goimports
-	goimports -w .
+goimports: gen ## Run goimports
+	$(GOIMPORTS) -w .
 
-ci-checks: bin/goimports .github/workflows/ci-checks.sh shell.nix gen
+ci-checks: .github/workflows/ci-checks.sh shell.nix gen
 	./.github/workflows/ci-checks.sh
 
 ci: ci-checks coverage goimports lint vet ## Runs all the same validations and tests that run in CI
