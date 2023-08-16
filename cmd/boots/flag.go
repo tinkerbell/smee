@@ -80,38 +80,38 @@ func countFlags(fs *flag.FlagSet) (n int) {
 
 func syslogFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.syslog.enabled, "syslog-enabled", true, "[syslog] enable syslog server(receiver)")
-	fs.StringVar(&c.syslog.bindAddr, "syslog-addr", detectPublicIPv4(":514"), "[syslog] local IP and port to listen on for syslog messages")
+	fs.StringVar(&c.syslog.bindAddr, "syslog-addr", detectPublicIPv4(":514"), "[syslog] local IP:Port to listen on for syslog messages")
 }
 
 func tftpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.tftp.enabled, "tftp-enabled", true, "[tftp] enable iPXE tftp binary server)")
-	fs.StringVar(&c.tftp.bindAddr, "tftp-addr", detectPublicIPv4(":69"), "[tftp] local IP and port to listen on for iPXE tftp binary requests")
+	fs.StringVar(&c.tftp.bindAddr, "tftp-addr", detectPublicIPv4(":69"), "[tftp] local IP:Port to listen on for iPXE tftp binary requests")
 	fs.DurationVar(&c.tftp.timeout, "tftp-timeout", time.Second*5, "[tftp] iPXE tftp binary server requests timeout")
 	fs.StringVar(&c.tftp.ipxeScriptPatch, "ipxe-script-patch", "", "[tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP")
 }
 
 func ipxeHTTPBinaryFlags(c *config, fs *flag.FlagSet) {
-	fs.BoolVar(&c.ipxeHTTPBinary.enabled, "http-ipxe-binary-enabled", true, "[http] enable iPXE http binary server")
+	fs.BoolVar(&c.ipxeHTTPBinary.enabled, "http-ipxe-binary-enabled", true, "[http] enable iPXE HTTP binary server")
 }
 
 func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
-	fs.BoolVar(&c.ipxeHTTPScript.enabled, "http-ipxe-script-enabled", true, "[http] enable iPXE http script server)")
-	fs.StringVar(&c.ipxeHTTPScript.bindAddr, "http-addr", detectPublicIPv4(":80"), "[http] local IP and port to listen on for iPXE http script requests")
+	fs.BoolVar(&c.ipxeHTTPScript.enabled, "http-ipxe-script-enabled", true, "[http] enable iPXE HTTP script server")
+	fs.StringVar(&c.ipxeHTTPScript.bindAddr, "http-addr", detectPublicIPv4(":80"), "[http] local IP:Port to listen on for iPXE HTTP script requests")
 	fs.StringVar(&c.ipxeHTTPScript.extraKernelArgs, "extra-kernel-args", "", "[http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script")
-	fs.StringVar(&c.ipxeHTTPScript.trustedProxies, "trusted-proxies", "", "[http] comma separated list of trusted proxies")
-	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] url where OSIE(Hook) images are located")
-	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] ip:port for the Tink server")
+	fs.StringVar(&c.ipxeHTTPScript.trustedProxies, "trusted-proxies", "", "[http] comma separated list of trusted proxies in CIDR notation")
+	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] URL where OSIE(Hook) images are located")
+	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")
 }
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.dhcp.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP server")
-	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP and port to listen on for DHCP requests")
-	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(""), "[dhcp] ip address to use in DHCP packets (opt 54, etc)")
+	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP:Port to listen on for DHCP requests")
+	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(""), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")
 	fs.StringVar(&c.dhcp.syslogIP, "dhcp-syslog-ip", detectPublicIPv4(""), "[dhcp] syslog server IP address to use in DHCP packets (opt 7)")
 	fs.StringVar(&c.dhcp.tftpIP, "dhcp-tftp-ip", detectPublicIPv4(":69"), "[dhcp] tftp server IP address to use in DHCP packets (opt 66, etc)")
-	fs.StringVar(&c.dhcp.httpIpxeBinaryIP, "dhcp-http-ipxe-binary-ip", "http://"+detectPublicIPv4(":8080/ipxe/"), "[dhcp] http ipxe binary server IP address to use in DHCP packets")
-	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "http://"+detectPublicIPv4("/auto.ipxe"), "[dhcp] http ipxe script server URL to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeBinaryIP, "dhcp-http-ipxe-binary-ip", "http://"+detectPublicIPv4(":8080/ipxe/"), "[dhcp] HTTP ipxe binary server IP address to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "http://"+detectPublicIPv4("/auto.ipxe"), "[dhcp] HTTP ipxe script server URL to use in DHCP packets")
 }
 
 func backendFlags(c *config, fs *flag.FlagSet) {
