@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
+	"github.com/tinkerbell/dhcp/handler"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -19,7 +20,7 @@ import (
 
 type Handler struct {
 	Logger             logr.Logger
-	Finder             Finder
+	Backend            handler.BackendReader
 	OSIEURL            string
 	ExtraKernelParams  []string
 	PublicSyslogFQDN   string
@@ -37,6 +38,28 @@ type Data struct {
 	Facility      string
 	IPXEScript    string
 	IPXEScriptURL *url.URL
+}
+
+// Find implements the script.Finder interface.
+// It uses the handler.BackendReader to get the (hardware) data and then
+// translates it to the script.Data struct.
+func GetByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (Data, error) {
+	d, n, err := br.GetByIP(ctx, ip)
+	if err != nil {
+		return Data{}, err
+	}
+
+	return Data{
+		AllowNetboot:  n.AllowNetboot,
+		Console:       "",
+		MACAddress:    d.MACAddress,
+		Arch:          d.Arch,
+		VLANID:        d.VLANID,
+		WorkflowID:    d.MACAddress.String(),
+		Facility:      n.Facility,
+		IPXEScript:    n.IPXEScript,
+		IPXEScriptURL: n.IPXEScriptURL,
+	}, nil
 }
 
 type Finder interface {
@@ -74,7 +97,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 		// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 		// without a tink workflow present.
-		hw, err := h.Finder.Find(ctx, ip)
+		hw, err := GetByIP(ctx, ip, h.Backend)
 		if err != nil || !hw.AllowNetboot {
 			w.WriteHeader(http.StatusNotFound)
 			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
