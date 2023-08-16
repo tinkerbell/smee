@@ -92,10 +92,10 @@ linters-settings:
       - name: waitgroup-by-value
 
   staticcheck:
-    go: "1.17"
+    go: "1.20"
 
   unused:
-    go: "1.17"
+    go: "1.20"
 
 output:
   sort-results: true
@@ -106,7 +106,8 @@ linters:
     - asciicheck
     - bodyclose
     - cyclop
-    - deadcode
+    # deprecated
+    # - deadcode
     - dogsled
     - dupl
     - durationcheck
@@ -128,7 +129,8 @@ linters:
     - goprintffuncname
     - gosimple
     - govet
-    - ifshort
+    # deprecated
+    # - ifshort
     - importas
     - ineffassign
     - makezero
@@ -145,7 +147,8 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
+    # deprecated
+    # - structcheck
     - stylecheck
     - thelper
     - tparallel
@@ -153,7 +156,8 @@ linters:
     - unconvert
     - unparam
     - unused
-    - varcheck
+    # deprecated
+    # - varcheck
     - wastedassign
     - whitespace
 
