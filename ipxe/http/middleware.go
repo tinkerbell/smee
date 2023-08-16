@@ -3,7 +3,6 @@ package http
 import (
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -25,7 +24,7 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	)
 
 	log := true
-	if uri == "/metrics" || strings.HasPrefix(uri, "/_packet") {
+	if uri == "/metrics" {
 		log = false
 	}
 	if log {

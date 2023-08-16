@@ -4,31 +4,25 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net"
-	stdhttp "net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	dhcp4 "github.com/packethost/dhcp4-go"
-	plog "github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/client"
-	"github.com/tinkerbell/boots/client/kubernetes"
-	"github.com/tinkerbell/boots/client/standalone"
-	"github.com/tinkerbell/boots/dhcp/server"
-	"github.com/tinkerbell/boots/http"
-	"github.com/tinkerbell/boots/job"
+	"github.com/tinkerbell/boots/ipxe/http"
+	"github.com/tinkerbell/boots/ipxe/script"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
+	"github.com/tinkerbell/dhcp"
+	"github.com/tinkerbell/dhcp/handler"
+	"github.com/tinkerbell/dhcp/handler/reservation"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
 	"go.uber.org/zap"
@@ -40,54 +34,62 @@ var (
 	// GitRev is the git revision of the build. It is set by the Makefile.
 	GitRev = "unknown (use make)"
 
-	startTime        = time.Now()
-	publicIPv4       = mustPublicIPv4()
-	publicFQDN       = getStringEnv("PUBLIC_FQDN", publicIPv4.String())
-	publicSyslogIPv4 = mustPublicSyslogIPv4()
-	publicSyslogFQDN = getStringEnv("PUBLIC_SYSLOG_FQDN", publicSyslogIPv4.String())
-	syslogBind       = getStringEnv("SYSLOG_BIND", publicIPv4.String()+":514")
-	httpBind         = getStringEnv("HTTP_BIND", publicIPv4.String()+":80")
-	bootpBind        = getStringEnv("BOOTP_BIND", publicIPv4.String()+":67")
+	startTime = time.Now()
 )
 
 const name = "boots"
 
 type config struct {
-	// ipxe holds the config for serving ipxe binaries.
-	ipxe ipxedust.Command
-	// ipxeTFTPEnabled determines if local iPXE binaries served via TFTP are enabled.
-	ipxeTFTPEnabled bool
-	// ipxeHTTPEnabled determines if local iPXE binaries served via HTTP are enabled.
-	ipxeHTTPEnabled bool
-	// ipxeRemoteTFTPAddr is the address of the remote TFTP server serving iPXE binaries.
-	ipxeRemoteTFTPAddr string
-	// ipxeRemoteHTTPAddr is the address and port of the remote HTTP server serving iPXE binaries.
-	ipxeRemoteHTTPAddr string
-	// ipxeVars are additional variable definitions to include in all iPXE installer
-	// scripts. See https://ipxe.org/cfg. Separate multiple var definitions with spaces,
-	// e.g. 'var1=val1 var2=val2'. Note that settings which require spaces (e.g, scriptlets)
-	// are not yet supported.
-	ipxeVars string
-	// httpAddr is the address of the HTTP server serving the iPXE script and other installer assets.
-	httpAddr string
-	// dhcpAddr is the local address for the DHCP server.
-	dhcpAddr string
-	// syslogAddr is the local address for the syslog server.
-	syslogAddr string
+	syslog         syslogConfig
+	tftp           tftp
+	ipxeHTTPBinary ipxeHTTPBinary
+	ipxeHTTPScript ipxeHTTPScript
+	dhcp           dhcpConfig
+
 	// loglevel is the log level for boots.
 	logLevel string
-	// extraKernelArgs are key=value pairs to be added as kernel commandline to the kernel in iPXE for OSIE.
-	extraKernelArgs string
-	// kubeConfig is the path to a kubernetes config file.
-	kubeconfig string
-	// kubeAPI is the Kubernetes API URL.
-	kubeAPI string
-	// kubeNamespace is an override for the namespace the kubernetes client will watch.
-	kubeNamespace string
-	// osieURL is the URL at which OSIE/Hook images live.
-	osieURL string
-	// iPXE script fragment to patch into binaries served over TFTP and HTTP.
+	backends dhcpBackends
+}
+
+type syslogConfig struct {
+	enabled  bool
+	bindAddr string
+}
+
+type tftp struct {
+	enabled         bool
+	bindAddr        string
+	timeout         time.Duration
 	ipxeScriptPatch string
+}
+
+type ipxeHTTPBinary struct {
+	enabled bool
+}
+
+type ipxeHTTPScript struct {
+	enabled          bool
+	bindAddr         string
+	extraKernelArgs  string
+	trustedProxies   string
+	hookURL          string
+	tinkServer       string
+	tinkServerUseTLS bool
+}
+
+type dhcpConfig struct {
+	enabled           bool
+	bindAddr          string
+	ipForPacket       string
+	syslogIP          string
+	tftpIP            string
+	httpIpxeBinaryIP  string
+	httpIpxeScriptURL string
+}
+
+type dhcpBackends struct {
+	file       File
+	kubernetes Kube
 }
 
 func main() {
@@ -104,173 +106,185 @@ func main() {
 	log := defaultLogger(cfg.logLevel)
 	log.Info("starting", "version", GitRev)
 
-	go func() {
-		log.Info("serving syslog", "addr", cfg.syslogAddr)
-		err := retry.Do(
-			func() error {
-				_, err := syslog.StartReceiver(log, cfg.syslogAddr, 1)
-
-				return err
-			},
-		)
-		if err != nil {
-			log.Error(err, "retry syslog serve")
-			panic(errors.Wrap(err, "retry syslog serve"))
-		}
-	}()
-
 	g, ctx := errgroup.WithContext(ctx)
-	lg := log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust")
-	ipxe := &ipxedust.Server{
-		Log:                  lg,
-		EnableTFTPSinglePort: true,
-		TFTP:                 ipxedust.ServerSpec{Disabled: true},
-		HTTP:                 ipxedust.ServerSpec{Disabled: true},
+	// syslog
+	if cfg.syslog.enabled {
+		log.Info("starting syslog server", "bind_addr", cfg.syslog.bindAddr)
+		g.Go(func() error {
+			if err := syslog.StartReceiver(ctx, log, cfg.syslog.bindAddr, 1); err != nil {
+				log.Error(err, "syslog server failure")
+				return err
+			}
+			<-ctx.Done()
+			log.Info("syslog server stopped")
+			return nil
+		})
 	}
-	var nextServer net.IP
-	if cfg.ipxeRemoteTFTPAddr == "" { // use local iPXE binary service for TFTP
-		if cfg.ipxeTFTPEnabled {
-			ipportTFTP, err := netip.ParseAddrPort(cfg.ipxe.TFTPAddr)
+
+	// tftp
+	if cfg.tftp.enabled {
+		tftpServer := &ipxedust.Server{
+			Log:                  log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
+			HTTP:                 ipxedust.ServerSpec{Disabled: true}, // disabled because below we use the http handlerfunc instead.
+			EnableTFTPSinglePort: true,
+		}
+		tftpServer.EnableTFTPSinglePort = true
+		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err != nil {
+			log.Error(err, "invalid bind address")
+			panic(errors.Wrap(err, "invalid bind address"))
+		} else {
+			tftpServer.TFTP = ipxedust.ServerSpec{
+				Disabled: false,
+				Addr:     ip,
+				Timeout:  cfg.tftp.timeout,
+				Patch:    []byte(cfg.tftp.ipxeScriptPatch),
+			}
+			// start the ipxe binary tftp server
+			log.Info("starting tftp server", "bind_addr", cfg.tftp.bindAddr)
+			g.Go(func() error {
+				return tftpServer.ListenAndServe(ctx)
+			})
+		}
+	}
+
+	handlers := http.HandlerMapping{}
+	// http ipxe binaries
+	if cfg.ipxeHTTPBinary.enabled {
+		// serve ipxe binaries from the "/ipxe/" URI.
+		handlers["/ipxe/"] = ihttp.Handler{
+			Log:   log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
+			Patch: []byte(cfg.tftp.ipxeScriptPatch),
+		}.Handle
+	}
+
+	// http ipxe script
+	if cfg.ipxeHTTPScript.enabled {
+		var br handler.BackendReader
+		switch {
+		case cfg.backends.file.Enabled && cfg.backends.kubernetes.Enabled:
+			panic("only one backend can be enabled at a time")
+		case cfg.backends.file.Enabled:
+			b, err := cfg.backends.file.Backend(ctx, log)
 			if err != nil {
-				log.Error(err, "tftp addr must be an ip:port")
-				panic(fmt.Errorf("%w: tftp addr must be an ip:port", err))
+				panic(fmt.Errorf("failed to run file backend: %w", err))
 			}
-			if ipportTFTP.Port() != 69 {
-				err := fmt.Errorf("port for tftp addr must be 69, provided port: %d", ipportTFTP.Port())
-				log.Error(err, "invalid port for tftp addr")
-				panic(err)
+			br = b
+		default: // default backend is kubernetes
+			b, err := cfg.backends.kubernetes.Backend(ctx)
+			if err != nil {
+				panic(fmt.Errorf("failed to run kubernetes backend: %w", err))
 			}
-			ipxe.TFTP = ipxedust.ServerSpec{
-				Addr:    ipportTFTP,
-				Timeout: cfg.ipxe.TFTPTimeout,
-				Patch:   []byte(cfg.ipxeScriptPatch),
-			}
+			br = b
 		}
-		nextServer = publicIPv4
-	} else { // use remote iPXE binary service for TFTP
-		ip := net.ParseIP(cfg.ipxeRemoteTFTPAddr)
-		if ip == nil {
-			err := fmt.Errorf("invalid IP for remote TFTP server: %v", cfg.ipxeRemoteTFTPAddr)
-			log.Error(err, "invalid IP for remote TFTP server")
-			panic(err)
+
+		jh := script.Handler{
+			Logger:             log,
+			Backend:            br,
+			OSIEURL:            cfg.ipxeHTTPScript.hookURL,
+			ExtraKernelParams:  strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
+			PublicSyslogFQDN:   cfg.dhcp.syslogIP,
+			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
+			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
 		}
-		nextServer = ip
-		log.Info("serving iPXE binaries from remote TFTP server", "addr", nextServer.String())
+		// serve ipxe script from the "/" URI.
+		handlers["/"] = jh.HandlerFunc()
 	}
 
-	var ipxeHandler stdhttp.HandlerFunc
-	var ipxePattern string
-	var ipxeBaseURL string
-	if cfg.ipxeRemoteHTTPAddr == "" { // use local iPXE binary service for HTTP
-		if cfg.ipxeHTTPEnabled {
-			ipxeHandler = ihttp.Handler{Log: lg, Patch: []byte(cfg.ipxeScriptPatch)}.Handle
+	if len(handlers) > 0 {
+		// start the http server for ipxe binaries and scripts
+		httpServer := &http.Config{
+			GitRev:         GitRev,
+			StartTime:      startTime,
+			Logger:         log,
+			TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
 		}
-		ipxePattern = "/ipxe/"
-		ipxeBaseURL = publicFQDN + ipxePattern
-		log.Info("serving iPXE binaries from local HTTP server", "addr", ipxeBaseURL)
-	} else { // use remote iPXE binary service for HTTP
-		ipxeBaseURL = cfg.ipxeRemoteHTTPAddr
-		log.Info("serving iPXE binaries from remote HTTP server", "addr", ipxeBaseURL)
+		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
+		g.Go(func() error {
+			return httpServer.ServeHTTP(ctx, cfg.ipxeHTTPScript.bindAddr, handlers)
+		})
 	}
-	g.Go(func() error {
-		return ipxe.ListenAndServe(ctx)
-	})
 
-	finder, err := getHardwareFinder(log, cfg)
-	if err != nil {
-		log.Error(err, "get hardware finder")
+	// dhcp server
+	if cfg.dhcp.enabled {
+		listener, dh, err := cfg.dhcpListener(ctx, log)
+		if err != nil {
+			log.Error(err, "failed to create dhcp listener")
+			panic(errors.Wrap(err, "failed to create dhcp listener"))
+		}
+		log.Info("starting dhcp server", "bind_addr", cfg.dhcp.bindAddr)
+		g.Go(func() error {
+			return listener.ListenAndServe(ctx, dh)
+		})
+	}
+
+	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		log.Error(err, "failed running all Boots services")
 		panic(err)
 	}
-	jobManager := job.NewCreator(log, finder)
-	jobManager.DHCPServerIP = publicIPv4
-	jobManager.PublicSyslogIPv4 = publicSyslogIPv4
-	jobManager.Registry = getStringEnv("DOCKER_REGISTRY")
-	jobManager.RegistryUsername = getStringEnv("REGISTRY_USERNAME")
-	jobManager.RegistryPassword = getStringEnv("REGISTRY_PASSWORD")
-	authority := getStringEnv("TINKERBELL_GRPC_AUTHORITY")
-	if getStringEnv("DATA_MODEL_VERSION") == "1" && authority == "" {
-		err := errors.New("TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
-		log.Error(err, "TINKERBELL_GRPC_AUTHORITY env var is required when in tinkerbell mode (1)")
-		panic(err)
-	}
-
-	httpServer := &http.Config{
-		GitRev:             GitRev,
-		StartTime:          startTime,
-		Finder:             finder,
-		Logger:             log,
-		OSIEURL:            cfg.osieURL,
-		ExtraKernelParams:  strings.Split(cfg.extraKernelArgs, " "),
-		PublicSyslogFQDN:   publicSyslogFQDN,
-		TinkServerTLS:      getBoolEnv("TINKERBELL_TLS", false),
-		TinkServerGRPCAddr: authority,
-		TrustedProxies:     parseTrustedProxies(),
-	}
-
-	dhcpServer := &server.Handler{
-		JobManager: jobManager,
-		Logger:     log,
-		PoolSize:   getIntEnv("BOOTS_DHCP_WORKERS", runtime.GOMAXPROCS(0)/2),
-	}
-
-	log.Info("serving dhcp", "addr", cfg.dhcpAddr)
-	// this flag.Set is needed to support how the log level is set in github.com/packethost/pkg/log
-	_ = flag.Set("log-level", cfg.logLevel)
-
-	// this is still need so that github.com/packethost/dhcp4-go doesn't panic
-	l, err := plog.Init("github.com/tinkerbell/boots")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-	dhcp4.Init(l.Package("dhcp"))
-	// bootsBaseURL is the hostname/ip + uri path to the http service serving iPXE binaries,
-	// this is used when a netboot client identifies itself as HTTPClient.
-	bootsBaseURL := publicFQDN
-	go dhcpServer.ServeDHCP(cfg.dhcpAddr, nextServer, ipxeBaseURL, bootsBaseURL)
-
-	log.Info("serving http", "addr", cfg.httpAddr)
-	go httpServer.ServeHTTP(cfg.httpAddr, ipxePattern, ipxeHandler)
-
-	<-ctx.Done()
-	log.Info("boots shutting down")
-	err = g.Wait()
-	if err != nil && !errors.Is(err, context.Canceled) {
-		log.Error(err, "boots shutdown")
-		panic(err)
-	}
+	log.Info("boots is shutting down")
 }
 
-func getHardwareFinder(l logr.Logger, c *config) (client.HardwareFinder, error) {
-	var hf client.HardwareFinder
-	var err error
-
-	switch os.Getenv("DATA_MODEL_VERSION") {
-	case "standalone":
-		saFile := os.Getenv("BOOTS_STANDALONE_JSON")
-		if saFile == "" {
-			return nil, errors.New("BOOTS_STANDALONE_JSON env must be set")
-		}
-		hf, err = standalone.NewHardwareFinder(saFile)
+func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Listener, *reservation.Handler, error) {
+	// 1. create the handler
+	// 2. create the backend
+	// 3. add the backend to the handler
+	// 4. create the listener
+	// 5. start the listener(handler)
+	pktIP, err := netip.ParseAddr(c.dhcp.ipForPacket)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid bind address: %w", err)
+	}
+	tftpIP, err := netip.ParseAddrPort(c.dhcp.tftpIP)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
+	}
+	httpBinaryURL, err := url.Parse(c.dhcp.httpIpxeBinaryIP)
+	if err != nil || httpBinaryURL == nil {
+		return nil, nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
+	}
+	httpScriptURL, err := url.Parse(c.dhcp.httpIpxeScriptURL)
+	if err != nil || httpScriptURL == nil {
+		return nil, nil, fmt.Errorf("invalid http ipxe script url: %w", err)
+	}
+	syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid syslog address: %w", err)
+	}
+	dh := &reservation.Handler{
+		Backend: nil,
+		IPAddr:  pktIP,
+		Log:     log,
+		Netboot: reservation.Netboot{
+			IPXEBinServerTFTP: tftpIP,
+			IPXEBinServerHTTP: httpBinaryURL,
+			IPXEScriptURL:     httpScriptURL,
+			Enabled:           true,
+		},
+		OTELEnabled: true,
+		SyslogAddr:  syslogIP,
+	}
+	switch {
+	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
+		panic("only one backend can be enabled at a time")
+	case c.backends.file.Enabled:
+		b, err := c.backends.file.Backend(ctx, log)
 		if err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("failed to create file backend: %w", err)
 		}
-	case "kubernetes":
-		kf, err := kubernetes.NewFinder(l, c.kubeAPI, c.kubeconfig, c.kubeNamespace)
+		dh.Backend = b
+	default: // default backend is kubernetes
+		b, err := c.backends.kubernetes.Backend(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
 		}
-		hf = kf
-		// Start the client-side cache
-		go func() {
-			_ = kf.Start(context.Background())
-		}()
-
-	default:
-		return nil, fmt.Errorf("must specify DATA_MODEL_VERSION")
+		dh.Backend = b
+	}
+	bindAddr, err := netip.ParseAddrPort(c.dhcp.bindAddr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
 	}
 
-	return hf, nil
+	return &dhcp.Listener{Addr: bindAddr}, dh, nil
 }
 
 // defaultLogger is zap logr implementation.

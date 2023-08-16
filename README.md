@@ -2,12 +2,39 @@
 
 [![Build Status](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/boots/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 
-This service handles DHCP, PXE, tftp, and iPXE for provisions in the Tinkerbell project.
-For more information about the Tinkerbell project, see: [tinkerbell.org](https://tinkerbell.org).
+Boots is the network boot service in the [Tinkerbell stack](https://tinkerbell.org). It is comprised of the following services.
+
+- DHCP server
+  - host reservations only
+  - mac address based lookups
+  - netboot options support
+  - backend support
+    - Kubernetes
+    - file based
+- TFTP server
+  - serving iPXE binaries
+- HTTP server
+  - serving iPXE binaries and iPXE scripts
+  - iPXE script serving uses IP authentication
+  - backend support
+    - Kubernetes
+    - file based
+- Syslog server
+  - receives syslog messages and logs them
 
 ## Running Boots
 
-As boots runs a DHCP server, it's often asked if it is safe to run without any network isolation; the answer is yes. While boots does run a DHCP server, it only allocates an IP address when it recognizes the mac address of the requesting device.
+The DHCP server of Boots serves explicit host reservations only. This means that only hosts that are configured will be served an IP address and network boot details.
+
+## Interoperability with other DHCP servers
+
+It is not recommended, but it is possible for Boots to be run in networks with another DHCP server(s). To get the intended behavior from Boots one of the following must be true.
+
+1. All DHCP servers are configured to serve the same IPAM info as Boots and Boots is the only DHCP server to provide network boot info.
+
+1. All DHCP servers besides Boots are configured to ignore the MAC addresses that Boots is configured to serve.
+
+1. All DHCP servers are configured to serve the same IP address and network boot details as Boots. In this scenario the DHCP functionality of Boots is redundant. It would most likely be recommended to run Boots with the DHCP server functionality disabled (`-dhcp=false`). See the doc on using your existing DHCP service for more details.
 
 ### Local Setup
 
@@ -23,67 +50,78 @@ Build/Run Boots
 ```bash
 # make the binary
 make boots
-# run boots
-./cmd/boots/boots -h
+# run Boots
+./boots -h
 
 USAGE
   Run Boots server for provisioning
 
 FLAGS
-  -dhcp-addr              IP and port to listen on for DHCP. (default "172.17.0.3:67")
-  -http-addr              local IP and port to listen on for the serving iPXE binaries and files via HTTP. (default "172.17.0.3:80")
-  -ipxe-enable-http       enable serving iPXE binaries via HTTP. (default "true")
-  -ipxe-enable-tftp       enable serving iPXE binaries via TFTP. (default "true")
-  -ipxe-remote-http-addr  remote IP and port where iPXE binaries are served via HTTP. Overrides -http-addr for iPXE binaries only.
-  -ipxe-remote-tftp-addr  remote IP where iPXE binaries are served via TFTP. Overrides -tftp-addr.
-  -ipxe-tftp-addr         local IP and port to listen on for serving iPXE binaries via TFTP (port must be 69). (default "0.0.0.0:69")
-  -ipxe-tftp-timeout      local iPXE TFTP server requests timeout. (default "5s")
-  -log-level              log level. (default "info")
-  -syslog-addr            IP and port to listen on for syslog messages. (default "172.17.0.3:514")
+  -log-level                  log level (debug, info) (default "info")
+  -backend-file-enabled       [backend] enable the file backend for DHCP and the HTTP iPXE script (default "false")
+  -backend-file-path          [backend] the hardware yaml file path for the file backend
+  -backend-kube-api           [backend] the Kubernetes API URL, used for in-cluster client construction, kube backend only
+  -backend-kube-config        [backend] the Kubernetes config file location, kube backend only
+  -backend-kube-enabled       [backend] enable the kubernetes backend for DHCP and the HTTP iPXE script (default "true")
+  -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
+  -dhcp-addr                  [dhcp] local IP and port to listen on for DHCP requests (default "0.0.0.0:67")
+  -dhcp-enabled               [dhcp] enable DHCP server (default "true")
+  -dhcp-http-ipxe-binary-ip   [dhcp] http ipxe binary server IP address to use in DHCP packets (default "http://172.17.0.2:8080/ipxe/")
+  -dhcp-http-ipxe-script-url  [dhcp] http ipxe script server URL to use in DHCP packets (default "http://172.17.0.2/auto.ipxe")
+  -dhcp-ip-for-packet         [dhcp] ip address to use in DHCP packets (opt 54, etc) (default "172.17.0.2")
+  -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.2")
+  -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.2:69")
+  -extra-kernel-args          [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
+  -http-addr                  [http] local IP and port to listen on for iPXE http script requests (default "172.17.0.2:80")
+  -http-ipxe-binary-enabled   [http] enable iPXE http binary server (default "true")
+  -http-ipxe-script-enabled   [http] enable iPXE http script server) (default "true")
+  -osie-url                   [http] url where OSIE(Hook) images are located
+  -tink-server                [http] ip:port for the Tink server
+  -tink-server-tls            [http] use TLS for Tink server (default "false")
+  -trusted-proxies            [http] comma separated list of trusted proxies
+  -syslog-addr                [syslog] local IP and port to listen on for syslog messages (default "172.17.0.2:514")
+  -syslog-enabled             [syslog] enable syslog server(receiver) (default "true")
+  -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
+  -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "172.17.0.2:69")
+  -tftp-enabled                [tftp] enable iPXE tftp binary server) (default "true")
+  -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
 ```
 
-You can use NixOS shell, which will have Go and others
+You can use NixOS shell, which will have Go and other dependencies.
 
 `nix-shell`
 
-### Developing with Standalone Mode
+### Developing using the file backend
 
-The quickest way to get started is `docker-compose up`. This will start boots in
-standalone mode using the example JSON in the `test/` directory. It also starts
-a client container that runs some tests.
+The quickest way to get started is `docker-compose up`. This will start Boots using the file backend. This uses the example Yaml file (hardware.yaml) in the `test/` directory. It also starts a client container that runs some tests.
 
 ```sh
-docker-compose build # build containers
-docker-compose up    # start the network & services
+docker-compose up --build   # build images and start the network & services
 # it's fine to hit control-C twice for fast shutdown
-docker-compose down  # stop the network & clean up Docker processes
+docker-compose down  # stop the network & containers
 ```
 
-Alternatively you can run boots standalone manually. It requires a few
-environment variables for configuration.
+Alternatively you can manually run Boots by itself. It requires a few
+flags or environment variables for configuration.
 
-`test/standalone-hardware.json` should be safe enough for most developers to
+`test/hardware.yaml` should be safe enough for most developers to
 use on the command line locally without getting a call from your network
 administrator. That said, you might want to contact them before running a DHCP
 server on their network. Best to isolate it in Docker or a VM if you're not
 sure.
 
 ```sh
-export DATA_MODEL_VERSION=standalone
-export API_CONSUMER_TOKEN=none
-export API_AUTH_TOKEN=none
-export BOOTS_STANDALONE_JSON=./test/standalone-hardware.json
+export BOOTS_OSIE_URL=<http url to the OSIE (Operating System Installation Environment) artifacts>
+# For more info on the default OSUE (Hook) artifacts, please see https://github.com/tinkerbell/hook
+export BOOTS_BACKEND_FILE_ENABLED=true
+export BOOTS_BACKEND_FILE_PATH=./test/hardware.yaml
+export BOOTS_EXTRA_KERNEL_ARGS="tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
 
-# to run on your laptop as a regular user
-# DHCP won't work but useful for smoke testing and iterating on http/tftp/syslog
-./cmd/boots/boots \
-	-http-addr 127.0.0.1:9000 \
-	-syslog-addr 127.0.0.1:9001 \
-	-tftp-addr 127.0.0.01:9002 \
-	-dhcp-addr 127.0.0.1:9003
+# By default, Boots needs to bind to low ports (67, 69, 80, 514) so it needs root.
+sudo -E ./boots
 
 # or run it in a container
 # NOTE: not sure the NET_ADMIN cap is necessary
 docker run -ti --cap-add=NET_ADMIN --volume $(pwd):/boots alpine:3.14
-/boots/cmd/boots -dhcp-addr 0.0.0.0:67
+/boots -dhcp-addr 0.0.0.0:67
 ```

@@ -23,7 +23,8 @@ if ! nixfmt shell.nix; then
 	failed=1
 fi
 
-if ! git ls-files '*.go' | xargs -I% sh -c 'sed "/^import (/,/^)/ { /^\s*$/ d }" % >%.tmp && goimports -w %.tmp && (if cmp -s % %.tmp; then rm %.tmp; else mv %.tmp %; fi)'; then
+if [[ -n $(go run golang.org/x/tools/cmd/goimports@latest -d -e -l .) ]]; then
+	go run golang.org/x/tools/cmd/goimports@latest -w .
 	failed=1
 fi
 

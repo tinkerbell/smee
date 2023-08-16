@@ -3,20 +3,18 @@ all: help
 -include lint.mk
 -include rules.mk
 
-boots: cmd/boots/boots ## Compile boots for host OS and Architecture
+build: cmd/boots/boots ## Compile boots for host OS and Architecture
 
 crosscompile: $(crossbinaries) ## Compile boots for all architectures
 
-gen: $(generated_go_files) mocks ## Generate go generate'd files
-
-tools: $(toolsBins) ## Builds cli tools defined in tools.go
+gen: $(generated_go_files) ## Generate go generate'd files
 
 IMAGE_TAG ?= boots:latest
-image: cmd/boots/boots-linux-amd64 ## Build docker image
+image: cmd/boots/boots-linux-amd64  ## Build docker image
 	docker build -t $(IMAGE_TAG) .
 
 test: gen ## Run go test
-	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic ${TEST_ARGS} ./...
+	CGO_ENABLED=1 go test -race -coverprofile=coverage.txt -covermode=atomic -v ${TEST_ARGS} ./...
 
 coverage: test ## Show test coverage
 	go tool cover -func=coverage.txt
@@ -24,10 +22,10 @@ coverage: test ## Show test coverage
 vet: ## Run go vet
 	go vet ./...
 
-goimports: bin/goimports gen ## Run goimports
-	goimports -w .
+goimports: gen ## Run goimports
+	$(GOIMPORTS) -w .
 
-ci-checks: bin/goimports .github/workflows/ci-checks.sh shell.nix gen
+ci-checks: .github/workflows/ci-checks.sh shell.nix gen
 	./.github/workflows/ci-checks.sh
 
 ci: ci-checks coverage goimports lint vet ## Runs all the same validations and tests that run in CI

@@ -6,6 +6,6 @@ docker_build(
     'quay.io/tinkerbell/boots',
     '.',
     dockerfile='Dockerfile',
-    only=['./cmd/boots']
+    only=['.']
 )
 k8s_yaml(kustomize('./manifests/kustomize/overlays/kind'))

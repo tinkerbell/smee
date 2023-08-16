@@ -1,6 +1,7 @@
 package syslog
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"strings"
@@ -24,19 +25,19 @@ type Receiver struct {
 	Logger logr.Logger
 }
 
-func StartReceiver(logger logr.Logger, laddr string, parsers int) (*Receiver, error) {
+func StartReceiver(ctx context.Context, logger logr.Logger, laddr string, parsers int) error {
 	if parsers < 1 {
 		parsers = 1
 	}
 
 	addr, err := net.ResolveUDPAddr("udp4", laddr)
 	if err != nil {
-		return nil, errors.Wrap(err, "resolve syslog udp listen address")
+		return errors.Wrap(err, "resolve syslog udp listen address")
 	}
 
 	c, err := net.ListenUDP("udp4", addr)
 	if err != nil {
-		return nil, errors.Wrap(err, "listen on syslog udp address")
+		return errors.Wrap(err, "listen on syslog udp address")
 	}
 
 	s := &Receiver{
@@ -49,9 +50,9 @@ func StartReceiver(logger logr.Logger, laddr string, parsers int) (*Receiver, er
 	for i := 0; i < parsers; i++ {
 		go s.runParser()
 	}
-	go s.run()
+	go s.run(ctx)
 
-	return s, nil
+	return nil
 }
 
 func (r *Receiver) Done() <-chan struct{} {
@@ -69,12 +70,16 @@ func (r *Receiver) cleanup() {
 	close(r.done)
 }
 
-func (r *Receiver) run() {
+func (r *Receiver) run(ctx context.Context) {
 	var msg *message
 	defer func() {
 		if msg != nil {
 			syslogMessagePool.Put(msg)
 		}
+	}()
+
+	go func() {
+		<-ctx.Done()
 		r.cleanup()
 	}()
 

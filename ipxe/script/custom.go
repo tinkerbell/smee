@@ -1,4 +1,4 @@
-package ipxe
+package script
 
 import "net/url"
 

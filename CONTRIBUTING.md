@@ -94,7 +94,7 @@ To build Boots, run:
 nix-shell
 
 # build all ipxe files, embed them, and build the Go binary
-# Built binary can be found here ./cmd/boots/boots
+# Built binary can be found in the top level directory.
 make boots
 
 ```
@@ -176,7 +176,7 @@ make vet
    # FACILITY_CODE is needed for ?
    export FACILITY_CODE=onprem
    export DATA_MODEL_VERSION=1
-   # API_AUTH_TOKEN, API_CONSUMER_TOKEN are needed to by pass panicking in cmd/boots/main.go main func
+   # API_AUTH_TOKEN, API_CONSUMER_TOKEN are needed to by pass panicking in main.go main func
    export API_AUTH_TOKEN=none
    export API_CONSUMER_TOKEN=none
    ```
@@ -185,14 +185,14 @@ make vet
 
    ```bash
    # Run the compiled boots
-   sudo ./cmd/boots/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   sudo ./boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
    ```
 
 4. Faster iterating via `go run`
 
    ```bash
    # after the ipxe binaries have been compiled you can use `go run` to iterate a little more quickly than building the binary every time
-   sudo go run ./cmd/boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   sudo go run ./boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
    ```
 
 ## Pull Requests
