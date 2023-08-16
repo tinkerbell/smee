@@ -11,36 +11,22 @@ MAKEFLAGS += --no-builtin-rules
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
+# Runnable tools
+GO			?= go
+GOIMPORTS	:= $(GO) run golang.org/x/tools/cmd/goimports@latest
+
 .PHONY: all boots crosscompile dc image gen run test
 
 CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
-SOURCE_DATE_EPOCH := $(shell git log -1 --pretty=%ct)
-export SOURCE_DATE_EPOCH
 
 crossbinaries := boots-linux-amd64 boots-linux-arm64
 boots-linux-amd64: FLAGS=GOARCH=amd64
 boots-linux-arm64: FLAGS=GOARCH=arm64
 boots-linux-amd64 boots-linux-arm64: boots
-	${FLAGS} GOOS=linux go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ .
-
-ifeq ($(origin GOBIN), undefined)
-GOBIN := ${PWD}/bin
-export GOBIN
-PATH := ${GOBIN}:${PATH}
-export PATH
-endif
-
-# parses tools.go and returns the tool name prefixed with bin/
-toolsBins := $(addprefix bin/,$(notdir $(shell grep '^\s*_' tools.go | awk -F'"' '{print $$2}')))
-
-# build cli tools defined in tools.go
-$(toolsBins): go.mod go.sum tools.go
-$(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
-$(toolsBins):
-	go install "$(CMD)"
+	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ .
 
 generated_go_files := \
 	syslog/facility_string.go \
@@ -48,12 +34,12 @@ generated_go_files := \
 
 # go generate
 go_generate: $(generated_go_files)
-$(filter %_string.go,$(generated_go_files)): bin/stringer
+$(filter %_string.go,$(generated_go_files)):
 syslog/facility_string.go: syslog/message.go
 syslog/severity_string.go: syslog/message.go
-$(generated_go_files): bin/goimports
+$(generated_go_files):
 	go generate -run="$(@F)" ./...
-	goimports -w $@
+	$(GOIMPORTS) -w $@
 
 boots: syslog/facility_string.go syslog/severity_string.go cleanup
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ .
