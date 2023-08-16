@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net"
 	"net/netip"
 	"net/url"
 	"os"
@@ -160,25 +159,25 @@ func main() {
 
 	// http ipxe script
 	if cfg.ipxeHTTPScript.enabled {
-		i := ipxeScript{}
+		var br handler.BackendReader
 		switch {
 		case cfg.backends.file.Enabled:
 			b, err := cfg.backends.file.Backend(ctx, log)
 			if err != nil {
 				panic(fmt.Errorf("failed to run file backend: %w", err))
 			}
-			i.backend = b
+			br = b
 		default: // default backend is kubernetes
 			b, err := cfg.backends.kubernetes.Backend(ctx)
 			if err != nil {
 				panic(fmt.Errorf("failed to run kubernetes backend: %w", err))
 			}
-			i.backend = b
+			br = b
 		}
 
 		jh := script.Handler{
 			Logger:             log,
-			Finder:             i,
+			Backend:            br,
 			OSIEURL:            cfg.ipxeHTTPScript.hookURL,
 			ExtraKernelParams:  strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
 			PublicSyslogFQDN:   cfg.dhcp.syslogIP,
@@ -282,34 +281,6 @@ func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Liste
 	}
 
 	return &dhcp.Listener{Addr: bindAddr}, dh, nil
-}
-
-// ipxeScript is is needed to be able to translate the handler.BackendReader
-// returned data to the script.Data struct.
-type ipxeScript struct {
-	backend handler.BackendReader
-}
-
-// Find implements the script.Finder interface.
-// It uses the handler.BackendReader to get the (hardware) data and then
-// translates it to the script.Data struct.
-func (s ipxeScript) Find(ctx context.Context, ip net.IP) (script.Data, error) {
-	d, n, err := s.backend.GetByIP(ctx, ip)
-	if err != nil {
-		return script.Data{}, err
-	}
-
-	return script.Data{
-		AllowNetboot:  n.AllowNetboot,
-		Console:       "",
-		MACAddress:    d.MACAddress,
-		Arch:          d.Arch,
-		VLANID:        d.VLANID,
-		WorkflowID:    d.MACAddress.String(),
-		Facility:      n.Facility,
-		IPXEScript:    n.IPXEScript,
-		IPXEScriptURL: n.IPXEScriptURL,
-	}, nil
 }
 
 // defaultLogger is zap logr implementation.
