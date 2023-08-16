@@ -161,6 +161,8 @@ func main() {
 	if cfg.ipxeHTTPScript.enabled {
 		var br handler.BackendReader
 		switch {
+		case cfg.backends.file.Enabled && cfg.backends.kubernetes.Enabled:
+			panic(fmt.Errorf("only one backend can be enabled at a time"))
 		case cfg.backends.file.Enabled:
 			b, err := cfg.backends.file.Backend(ctx, log)
 			if err != nil {
@@ -262,6 +264,8 @@ func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Liste
 		SyslogAddr:  syslogIP,
 	}
 	switch {
+	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
+		panic(fmt.Errorf("only one backend can be enabled at a time"))
 	case c.backends.file.Enabled:
 		b, err := c.backends.file.Backend(ctx, log)
 		if err != nil {
