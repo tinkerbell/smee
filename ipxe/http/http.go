@@ -1,5 +1,5 @@
 // package bhttp is the http server for boots.
-package bhttp
+package http
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+// Config is the configuration for the http server.
 type Config struct {
 	GitRev         string
 	StartTime      time.Time
@@ -23,35 +24,13 @@ type Config struct {
 	TrustedProxies []string
 }
 
-func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		res := struct {
-			GitRev     string  `json:"git_rev"`
-			Uptime     float64 `json:"uptime"`
-			Goroutines int     `json:"goroutines"`
-		}{
-			GitRev:     rev,
-			Uptime:     time.Since(start).Seconds(),
-			Goroutines: runtime.NumGoroutine(),
-		}
-		if err := json.NewEncoder(w).Encode(&res); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			s.Logger.Error(errors.Wrap(err, "marshaling healthcheck json"), "marshaling healthcheck json")
-		}
-	}
-}
-
-// otelFuncWrapper takes a route and an http handler function, wraps the function
-// with otelhttp, and returns the route again and http.Handler all set for mux.Handle().
-func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Request)) (string, http.Handler) {
-	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
-}
+// HandlerMapping is a map of routes to http.HandlerFuncs.
+type HandlerMapping map[string]http.HandlerFunc
 
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
 // server, which will block. App functionality is instrumented in Prometheus and
 // OpenTelemetry. Optionally configures X-Forwarded-For support.
-func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers map[string]http.HandlerFunc) error {
+func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMapping) error {
 	mux := http.NewServeMux()
 	for pattern, handler := range handlers {
 		mux.Handle(otelFuncWrapper(pattern, handler))
@@ -110,4 +89,29 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers map[string
 	}
 
 	return nil
+}
+
+func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		res := struct {
+			GitRev     string  `json:"git_rev"`
+			Uptime     float64 `json:"uptime"`
+			Goroutines int     `json:"goroutines"`
+		}{
+			GitRev:     rev,
+			Uptime:     time.Since(start).Seconds(),
+			Goroutines: runtime.NumGoroutine(),
+		}
+		if err := json.NewEncoder(w).Encode(&res); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			s.Logger.Error(errors.Wrap(err, "marshaling healthcheck json"), "marshaling healthcheck json")
+		}
+	}
+}
+
+// otelFuncWrapper takes a route and an http handler function, wraps the function
+// with otelhttp, and returns the route again and http.Handler all set for mux.Handle().
+func otelFuncWrapper(route string, h func(w http.ResponseWriter, req *http.Request)) (string, http.Handler) {
+	return route, otelhttp.WithRouteTag(route, http.HandlerFunc(h))
 }

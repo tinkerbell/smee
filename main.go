@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
 	"net/netip"
 	"net/url"
 	"os"
@@ -18,7 +17,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/boots/ipxe/bhttp"
+	"github.com/tinkerbell/boots/ipxe/http"
 	"github.com/tinkerbell/boots/ipxe/script"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/boots/syslog"
@@ -149,7 +148,7 @@ func main() {
 		}
 	}
 
-	handlers := map[string]http.HandlerFunc{}
+	handlers := http.HandlerMapping{}
 	// http ipxe binaries
 	if cfg.ipxeHTTPBinary.enabled {
 		// serve ipxe binaries from the "/ipxe/" URI.
@@ -192,7 +191,7 @@ func main() {
 
 	if len(handlers) > 0 {
 		// start the http server for ipxe binaries and scripts
-		httpServer := &bhttp.Config{
+		httpServer := &http.Config{
 			GitRev:         GitRev,
 			StartTime:      startTime,
 			Logger:         log,
