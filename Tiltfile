@@ -1,6 +1,6 @@
 local_resource(
   'compile boots',
-  'make boots-linux-amd64'
+  'make cmd/boots/boots-linux-amd64'
 )
 docker_build(
     'quay.io/tinkerbell/boots',

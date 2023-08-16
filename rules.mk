@@ -22,11 +22,11 @@ export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
 
-crossbinaries := boots-linux-amd64 boots-linux-arm64
-boots-linux-amd64: FLAGS=GOARCH=amd64
-boots-linux-arm64: FLAGS=GOARCH=arm64
-boots-linux-amd64 boots-linux-arm64: boots
-	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ .
+crossbinaries := cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
+cmd/boots/boots-linux-amd64: FLAGS=GOARCH=amd64
+cmd/boots/boots-linux-arm64: FLAGS=GOARCH=arm64
+cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64: boots
+	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 generated_go_files := \
 	syslog/facility_string.go \
@@ -41,8 +41,8 @@ $(generated_go_files):
 	go generate -run="$(@F)" ./...
 	$(GOIMPORTS) -w $@
 
-boots: syslog/facility_string.go syslog/severity_string.go cleanup
-	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ .
+cmd/boots/boots: syslog/facility_string.go syslog/severity_string.go cleanup
+	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
 
 cleanup:
-	rm -f boots boots-linux-amd64 boots-linux-arm64
+	rm -f cmd/boots/boots cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
