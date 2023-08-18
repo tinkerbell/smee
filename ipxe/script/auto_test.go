@@ -33,7 +33,7 @@ echo Loading the Tinkerbell Hook iPXE script...
 set arch x86_64
 set download-url http://location:8080/to/kernel/and/initrd
 
-kernel ${download-url}/vmlinuz-${arch} ip=dhcp tink_worker_image=quay.io/tinkerbell/tink-worker:v0.8.0 tinkerbell=packet \
+kernel ${download-url}/vmlinuz-${arch} tink_worker_image=quay.io/tinkerbell/tink-worker:v0.8.0 tinkerbell=packet \
 facility=onprem syslog_host=1.2.3.4 grpc_authority=1.2.3.4:42113 tinkerbell_tls=false worker_id=3c:ec:ef:4c:4f:54 hw_addr=3c:ec:ef:4c:4f:54 \
 modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
 
