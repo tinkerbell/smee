@@ -1,11 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func detectPublicIPv4(extra string) string {

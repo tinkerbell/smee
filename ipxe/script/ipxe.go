@@ -2,6 +2,7 @@ package script
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"path"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/dhcp/handler"
@@ -84,7 +84,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.Logger.Error(errors.Wrap(err, "splitting host:ip"), "error parsing client address", "client", r.RemoteAddr)
+			h.Logger.Error(fmt.Errorf("error parsing client address: %w", err), "client", r.RemoteAddr)
 
 			return
 		}
@@ -122,8 +122,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 		s, err := h.defaultScript(span, hw)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			err := errors.Wrap(err, "error with default ipxe script")
-			h.Logger.Error(err, "error", "script", name)
+			h.Logger.Error(err, "error with default ipxe script", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
 			return
@@ -133,8 +132,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 		cs, err := h.customScript(hw)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			err := errors.Wrap(err, "error with custom ipxe script")
-			h.Logger.Error(err, "error", "script", name)
+			h.Logger.Error(err, "error with custom ipxe script", "script", name)
 			span.SetStatus(codes.Error, err.Error())
 
 			return
@@ -142,8 +140,8 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 		script = []byte(cs)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		err := errors.Errorf("boot script %q not found", name)
-		h.Logger.Error(err, "error", "script", name)
+		err := fmt.Errorf("boot script %q not found", name)
+		h.Logger.Error(err, "boot script not found", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
@@ -151,7 +149,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 	span.SetAttributes(attribute.String("ipxe-script", string(script)))
 
 	if _, err := w.Write(script); err != nil {
-		h.Logger.Error(errors.Wrap(err, "unable to write boot script"), "unable to write boot script", "script", name)
+		h.Logger.Error(err, "unable to write boot script", "script", name)
 		span.SetStatus(codes.Error, err.Error())
 
 		return
