@@ -1,6 +1,6 @@
 # Contributor Guide
 
-Welcome to Boots!
+Welcome to Smee!
 We are really excited to have you.
 Please use the following guide on your contributing journey.
 Thanks for contributing!
@@ -20,7 +20,7 @@ Thanks for contributing!
   - [Unit testing](#Unit-testing)
   - [Linting](#Linting)
   - [Functional testing](#Functional-testing)
-  - [Running Boots locally](#Running-Boots-locally)
+  - [Running Smee locally](#Running-Smee-locally)
 - [Pull Requests](#Pull-Requests)
   - [Branching strategy](#Branching-strategy)
   - [Quality](#Quality)
@@ -32,18 +32,18 @@ Thanks for contributing!
 
 ## Context
 
-Boots is a DHCP and PXE (TFTP & HTTP) service.
+Smee is a DHCP and PXE (TFTP & HTTP) service.
 It is part of the [Tinkerbell stack](https://tinkerbell.org) and provides the first interaction for any machines being provisioned through Tinkerbell.
 
 ## Architecture
 
 ### Design Docs
 
-Details and diagrams for Boots are found [here](docs/DESIGN.md).
+Details and diagrams for Smee are found [here](docs/DESIGN.md).
 
 ### Code Structure
 
-Details on Boots's code structure is found [here](docs/CODE_STRUCTURE.md) (WIP)
+Details on Smee's code structure is found [here](docs/CODE_STRUCTURE.md) (WIP)
 
 ## Prerequisites
 
@@ -78,7 +78,7 @@ If you have `direnv` installed the included `.envrc` will make that step automat
 
 #### Runtime dependencies
 
-At runtime Boots needs to communicate with a Tink server.
+At runtime Smee needs to communicate with a Tink server.
 Follow this [guide](https://docs.tinkerbell.org/setup/local-vagrant/) for running Tink server.
 
 ## Development
@@ -87,7 +87,7 @@ Follow this [guide](https://docs.tinkerbell.org/setup/local-vagrant/) for runnin
 
 > At the moment, these instructions are only stable on Linux environments
 
-To build Boots, run:
+To build Smee, run:
 
 ```bash
 # drop into a shell with all build dependencies
@@ -95,15 +95,15 @@ nix-shell
 
 # build all ipxe files, embed them, and build the Go binary
 # Built binary can be found in the top level directory.
-make boots
+make build
 
 ```
 
-To build the amd64 Boots container image, run:
+To build the amd64 Smee container image, run:
 
 ```bash
 # make the amd64 container image
-# Built image will be named boots:latest
+# Built image will be named smee:latest
 make image
 
 ```
@@ -111,11 +111,11 @@ make image
 To build the IPXE binaries and embed them into Go, run:
 
 ```bash
-# Note, this will not build the Boots binary
+# Note, this will not build the Smee binary
 make bindata
 ```
 
-To build Boots binaries for all distro
+To build Smee binaries for all distro
 
 ### Unit testing
 
@@ -156,7 +156,7 @@ make vet
 1. Create a hardware record in Tink server - follow the guide [here](https://docs.tinkerbell.org/hardware-data/)
 2. boot the machine
 
-### Running Boots
+### Running Smee
 
 1. Be sure all documented runtime dependencies are satisfied.
 2. Define all environment variables.
@@ -181,38 +181,38 @@ make vet
    export API_CONSUMER_TOKEN=none
    ```
 
-3. Run Boots
+3. Run Smee
 
    ```bash
-   # Run the compiled boots
-   sudo ./boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   # Run the compiled smee
+   sudo ./smee -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
    ```
 
 4. Faster iterating via `go run`
 
    ```bash
    # after the ipxe binaries have been compiled you can use `go run` to iterate a little more quickly than building the binary every time
-   sudo go run ./boots -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
+   sudo go run ./smee -http-addr 192.168.2.225:80 -tftp-addr 192.168.2.225:69 -dhcp-addr 192.168.2.225:67
    ```
 
 ## Pull Requests
 
 ### Branching strategy
 
-Boots uses a fork and pull request model.
+Smee uses a fork and pull request model.
 See this [doc](https://guides.github.com/activities/forking/) for more details.
 
 ### Quality
 
 #### CI
 
-Boots uses GitHub Actions for CI.
+Smee uses GitHub Actions for CI.
 The workflow is found in [.github/workflows/ci.yaml](.github/workflows/ci.yaml).
 It is run for each commit and PR.
 
 #### Code coverage
 
-Boots does run code coverage with each PR.
+Smee does run code coverage with each PR.
 Coverage thresholds are not currently enforced.
 It is always nice and very welcomed to add tests and keep or increase the code coverage percentage.
 

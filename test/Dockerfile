@@ -5,6 +5,6 @@ RUN apk add --update --upgrade --no-cache net-tools busybox tftp-hpa curl tcpdum
 
 COPY busybox-udhcpc-script.sh /busybox-udhcpc-script.sh
 COPY extract-traceparent-from-opt43.sh /extract-traceparent-from-opt43.sh
-COPY test-boots.sh /test-boots.sh
+COPY test-smee.sh /test-smee.sh
 
-ENTRYPOINT /test-boots.sh
+ENTRYPOINT /test-smee.sh

@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: tink-system
 
 images:
-  - name: quay.io/tinkerbell/boots
+  - name: quay.io/tinkerbell/smee
     newTag: latest
 resources:
   - github.com/tinkerbell/tink/config/crd?ref=main

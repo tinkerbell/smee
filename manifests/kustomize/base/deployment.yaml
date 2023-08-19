@@ -2,24 +2,24 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: tinkerbell-boots
-  name: boots-deployment
+    app: tinkerbell-smee
+  name: smee-deployment
   namespace: tink-system
 spec:
   selector:
     matchLabels:
-      app: tinkerbell-boots
+      app: tinkerbell-smee
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: tinkerbell-boots
+        app: tinkerbell-smee
     spec:
       containers:
         - args: ["-log-level", "debug", "-dhcp-addr", "0.0.0.0:67"]
           env:
-            - name: BOOTS_EXTRA_KERNEL_ARGS
+            - name: SMEE_EXTRA_KERNEL_ARGS
               value: "tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
             - name: DATA_MODEL_VERSION
               value: "kubernetes"
@@ -39,9 +39,9 @@ spec:
               value: 192.168.2.59:42113
             - name: TINKERBELL_TLS
               value: "false"
-          image: boots:latest
+          image: smee:latest
           imagePullPolicy: IfNotPresent
-          name: tinkerbell-boots
+          name: tinkerbell-smee
           ports:
             - name: dhcp
               containerPort: 67
@@ -62,4 +62,4 @@ spec:
             requests:
               cpu: 10m
               memory: 64Mi
-      serviceAccountName: tinkerbell-boots
+      serviceAccountName: tinkerbell-smee

@@ -49,7 +49,7 @@ jobs:
       - name: Figure out Docker Tags
         id: docker-image-tag
         run: |
-          echo ::set-output name=tags::quay.io/tinkerbell/boots:latest,quay.io/tinkerbell/boots:sha-${GITHUB_SHA::8}
+          echo ::set-output name=tags::quay.io/tinkerbell/smee:latest,quay.io/tinkerbell/smee:sha-${GITHUB_SHA::8}
 
       - name: Login to quay.io
         uses: docker/login-action@v2
@@ -64,7 +64,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          cache-from: type=registry,ref=quay.io/tinkerbell/boots:latest
+          cache-from: type=registry,ref=quay.io/tinkerbell/smee:latest
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.docker-image-tag.outputs.tags }}
 
@@ -75,7 +75,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          cache-from: type=registry,ref=quay.io/tinkerbell/boots:latest
+          cache-from: type=registry,ref=quay.io/tinkerbell/smee:latest
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-image-tag.outputs.tags }}

@@ -1,6 +1,6 @@
 # KinD (Kubernetes in Docker)
 
-This describes deploying Boots into a Kubernetes in Docker (KinD) cluster.
+This describes deploying Smee into a Kubernetes in Docker (KinD) cluster.
 
 ## Prerequisites
 
@@ -16,19 +16,19 @@ This describes deploying Boots into a Kubernetes in Docker (KinD) cluster.
    kind create cluster --config ./manifests/kind/config.yaml
    ```
 
-2. Deploy Boots
+2. Deploy Smee
 
    Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the [`manifests/kustomize/base/deployment.yaml`](../../manifests/kustomize/base/deployment.yaml) file.
 
    ```bash
-   # Deploy Boots to KinD
+   # Deploy Smee to KinD
    kubectl kustomize manifests/kustomize/overlays/kind | kubectl apply -f -
    ```
 
 3. Watch the logs
 
    ```bash
-   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-smee
    ```
 
 > **Note:** KinD will not be able to listen for DHCP broadcast traffic. Using a DHCP relay is recommended.

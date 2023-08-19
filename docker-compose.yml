@@ -1,6 +1,6 @@
 ---
 # Provides a docker-compose configuration for local fast iteration when
-# hacking on boots alone.
+# hacking on smee alone.
 # TODO: figure out if NET_ADMIN capability is really necessary
 
 version: "3.8"
@@ -10,7 +10,7 @@ version: "3.8"
 # standalone-hardware.json references these IPs and MACs so we can write
 # (simpler) assertions against behavior on the client side.
 networks:
-  boots-test:
+  smee-test:
     # enables a more realistic L2 network for the containers
     driver: macvlan
     ipam:
@@ -20,35 +20,35 @@ networks:
           gateway: 192.168.99.1
 
 services:
-  boots:
+  smee:
     build: .
-    # entrypoint: ["/usr/bin/boots", "--dhcp-addr", "0.0.0.0:67"]
-    entrypoint: ["/start-boots.sh"]
+    # entrypoint: ["/usr/bin/smee", "--dhcp-addr", "0.0.0.0:67"]
+    entrypoint: ["/start-smee.sh"]
     networks:
-      boots-test:
+      smee-test:
         ipv4_address: 192.168.99.42
     mac_address: 02:00:00:00:00:01
     environment:
-      BOOTS_TINK_SERVER: tinkerbell.tinkerbell:42113
-      BOOTS_BACKEND_FILE: true
-      BOOTS_BACKEND_FILE_PATH: /hardware.yaml
-      BOOTS_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
+      SMEE_TINK_SERVER: tinkerbell.tinkerbell:42113
+      SMEE_BACKEND_FILE: true
+      SMEE_BACKEND_FILE_PATH: /hardware.yaml
+      SMEE_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
     volumes:
       - ./test/hardware.yaml:/hardware.yaml
-      - ./test/start-boots.sh:/start-boots.sh
+      - ./test/start-smee.sh:/start-smee.sh
     cap_add:
       - NET_ADMIN
-  # eventually want to add more client containers, including one that boots will
+  # eventually want to add more client containers, including one that smee will
   # not recognize so we can validate it won't serve content to IPs it's not
   # managing
   client:
     depends_on:
-      - boots
+      - smee
     build: test
     networks:
-      boots-test:
+      smee-test:
         ipv4_address: 192.168.99.43
     mac_address: 02:00:00:00:00:ff
     cap_add:
@@ -56,7 +56,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.38.0
     networks:
-      boots-test:
+      smee-test:
         ipv4_address: 192.168.99.44
     volumes:
       - ./test/otel-collector.yaml:/etc/otel-collector.yaml

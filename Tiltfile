@@ -1,9 +1,9 @@
 local_resource(
-  'compile boots',
-  'make cmd/boots/boots-linux-amd64'
+  'compile smee',
+  'make cmd/smee/smee-linux-amd64'
 )
 docker_build(
-    'quay.io/tinkerbell/boots',
+    'quay.io/tinkerbell/smee',
     '.',
     dockerfile='Dockerfile',
     only=['.']

@@ -1,4 +1,4 @@
 *
-!cmd/boots/boots-*-*
-!cmd/boots/boots
+!cmd/smee/smee-*-*
+!cmd/smee/smee
 !test/

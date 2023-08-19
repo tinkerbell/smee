@@ -1,8 +1,8 @@
-# Boots
+# Smee
 
-[![Build Status](https://github.com/tinkerbell/boots/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/boots/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
+[![Build Status](https://github.com/tinkerbell/smee/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/smee/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 
-Boots is the network boot service in the [Tinkerbell stack](https://tinkerbell.org). It is comprised of the following services.
+Smee is the network boot service in the [Tinkerbell stack](https://tinkerbell.org). It is comprised of the following services.
 
 - DHCP server
   - host reservations only
@@ -22,19 +22,19 @@ Boots is the network boot service in the [Tinkerbell stack](https://tinkerbell.o
 - Syslog server
   - receives syslog messages and logs them
 
-## Running Boots
+## Running Smee
 
-The DHCP server of Boots serves explicit host reservations only. This means that only hosts that are configured will be served an IP address and network boot details.
+The DHCP server of Smee serves explicit host reservations only. This means that only hosts that are configured will be served an IP address and network boot details.
 
 ## Interoperability with other DHCP servers
 
-It is not recommended, but it is possible for Boots to be run in networks with another DHCP server(s). To get the intended behavior from Boots one of the following must be true.
+It is not recommended, but it is possible for Smee to be run in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.
 
-1. All DHCP servers are configured to serve the same IPAM info as Boots and Boots is the only DHCP server to provide network boot info.
+1. All DHCP servers are configured to serve the same IPAM info as Smee and Smee is the only DHCP server to provide network boot info.
 
-1. All DHCP servers besides Boots are configured to ignore the MAC addresses that Boots is configured to serve.
+1. All DHCP servers besides Smee are configured to ignore the MAC addresses that Smee is configured to serve.
 
-1. All DHCP servers are configured to serve the same IP address and network boot details as Boots. In this scenario the DHCP functionality of Boots is redundant. It would most likely be recommended to run Boots with the DHCP server functionality disabled (`-dhcp=false`). See the doc on using your existing DHCP service for more details.
+1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would most likely be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the doc on using your existing DHCP service for more details.
 
 ### Local Setup
 
@@ -45,16 +45,16 @@ Running the Tests
 make test
 ```
 
-Build/Run Boots
+Build/Run Smee
 
 ```bash
 # make the binary
-make boots
-# run Boots
-./boots -h
+make smee
+# run Smee
+./smee -h
 
 USAGE
-  Run Boots server for provisioning
+  Run Smee server for provisioning
 
 FLAGS
   -log-level                  log level (debug, info) (default "info")
@@ -83,7 +83,7 @@ FLAGS
   -syslog-enabled             [syslog] enable syslog server(receiver) (default "true")
   -ipxe-script-patch          [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
   -tftp-addr                  [tftp] local IP and port to listen on for iPXE tftp binary requests (default "172.17.0.2:69")
-  -tftp-enabled                [tftp] enable iPXE tftp binary server) (default "true")
+  -tftp-enabled               [tftp] enable iPXE tftp binary server) (default "true")
   -tftp-timeout               [tftp] iPXE tftp binary server requests timeout (default "5s")
 ```
 
@@ -93,7 +93,7 @@ You can use NixOS shell, which will have Go and other dependencies.
 
 ### Developing using the file backend
 
-The quickest way to get started is `docker-compose up`. This will start Boots using the file backend. This uses the example Yaml file (hardware.yaml) in the `test/` directory. It also starts a client container that runs some tests.
+The quickest way to get started is `docker-compose up`. This will start Smee using the file backend. This uses the example Yaml file (hardware.yaml) in the `test/` directory. It also starts a client container that runs some tests.
 
 ```sh
 docker-compose up --build   # build images and start the network & services
@@ -101,7 +101,7 @@ docker-compose up --build   # build images and start the network & services
 docker-compose down  # stop the network & containers
 ```
 
-Alternatively you can manually run Boots by itself. It requires a few
+Alternatively you can manually run Smee by itself. It requires a few
 flags or environment variables for configuration.
 
 `test/hardware.yaml` should be safe enough for most developers to
@@ -111,17 +111,17 @@ server on their network. Best to isolate it in Docker or a VM if you're not
 sure.
 
 ```sh
-export BOOTS_OSIE_URL=<http url to the OSIE (Operating System Installation Environment) artifacts>
+export SMEE_OSIE_URL=<http url to the OSIE (Operating System Installation Environment) artifacts>
 # For more info on the default OSUE (Hook) artifacts, please see https://github.com/tinkerbell/hook
-export BOOTS_BACKEND_FILE_ENABLED=true
-export BOOTS_BACKEND_FILE_PATH=./test/hardware.yaml
-export BOOTS_EXTRA_KERNEL_ARGS="tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
+export SMEE_BACKEND_FILE_ENABLED=true
+export SMEE_BACKEND_FILE_PATH=./test/hardware.yaml
+export SMEE_EXTRA_KERNEL_ARGS="tink_worker_image=quay.io/tinkerbell/tink-worker:latest"
 
-# By default, Boots needs to bind to low ports (67, 69, 80, 514) so it needs root.
-sudo -E ./boots
+# By default, Smee needs to bind to low ports (67, 69, 80, 514) so it needs root.
+sudo -E ./smee
 
 # or run it in a container
 # NOTE: not sure the NET_ADMIN cap is necessary
-docker run -ti --cap-add=NET_ADMIN --volume $(pwd):/boots alpine:3.14
-/boots -dhcp-addr 0.0.0.0:67
+docker run -ti --cap-add=NET_ADMIN --volume $(pwd):/smee alpine:3.14
+/smee -dhcp-addr 0.0.0.0:67
 ```

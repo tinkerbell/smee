@@ -3,14 +3,14 @@ all: help
 -include lint.mk
 -include rules.mk
 
-build: cmd/boots/boots ## Compile boots for host OS and Architecture
+build: cmd/smee/smee ## Compile smee for host OS and Architecture
 
-crosscompile: $(crossbinaries) ## Compile boots for all architectures
+crosscompile: $(crossbinaries) ## Compile smee for all architectures
 
 gen: $(generated_go_files) ## Generate go generate'd files
 
-IMAGE_TAG ?= boots:latest
-image: cmd/boots/boots-linux-amd64  ## Build docker image
+IMAGE_TAG ?= smee:latest
+image: cmd/smee/smee-linux-amd64  ## Build docker image
 	docker build -t $(IMAGE_TAG) .
 
 test: gen ## Run go test

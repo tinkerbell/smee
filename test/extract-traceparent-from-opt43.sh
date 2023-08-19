@@ -8,7 +8,7 @@
 # PXE_DISCOVERY_CONTROL is 060108 (option 6, 1 byte long, value 8)
 # traceparent is 451a (type 69, 26 bytes, value is tp)
 #
-# The DHCP spec says nothing about ordering and boots can be observed to serve
+# The DHCP spec says nothing about ordering and smee can be observed to serve
 # the types in a different order on different runs, so the option has to be
 # fully parsed to get the right data.
 #
