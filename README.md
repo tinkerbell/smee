@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/tinkerbell/smee/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/smee/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 
-Smee is the network boot service in the [Tinkerbell stack](https://tinkerbell.org). It is comprised of the following services.
+Smee is the network boot service in the [Tinkerbell stack](https://tinkerbell.org), formerly known as `Boots`. It is comprised of the following services.
 
 - DHCP server
   - host reservations only
