@@ -1,6 +1,6 @@
 # K3D (K3S in Docker)
 
-This describes deploying Boots into a K3S in Docker (K3D) cluster.
+This describes deploying Smee into a K3S in Docker (K3D) cluster.
 
 ## Prerequisites
 
@@ -17,17 +17,17 @@ This describes deploying Boots into a K3S in Docker (K3D) cluster.
    k3d cluster create --network host --no-lb --k3s-arg "--disable=traefik"
    ```
 
-2. Deploy Boots
+2. Deploy Smee
 
    Be sure you have updated `MIRROR_BASE_URL`, `PUBLIC_IP`, `PUBLIC_SYSLOG_FQDN`, and `TINKERBELL_GRPC_AUTHORITY` env variables in the [`manifests/kustomize/base/deployment.yaml`](../../manifests/kustomize/base/deployment.yaml) file.
 
    ```bash
-   # Deploy Boots to K3D
+   # Deploy Smee to K3D
    kubectl kustomize manifests/kustomize/overlays/k3d | kubectl apply -f -
    ```
 
 3. Watch the logs
 
    ```bash
-   kubectl -n tinkerbell logs -f -l app=tinkerbell-boots
+   kubectl -n tinkerbell logs -f -l app=tinkerbell-smee
    ```

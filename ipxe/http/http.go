@@ -1,4 +1,4 @@
-// package bhttp is the http server for boots.
+// package bhttp is the http server for smee.
 package http
 
 import (
@@ -40,7 +40,7 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 	mux.HandleFunc("/healthcheck", s.serveHealthchecker(s.GitRev, s.StartTime))
 
 	// wrap the mux with an OpenTelemetry interceptor
-	otelHandler := otelhttp.NewHandler(mux, "boots-http")
+	otelHandler := otelhttp.NewHandler(mux, "smee-http")
 
 	// add X-Forwarded-For support if trusted proxies are configured
 	var xffHandler http.Handler
@@ -69,7 +69,7 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 		Handler: xffHandler,
 
 		// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
-		// recommendation. Boots doesn't really have many headers so 20s should be plenty of time.
+		// recommendation. Smee doesn't really have many headers so 20s should be plenty of time.
 		// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
 		ReadHeaderTimeout: 20 * time.Second,
 	}

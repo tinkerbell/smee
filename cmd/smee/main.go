@@ -16,15 +16,15 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/tinkerbell/boots/ipxe/http"
-	"github.com/tinkerbell/boots/ipxe/script"
-	"github.com/tinkerbell/boots/metrics"
-	"github.com/tinkerbell/boots/syslog"
 	"github.com/tinkerbell/dhcp"
 	"github.com/tinkerbell/dhcp/handler"
 	"github.com/tinkerbell/dhcp/handler/reservation"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
+	"github.com/tinkerbell/smee/ipxe/http"
+	"github.com/tinkerbell/smee/ipxe/script"
+	"github.com/tinkerbell/smee/metrics"
+	"github.com/tinkerbell/smee/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
@@ -37,7 +37,7 @@ var (
 	startTime = time.Now()
 )
 
-const name = "boots"
+const name = "smee"
 
 type config struct {
 	syslog         syslogConfig
@@ -46,7 +46,7 @@ type config struct {
 	ipxeHTTPScript ipxeHTTPScript
 	dhcp           dhcpConfig
 
-	// loglevel is the log level for boots.
+	// loglevel is the log level for smee.
 	logLevel string
 	backends dhcpBackends
 }
@@ -124,7 +124,7 @@ func main() {
 	// tftp
 	if cfg.tftp.enabled {
 		tftpServer := &ipxedust.Server{
-			Log:                  log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
+			Log:                  log.WithValues("service", "github.com/tinkerbell/smee").WithName("github.com/tinkerbell/ipxedust"),
 			HTTP:                 ipxedust.ServerSpec{Disabled: true}, // disabled because below we use the http handlerfunc instead.
 			EnableTFTPSinglePort: true,
 		}
@@ -152,7 +152,7 @@ func main() {
 	if cfg.ipxeHTTPBinary.enabled {
 		// serve ipxe binaries from the "/ipxe/" URI.
 		handlers["/ipxe/"] = ihttp.Handler{
-			Log:   log.WithValues("service", "github.com/tinkerbell/boots").WithName("github.com/tinkerbell/ipxedust"),
+			Log:   log.WithValues("service", "github.com/tinkerbell/smee").WithName("github.com/tinkerbell/ipxedust"),
 			Patch: []byte(cfg.tftp.ipxeScriptPatch),
 		}.Handle
 	}
@@ -218,10 +218,10 @@ func main() {
 	}
 
 	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
-		log.Error(err, "failed running all Boots services")
+		log.Error(err, "failed running all Smee services")
 		panic(err)
 	}
-	log.Info("boots is shutting down")
+	log.Info("smee is shutting down")
 }
 
 func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Listener, *reservation.Handler, error) {

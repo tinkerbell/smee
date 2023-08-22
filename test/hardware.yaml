@@ -5,7 +5,7 @@
   defaultGateway: "192.168.99.1"
   nameServers:
     - "8.8.8.8"
-  hostname: "boots-test-client"
+  hostname: "smee-test-client"
   domainName: "example.com"
   broadcastAddress: "192.168.2.255"
   ntpServers:

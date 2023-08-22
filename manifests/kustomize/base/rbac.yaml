@@ -1,14 +1,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tinkerbell-boots
+  name: tinkerbell-smee
   namespace: tink-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
-  name: tinkerbell-boots-role
+  name: tinkerbell-smee-role
   namespace: tink-system
 rules:
   - apiGroups:
@@ -33,15 +32,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: tinkerbell-boots-role
+  name: tinkerbell-smee-role
   namespace: tink-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: tinkerbell-boots-role
+  name: tinkerbell-smee-role
 subjects:
   - kind: ServiceAccount
-    name: tinkerbell-boots
+    name: tinkerbell-smee
     namespace: tink-system
 ---
 

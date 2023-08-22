@@ -74,7 +74,7 @@ func TestParser(t *testing.T) {
 func TestCustomUsageFunc(t *testing.T) {
 	defaultIP := detectPublicIPv4("")
 	want := fmt.Sprintf(`USAGE
-  Run Boots server for provisioning
+  Run Smee server for provisioning
 
 FLAGS
   -log-level                  log level (debug, info) (default "info")

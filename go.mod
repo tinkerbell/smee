@@ -1,4 +1,4 @@
-module github.com/tinkerbell/boots
+module github.com/tinkerbell/smee
 
 go 1.20
 

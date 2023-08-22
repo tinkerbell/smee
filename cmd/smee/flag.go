@@ -137,7 +137,7 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	setFlags(cfg, fs)
 	return &ffcli.Command{
 		Name:       name,
-		ShortUsage: "Run Boots server for provisioning",
+		ShortUsage: "Run Smee server for provisioning",
 		FlagSet:    fs,
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
 		UsageFunc:  customUsageFunc,

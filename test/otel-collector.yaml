@@ -1,6 +1,6 @@
 # opentelemetry-collector is a proxy for telemetry events.
 #
-# This configuration is set up for use in boots development.
+# This configuration is set up for use in smee development.
 # With collector in debug mode every trace is printed to the console
 # so you can see traces without any complex tooling. There are also
 # examples below for how to send to Lightstep and Honeycomb.

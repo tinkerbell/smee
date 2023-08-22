@@ -15,18 +15,18 @@ SHELL := bash
 GO			?= go
 GOIMPORTS	:= $(GO) run golang.org/x/tools/cmd/goimports@latest
 
-.PHONY: all boots crosscompile dc image gen run test
+.PHONY: all smee crosscompile dc image gen run test
 
 CGO_ENABLED := 0
 export CGO_ENABLED
 
 GitRev := $(shell git rev-parse --short HEAD)
 
-crossbinaries := cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
-cmd/boots/boots-linux-amd64: FLAGS=GOARCH=amd64
-cmd/boots/boots-linux-arm64: FLAGS=GOARCH=arm64
-cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64: boots
-	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+crossbinaries := cmd/smee/smee-linux-amd64 cmd/smee/smee-linux-arm64
+cmd/smee/smee-linux-amd64: FLAGS=GOARCH=amd64
+cmd/smee/smee-linux-arm64: FLAGS=GOARCH=arm64
+cmd/smee/smee-linux-amd64 cmd/smee/smee-linux-arm64: smee
+	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/smee/
 
 generated_go_files := \
 	syslog/facility_string.go \
@@ -41,8 +41,8 @@ $(generated_go_files):
 	go generate -run="$(@F)" ./...
 	$(GOIMPORTS) -w $@
 
-cmd/boots/boots: syslog/facility_string.go syslog/severity_string.go cleanup
-	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/boots/
+cmd/smee/smee: syslog/facility_string.go syslog/severity_string.go cleanup
+	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/smee/
 
 cleanup:
-	rm -f cmd/boots/boots cmd/boots/boots-linux-amd64 cmd/boots/boots-linux-arm64
+	rm -f cmd/smee/smee cmd/smee/smee-linux-amd64 cmd/smee/smee-linux-arm64

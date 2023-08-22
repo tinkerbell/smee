@@ -10,4 +10,4 @@ patches:
   - path: deployment_patch.yaml
     target:
       kind: Deployment
-      labelSelector: "app=tinkerbell-boots"
+      labelSelector: "app=tinkerbell-smee"

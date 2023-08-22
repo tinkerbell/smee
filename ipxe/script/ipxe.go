@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/boots/metrics"
 	"github.com/tinkerbell/dhcp/handler"
+	"github.com/tinkerbell/smee/metrics"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -111,7 +111,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 
 func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw Data) {
 	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.String("boots.script_name", name))
+	span.SetAttributes(attribute.String("smee.script_name", name))
 	var script []byte
 	// check if the custom script should be used
 	if hw.IPXEScriptURL != nil || hw.IPXEScript != "" {
