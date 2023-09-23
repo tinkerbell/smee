@@ -49,8 +49,11 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 		w.statusCode = 200
 	}
 	n, err := w.ResponseWriter.Write(b)
+	if err != nil {
+		return 0, fmt.Errorf("failed writing response: %w", err)
+	}
 
-	return n, fmt.Errorf("writing response: %w", err)
+	return n, nil
 }
 
 func (w *responseWriter) WriteHeader(code int) {
