@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"net/netip"
 	"net/url"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/tinkerbell/dhcp"
 	"github.com/tinkerbell/dhcp/handler"
 	"github.com/tinkerbell/dhcp/handler/reservation"
@@ -206,14 +208,27 @@ func main() {
 
 	// dhcp server
 	if cfg.dhcp.enabled {
-		listener, dh, err := cfg.dhcpListener(ctx, log)
+		dh, err := cfg.dhcpHandler(ctx, log)
 		if err != nil {
 			log.Error(err, "failed to create dhcp listener")
 			panic(fmt.Errorf("failed to create dhcp listener: %w", err))
 		}
 		log.Info("starting dhcp server", "bind_addr", cfg.dhcp.bindAddr)
 		g.Go(func() error {
-			return listener.ListenAndServe(ctx, dh)
+			bindAddr, err := netip.ParseAddrPort(cfg.dhcp.bindAddr)
+			if err != nil {
+				panic(fmt.Errorf("invalid tftp address for DHCP server: %w", err))
+			}
+			conn, err := server4.NewIPv4UDPConn("", net.UDPAddrFromAddrPort(bindAddr))
+			if err != nil {
+				panic(err)
+			}
+			defer func() {
+				_ = conn.Close()
+			}()
+			ds := &dhcp.Server{Logger: log, Conn: conn, Handlers: []dhcp.Handler{dh}}
+
+			return ds.Serve(ctx)
 		})
 	}
 
@@ -224,31 +239,29 @@ func main() {
 	log.Info("smee is shutting down")
 }
 
-func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Listener, *reservation.Handler, error) {
+func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation.Handler, error) {
 	// 1. create the handler
 	// 2. create the backend
 	// 3. add the backend to the handler
-	// 4. create the listener
-	// 5. start the listener(handler)
 	pktIP, err := netip.ParseAddr(c.dhcp.ipForPacket)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid bind address: %w", err)
+		return nil, fmt.Errorf("invalid bind address: %w", err)
 	}
 	tftpIP, err := netip.ParseAddrPort(c.dhcp.tftpIP)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
+		return nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
 	}
 	httpBinaryURL, err := url.Parse(c.dhcp.httpIpxeBinaryIP)
 	if err != nil || httpBinaryURL == nil {
-		return nil, nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
+		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}
 	httpScriptURL, err := url.Parse(c.dhcp.httpIpxeScriptURL)
 	if err != nil || httpScriptURL == nil {
-		return nil, nil, fmt.Errorf("invalid http ipxe script url: %w", err)
+		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
 	}
 	syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid syslog address: %w", err)
+		return nil, fmt.Errorf("invalid syslog address: %w", err)
 	}
 	dh := &reservation.Handler{
 		Backend: nil,
@@ -269,22 +282,18 @@ func (c *config) dhcpListener(ctx context.Context, log logr.Logger) (*dhcp.Liste
 	case c.backends.file.Enabled:
 		b, err := c.backends.file.Backend(ctx, log)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create file backend: %w", err)
+			return nil, fmt.Errorf("failed to create file backend: %w", err)
 		}
 		dh.Backend = b
 	default: // default backend is kubernetes
 		b, err := c.backends.kubernetes.Backend(ctx)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
+			return nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
 		}
 		dh.Backend = b
 	}
-	bindAddr, err := netip.ParseAddrPort(c.dhcp.bindAddr)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
-	}
 
-	return &dhcp.Listener{Addr: bindAddr}, dh, nil
+	return dh, nil
 }
 
 // defaultLogger is zap logr implementation.
