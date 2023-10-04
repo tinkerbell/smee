@@ -223,9 +223,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			defer func() {
-				_ = conn.Close()
-			}()
+			defer conn.Close()
 			ds := &dhcp.Server{Logger: log, Conn: conn, Handlers: []dhcp.Handler{dh}}
 
 			return ds.Serve(ctx)
