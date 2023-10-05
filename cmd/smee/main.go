@@ -85,7 +85,7 @@ type dhcpConfig struct {
 	ipForPacket       string
 	syslogIP          string
 	tftpIP            string
-	httpIpxeBinaryIP  string
+	httpIpxeBinaryURL string
 	httpIpxeScriptURL string
 }
 
@@ -249,7 +249,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation
 	if err != nil {
 		return nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
 	}
-	httpBinaryURL, err := url.Parse(c.dhcp.httpIpxeBinaryIP)
+	httpBinaryURL, err := url.Parse(c.dhcp.httpIpxeBinaryURL)
 	if err != nil || httpBinaryURL == nil {
 		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}

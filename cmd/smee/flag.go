@@ -110,8 +110,8 @@ func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(""), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")
 	fs.StringVar(&c.dhcp.syslogIP, "dhcp-syslog-ip", detectPublicIPv4(""), "[dhcp] syslog server IP address to use in DHCP packets (opt 7)")
 	fs.StringVar(&c.dhcp.tftpIP, "dhcp-tftp-ip", detectPublicIPv4(":69"), "[dhcp] tftp server IP address to use in DHCP packets (opt 66, etc)")
-	fs.StringVar(&c.dhcp.httpIpxeBinaryIP, "dhcp-http-ipxe-binary-ip", "http://"+detectPublicIPv4(":8080/ipxe/"), "[dhcp] HTTP ipxe binary server IP address to use in DHCP packets")
-	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "http://"+detectPublicIPv4("/auto.ipxe"), "[dhcp] HTTP ipxe script server URL to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeBinaryURL, "dhcp-http-ipxe-binary-url", "http://"+detectPublicIPv4(":8080/ipxe/"), "[dhcp] HTTP ipxe binaries URL to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "http://"+detectPublicIPv4("/auto.ipxe"), "[dhcp] HTTP ipxe script URL to use in DHCP packets")
 }
 
 func backendFlags(c *config, fs *flag.FlagSet) {
