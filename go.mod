@@ -11,7 +11,7 @@ require (
 	github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/tinkerbell/dhcp v0.0.0-20230929144734-2d9b619724b7
+	github.com/tinkerbell/dhcp v0.0.0-20231005151535-1a08a6aee2f9
 	github.com/tinkerbell/ipxedust v0.0.0-20230724133306-6eefab8af845
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
 	go.opentelemetry.io/otel v1.18.0
