@@ -66,8 +66,8 @@ FLAGS
   -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
   -dhcp-addr                  [dhcp] local IP and port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled               [dhcp] enable DHCP server (default "true")
-  -dhcp-http-ipxe-binary-ip   [dhcp] http ipxe binary server IP address to use in DHCP packets (default "http://172.17.0.2:8080/ipxe/")
-  -dhcp-http-ipxe-script-url  [dhcp] http ipxe script server URL to use in DHCP packets (default "http://172.17.0.2/auto.ipxe")
+  -dhcp-http-ipxe-binary-url  [dhcp] HTTP ipxe binaries URL to use in DHCP packets (default "http://172.17.0.2:8080/ipxe/")
+  -dhcp-http-ipxe-script-url  [dhcp] HTTP ipxe script URL to use in DHCP packets (default "http://172.17.0.2/auto.ipxe")
   -dhcp-ip-for-packet         [dhcp] ip address to use in DHCP packets (opt 54, etc) (default "172.17.0.2")
   -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.2")
   -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.2:69")

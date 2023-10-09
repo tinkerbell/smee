@@ -33,7 +33,7 @@ func TestParser(t *testing.T) {
 			ipForPacket:       "192.168.2.4",
 			syslogIP:          "192.168.2.4",
 			tftpIP:            "192.168.2.4:69",
-			httpIpxeBinaryIP:  "http://192.168.2.4:8080/ipxe/",
+			httpIpxeBinaryURL: "http://192.168.2.4:8080/ipxe/",
 			httpIpxeScriptURL: "http://192.168.2.4/auto.ipxe",
 		},
 		logLevel: "info",
@@ -52,7 +52,7 @@ func TestParser(t *testing.T) {
 		"-dhcp-ip-for-packet", "192.168.2.4",
 		"-dhcp-syslog-ip", "192.168.2.4",
 		"-dhcp-tftp-ip", "192.168.2.4:69",
-		"-dhcp-http-ipxe-binary-ip", "http://192.168.2.4:8080/ipxe/",
+		"-dhcp-http-ipxe-binary-url", "http://192.168.2.4:8080/ipxe/",
 		"-dhcp-http-ipxe-script-url", "http://192.168.2.4/auto.ipxe",
 	}
 	cli := newCLI(&got, fs)
@@ -86,8 +86,8 @@ FLAGS
   -backend-kube-namespace     [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
   -dhcp-addr                  [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled               [dhcp] enable DHCP server (default "true")
-  -dhcp-http-ipxe-binary-ip   [dhcp] HTTP ipxe binary server IP address to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
-  -dhcp-http-ipxe-script-url  [dhcp] HTTP ipxe script server URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
+  -dhcp-http-ipxe-binary-url  [dhcp] HTTP ipxe binaries URL to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
+  -dhcp-http-ipxe-script-url  [dhcp] HTTP ipxe script URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
   -dhcp-ip-for-packet         [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "%[1]v")
   -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
   -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v:69")
