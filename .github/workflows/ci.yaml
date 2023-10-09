@@ -32,7 +32,7 @@ jobs:
           nix-shell --run 'go get -t ./... && go mod tidy'
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Generate all files
         run: nix-shell --run 'make -j1 gen'
