@@ -68,6 +68,7 @@ FLAGS
   -dhcp-enabled               [dhcp] enable DHCP server (default "true")
   -dhcp-http-ipxe-binary-url  [dhcp] HTTP ipxe binaries URL to use in DHCP packets (default "http://172.17.0.2:8080/ipxe/")
   -dhcp-http-ipxe-script-url  [dhcp] HTTP ipxe script URL to use in DHCP packets (default "http://172.17.0.2/auto.ipxe")
+  -dhcp-iface                 [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet         [dhcp] ip address to use in DHCP packets (opt 54, etc) (default "172.17.0.2")
   -dhcp-syslog-ip             [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.2")
   -dhcp-tftp-ip               [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.2:69")
