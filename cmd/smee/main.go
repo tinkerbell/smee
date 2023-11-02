@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/tinkerbell/dhcp"
 	"github.com/tinkerbell/dhcp/handler"
@@ -73,7 +75,6 @@ type ipxeHTTPScript struct {
 	enabled          bool
 	bindAddr         string
 	extraKernelArgs  string
-	trustedProxies   string
 	hookURL          string
 	tinkServer       string
 	tinkServerUseTLS bool
@@ -87,7 +88,15 @@ type dhcpConfig struct {
 	syslogIP          string
 	tftpIP            string
 	httpIpxeBinaryURL string
-	httpIpxeScriptURL string
+	httpIpxeScript    httpIpxeScript
+}
+
+type httpIpxeScript struct {
+	url string
+	// injectMacAddress will prepend the hardware mac address to the ipxe script URL file name.
+	// For example: http://1.2.3.4/my/loc/auto.ipxe -> http://1.2.3.4/my/loc/40:15:ff:89:cc:0e/auto.ipxe
+	// Setting this to false is useful when you are not using the auto.ipxe script in Smee.
+	injectMacAddress bool
 }
 
 type dhcpBackends struct {
@@ -196,10 +205,9 @@ func main() {
 	if len(handlers) > 0 {
 		// start the http server for ipxe binaries and scripts
 		httpServer := &http.Config{
-			GitRev:         GitRev,
-			StartTime:      startTime,
-			Logger:         log,
-			TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
+			GitRev:    GitRev,
+			StartTime: startTime,
+			Logger:    log,
 		}
 		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
 		g.Go(func() error {
@@ -254,9 +262,20 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation
 	if err != nil || httpBinaryURL == nil {
 		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}
-	httpScriptURL, err := url.Parse(c.dhcp.httpIpxeScriptURL)
+	httpScriptURL, err := url.Parse(c.dhcp.httpIpxeScript.url)
 	if err != nil || httpScriptURL == nil {
 		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
+	}
+	ipxeScript := func(d *dhcpv4.DHCPv4) *url.URL {
+		return httpScriptURL
+	}
+	if c.dhcp.httpIpxeScript.injectMacAddress {
+		ipxeScript = func(d *dhcpv4.DHCPv4) *url.URL {
+			u := *httpScriptURL
+			p := path.Base(u.Path)
+			u.Path = path.Join(path.Dir(u.Path), d.ClientHWAddr.String(), p)
+			return &u
+		}
 	}
 	syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
 	if err != nil {
@@ -269,7 +288,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation
 		Netboot: reservation.Netboot{
 			IPXEBinServerTFTP: tftpIP,
 			IPXEBinServerHTTP: httpBinaryURL,
-			IPXEScriptURL:     httpScriptURL,
+			IPXEScriptURL:     ipxeScript,
 			Enabled:           true,
 		},
 		OTELEnabled: true,

@@ -5,13 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/packethost/xff"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -43,25 +41,9 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 	otelHandler := otelhttp.NewHandler(mux, "smee-http")
 
 	// add X-Forwarded-For support if trusted proxies are configured
-	var xffHandler http.Handler
-	if len(s.TrustedProxies) > 0 {
-		xffmw, err := xff.New(xff.Options{
-			AllowedSubnets: s.TrustedProxies,
-		})
-		if err != nil {
-			s.Logger.Error(err, "failed to create new xff object")
-			panic(fmt.Errorf("failed to create new xff object: %v", err))
-		}
-
-		xffHandler = xffmw.Handler(&loggingMiddleware{
-			handler: otelHandler,
-			log:     s.Logger,
-		})
-	} else {
-		xffHandler = &loggingMiddleware{
-			handler: otelHandler,
-			log:     s.Logger,
-		}
+	xffHandler := &loggingMiddleware{
+		handler: otelHandler,
+		log:     s.Logger,
 	}
 
 	server := http.Server{
