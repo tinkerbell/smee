@@ -82,6 +82,7 @@ type ipxeHTTPScript struct {
 type dhcpConfig struct {
 	enabled           bool
 	bindAddr          string
+	bindInterface     string
 	ipForPacket       string
 	syslogIP          string
 	tftpIP            string
@@ -219,7 +220,7 @@ func main() {
 			if err != nil {
 				panic(fmt.Errorf("invalid tftp address for DHCP server: %w", err))
 			}
-			conn, err := server4.NewIPv4UDPConn("", net.UDPAddrFromAddrPort(bindAddr))
+			conn, err := server4.NewIPv4UDPConn(cfg.dhcp.bindInterface, net.UDPAddrFromAddrPort(bindAddr))
 			if err != nil {
 				panic(err)
 			}

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"regexp"
 	"sort"
 	"strings"
@@ -107,6 +109,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.dhcp.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP server")
 	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP:Port to listen on for DHCP requests")
+	fs.StringVar(&c.dhcp.bindInterface, "dhcp-iface", "", "[dhcp] interface to bind to for DHCP requests")
 	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(""), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")
 	fs.StringVar(&c.dhcp.syslogIP, "dhcp-syslog-ip", detectPublicIPv4(""), "[dhcp] syslog server IP address to use in DHCP packets (opt 7)")
 	fs.StringVar(&c.dhcp.tftpIP, "dhcp-tftp-ip", detectPublicIPv4(":69"), "[dhcp] tftp server IP address to use in DHCP packets (opt 66, etc)")
@@ -142,4 +145,60 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
 		UsageFunc:  customUsageFunc,
 	}
+}
+
+func detectPublicIPv4(extra string) string {
+	ip, err := autoDetectPublicIPv4()
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%v%v", ip.String(), extra)
+}
+
+func autoDetectPublicIPv4() (net.IP, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("unable to auto-detect public IPv4: %w", err)
+	}
+	for _, addr := range addrs {
+		ip, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		v4 := ip.IP.To4()
+		if v4 == nil || !v4.IsGlobalUnicast() {
+			continue
+		}
+
+		return v4, nil
+	}
+
+	return nil, errors.New("unable to auto-detect public IPv4")
+}
+
+func parseTrustedProxies(trustedProxies string) (result []string) {
+	for _, cidr := range strings.Split(trustedProxies, ",") {
+		cidr = strings.TrimSpace(cidr)
+		if cidr == "" {
+			continue
+		}
+		_, _, err := net.ParseCIDR(cidr)
+		if err != nil {
+			// Its not a cidr, but maybe its an IP
+			if ip := net.ParseIP(cidr); ip != nil {
+				if ip.To4() != nil {
+					cidr += "/32"
+				} else {
+					cidr += "/128"
+				}
+			} else {
+				// not an IP, panic
+				panic("invalid ip cidr in TRUSTED_PROXIES cidr=" + cidr)
+			}
+		}
+		result = append(result, cidr)
+	}
+
+	return result
 }
