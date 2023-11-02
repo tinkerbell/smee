@@ -19,6 +19,10 @@ import (
 func customUsageFunc(c *ffcli.Command) string {
 	var b strings.Builder
 
+	if c.LongHelp != "" {
+		fmt.Fprintf(&b, "%s\n\n", c.LongHelp)
+	}
+
 	fmt.Fprintf(&b, "USAGE\n")
 	if c.ShortUsage != "" {
 		fmt.Fprintf(&b, "  %s\n", c.ShortUsage)
@@ -26,10 +30,6 @@ func customUsageFunc(c *ffcli.Command) string {
 		fmt.Fprintf(&b, "  %s\n", c.Name)
 	}
 	fmt.Fprintf(&b, "\n")
-
-	if c.LongHelp != "" {
-		fmt.Fprintf(&b, "%s\n\n", c.LongHelp)
-	}
 
 	if len(c.Subcommands) > 0 {
 		fmt.Fprintf(&b, "SUBCOMMANDS\n")
@@ -140,7 +140,8 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	setFlags(cfg, fs)
 	return &ffcli.Command{
 		Name:       name,
-		ShortUsage: "Run Smee server for provisioning",
+		ShortUsage: "smee [flags]",
+		LongHelp:   "Smee is the DHCP and Network boot service for use in the Tinkerbell stack.",
 		FlagSet:    fs,
 		Options:    []ff.Option{ff.WithEnvVarPrefix(name)},
 		UsageFunc:  customUsageFunc,

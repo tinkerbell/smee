@@ -77,8 +77,10 @@ func TestParser(t *testing.T) {
 
 func TestCustomUsageFunc(t *testing.T) {
 	defaultIP := detectPublicIPv4("")
-	want := fmt.Sprintf(`USAGE
-  Run Smee server for provisioning
+	want := fmt.Sprintf(`Smee is the DHCP and Network boot service for use in the Tinkerbell stack.
+
+USAGE
+  smee [flags]
 
 FLAGS
   -log-level                          log level (debug, info) (default "info")
