@@ -100,6 +100,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.ipxeHTTPScript.enabled, "http-ipxe-script-enabled", true, "[http] enable iPXE HTTP script server")
 	fs.StringVar(&c.ipxeHTTPScript.bindAddr, "http-addr", detectPublicIPv4(":80"), "[http] local IP:Port to listen on for iPXE HTTP script requests")
 	fs.StringVar(&c.ipxeHTTPScript.extraKernelArgs, "extra-kernel-args", "", "[http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script")
+	fs.StringVar(&c.ipxeHTTPScript.trustedProxies, "trusted-proxies", "", "[http] comma separated list of trusted proxies in CIDR notation")
 	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] URL where OSIE (HookOS) images are located")
 	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")

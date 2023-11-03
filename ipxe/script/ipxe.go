@@ -61,6 +61,25 @@ func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReade
 	}, nil
 }
 
+func getByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (data, error) {
+	d, n, err := br.GetByIP(ctx, ip)
+	if err != nil {
+		return data{}, err
+	}
+
+	return data{
+		AllowNetboot:  n.AllowNetboot,
+		Console:       "",
+		MACAddress:    d.MACAddress,
+		Arch:          d.Arch,
+		VLANID:        d.VLANID,
+		WorkflowID:    d.MACAddress.String(),
+		Facility:      n.Facility,
+		IPXEScript:    n.IPXEScript,
+		IPXEScriptURL: n.IPXEScriptURL,
+	}, nil
+}
+
 // HandlerFunc returns a http.HandlerFunc that serves the ipxe script.
 // It is expected that the request path is /<mac address>/auto.ipxe.
 func (h *Handler) HandlerFunc() http.HandlerFunc {
@@ -86,24 +105,53 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 		// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 		// without a tink workflow present.
-		mac := path.Base(path.Dir(r.URL.Path))
-		ha, err := net.ParseMAC(mac)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			h.Logger.Info("URL path not supported, the second to last element in the URL path must be a valid mac address", "error", err)
 
-			return
+		// Try to get the MAC address from the URL path, if not available get the source IP address.
+		if ha, err := getMAC(r.URL.Path); err == nil {
+			hw, err := getByMac(ctx, ha, h.Backend)
+			if err != nil || !hw.AllowNetboot {
+				w.WriteHeader(http.StatusNotFound)
+				h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", ha, "error", err)
+
+				return
+			}
+			h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
 		}
-		hw, err := getByMac(ctx, ha, h.Backend)
-		if err != nil || !hw.AllowNetboot {
-			w.WriteHeader(http.StatusNotFound)
-			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
+		if ip, err := getIP(r.RemoteAddr); err == nil {
+			hw, err := getByIP(ctx, ip, h.Backend)
+			if err != nil || !hw.AllowNetboot {
+				w.WriteHeader(http.StatusNotFound)
+				h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
 
-			return
+				return
+			}
+			h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
 		}
 
-		h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
+		// If we get here, we were unable to get the MAC address from the URL path or the source IP address.
+		w.WriteHeader(http.StatusNotFound)
+		h.Logger.Info("unable to get the MAC address from the URL path or the source IP address", "client", r.RemoteAddr, "urlPath", r.URL.Path)
 	}
+}
+
+func getIP(remoteAddr string) (net.IP, error) {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return net.IP{}, fmt.Errorf("error parsing client address: %w: client: %v", err, remoteAddr)
+	}
+	ip := net.ParseIP(host)
+
+	return ip, nil
+}
+
+func getMAC(urlPath string) (net.HardwareAddr, error) {
+	mac := path.Base(path.Dir(urlPath))
+	ha, err := net.ParseMAC(mac)
+	if err != nil {
+		return net.HardwareAddr{}, fmt.Errorf("URL path not supported, the second to last element in the URL path must be a valid mac address, err: %w", err)
+	}
+
+	return ha, nil
 }
 
 func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw data) {

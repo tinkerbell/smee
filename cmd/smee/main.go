@@ -78,6 +78,7 @@ type ipxeHTTPScript struct {
 	hookURL          string
 	tinkServer       string
 	tinkServerUseTLS bool
+	trustedProxies   string
 }
 
 type dhcpConfig struct {
@@ -141,10 +142,7 @@ func main() {
 			EnableTFTPSinglePort: true,
 		}
 		tftpServer.EnableTFTPSinglePort = true
-		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err != nil {
-			log.Error(err, "invalid bind address")
-			panic(fmt.Errorf("invalid bind address: %w", err))
-		} else {
+		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err == nil {
 			tftpServer.TFTP = ipxedust.ServerSpec{
 				Disabled: false,
 				Addr:     ip,
@@ -156,6 +154,9 @@ func main() {
 			g.Go(func() error {
 				return tftpServer.ListenAndServe(ctx)
 			})
+		} else {
+			log.Error(err, "invalid bind address")
+			panic(fmt.Errorf("invalid bind address: %w", err))
 		}
 	}
 
@@ -205,9 +206,10 @@ func main() {
 	if len(handlers) > 0 {
 		// start the http server for ipxe binaries and scripts
 		httpServer := &http.Config{
-			GitRev:    GitRev,
-			StartTime: startTime,
-			Logger:    log,
+			GitRev:         GitRev,
+			StartTime:      startTime,
+			Logger:         log,
+			TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
 		}
 		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
 		g.Go(func() error {
@@ -330,4 +332,30 @@ func defaultLogger(level string) logr.Logger {
 	}
 
 	return zapr.NewLogger(zapLogger)
+}
+
+func parseTrustedProxies(trustedProxies string) (result []string) {
+	for _, cidr := range strings.Split(trustedProxies, ",") {
+		cidr = strings.TrimSpace(cidr)
+		if cidr == "" {
+			continue
+		}
+		_, _, err := net.ParseCIDR(cidr)
+		if err != nil {
+			// Its not a cidr, but maybe its an IP
+			if ip := net.ParseIP(cidr); ip != nil {
+				if ip.To4() != nil {
+					cidr += "/32"
+				} else {
+					cidr += "/128"
+				}
+			} else {
+				// not an IP, panic
+				panic("invalid ip cidr in TRUSTED_PROXIES cidr=" + cidr)
+			}
+		}
+		result = append(result, cidr)
+	}
+
+	return result
 }
