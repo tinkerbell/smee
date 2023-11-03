@@ -92,26 +92,26 @@ FLAGS
   -backend-kube-namespace             [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
   -dhcp-addr                          [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled                       [dhcp] enable DHCP server (default "true")
-  -dhcp-http-ipxe-binary-url          [dhcp] HTTP ipxe binaries URL to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
-  -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware mac address to ipxe script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
-  -dhcp-http-ipxe-script-url          [dhcp] HTTP ipxe script URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
+  -dhcp-http-ipxe-binary-url          [dhcp] HTTP iPXE binaries URL to use in DHCP packets (default "http://%[1]v:8080/ipxe/")
+  -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
+  -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "%[1]v")
-  -dhcp-syslog-ip                     [dhcp] syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
-  -dhcp-tftp-ip                       [dhcp] tftp server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v:69")
+  -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
+  -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v:69")
   -extra-kernel-args                  [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
   -http-addr                          [http] local IP:Port to listen on for iPXE HTTP script requests (default "%[1]v:80")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
   -http-ipxe-script-enabled           [http] enable iPXE HTTP script server (default "true")
-  -osie-url                           [http] URL where OSIE(Hook) images are located
+  -osie-url                           [http] URL where OSIE (HookOS) images are located
   -tink-server                        [http] IP:Port for the Tink server
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
-  -syslog-addr                        [syslog] local IP:Port to listen on for syslog messages (default "%[1]v:514")
-  -syslog-enabled                     [syslog] enable syslog server(receiver) (default "true")
+  -syslog-addr                        [syslog] local IP:Port to listen on for Syslog messages (default "%[1]v:514")
+  -syslog-enabled                     [syslog] enable Syslog server(receiver) (default "true")
   -ipxe-script-patch                  [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
-  -tftp-addr                          [tftp] local IP:Port to listen on for iPXE tftp binary requests (default "%[1]v:69")
-  -tftp-enabled                       [tftp] enable iPXE tftp binary server) (default "true")
-  -tftp-timeout                       [tftp] iPXE tftp binary server requests timeout (default "5s")
+  -tftp-addr                          [tftp] local IP:Port to listen on for iPXE TFTP binary requests (default "%[1]v:69")
+  -tftp-enabled                       [tftp] enable iPXE TFTP binary server) (default "true")
+  -tftp-timeout                       [tftp] iPXE TFTP binary server requests timeout (default "5s")
 `, defaultIP)
 
 	c := &config{}
