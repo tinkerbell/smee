@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/equinix-labs/otel-init-go v0.0.9
 	github.com/go-logr/logr v1.3.0
-	github.com/go-logr/zapr v1.2.4
+	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/insomniacslk/dhcp v0.0.0-20230908212754-65c27093e38a
 	github.com/peterbourgon/ff/v3 v3.4.0
