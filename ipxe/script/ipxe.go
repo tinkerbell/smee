@@ -116,6 +116,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 				return
 			}
 			h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
+			return
 		}
 		if ip, err := getIP(r.RemoteAddr); err == nil {
 			hw, err := getByIP(ctx, ip, h.Backend)
@@ -126,6 +127,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 				return
 			}
 			h.serveBootScript(ctx, w, path.Base(r.URL.Path), hw)
+			return
 		}
 
 		// If we get here, we were unable to get the MAC address from the URL path or the source IP address.
