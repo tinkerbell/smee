@@ -31,7 +31,7 @@ func TestCustomScript(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			d := Data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, IPXEScript: tt.ipxeScript, IPXEScriptURL: u}
+			d := data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, IPXEScript: tt.ipxeScript, IPXEScriptURL: u}
 			got, err := h.customScript(d)
 			if err != nil && !tt.shouldErr {
 				t.Fatal(err)
@@ -69,7 +69,7 @@ boot
 			h := &Handler{
 				OSIEURL: "http://127.1.1.1",
 			}
-			d := Data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, VLANID: "1234", Facility: "onprem", Arch: "x86_64"}
+			d := data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, VLANID: "1234", Facility: "onprem", Arch: "x86_64"}
 			sp := trace.SpanFromContext(context.Background())
 			got, err := h.defaultScript(sp, d)
 			if err != nil {

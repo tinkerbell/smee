@@ -28,7 +28,7 @@ type Handler struct {
 	TinkServerGRPCAddr string
 }
 
-type Data struct {
+type data struct {
 	AllowNetboot  bool // If true, the client will be provided netboot options in the DHCP offer/ack.
 	Console       string
 	MACAddress    net.HardwareAddr
@@ -40,35 +40,15 @@ type Data struct {
 	IPXEScriptURL *url.URL
 }
 
-// Find implements the script.Finder interface.
-// It uses the handler.BackendReader to get the (hardware) data and then
+// getByMac uses the handler.BackendReader to get the (hardware) data and then
 // translates it to the script.Data struct.
-func GetByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (Data, error) {
-	d, n, err := br.GetByIP(ctx, ip)
-	if err != nil {
-		return Data{}, err
-	}
-
-	return Data{
-		AllowNetboot:  n.AllowNetboot,
-		Console:       "",
-		MACAddress:    d.MACAddress,
-		Arch:          d.Arch,
-		VLANID:        d.VLANID,
-		WorkflowID:    d.MACAddress.String(),
-		Facility:      n.Facility,
-		IPXEScript:    n.IPXEScript,
-		IPXEScriptURL: n.IPXEScriptURL,
-	}, nil
-}
-
-func GetByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReader) (Data, error) {
+func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReader) (data, error) {
 	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
-		return Data{}, err
+		return data{}, err
 	}
 
-	return Data{
+	return data{
 		AllowNetboot:  n.AllowNetboot,
 		Console:       "",
 		MACAddress:    d.MACAddress,
@@ -79,10 +59,6 @@ func GetByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReade
 		IPXEScript:    n.IPXEScript,
 		IPXEScriptURL: n.IPXEScriptURL,
 	}, nil
-}
-
-type Finder interface {
-	Find(context.Context, net.IP) (Data, error)
 }
 
 // HandlerFunc returns a http.HandlerFunc that serves the ipxe script.
@@ -118,7 +94,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 
 			return
 		}
-		hw, err := GetByMac(ctx, ha, h.Backend)
+		hw, err := getByMac(ctx, ha, h.Backend)
 		if err != nil || !hw.AllowNetboot {
 			w.WriteHeader(http.StatusNotFound)
 			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
@@ -130,7 +106,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw Data) {
+func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw data) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("smee.script_name", name))
 	var script []byte
@@ -177,7 +153,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 	}
 }
 
-func (h *Handler) defaultScript(span trace.Span, hw Data) (string, error) {
+func (h *Handler) defaultScript(span trace.Span, hw data) (string, error) {
 	mac := hw.MACAddress
 	arch := hw.Arch
 	if arch == "" {
@@ -210,7 +186,7 @@ func (h *Handler) defaultScript(span trace.Span, hw Data) (string, error) {
 }
 
 // customScript returns the custom script or chain URL if defined in the hardware data otherwise an error.
-func (h *Handler) customScript(hw Data) (string, error) {
+func (h *Handler) customScript(hw data) (string, error) {
 	if chain := hw.IPXEScriptURL; chain != nil && chain.String() != "" {
 		if chain.Scheme != "http" && chain.Scheme != "https" {
 			return "", fmt.Errorf("invalid URL scheme: %v", chain.Scheme)
