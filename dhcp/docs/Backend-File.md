@@ -22,41 +22,41 @@ See this [example.yaml](../backend/file/testdata/example.yaml) for a full workin
 ```yaml
 ---
 08:00:27:29:4E:67:
-  ipAddress: '192.168.2.153'
-  subnetMask: '255.255.255.0'
-  defaultGateway: '192.168.2.1'
+  ipAddress: "192.168.2.153"
+  subnetMask: "255.255.255.0"
+  defaultGateway: "192.168.2.1"
   nameServers:
-  - '8.8.8.8'
-  - '1.1.1.1'
-  hostname: 'pxe-virtualbox'
-  domainName: 'example.com'
-  broadcastAddress: '192.168.2.255'
+    - "8.8.8.8"
+    - "1.1.1.1"
+  hostname: "pxe-virtualbox"
+  domainName: "example.com"
+  broadcastAddress: "192.168.2.255"
   ntpServers:
-  - '132.163.96.2'
-  - '132.163.96.3'
+    - "132.163.96.2"
+    - "132.163.96.3"
   leaseTime: 86400
   domainSearch:
-  - 'example.com'
+    - "example.com"
   netboot:
     allowPxe: true
-    ipxeScriptUrl: 'https://boot.netboot.xyz'
+    ipxeScriptUrl: "https://boot.netboot.xyz"
 52:54:00:aa:88:2a:
-  ipAddress: '192.168.2.15'
-  subnetMask: '255.255.255.0'
-  defaultGateway: '192.168.2.1'
+  ipAddress: "192.168.2.15"
+  subnetMask: "255.255.255.0"
+  defaultGateway: "192.168.2.1"
   nameServers:
-  - '8.8.8.8'
-  - '1.1.1.1'
-  hostname: 'sandbox'
-  domainName: 'example.com'
-  broadcastAddress: '192.168.2.255'
+    - "8.8.8.8"
+    - "1.1.1.1"
+  hostname: "sandbox"
+  domainName: "example.com"
+  broadcastAddress: "192.168.2.255"
   ntpServers:
-  - '132.163.96.2'
-  - '132.163.96.3'
+    - "132.163.96.2"
+    - "132.163.96.3"
   leaseTime: 86400
   domainSearch:
-  - 'example.com'
+    - "example.com"
   netboot:
     allowPxe: true
-    ipxeScriptUrl: 'https://boot.netboot.xyz'
+    ipxeScriptUrl: "https://boot.netboot.xyz"
 ```

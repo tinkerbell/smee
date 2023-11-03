@@ -6,11 +6,11 @@ DHCP library with multiple backends. All IP addresses are served as DHCP reserva
 
 - [Tink Kubernetes CRDs](https://github.com/tinkerbell/tink/blob/main/config/crd/bases/tinkerbell.org_hardware.yaml)
   - This backend is also the main use case.
-  It pulls hardware data from Kubernetes CRDs for use in serving DHCP clients.
+    It pulls hardware data from Kubernetes CRDs for use in serving DHCP clients.
 - [File based](./docs/Backend-File.md)
   - This backend is for mainly for testing and development.
-  It reads a file for hardware data to use in serving DHCP clients.
-  See [example.yaml](../backend/file/testdata/example.yaml) for the data model.
+    It reads a file for hardware data to use in serving DHCP clients.
+    See [example.yaml](../backend/file/testdata/example.yaml) for the data model.
 
 ## Definitions
 
