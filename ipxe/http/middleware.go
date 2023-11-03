@@ -28,14 +28,14 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		log = false
 	}
 	if log {
-		h.log.V(1).Info("request", "method", method, "uri", uri, "client", client, "event", "sr")
+		h.log.V(1).Info("request", "method", method, "uri", uri, "client", client)
 	}
 
 	res := &responseWriter{ResponseWriter: w}
 	h.handler.ServeHTTP(res, req) // process the request
 
 	if log {
-		h.log.Info("response", "method", method, "uri", uri, "client", client, "duration", time.Since(start), "status", res.statusCode, "event", "ss")
+		h.log.Info("response", "method", method, "uri", uri, "client", client, "duration", time.Since(start), "status", res.statusCode)
 	}
 }
 

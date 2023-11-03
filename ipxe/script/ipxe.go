@@ -28,7 +28,7 @@ type Handler struct {
 	TinkServerGRPCAddr string
 }
 
-type Data struct {
+type data struct {
 	AllowNetboot  bool // If true, the client will be provided netboot options in the DHCP offer/ack.
 	Console       string
 	MACAddress    net.HardwareAddr
@@ -40,16 +40,15 @@ type Data struct {
 	IPXEScriptURL *url.URL
 }
 
-// Find implements the script.Finder interface.
-// It uses the handler.BackendReader to get the (hardware) data and then
+// getByMac uses the handler.BackendReader to get the (hardware) data and then
 // translates it to the script.Data struct.
-func GetByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (Data, error) {
-	d, n, err := br.GetByIP(ctx, ip)
+func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReader) (data, error) {
+	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
-		return Data{}, err
+		return data{}, err
 	}
 
-	return Data{
+	return data{
 		AllowNetboot:  n.AllowNetboot,
 		Console:       "",
 		MACAddress:    d.MACAddress,
@@ -62,14 +61,12 @@ func GetByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (Data, er
 	}, nil
 }
 
-type Finder interface {
-	Find(context.Context, net.IP) (Data, error)
-}
-
+// HandlerFunc returns a http.HandlerFunc that serves the ipxe script.
+// It is expected that the request path is /<mac address>/auto.ipxe.
 func (h *Handler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if path.Base(r.URL.Path) != "auto.ipxe" {
-			h.Logger.Info("not found", "path", r.URL.Path)
+			h.Logger.Info("URL path not supported", "path", r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 
 			return
@@ -81,14 +78,6 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
 		defer timer.ObserveDuration()
 
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.Logger.Error(fmt.Errorf("error parsing client address: %w", err), "client", r.RemoteAddr)
-
-			return
-		}
-		ip := net.ParseIP(host)
 		ctx := r.Context()
 		// Should we serve a custom ipxe script?
 		// This gates serving PXE file by
@@ -97,7 +86,15 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		// 2. the network.interfaces[].netboot.allow_pxe value, in the tink server hardware record, equal to true
 		// This allows serving custom ipxe scripts, starting up into OSIE or other installation environments
 		// without a tink workflow present.
-		hw, err := GetByIP(ctx, ip, h.Backend)
+		mac := path.Base(path.Dir(r.URL.Path))
+		ha, err := net.ParseMAC(mac)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			h.Logger.Info("URL path not supported, the second to last element in the URL path must be a valid mac address", "error", err)
+
+			return
+		}
+		hw, err := getByMac(ctx, ha, h.Backend)
 		if err != nil || !hw.AllowNetboot {
 			w.WriteHeader(http.StatusNotFound)
 			h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
@@ -109,7 +106,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw Data) {
+func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, name string, hw data) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("smee.script_name", name))
 	var script []byte
@@ -156,7 +153,7 @@ func (h *Handler) serveBootScript(ctx context.Context, w http.ResponseWriter, na
 	}
 }
 
-func (h *Handler) defaultScript(span trace.Span, hw Data) (string, error) {
+func (h *Handler) defaultScript(span trace.Span, hw data) (string, error) {
 	mac := hw.MACAddress
 	arch := hw.Arch
 	if arch == "" {
@@ -189,7 +186,7 @@ func (h *Handler) defaultScript(span trace.Span, hw Data) (string, error) {
 }
 
 // customScript returns the custom script or chain URL if defined in the hardware data otherwise an error.
-func (h *Handler) customScript(hw Data) (string, error) {
+func (h *Handler) customScript(hw data) (string, error) {
 	if chain := hw.IPXEScriptURL; chain != nil && chain.String() != "" {
 		if chain.Scheme != "http" && chain.Scheme != "https" {
 			return "", fmt.Errorf("invalid URL scheme: %v", chain.Scheme)

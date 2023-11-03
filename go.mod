@@ -8,10 +8,9 @@ require (
 	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-cmp v0.6.0
 	github.com/insomniacslk/dhcp v0.0.0-20230908212754-65c27093e38a
-	github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.17.0
-	github.com/tinkerbell/dhcp v0.0.0-20231023182819-60610e3eff8d
+	github.com/tinkerbell/dhcp v0.0.0-20231102180731-28d9c2fedcbf
 	github.com/tinkerbell/ipxedust v0.0.0-20231006181752-2042f6b1aad3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
 	go.opentelemetry.io/otel v1.19.0

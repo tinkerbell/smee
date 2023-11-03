@@ -5,31 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/packethost/xff"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // Config is the configuration for the http server.
 type Config struct {
-	GitRev         string
-	StartTime      time.Time
-	Logger         logr.Logger
-	TrustedProxies []string
+	GitRev    string
+	StartTime time.Time
+	Logger    logr.Logger
 }
 
 // HandlerMapping is a map of routes to http.HandlerFuncs.
 type HandlerMapping map[string]http.HandlerFunc
 
 // ServeHTTP sets up all the HTTP routes using a stdlib mux and starts the http
-// server, which will block. App functionality is instrumented in Prometheus and
-// OpenTelemetry. Optionally configures X-Forwarded-For support.
+// server, which will block. App functionality is instrumented in Prometheus and OpenTelemetry.
 func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMapping) error {
 	mux := http.NewServeMux()
 	for pattern, handler := range handlers {
@@ -42,31 +38,12 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 	// wrap the mux with an OpenTelemetry interceptor
 	otelHandler := otelhttp.NewHandler(mux, "smee-http")
 
-	// add X-Forwarded-For support if trusted proxies are configured
-	var xffHandler http.Handler
-	if len(s.TrustedProxies) > 0 {
-		xffmw, err := xff.New(xff.Options{
-			AllowedSubnets: s.TrustedProxies,
-		})
-		if err != nil {
-			s.Logger.Error(err, "failed to create new xff object")
-			panic(fmt.Errorf("failed to create new xff object: %v", err))
-		}
-
-		xffHandler = xffmw.Handler(&loggingMiddleware{
-			handler: otelHandler,
-			log:     s.Logger,
-		})
-	} else {
-		xffHandler = &loggingMiddleware{
-			handler: otelHandler,
-			log:     s.Logger,
-		}
-	}
-
 	server := http.Server{
-		Addr:    addr,
-		Handler: xffHandler,
+		Addr: addr,
+		Handler: &loggingMiddleware{
+			handler: otelHandler,
+			log:     s.Logger,
+		},
 
 		// Mitigate Slowloris attacks. 30 seconds is based on Apache's recommended 20-40
 		// recommendation. Smee doesn't really have many headers so 20s should be plenty of time.
