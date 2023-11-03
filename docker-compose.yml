@@ -29,8 +29,9 @@ services:
         ipv4_address: 192.168.99.42
     mac_address: 02:00:00:00:00:01
     environment:
-      SMEE_TINK_SERVER: tinkerbell.tinkerbell:42113
-      SMEE_BACKEND_FILE: true
+      SMEE_TINK_SERVER: tink-server:42113
+      SMEE_BACKEND_KUBE_ENABLED: false
+      SMEE_BACKEND_FILE_ENABLED: true
       SMEE_BACKEND_FILE_PATH: /hardware.yaml
       SMEE_OSIE_URL: "http://192.168.8.5/osie/artifacts/"
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
