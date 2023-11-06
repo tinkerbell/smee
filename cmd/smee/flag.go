@@ -90,6 +90,7 @@ func tftpFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.tftp.bindAddr, "tftp-addr", detectPublicIPv4(":69"), "[tftp] local IP:Port to listen on for iPXE TFTP binary requests")
 	fs.DurationVar(&c.tftp.timeout, "tftp-timeout", time.Second*5, "[tftp] iPXE TFTP binary server requests timeout")
 	fs.StringVar(&c.tftp.ipxeScriptPatch, "ipxe-script-patch", "", "[tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP")
+	fs.IntVar(&c.tftp.blockSize, "tftp-block-size", 512, "[tftp] TFTP block size a value between 512 (the default block size for TFTP) and 65456 (the max size a UDP packet payload can be)")
 }
 
 func ipxeHTTPBinaryFlags(c *config, fs *flag.FlagSet) {
