@@ -61,10 +61,11 @@ type syslogConfig struct {
 }
 
 type tftp struct {
-	enabled         bool
 	bindAddr        string
-	timeout         time.Duration
+	blockSize       int
+	enabled         bool
 	ipxeScriptPatch string
+	timeout         time.Duration
 }
 
 type ipxeHTTPBinary struct {
@@ -144,10 +145,11 @@ func main() {
 		tftpServer.EnableTFTPSinglePort = true
 		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err == nil {
 			tftpServer.TFTP = ipxedust.ServerSpec{
-				Disabled: false,
-				Addr:     ip,
-				Timeout:  cfg.tftp.timeout,
-				Patch:    []byte(cfg.tftp.ipxeScriptPatch),
+				Disabled:  false,
+				Addr:      ip,
+				Timeout:   cfg.tftp.timeout,
+				Patch:     []byte(cfg.tftp.ipxeScriptPatch),
+				BlockSize: cfg.tftp.blockSize,
 			}
 			// start the ipxe binary tftp server
 			log.Info("starting tftp server", "bind_addr", cfg.tftp.bindAddr)

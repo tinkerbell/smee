@@ -87,6 +87,7 @@ FLAGS
   -syslog-enabled                     [syslog] enable Syslog server(receiver) (default "true")
   -ipxe-script-patch                  [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
   -tftp-addr                          [tftp] local IP:Port to listen on for iPXE TFTP binary requests (default "172.17.0.2:69")
+  -tftp-block-size                    [tftp] TFTP block size a value between 512 (the default block size for TFTP) and 65456 (the max size a UDP packet payload can be) (default "512")
   -tftp-enabled                       [tftp] enable iPXE TFTP binary server) (default "true")
   -tftp-timeout                       [tftp] iPXE TFTP binary server requests timeout (default "5s")
 ```
