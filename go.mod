@@ -1,6 +1,8 @@
 module github.com/tinkerbell/smee
 
-go 1.20
+go 1.21
+
+toolchain go1.21.2
 
 require (
 	github.com/equinix-labs/otel-init-go v0.0.9
@@ -18,6 +20,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.5.0
+	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.29.0
 )
 
@@ -93,7 +96,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.29.0 // indirect
-	k8s.io/apimachinery v0.29.0 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231206194836-bf4651e18aa8 // indirect
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661 // indirect

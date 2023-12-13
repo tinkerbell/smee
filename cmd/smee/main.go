@@ -73,13 +73,14 @@ type ipxeHTTPBinary struct {
 }
 
 type ipxeHTTPScript struct {
-	enabled          bool
-	bindAddr         string
-	extraKernelArgs  string
-	hookURL          string
-	tinkServer       string
-	tinkServerUseTLS bool
-	trustedProxies   string
+	enabled                       bool
+	bindAddr                      string
+	extraKernelArgs               string
+	hookURL                       string
+	tinkServer                    string
+	tinkServerUseTLS              bool
+	trustedProxies                string
+	disableDiscoverTrustedProxies bool
 }
 
 type dhcpConfig struct {
@@ -179,13 +180,13 @@ func main() {
 		case cfg.backends.file.Enabled && cfg.backends.kubernetes.Enabled:
 			panic("only one backend can be enabled at a time")
 		case cfg.backends.file.Enabled:
-			b, err := cfg.backends.file.Backend(ctx, log)
+			b, err := cfg.backends.file.backend(ctx, log)
 			if err != nil {
 				panic(fmt.Errorf("failed to run file backend: %w", err))
 			}
 			br = b
 		default: // default backend is kubernetes
-			b, err := cfg.backends.kubernetes.Backend(ctx)
+			b, err := cfg.backends.kubernetes.backend(ctx)
 			if err != nil {
 				panic(fmt.Errorf("failed to run kubernetes backend: %w", err))
 			}
@@ -207,13 +208,17 @@ func main() {
 
 	if len(handlers) > 0 {
 		// start the http server for ipxe binaries and scripts
+		tp := parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies)
+		if cfg.backends.kubernetes.Enabled {
+			tp = cfg.backends.kubernetes.discoverTrustedProxies(ctx, log, tp)
+		}
 		httpServer := &http.Config{
 			GitRev:         GitRev,
 			StartTime:      startTime,
 			Logger:         log,
-			TrustedProxies: parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies),
+			TrustedProxies: tp,
 		}
-		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr)
+		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr, "trusted_proxies", tp)
 		g.Go(func() error {
 			return httpServer.ServeHTTP(ctx, cfg.ipxeHTTPScript.bindAddr, handlers)
 		})
@@ -302,13 +307,13 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation
 	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
 		panic("only one backend can be enabled at a time")
 	case c.backends.file.Enabled:
-		b, err := c.backends.file.Backend(ctx, log)
+		b, err := c.backends.file.backend(ctx, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create file backend: %w", err)
 		}
 		dh.Backend = b
 	default: // default backend is kubernetes
-		b, err := c.backends.kubernetes.Backend(ctx)
+		b, err := c.backends.kubernetes.backend(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
 		}
