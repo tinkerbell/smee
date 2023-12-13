@@ -105,20 +105,22 @@ func (k *Kube) discoverTrustedProxies(ctx context.Context, l logr.Logger, truste
 // combinedCIDRs returns the CIDR Ranges for Pods in cluster. Not all Kubernetes distributions provide a way to discover the entire podCIDR.
 // Some distributions just provide the podCIDRs assigned to each node. combinedCIDRs tries all known locations where pod CIDRs might exist.
 // For example, if a cluster has 3 nodes, each with a /24 podCIDR, and the cluster has a /16 podCIDR, combinedCIDRs will return 4 CIDR ranges.
-func combinedCIDRs(ctx context.Context, l logr.Logger, c *corev1client.CoreV1Client, trustedProxies []string) []string {
+func combinedCIDRs(ctx context.Context, l logr.Logger, c corev1client.CoreV1Interface, trustedProxies []string) []string {
+	var tp []string
+	copy(tp, trustedProxies)
 	if podCIDRS, err := perNodePodCIDRs(ctx, c); err == nil {
-		trustedProxies = append(trustedProxies, podCIDRS...)
+		tp = append(tp, podCIDRS...)
 	} else {
 		l.V(1).Info("failed to get per node podCIDRs", "err", err)
 	}
 
 	if clusterCIDR, err := clusterPodCIDR(ctx, c); err == nil {
-		trustedProxies = append(trustedProxies, clusterCIDR...)
+		tp = append(tp, clusterCIDR...)
 	} else {
 		l.V(1).Info("failed to get cluster wide podCIDR", "err", err)
 	}
 
-	return trustedProxies
+	return tp
 }
 
 // perNodePodCIDRs returns the CIDR Range for Pods on each node. This is the per node podCIDR as compared to the total podCIDR.
