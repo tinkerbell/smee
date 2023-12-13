@@ -125,7 +125,7 @@ func combinedCIDRs(ctx context.Context, l logr.Logger, c *corev1client.CoreV1Cli
 // This will get the podCIDR from each node in the cluster, not the entire cluster podCIDR. If a cluster grows after this is run,
 // the new nodes will not be included until this func is run again.
 // This should be used in conjunction with ClusterPodCIDR to be as complete and cross distribution compatible as possible.
-func perNodePodCIDRs(ctx context.Context, c *corev1client.CoreV1Client) ([]string, error) {
+func perNodePodCIDRs(ctx context.Context, c corev1client.CoreV1Interface) ([]string, error) {
 	ns, err := c.Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func perNodePodCIDRs(ctx context.Context, c *corev1client.CoreV1Client) ([]strin
 // clusterPodCIDR returns the CIDR Range for Pods in cluster. This is the total podCIDR as compared to the per node podCIDR.
 // Some Kubernetes distributions do not run a kube-controller-manager pod, so this func should be used in conjunction with PerNodePodCIDRs
 // to be as complete and cross distribution compatible as possible.
-func clusterPodCIDR(ctx context.Context, c *corev1client.CoreV1Client) ([]string, error) {
+func clusterPodCIDR(ctx context.Context, c corev1client.CoreV1Interface) ([]string, error) {
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
 	pods, err := c.Pods("kube-system").List(ctx, metav1.ListOptions{
 		LabelSelector: "component=kube-controller-manager",
