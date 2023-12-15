@@ -165,10 +165,10 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/tinkerbell/dhcp v0.0.0-20231207155719-b3c8a31c34f9 h1:kESuyF0DXYE63Q7UMCmBkGqKOTzcqBGK8O0XGdnbHVc=
-github.com/tinkerbell/dhcp v0.0.0-20231207155719-b3c8a31c34f9/go.mod h1:Hsk+IlFnEywO5f4u0ecP7vrX5o73ZkDv8as9MDUOrD4=
-github.com/tinkerbell/ipxedust v0.0.0-20231214161425-b49091211c4a h1:2GQKbt9nBEdMFraRHF2t3l/WtNYjGS81nrXOz1UWVsc=
-github.com/tinkerbell/ipxedust v0.0.0-20231214161425-b49091211c4a/go.mod h1:zrFXKJHUplvuggD9MzSQuZldQZU4CLter7QYqSLiiE4=
+github.com/tinkerbell/dhcp v0.0.0-20231215222245-f5112b96a67c h1:3DP2/hZ4ew/H6OT3don45xM55W/Og7NYID7x0NZIBtA=
+github.com/tinkerbell/dhcp v0.0.0-20231215222245-f5112b96a67c/go.mod h1:BZr9oLvt55h9XhrCC7/83+3ap5lH/n8MeX+rsDQAX2U=
+github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a h1:BNbuuQp8m/L0eS9BLToKx1KQSuK/RvUuzSOXVuFKruI=
+github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a/go.mod h1:zrFXKJHUplvuggD9MzSQuZldQZU4CLter7QYqSLiiE4=
 github.com/tinkerbell/tink v0.9.0 h1:W7X/OEmhyYXE/kPVu1U31fpugVHoc2qsAvBtsZ7mkDg=
 github.com/tinkerbell/tink v0.9.0/go.mod h1:r8gDvx/Y+GEFeT9xwKa14ULrkMre8mYmH3/E9VbUkEw=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 h1:YcojQL98T/OO+rybuzn2+5KrD5dBwXIvYBvQ2cD3Avg=
