@@ -107,7 +107,7 @@ func (k *Kube) discoverTrustedProxies(ctx context.Context, l logr.Logger, truste
 // For example, if a cluster has 3 nodes, each with a /24 podCIDR, and the cluster has a /16 podCIDR, combinedCIDRs will return 4 CIDR ranges.
 func combinedCIDRs(ctx context.Context, l logr.Logger, c corev1client.CoreV1Interface, trustedProxies []string) []string {
 	var tp []string
-	copy(tp, trustedProxies)
+	tp = append(tp, trustedProxies...)
 	if podCIDRS, err := perNodePodCIDRs(ctx, c); err == nil {
 		tp = append(tp, podCIDRS...)
 	} else {
