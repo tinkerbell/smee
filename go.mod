@@ -1,6 +1,8 @@
 module github.com/tinkerbell/smee
 
-go 1.20
+go 1.21
+
+toolchain go1.21.2
 
 require (
 	github.com/equinix-labs/otel-init-go v0.0.9
@@ -11,13 +13,15 @@ require (
 	github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.17.0
-	github.com/tinkerbell/dhcp v0.0.0-20231207155719-b3c8a31c34f9
-	github.com/tinkerbell/ipxedust v0.0.0-20231214161425-b49091211c4a
+	github.com/tinkerbell/dhcp v0.0.0-20231215222245-f5112b96a67c
+	github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.5.0
+	k8s.io/api v0.29.0
+	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.29.0
 )
 
@@ -28,6 +32,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -92,8 +97,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.29.0 // indirect
-	k8s.io/apimachinery v0.29.0 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231206194836-bf4651e18aa8 // indirect
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661 // indirect
