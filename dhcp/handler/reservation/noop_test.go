@@ -1,4 +1,4 @@
-package noop
+package reservation
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 
 func TestNoop(t *testing.T) {
 	want := errors.New("no backend specified, please specify a backend")
-	_, _, got := Handler{}.GetByMac(context.TODO(), nil)
+	_, _, got := noop{}.GetByMac(context.TODO(), nil)
 	if diff := cmp.Diff(want.Error(), got.Error()); diff != "" {
 		t.Fatal(diff)
 	}
-	_, _, got = Handler{}.GetByIP(context.TODO(), nil)
+	_, _, got = noop{}.GetByIP(context.TODO(), nil)
 	if diff := cmp.Diff(want.Error(), got.Error()); diff != "" {
 		t.Fatal(diff)
 	}

@@ -168,8 +168,6 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/tinkerbell/dhcp v0.0.0-20231215222245-f5112b96a67c h1:3DP2/hZ4ew/H6OT3don45xM55W/Og7NYID7x0NZIBtA=
-github.com/tinkerbell/dhcp v0.0.0-20231215222245-f5112b96a67c/go.mod h1:BZr9oLvt55h9XhrCC7/83+3ap5lH/n8MeX+rsDQAX2U=
 github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a h1:BNbuuQp8m/L0eS9BLToKx1KQSuK/RvUuzSOXVuFKruI=
 github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a/go.mod h1:zrFXKJHUplvuggD9MzSQuZldQZU4CLter7QYqSLiiE4=
 github.com/tinkerbell/tink v0.9.0 h1:W7X/OEmhyYXE/kPVu1U31fpugVHoc2qsAvBtsZ7mkDg=
