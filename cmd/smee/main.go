@@ -28,7 +28,7 @@ import (
 	"github.com/tinkerbell/smee/internal/ipxe/http"
 	"github.com/tinkerbell/smee/internal/ipxe/script"
 	"github.com/tinkerbell/smee/internal/metric"
-	"github.com/tinkerbell/smee/syslog"
+	"github.com/tinkerbell/smee/internal/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"

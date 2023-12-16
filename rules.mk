@@ -29,19 +29,19 @@ cmd/smee/smee-linux-amd64 cmd/smee/smee-linux-arm64: smee
 	${FLAGS} GOOS=linux go build -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/smee/
 
 generated_go_files := \
-	syslog/facility_string.go \
-	syslog/severity_string.go \
+	internal/syslog/facility_string.go \
+	internal/syslog/severity_string.go \
 
 # go generate
 go_generate: $(generated_go_files)
 $(filter %_string.go,$(generated_go_files)):
-syslog/facility_string.go: syslog/message.go
-syslog/severity_string.go: syslog/message.go
+internal/syslog/facility_string.go: internal/syslog/message.go
+internal/syslog/severity_string.go: internal/syslog/message.go
 $(generated_go_files):
 	go generate -run="$(@F)" ./...
 	$(GOIMPORTS) -w $@
 
-cmd/smee/smee: syslog/facility_string.go syslog/severity_string.go cleanup
+cmd/smee/smee: internal/syslog/facility_string.go internal/syslog/severity_string.go cleanup
 	go build -v -ldflags="-X main.GitRev=${GitRev}" -o $@ ./cmd/smee/
 
 cleanup:
