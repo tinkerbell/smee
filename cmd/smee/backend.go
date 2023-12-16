@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/smee/backend/file"
-	"github.com/tinkerbell/smee/backend/kube"
+	"github.com/tinkerbell/smee/internal/backend/file"
+	"github.com/tinkerbell/smee/internal/backend/kube"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

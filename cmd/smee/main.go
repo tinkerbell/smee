@@ -25,9 +25,9 @@ import (
 	"github.com/tinkerbell/smee/internal/dhcp"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"github.com/tinkerbell/smee/internal/dhcp/handler/reservation"
-	"github.com/tinkerbell/smee/ipxe/http"
-	"github.com/tinkerbell/smee/ipxe/script"
-	"github.com/tinkerbell/smee/metrics"
+	"github.com/tinkerbell/smee/internal/ipxe/http"
+	"github.com/tinkerbell/smee/internal/ipxe/script"
+	"github.com/tinkerbell/smee/internal/metric"
 	"github.com/tinkerbell/smee/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -116,7 +116,7 @@ func main() {
 	defer done()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
 	defer otelShutdown(ctx)
-	metrics.Init()
+	metric.Init()
 
 	log := defaultLogger(cfg.logLevel)
 	log.Info("starting", "version", GitRev)

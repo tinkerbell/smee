@@ -12,7 +12,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
-	"github.com/tinkerbell/smee/metrics"
+	"github.com/tinkerbell/smee/internal/metric"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -91,10 +91,10 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 			return
 		}
 		labels := prometheus.Labels{"from": "http", "op": "file"}
-		metrics.JobsTotal.With(labels).Inc()
-		metrics.JobsInProgress.With(labels).Inc()
-		defer metrics.JobsInProgress.With(labels).Dec()
-		timer := prometheus.NewTimer(metrics.JobDuration.With(labels))
+		metric.JobsTotal.With(labels).Inc()
+		metric.JobsInProgress.With(labels).Inc()
+		defer metric.JobsInProgress.With(labels).Dec()
+		timer := prometheus.NewTimer(metric.JobDuration.With(labels))
 		defer timer.ObserveDuration()
 
 		ctx := r.Context()
