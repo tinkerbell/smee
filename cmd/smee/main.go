@@ -209,9 +209,6 @@ func main() {
 	if len(handlers) > 0 {
 		// start the http server for ipxe binaries and scripts
 		tp := parseTrustedProxies(cfg.ipxeHTTPScript.trustedProxies)
-		if cfg.backends.kubernetes.Enabled {
-			tp = cfg.backends.kubernetes.discoverTrustedProxies(ctx, log, tp)
-		}
 		httpServer := &http.Config{
 			GitRev:         GitRev,
 			StartTime:      startTime,
