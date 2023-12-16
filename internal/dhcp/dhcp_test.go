@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
-	"github.com/tinkerbell/smee/dhcp/data"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/nettest"
 )

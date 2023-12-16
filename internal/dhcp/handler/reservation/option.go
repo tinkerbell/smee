@@ -11,8 +11,8 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/iana"
-	"github.com/tinkerbell/smee/dhcp/data"
-	"github.com/tinkerbell/smee/dhcp/otel"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/tinkerbell/smee/internal/dhcp/otel"
 )
 
 // UserClass is DHCP option 77 (https://www.rfc-editor.org/rfc/rfc3004.html).

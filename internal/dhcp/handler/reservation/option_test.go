@@ -15,8 +15,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/insomniacslk/dhcp/rfc1035label"
-	"github.com/tinkerbell/smee/dhcp/data"
-	oteldhcp "github.com/tinkerbell/smee/dhcp/otel"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
+	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 )

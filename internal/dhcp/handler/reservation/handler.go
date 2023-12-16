@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/tinkerbell/smee/dhcp/data"
-	oteldhcp "github.com/tinkerbell/smee/dhcp/otel"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
+	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

@@ -172,8 +172,6 @@ github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a h1:BNbuuQp8m/L
 github.com/tinkerbell/ipxedust v0.0.0-20231215220341-a535c5deb47a/go.mod h1:zrFXKJHUplvuggD9MzSQuZldQZU4CLter7QYqSLiiE4=
 github.com/tinkerbell/tink v0.9.0 h1:W7X/OEmhyYXE/kPVu1U31fpugVHoc2qsAvBtsZ7mkDg=
 github.com/tinkerbell/tink v0.9.0/go.mod h1:r8gDvx/Y+GEFeT9xwKa14ULrkMre8mYmH3/E9VbUkEw=
-github.com/tonglil/buflogr v1.0.1 h1:WXFZLKxLfqcVSmckwiMCF8jJwjIgmStJmg63YKRF1p0=
-github.com/tonglil/buflogr v1.0.1/go.mod h1:yYWwvSpn/3uAaqjf6mJg/XMiAciaR0QcRJH2gJGDxNE=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 h1:YcojQL98T/OO+rybuzn2+5KrD5dBwXIvYBvQ2cD3Avg=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63/go.mod h1:eLL9Nub3yfAho7qB0MzZizFhTU2QkLeoVsWdHtDW264=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

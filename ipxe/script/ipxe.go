@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/smee/dhcp/handler"
+	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"github.com/tinkerbell/smee/metrics"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
