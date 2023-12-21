@@ -6,7 +6,7 @@ toolchain go1.21.2
 
 require (
 	github.com/equinix-labs/otel-init-go v0.0.9
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/insomniacslk/dhcp v0.0.0-20231206064809-8c70d406f6d2
