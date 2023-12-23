@@ -1,5 +1,5 @@
 /*
-	Package proxy implements a DHCP handler that provides proxyDHCP functionality.
+Package proxy implements a DHCP handler that provides proxyDHCP functionality.
 
 "[A] Proxy DHCP server behaves much like a DHCP server by listening for ordinary
 DHCP client traffic and responding to certain client requests. However, unlike the
@@ -83,51 +83,51 @@ type netbootClient struct {
 }
 
 // Redirection name comes from section 2.5 of http://www.pix.net/software/pxeboot/archive/pxespec.pdf
-func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, data data.Packet) {
-	log := h.Log.WithValues("hwaddr", data.Pkt.ClientHWAddr.String(), "listenAddr", conn.LocalAddr())
-	reply, err := dhcpv4.New(dhcpv4.WithReply(data.Pkt),
-		dhcpv4.WithGatewayIP(data.Pkt.GatewayIPAddr),
-		dhcpv4.WithOptionCopied(data.Pkt, dhcpv4.OptionRelayAgentInformation),
+func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Packet) {
+	log := h.Log.WithValues("hwaddr", dp.Pkt.ClientHWAddr.String(), "listenAddr", conn.LocalAddr())
+	reply, err := dhcpv4.New(dhcpv4.WithReply(dp.Pkt),
+		dhcpv4.WithGatewayIP(dp.Pkt.GatewayIPAddr),
+		dhcpv4.WithOptionCopied(dp.Pkt, dhcpv4.OptionRelayAgentInformation),
 	)
 	if err != nil {
 		log.Info("Generating a new transaction id failed, not a problem as we're passing one in, but if this message is showing up a lot then something could be up with github.com/insomniacslk/dhcp")
 	}
-	if data.Pkt.OpCode != dhcpv4.OpcodeBootRequest { // TODO(jacobweinstock): dont understand this, found it in an example here: https://github.com/insomniacslk/dhcp/blob/c51060810aaab9c8a0bd1b0fcbf72bc0b91e6427/dhcpv4/server4/server_test.go#L31
-		log.V(1).Info("Ignoring packet", "OpCode", data.Pkt.OpCode)
+	if dp.Pkt.OpCode != dhcpv4.OpcodeBootRequest { // TODO(jacobweinstock): dont understand this, found it in an example here: https://github.com/insomniacslk/dhcp/blob/c51060810aaab9c8a0bd1b0fcbf72bc0b91e6427/dhcpv4/server4/server_test.go#L31
+		log.V(1).Info("Ignoring packet", "OpCode", dp.Pkt.OpCode)
 		return
 	}
 
-	if err := dhcp.IsNetbootClient(data.Pkt); err != nil {
+	if err := dhcp.IsNetbootClient(dp.Pkt); err != nil {
 		log.V(1).Info("Ignoring packet: not from a PXE enabled client", "error", err.Error())
 		return
 	}
 
-	if err := setMessageType(reply, data.Pkt.MessageType()); err != nil {
+	if err := setMessageType(reply, dp.Pkt.MessageType()); err != nil {
 		log.V(1).Info("Ignoring packet", "error", err.Error())
 		return
 	}
 
-	mach := process(data.Pkt)
+	mach := process(dp.Pkt)
 
 	// Set option 43
 	setOpt43(reply)
 
 	// Set option 97, just copy from the incoming packet
-	reply.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, data.Pkt.GetOneOption(dhcpv4.OptionClientMachineIdentifier)))
+	reply.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, dp.Pkt.GetOneOption(dhcpv4.OptionClientMachineIdentifier)))
 
 	// set broadcast header to true
 	// reply.SetBroadcast()
 
 	// Set option 60
 	// The PXE spec says the server should identify itself as a PXEClient or HTTPCient
-	if opt60 := data.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier); strings.HasPrefix(string(opt60), string(dhcp.PXEClient)) {
+	if opt60 := dp.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier); strings.HasPrefix(string(opt60), string(dhcp.PXEClient)) {
 		reply.UpdateOption(dhcpv4.OptClassIdentifier(string(dhcp.PXEClient)))
 	} else {
 		reply.UpdateOption(dhcpv4.OptClassIdentifier(string(dhcp.HTTPClient)))
 	}
 
 	// Set option 54
-	opt54 := setOpt54(reply, data.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier), h.Netboot.IPXEBinServerTFTP.Addr().AsSlice(), net.ParseIP(h.Netboot.IPXEBinServerHTTP.Hostname()))
+	opt54 := setOpt54(reply, dp.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier), h.Netboot.IPXEBinServerTFTP.Addr().AsSlice(), net.ParseIP(h.Netboot.IPXEBinServerHTTP.Hostname()))
 
 	// add the siaddr (IP address of next server) dhcp packet header to a given packet pkt.
 	// see https://datatracker.ietf.org/doc/html/rfc2131#section-2
@@ -138,35 +138,34 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, data data.P
 
 	// set sname header
 	// see https://datatracker.ietf.org/doc/html/rfc2131#section-2
-	setSNAME(reply, data.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier), h.Netboot.IPXEBinServerTFTP.Addr().AsSlice(), net.ParseIP(h.Netboot.IPXEBinServerHTTP.Hostname()))
+	setSNAME(reply, dp.Pkt.GetOneOption(dhcpv4.OptionClassIdentifier), h.Netboot.IPXEBinServerTFTP.Addr().AsSlice(), net.ParseIP(h.Netboot.IPXEBinServerHTTP.Hostname()))
 
 	// set bootfile header
-	if err := setBootfile(reply, mach, h.Netboot.IPXEBinServerTFTP, h.Netboot.IPXEBinServerHTTP, h.Netboot.IPXEScriptURL(data.Pkt).String()); err != nil {
+	if err := setBootfile(reply, mach, h.Netboot.IPXEBinServerTFTP, h.Netboot.IPXEBinServerHTTP, h.Netboot.IPXEScriptURL(dp.Pkt).String()); err != nil {
 		log.Info("Ignoring packet", "error", err.Error())
 		return
 	}
 	// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
-	_, n, err := h.Backend.GetByMac(context.Background(), data.Pkt.ClientHWAddr)
+	_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
 	if err != nil || (n != nil && !n.AllowNetboot) {
 		log.V(1).Info("Ignoring packet", "error", err.Error(), "netbootAllowed", n)
 		return
 	}
-	//if !h.Allower.Allow(, mach.mac) {
+	// if !h.Allower.Allow(, mach.mac) {
 	//	rp.BootFileName = fmt.Sprintf("/%v/not-allowed", mach.mac)
-	//}
+	// }
 
-	dst := replyDestination(data.Peer, data.Pkt.GatewayIPAddr)
+	dst := replyDestination(dp.Peer, dp.Pkt.GatewayIPAddr)
 	cm := &ipv4.ControlMessage{}
-	if data.Md != nil {
-		cm.IfIndex = data.Md.IfIndex
+	if dp.Md != nil {
+		cm.IfIndex = dp.Md.IfIndex
 	}
 	// send the DHCP packet
 	if _, err := conn.WriteTo(reply.ToBytes(), cm, dst); err != nil {
 		log.Error(err, "failed to send ProxyDHCP offer")
 		return
 	}
-	//log.V(1).Info("DHCP packet received", "pkt", *data.Pkt)
-	log.Info("Sent ProxyDHCP message", "arch", mach.arch, "userClass", mach.uClass, "receivedMsgType", data.Pkt.MessageType(), "replyMsgType", reply.MessageType(), "unicast", reply.IsUnicast(), "peer", dst, "bootfile", reply.BootFileName)
+	log.Info("Sent ProxyDHCP message", "arch", mach.arch, "userClass", mach.uClass, "receivedMsgType", dp.Pkt.MessageType(), "replyMsgType", reply.MessageType(), "unicast", reply.IsUnicast(), "peer", dst, "bootfile", reply.BootFileName)
 }
 
 func setMessageType(reply *dhcpv4.DHCPv4, reqMsg dhcpv4.MessageType) error {
@@ -176,19 +175,19 @@ func setMessageType(reply *dhcpv4.DHCPv4, reqMsg dhcpv4.MessageType) error {
 	case dhcpv4.MessageTypeRequest:
 		reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 	default:
-		return ErrIgnorePacket{PacketType: mt, Details: "proxyDHCP only responds to Discover or Request DHCP message types"}
+		return IgnorePacketError{PacketType: mt, Details: "proxyDHCP only responds to Discover or Request DHCP message types"}
 	}
 	return nil
 }
 
-// ErrIgnorePacket is for when a DHCP packet should be ignored.
-type ErrIgnorePacket struct {
+// IgnorePacketError is for when a DHCP packet should be ignored.
+type IgnorePacketError struct {
 	PacketType dhcpv4.MessageType
 	Details    string
 }
 
 // Error returns the string representation of ErrIgnorePacket.
-func (e ErrIgnorePacket) Error() string {
+func (e IgnorePacketError) Error() string {
 	return fmt.Sprintf("Ignoring packet: message type %s: details %s", e.PacketType, e.Details)
 }
 
@@ -291,7 +290,7 @@ func setBootfile(reply *dhcpv4.DHCPv4, mach netbootClient, tftp netip.AddrPort, 
 	// set bootfile header
 	bin, found := dhcp.ArchToBootFile[mach.arch]
 	if !found {
-		return ErrArchNotFound{Arch: mach.arch}
+		return ArchNotFoundError{Arch: mach.arch}
 	}
 	var bootfile string
 	// If a machine is in an ipxe boot loop, it is likely to be that we arent matching on IPXE or Tinkerbell.
@@ -316,15 +315,15 @@ func setBootfile(reply *dhcpv4.DHCPv4, mach netbootClient, tftp netip.AddrPort, 
 	return nil
 }
 
-// ErrArchNotFound is for when an PXE client request is an architecture that does not have a matching bootfile.
+// ArchNotFoundError is for when an PXE client request is an architecture that does not have a matching bootfile.
 // See var ArchToBootFile for the look ups.
-type ErrArchNotFound struct {
+type ArchNotFoundError struct {
 	Arch   iana.Arch
 	Detail string
 }
 
 // Error returns the string representation of ErrArchNotFound.
-func (e ErrArchNotFound) Error() string {
+func (e ArchNotFoundError) Error() string {
 	return fmt.Sprintf("unable to find bootfile for arch %v: details %v", e.Arch, e.Detail)
 }
 

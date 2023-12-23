@@ -252,7 +252,7 @@ func main() {
 	log.Info("smee is shutting down")
 }
 
-// func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation.Handler, error) {
+// func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation.Handler, error) {.
 func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*proxy.Handler, error) {
 	// 1. create the handler
 	// 2. create the backend

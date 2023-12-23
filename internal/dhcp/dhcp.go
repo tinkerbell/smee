@@ -157,10 +157,10 @@ func IsNetbootClient(pkt *dhcpv4.DHCPv4) error {
 	return err
 }
 
-func wrapNonNil(err error, format string, a ...any) error {
+func wrapNonNil(err error, format string) error {
 	if err == nil {
-		return fmt.Errorf(format, a...)
+		return fmt.Errorf(format)
 	}
 
-	return fmt.Errorf("%w: %w", err, fmt.Errorf(format, a...))
+	return fmt.Errorf("%w: %v", err, format)
 }
