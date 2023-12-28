@@ -29,6 +29,7 @@ import (
 	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/net/ipv4"
 )
@@ -122,11 +123,15 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 
 	if dp.Pkt.OpCode != dhcpv4.OpcodeBootRequest { // TODO(jacobweinstock): dont understand this, found it in an example here: https://github.com/insomniacslk/dhcp/blob/c51060810aaab9c8a0bd1b0fcbf72bc0b91e6427/dhcpv4/server4/server_test.go#L31
 		log.V(1).Info("Ignoring packet", "OpCode", dp.Pkt.OpCode)
+		span.SetStatus(codes.Ok, "Ignoring packet: OpCode not BootRequest")
+
 		return
 	}
 
 	if err := setMessageType(reply, dp.Pkt.MessageType()); err != nil {
 		log.V(1).Info("Ignoring packet", "error", err.Error())
+		span.SetStatus(codes.Ok, err.Error())
+
 		return
 	}
 
@@ -135,12 +140,22 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 
 	i := dhcp.NewInfo(dp.Pkt)
 
+	if !h.Netboot.Enabled {
+		log.V(1).Info("Ignoring packet: netboot is not enabled")
+		span.SetStatus(codes.Ok, "Ignoring packet: netboot is not enabled")
+
+		return
+	}
 	if err := i.IsNetbootClient; err != nil {
 		log.V(1).Info("Ignoring packet: not from a PXE enabled client", "error", err.Error())
+		span.SetStatus(codes.Ok, fmt.Sprintf("Ignoring packet: not from a PXE enabled client: %s", err.Error()))
+
 		return
 	}
 	if i.IPXEBinary == "" {
 		log.V(1).Info("Ignoring packet: no iPXE binary was able to be determined")
+		span.SetStatus(codes.Ok, "Ignoring packet: no iPXE binary was able to be determined")
+
 		return
 	}
 
@@ -172,7 +187,8 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
 	_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
 	if err != nil || (n != nil && !n.AllowNetboot) {
-		log.V(1).Info("Ignoring packet", "error", err.Error(), "netbootAllowed", n)
+		log.V(1).Info("Ignoring packet", "error", err.Error(), "netbootAllowed", n.AllowNetboot)
+		span.SetStatus(codes.Ok, "netboot not allowed")
 		return
 	}
 	log.Info(
@@ -197,9 +213,13 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	// send the DHCP packet
 	if _, err := conn.WriteTo(reply.ToBytes(), cm, dst); err != nil {
 		log.Error(err, "failed to send ProxyDHCP response")
+		span.SetStatus(codes.Error, err.Error())
+
 		return
 	}
 	log.Info("Sent ProxyDHCP response")
+	span.SetAttributes(h.encodeToAttributes(reply, "reply")...)
+	span.SetStatus(codes.Ok, "sent DHCP response")
 }
 
 // encodeToAttributes takes a DHCP packet and returns opentelemetry key/value attributes.

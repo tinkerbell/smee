@@ -62,13 +62,22 @@ var ArchToBootFile = map[iana.Arch]string{
 // ErrUnknownArch is used when the PXE client request is from an unknown architecture.
 var ErrUnknownArch = fmt.Errorf("could not determine client architecture from option 93")
 
+// Info holds details about the dhcp request. Use NewInfo to populate the struct fields from a dhcp packet.
 type Info struct {
-	Pkt             *dhcpv4.DHCPv4
-	Arch            iana.Arch
-	Mac             net.HardwareAddr
-	UserClass       UserClass
-	ClientType      ClientType
+	// Pkt is the dhcp packet that was received from the client.
+	Pkt        *dhcpv4.DHCPv4
+	// Arch is the architecture of the client. Use NewInfo to automatically populate this field.
+	Arch       iana.Arch
+	// Mac is the mac address of the client. Use NewInfo to automatically populate this field.
+	Mac        net.HardwareAddr
+	// UserClass is the user class of the client. Use NewInfo to automatically populate this field.
+	UserClass  UserClass
+	// ClientType is the client type of the client. Use NewInfo to automatically populate this field.
+	ClientType ClientType
+	// IsNetbootClient returns nil if the client is a valid netboot client.	Otherwise it returns an error.
+	// Use NewInfo to automatically populate this field.
 	IsNetbootClient error
+	// IPXEBinary is the iPXE binary file to boot. Use NewInfo to automatically populate this field.
 	IPXEBinary      string
 }
 
@@ -157,7 +166,7 @@ func (i Info) ClientTypeFrom() ClientType {
 	return c
 }
 
-// IsNetbootClient returns true if the client is a valid netboot client.
+// IsNetbootClient returns nil if the client is a valid netboot client.	Otherwise it returns an error.
 //
 // A valid netboot client will have the following in its DHCP request:
 // 1. is a DHCP discovery/request message type.
