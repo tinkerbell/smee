@@ -65,20 +65,20 @@ var ErrUnknownArch = fmt.Errorf("could not determine client architecture from op
 // Info holds details about the dhcp request. Use NewInfo to populate the struct fields from a dhcp packet.
 type Info struct {
 	// Pkt is the dhcp packet that was received from the client.
-	Pkt        *dhcpv4.DHCPv4
+	Pkt *dhcpv4.DHCPv4
 	// Arch is the architecture of the client. Use NewInfo to automatically populate this field.
-	Arch       iana.Arch
+	Arch iana.Arch
 	// Mac is the mac address of the client. Use NewInfo to automatically populate this field.
-	Mac        net.HardwareAddr
+	Mac net.HardwareAddr
 	// UserClass is the user class of the client. Use NewInfo to automatically populate this field.
-	UserClass  UserClass
+	UserClass UserClass
 	// ClientType is the client type of the client. Use NewInfo to automatically populate this field.
 	ClientType ClientType
 	// IsNetbootClient returns nil if the client is a valid netboot client.	Otherwise it returns an error.
 	// Use NewInfo to automatically populate this field.
 	IsNetbootClient error
 	// IPXEBinary is the iPXE binary file to boot. Use NewInfo to automatically populate this field.
-	IPXEBinary      string
+	IPXEBinary string
 }
 
 func NewInfo(pkt *dhcpv4.DHCPv4) Info {
