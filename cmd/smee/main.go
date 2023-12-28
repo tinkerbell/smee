@@ -24,6 +24,7 @@ import (
 	"github.com/tinkerbell/ipxedust/ihttp"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"github.com/tinkerbell/smee/internal/dhcp/handler/proxy"
+	"github.com/tinkerbell/smee/internal/dhcp/handler/reservation"
 	"github.com/tinkerbell/smee/internal/dhcp/server"
 	"github.com/tinkerbell/smee/internal/ipxe/http"
 	"github.com/tinkerbell/smee/internal/ipxe/script"
@@ -85,6 +86,7 @@ type ipxeHTTPScript struct {
 
 type dhcpConfig struct {
 	enabled           bool
+	mode              string
 	bindAddr          string
 	bindInterface     string
 	ipForPacket       string
@@ -221,7 +223,7 @@ func main() {
 		})
 	}
 
-	// dhcp server
+	// dhcp serving
 	if cfg.dhcp.enabled {
 		dh, err := cfg.dhcpHandler(ctx, log)
 		if err != nil {
@@ -252,8 +254,7 @@ func main() {
 	log.Info("smee is shutting down")
 }
 
-// func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*reservation.Handler, error) {.
-func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*proxy.Handler, error) {
+func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handler, error) {
 	// 1. create the handler
 	// 2. create the backend
 	// 3. add the backend to the handler
@@ -284,37 +285,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*proxy.Handl
 			return &u
 		}
 	}
-	syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
-	if err != nil {
-		return nil, fmt.Errorf("invalid syslog address: %w", err)
-	}
-	log.V(19).Info("debug", "syslog", syslogIP)
-	dh := &proxy.Handler{
-		Backend: nil,
-		IPAddr:  pktIP,
-		Log:     log,
-		Netboot: proxy.Netboot{
-			IPXEBinServerTFTP: tftpIP,
-			IPXEBinServerHTTP: httpBinaryURL,
-			IPXEScriptURL:     ipxeScript,
-			Enabled:           true,
-		},
-		OTELEnabled: true,
-	}
-	/*dh := &reservation.Handler{
-		Backend: nil,
-		IPAddr:  pktIP,
-		Log:     log,
-		Netboot: reservation.Netboot{
-			IPXEBinServerTFTP: tftpIP,
-			IPXEBinServerHTTP: httpBinaryURL,
-			IPXEScriptURL:     ipxeScript,
-			Enabled:           true,
-		},
-		OTELEnabled: true,
-		SyslogAddr:  syslogIP,
-	}
-	*/
+	var backend handler.BackendReader
 	switch {
 	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
 		panic("only one backend can be enabled at a time")
@@ -323,16 +294,51 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (*proxy.Handl
 		if err != nil {
 			return nil, fmt.Errorf("failed to create file backend: %w", err)
 		}
-		dh.Backend = b
+		backend = b
 	default: // default backend is kubernetes
 		b, err := c.backends.kubernetes.backend(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
 		}
-		dh.Backend = b
+		backend = b
+	}
+	switch c.dhcp.mode {
+	case "reservation":
+		syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
+		if err != nil {
+			return nil, fmt.Errorf("invalid syslog address: %w", err)
+		}
+		dh := &reservation.Handler{
+			Backend: backend,
+			IPAddr:  pktIP,
+			Log:     log,
+			Netboot: reservation.Netboot{
+				IPXEBinServerTFTP: tftpIP,
+				IPXEBinServerHTTP: httpBinaryURL,
+				IPXEScriptURL:     ipxeScript,
+				Enabled:           true,
+			},
+			OTELEnabled: true,
+			SyslogAddr:  syslogIP,
+		}
+		return dh, nil
+	case "proxy":
+		dh := &proxy.Handler{
+			Backend: backend,
+			IPAddr:  pktIP,
+			Log:     log,
+			Netboot: proxy.Netboot{
+				IPXEBinServerTFTP: tftpIP,
+				IPXEBinServerHTTP: httpBinaryURL,
+				IPXEScriptURL:     ipxeScript,
+				Enabled:           true,
+			},
+			OTELEnabled: true,
+		}
+		return dh, nil
 	}
 
-	return dh, nil
+	return nil, errors.New("invalid dhcp mode")
 }
 
 // defaultLogger is zap logr implementation.

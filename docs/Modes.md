@@ -12,4 +12,4 @@ To enable this mode set `-dhcp-mode=proxy`.
 
 1. **DHCP disabled**  
 Smee will not respond to DHCP requests from clients. This is useful if you have another DHCP server on your network that will provide both IP and next boot info and you want to use Smee's TFTP and HTTP functionality. In this mode you most likely want to set `-dhcp-http-ipxe-script-prepend-mac=false`. This will cause Smee to provide the `auto.ipxe` script without a MAC address in the URL and Smee will use the source IP address of the client request to lookup the corresponding hardware. There must be a corresponding hardware record for the requesting client's IP address. The IP address in the hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script.  
-To enable this mode set `-dhcp-mode=disabled`.
+To enable this mode set `-dhcp-enabled=false`.
