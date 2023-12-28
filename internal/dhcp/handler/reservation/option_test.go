@@ -15,10 +15,16 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/insomniacslk/dhcp/rfc1035label"
+	"github.com/tinkerbell/smee/internal/dhcp"
 	"github.com/tinkerbell/smee/internal/dhcp/data"
 	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+)
+
+const (
+	examplePXEClient  = "PXEClient:Arch:00007:UNDI:003001"
+	exampleHTTPClient = "HTTPClient:Arch:00016:UNDI:003001"
 )
 
 func TestSetDHCPOpts(t *testing.T) {
@@ -117,40 +123,10 @@ func TestSetDHCPOpts(t *testing.T) {
 	}
 }
 
-func TestArch(t *testing.T) {
-	tests := map[string]struct {
-		pkt  *dhcpv4.DHCPv4
-		want iana.Arch
-	}{
-		"found": {
-			pkt:  &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptClientArch(iana.INTEL_X86PC))},
-			want: iana.INTEL_X86PC,
-		},
-		"unknown": {
-			pkt:  &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptClientArch(iana.Arch(255)))},
-			want: iana.Arch(255),
-		},
-		"unknown: opt 93 len 0": {
-			pkt:  &dhcpv4.DHCPv4{},
-			want: iana.Arch(255),
-		},
-	}
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			got := arch(tt.pkt)
-			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Fatal(diff)
-			}
-		})
-	}
-}
-
 func TestBootfileAndNextServer(t *testing.T) {
 	type args struct {
-		mac     net.HardwareAddr
-		uClass  UserClass
-		opt60   string
-		bin     string
+		pkt     *dhcpv4.DHCPv4
+		uClass  dhcp.UserClass
 		tftp    netip.AddrPort
 		ipxe    *url.URL
 		iscript *url.URL
@@ -165,7 +141,12 @@ func TestBootfileAndNextServer(t *testing.T) {
 		"success bootfile only": {
 			server: &Handler{Log: logr.Discard()},
 			args: args{
-				uClass:  Tinkerbell,
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptUserClass(dhcp.Tinkerbell.String()),
+					),
+				},
 				iscript: &url.URL{Scheme: "http", Host: "localhost:8080", Path: "/auto.ipxe"},
 			},
 			wantBootFile: "http://localhost:8080/auto.ipxe",
@@ -174,59 +155,78 @@ func TestBootfileAndNextServer(t *testing.T) {
 		"success httpClient": {
 			server: &Handler{Log: logr.Discard()},
 			args: args{
-				mac:   net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
-				opt60: httpClient.String(),
-				bin:   "snp.ipxe",
-				ipxe:  &url.URL{Scheme: "http", Host: "localhost:8181"},
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptClientArch(iana.EFI_ARM64_HTTP),
+						dhcpv4.OptClassIdentifier(exampleHTTPClient),
+					),
+				},
+				ipxe: &url.URL{Scheme: "http", Host: "127.0.0.1:8181"},
 			},
-			wantBootFile: "http://localhost:8181/snp.ipxe",
-			wantNextSrv:  net.IPv4(0, 0, 0, 0),
+			wantBootFile: "http://127.0.0.1:8181/01:02:03:04:05:06/snp.efi",
+			wantNextSrv:  net.IPv4(127, 0, 0, 1),
 		},
 		"success userclass iPXE": {
 			server: &Handler{Log: logr.Discard()},
 			args: args{
-				mac:    net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
-				uClass: IPXE,
-				bin:    "unidonly.kpxe",
-				tftp:   netip.MustParseAddrPort("192.168.6.5:69"),
-				ipxe:   &url.URL{Scheme: "tftp", Host: "192.168.6.5:69"},
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptClientArch(iana.INTEL_X86PC),
+						dhcpv4.OptUserClass(dhcp.IPXE.String()),
+					),
+				},
+				tftp: netip.MustParseAddrPort("192.168.6.5:69"),
 			},
-			wantBootFile: "tftp://192.168.6.5:69/unidonly.kpxe",
+			wantBootFile: "tftp://192.168.6.5:69/01:02:03:04:05:07/undionly.kpxe",
 			wantNextSrv:  net.ParseIP("192.168.6.5"),
 		},
 		"success userclass iPXE with otel": {
 			server:      &Handler{Log: logr.Discard(), OTELEnabled: true},
 			otelEnabled: true,
 			args: args{
-				mac:    net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
-				uClass: IPXE,
-				bin:    "unidonly.kpxe",
-				tftp:   netip.MustParseAddrPort("192.168.6.5:69"),
-				ipxe:   &url.URL{Scheme: "tftp", Host: "192.168.6.5:69"},
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptClientArch(iana.INTEL_X86PC),
+						dhcpv4.OptUserClass(dhcp.IPXE.String()),
+					),
+				},
+				tftp: netip.MustParseAddrPort("192.168.6.5:69"),
+				ipxe: &url.URL{Scheme: "tftp", Host: "192.168.6.5:69"},
 			},
-			wantBootFile: "tftp://192.168.6.5:69/unidonly.kpxe-00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01",
+			wantBootFile: "tftp://192.168.6.5:69/01:02:03:04:05:07/undionly.kpxe-00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01",
 			wantNextSrv:  net.ParseIP("192.168.6.5"),
 		},
 		"success default": {
 			server: &Handler{Log: logr.Discard()},
 			args: args{
-				mac:  net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
-				bin:  "unidonly.kpxe",
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptClientArch(iana.INTEL_X86PC),
+					),
+				},
 				tftp: netip.MustParseAddrPort("192.168.6.5:69"),
 				ipxe: &url.URL{Scheme: "tftp", Host: "192.168.6.5:69"},
 			},
-			wantBootFile: "unidonly.kpxe",
+			wantBootFile: "undionly.kpxe",
 			wantNextSrv:  net.ParseIP("192.168.6.5"),
 		},
 		"success otel enabled, no traceparent": {
 			server: &Handler{Log: logr.Discard(), OTELEnabled: true},
 			args: args{
-				mac:  net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
-				bin:  "unidonly.kpxe",
+				pkt: &dhcpv4.DHCPv4{
+					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x07},
+					Options: dhcpv4.OptionsFromList(
+						dhcpv4.OptClientArch(iana.INTEL_X86PC),
+					),
+				},
 				tftp: netip.MustParseAddrPort("192.168.6.5:69"),
 				ipxe: &url.URL{Scheme: "tftp", Host: "192.168.6.5:69"},
 			},
-			wantBootFile: "unidonly.kpxe",
+			wantBootFile: "undionly.kpxe",
 			wantNextSrv:  net.ParseIP("192.168.6.5"),
 		},
 	}
@@ -239,11 +239,11 @@ func TestBootfileAndNextServer(t *testing.T) {
 				otel.SetTextMapPropagator(prop)
 				ctx = otelhelpers.ContextWithTraceparentString(ctx, "00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01")
 			}
-			bootfile, nextServer := tt.server.bootfileAndNextServer(ctx, tt.args.uClass, tt.args.opt60, tt.args.bin, tt.args.tftp, tt.args.ipxe, tt.args.iscript)
-			if diff := cmp.Diff(tt.wantBootFile, bootfile); diff != "" {
+			bootfile, nextServer := tt.server.bootfileAndNextServer(ctx, tt.args.pkt, tt.args.uClass, tt.args.tftp, tt.args.ipxe, tt.args.iscript)
+			if diff := cmp.Diff(bootfile, tt.wantBootFile); diff != "" {
 				t.Fatal("bootfile", diff)
 			}
-			if diff := cmp.Diff(tt.wantNextSrv, nextServer); diff != "" {
+			if diff := cmp.Diff(nextServer, tt.wantNextSrv); diff != "" {
 				t.Fatal("nextServer", diff)
 			}
 		})
@@ -279,7 +279,7 @@ func TestSetNetworkBootOpts(t *testing.T) {
 				m: &dhcpv4.DHCPv4{
 					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
 					Options: dhcpv4.OptionsFromList(
-						dhcpv4.OptUserClass(Tinkerbell.String()),
+						dhcpv4.OptUserClass(dhcp.Tinkerbell.String()),
 						dhcpv4.OptClassIdentifier("HTTPClient:xxxxx"),
 						dhcpv4.OptClientArch(iana.EFI_X86_64_HTTP),
 					),
@@ -303,7 +303,7 @@ func TestSetNetworkBootOpts(t *testing.T) {
 				m: &dhcpv4.DHCPv4{
 					ClientHWAddr: net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
 					Options: dhcpv4.OptionsFromList(
-						dhcpv4.OptUserClass(Tinkerbell.String()),
+						dhcpv4.OptUserClass(dhcp.Tinkerbell.String()),
 						dhcpv4.OptClientArch(iana.UBOOT_ARM64),
 					),
 				},
@@ -329,7 +329,7 @@ func TestSetNetworkBootOpts(t *testing.T) {
 			gotFunc := s.setNetworkBootOpts(tt.args.in0, tt.args.m, tt.args.n)
 			got := new(dhcpv4.DHCPv4)
 			gotFunc(got)
-			if diff := cmp.Diff(tt.want, got); diff != "" {
+			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Fatal(diff)
 			}
 		})
