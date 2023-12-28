@@ -70,6 +70,7 @@ func (h *Handler) setNetworkBootOpts(ctx context.Context, m *dhcpv4.DHCPv4, n *d
 	// d is the reply packet we are building.
 	withNetboot := func(d *dhcpv4.DHCPv4) {
 		// if the client sends opt 60 with HTTPClient then we need to respond with opt 60
+		// This is outside of the n.AllowNetboot check because we will be sending "/netboot-not-allowed" regardless.
 		if val := m.Options.Get(dhcpv4.OptionClassIdentifier); val != nil {
 			if strings.HasPrefix(string(val), dhcp.HTTPClient.String()) {
 				d.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionClassIdentifier, []byte(dhcp.HTTPClient)))
@@ -82,21 +83,22 @@ func (h *Handler) setNetworkBootOpts(ctx context.Context, m *dhcpv4.DHCPv4, n *d
 			if i.IPXEBinary == "" {
 				return
 			}
-			uClass := dhcp.UserClass(string(m.GetOneOption(dhcpv4.OptionUserClassInformation)))
 			var ipxeScript *url.URL
+			// If the global IPXEScriptURL is set, use that.
 			if h.Netboot.IPXEScriptURL != nil {
 				ipxeScript = h.Netboot.IPXEScriptURL(m)
 			}
+			// If the IPXE script URL is set on the hardware record, use that.
 			if n.IPXEScriptURL != nil {
 				ipxeScript = n.IPXEScriptURL
 			}
-			d.BootFileName, d.ServerIPAddr = h.bootfileAndNextServer(ctx, m, uClass, h.Netboot.IPXEBinServerTFTP, h.Netboot.IPXEBinServerHTTP, ipxeScript)
+			d.BootFileName, d.ServerIPAddr = h.bootfileAndNextServer(ctx, m, h.Netboot.UserClass, h.Netboot.IPXEBinServerTFTP, h.Netboot.IPXEBinServerHTTP, ipxeScript)
 			pxe := dhcpv4.Options{ // FYI, these are suboptions of option43. ref: https://datatracker.ietf.org/doc/html/rfc2132#section-8.4
 				// PXE Boot Server Discovery Control - bypass, just boot from filename.
 				6:  []byte{8},
 				69: otel.TraceparentFromContext(ctx),
 			}
-			d.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionVendorSpecificInformation, pxe.ToBytes()))
+			d.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionVendorSpecificInformation, i.AddRPIOpt43(pxe)))
 		}
 	}
 
@@ -106,7 +108,7 @@ func (h *Handler) setNetworkBootOpts(ctx context.Context, m *dhcpv4.DHCPv4, n *d
 // bootfileAndNextServer returns the bootfile (string) and next server (net.IP).
 // input arguments `tftp`, `ipxe` and `iscript` use non string types so as to attempt to be more clear about the expectation around what is wanted for these values.
 // It also helps us avoid having to validate a string in multiple ways.
-func (h *Handler) bootfileAndNextServer(ctx context.Context, pkt *dhcpv4.DHCPv4, uClass dhcp.UserClass, tftp netip.AddrPort, ipxe, iscript *url.URL) (string, net.IP) {
+func (h *Handler) bootfileAndNextServer(ctx context.Context, pkt *dhcpv4.DHCPv4, customUC dhcp.UserClass, tftp netip.AddrPort, ipxe, iscript *url.URL) (string, net.IP) {
 	var nextServer net.IP
 	var bootfile string
 	i := dhcp.NewInfo(pkt)
@@ -114,7 +116,7 @@ func (h *Handler) bootfileAndNextServer(ctx context.Context, pkt *dhcpv4.DHCPv4,
 		i.IPXEBinary = fmt.Sprintf("%s-%v", i.IPXEBinary, tp)
 	}
 	nextServer = i.NextServer(ipxe, tftp)
-	bootfile = i.Bootfile(uClass, iscript, ipxe, tftp)
+	bootfile = i.Bootfile(customUC, iscript, ipxe, tftp)
 
 	return bootfile, nextServer
 }
