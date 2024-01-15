@@ -7,8 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/tinkerbell/smee/internal/dhcp"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
+	"github.com/tinkerbell/smee/dhcp/handler"
 )
 
 // Handler holds the configuration details for the running the DHCP server.
@@ -53,5 +52,5 @@ type Netboot struct {
 	Enabled bool
 
 	// UserClass (for network booting) allows a custom DHCP option 77 to be used to break out of an iPXE loop.
-	UserClass dhcp.UserClass
+	UserClass UserClass
 }

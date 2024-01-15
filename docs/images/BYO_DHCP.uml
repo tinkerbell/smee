@@ -1,0 +1,36 @@
+title Bring your own DHCP service
+
+participant Machine
+participant DHCP
+participant Smee
+
+rbox over Machine,DHCP: 192.168.5.5 represents the IP from which the Smee service is available
+
+group #2f2e7b In firmware iPXE #white
+autonumber 1
+Machine->DHCP: DHCP discover
+
+DHCP->Machine: DHCP OFFER\nnext server: 192.168.2.5.5\nboot file: ipxe.efi
+
+Machine->DHCP: DHCP REQUEST
+
+DHCP->Machine: DHCP ACK\nnext server: 192.168.5.5\nboot file: ipxe.efi
+
+Machine->Smee: Download and boot **ipxe.efi** (TFTP or HTTP)
+end
+
+group #2f2e7b In Tinkerbell iPXE #white
+Machine->DHCP: DHCP DISCOVER
+ 
+DHCP->Machine: DHCP OFFER\nnext server: 192.168.5.5\nboot file: http://192.168.5.5/auto.ipxe
+
+Machine->DHCP: DHCP REQUEST
+
+DHCP->Machine: DHCP ACK\nnext server: 192.168.5.5\nboot file: http://192.168.5.5/auto.ipxe
+
+Machine->Smee: Download and execute **auto.ipxe** iPXE script (HTTP)
+
+destroysilent Machine
+destroysilent DHCP
+destroysilent Smee
+end

@@ -12,14 +12,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/insomniacslk/dhcp/rfc1035label"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
-	"github.com/tinkerbell/smee/internal/dhcp/otel"
+	"github.com/tinkerbell/smee/dhcp/data"
+	"github.com/tinkerbell/smee/dhcp/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/nettest"
@@ -511,6 +512,58 @@ func TestReadBackend(t *testing.T) {
 			}
 			if diff := cmp.Diff(gotNetboot, tt.wantNetboot); diff != "" {
 				t.Fatal(diff)
+			}
+		})
+	}
+}
+
+func TestIsNetbootClient(t *testing.T) {
+	tests := map[string]struct {
+		input *dhcpv4.DHCPv4
+		want  error
+	}{
+		"fail invalid message type": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptMessageType(dhcpv4.MessageTypeInform))}, want: errors.New("")},
+		"fail no opt60":             {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover))}, want: errors.New("")},
+		"fail bad opt60": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("BadClient"),
+		)}, want: errors.New("")},
+		"fail no opt93": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("HTTPClient:Arch:xxxxx:UNDI:yyyzzz"),
+		)}, want: errors.New("")},
+		"fail no opt94": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("HTTPClient:Arch:xxxxx:UNDI:yyyzzz"),
+			dhcpv4.OptClientArch(iana.EFI_ARM64_HTTP),
+		)}, want: errors.New("")},
+		"fail invalid opt97[0] != 0": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("HTTPClient:Arch:xxxxx:UNDI:yyyzzz"),
+			dhcpv4.OptClientArch(iana.EFI_ARM64_HTTP),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientNetworkInterfaceIdentifier, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00, 0x02, 0x03, 0x04, 0x05}),
+		)}, want: errors.New("")},
+		"fail invalid len(opt97)": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("HTTPClient:Arch:xxxxx:UNDI:yyyzzz"),
+			dhcpv4.OptClientArch(iana.EFI_ARM64_HTTP),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientNetworkInterfaceIdentifier, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, []byte{0x01, 0x02}),
+		)}, want: errors.New("")},
+		"success len(opt97) == 0": {input: &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeDiscover),
+			dhcpv4.OptClassIdentifier("HTTPClient:Arch:xxxxx:UNDI:yyyzzz"),
+			dhcpv4.OptClientArch(iana.EFI_ARM64_HTTP),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientNetworkInterfaceIdentifier, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}),
+			dhcpv4.OptGeneric(dhcpv4.OptionClientMachineIdentifier, []byte{}),
+		)}, want: nil},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			s := &Handler{Log: logr.Discard()}
+			if err := s.isNetbootClient(tt.input); (err == nil) != (tt.want == nil) {
+				t.Errorf("isNetbootClient() = %v, want %v", err, tt.want)
 			}
 		})
 	}

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/tinkerbell/smee/internal/dhcp"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
-	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
+	"github.com/tinkerbell/smee/backend/noop"
+	"github.com/tinkerbell/smee/dhcp/data"
+	oteldhcp "github.com/tinkerbell/smee/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -18,13 +19,13 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
-const tracerName = "github.com/tinkerbell/smee"
+const tracerName = "github.com/tinkerbell/smee/dhcp/server"
 
 // setDefaults will update the Handler struct to have default values so as
 // to avoid panic for nil pointers and such.
 func (h *Handler) setDefaults() {
 	if h.Backend == nil {
-		h.Backend = noop{}
+		h.Backend = noop.Handler{}
 	}
 	if h.Log.GetSink() == nil {
 		h.Log = logr.Discard()
@@ -123,15 +124,12 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 	if ns := reply.ServerIPAddr; ns != nil {
 		log = log.WithValues("nextServer", ns.String())
 	}
-
-	dst := replyDestination(p.Peer, p.Pkt.GatewayIPAddr)
-	log = log.WithValues("ipAddress", reply.YourIPAddr.String(), "destination", dst.String())
+	log = log.WithValues("ipAddress", reply.YourIPAddr.String(), "destination", p.Peer.String())
 	cm := &ipv4.ControlMessage{}
 	if p.Md != nil {
 		cm.IfIndex = p.Md.IfIndex
 	}
-
-	if _, err := conn.WriteTo(reply.ToBytes(), cm, dst); err != nil {
+	if _, err := conn.WriteTo(reply.ToBytes(), cm, p.Peer); err != nil {
 		log.Error(err, "failed to send DHCP")
 		span.SetStatus(codes.Error, err.Error())
 
@@ -141,22 +139,6 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 	log.Info("sent DHCP response")
 	span.SetAttributes(h.encodeToAttributes(reply, "reply")...)
 	span.SetStatus(codes.Ok, "sent DHCP response")
-}
-
-// replyDestination determines the destination address for the DHCP reply.
-// If the giaddr is set, then the reply should be sent to the giaddr.
-// Otherwise, the reply should be sent to the direct peer.
-//
-// From page 22 of https://www.ietf.org/rfc/rfc2131.txt:
-// "If the 'giaddr' field in a DHCP message from a client is non-zero,
-// the server sends any return messages to the 'DHCP server' port on
-// the BOOTP relay agent whose address appears in 'giaddr'.".
-func replyDestination(directPeer net.Addr, giaddr net.IP) net.Addr {
-	if !giaddr.IsUnspecified() && giaddr != nil {
-		return &net.UDPAddr{IP: giaddr, Port: dhcpv4.ServerPort}
-	}
-
-	return directPeer
 }
 
 // readBackend encapsulates the backend read and opentelemetry handling.
@@ -191,15 +173,81 @@ func (h *Handler) updateMsg(ctx context.Context, pkt *dhcpv4.DHCPv4, d *data.DHC
 	}
 	mods = append(mods, h.setDHCPOpts(ctx, pkt, d)...)
 
-	if h.Netboot.Enabled && dhcp.IsNetbootClient(pkt) == nil {
+	if h.Netboot.Enabled && h.isNetbootClient(pkt) == nil {
 		mods = append(mods, h.setNetworkBootOpts(ctx, pkt, n))
 	}
-	// We ignore the error here because:
-	// 1. it's only non-nil if the generation of a transaction id (XID) fails.
-	// 2. We always use the clients transaction id (XID) in responses. See dhcpv4.WithReply().
-	reply, _ := dhcpv4.NewReplyFromRequest(pkt, mods...)
+	reply, err := dhcpv4.NewReplyFromRequest(pkt, mods...)
+	if err != nil {
+		return nil
+	}
 
 	return reply
+}
+
+// isNetbootClient returns true if the client is a valid netboot client.
+//
+// A valid netboot client will have the following in its DHCP request:
+// 1. is a DHCP discovery/request message type.
+// 2. option 93 is set.
+// 3. option 94 is set.
+// 4. option 97 is correct length.
+// 5. option 60 is set with this format: "PXEClient:Arch:xxxxx:UNDI:yyyzzz" or "HTTPClient:Arch:xxxxx:UNDI:yyyzzz".
+//
+// See: http://www.pix.net/software/pxeboot/archive/pxespec.pdf
+//
+// See: https://www.rfc-editor.org/rfc/rfc4578.html
+func (h *Handler) isNetbootClient(pkt *dhcpv4.DHCPv4) error {
+	h.setDefaults()
+	var err error
+	// only response to DISCOVER and REQUEST packets
+	if pkt.MessageType() != dhcpv4.MessageTypeDiscover && pkt.MessageType() != dhcpv4.MessageTypeRequest {
+		// h.Log.Info("not a netboot client", "reason", "message type must be either Discover or Request", "mac", pkt.ClientHWAddr.String(), "message type", pkt.MessageType())
+		err = errors.New("message type must be either Discover or Request")
+	}
+	// option 60 must be set
+	if !pkt.Options.Has(dhcpv4.OptionClassIdentifier) {
+		// h.Log.Info("not a netboot client", "reason", "option 60 not set", "mac", pkt.ClientHWAddr.String())
+		err = fmt.Errorf("%w: option 60 not set", err)
+	}
+	// option 60 must start with PXEClient or HTTPClient
+	opt60 := pkt.GetOneOption(dhcpv4.OptionClassIdentifier)
+	if !strings.HasPrefix(string(opt60), string(pxeClient)) && !strings.HasPrefix(string(opt60), string(httpClient)) {
+		// h.Log.Info("not a netboot client", "reason", "option 60 not PXEClient or HTTPClient", "mac", pkt.ClientHWAddr.String(), "option 60", string(opt60))
+		err = fmt.Errorf("%w: option 60 not PXEClient or HTTPClient", err)
+	}
+
+	// option 93 must be set
+	if !pkt.Options.Has(dhcpv4.OptionClientSystemArchitectureType) {
+		// h.Log.Info("not a netboot client", "reason", "option 93 not set", "mac", pkt.ClientHWAddr.String())
+		err = fmt.Errorf("%w: option 93 not set", err)
+	}
+
+	// option 94 must be set
+	if !pkt.Options.Has(dhcpv4.OptionClientNetworkInterfaceIdentifier) {
+		// h.Log.Info("not a netboot client", "reason", "option 94 not set", "mac", pkt.ClientHWAddr.String())
+		err = fmt.Errorf("%w: option 94 not set", err)
+	}
+
+	// option 97 must be have correct length or not be set
+	guid := pkt.GetOneOption(dhcpv4.OptionClientMachineIdentifier)
+	switch len(guid) {
+	case 0:
+		// A missing GUID is invalid according to the spec, however
+		// there are PXE ROMs in the wild that omit the GUID and still
+		// expect to boot. The only thing we do with the GUID is
+		// mirror it back to the client if it's there, so we might as
+		// well accept these buggy ROMs.
+	case 17:
+		if guid[0] != 0 {
+			h.Log.Info("not a netboot client", "reason", "option 97 does not start with 0", "mac", pkt.ClientHWAddr.String(), "option 97", string(guid))
+			err = fmt.Errorf("%w: option 97 does not start with 0", err)
+		}
+	default:
+		h.Log.Info("not a netboot client", "reason", "option 97 has invalid length (0 or 17)", "mac", pkt.ClientHWAddr.String(), "option 97", string(guid))
+		err = fmt.Errorf("%w: option 97 has invalid length (0 or 17)", err)
+	}
+
+	return err
 }
 
 // encodeToAttributes takes a DHCP packet and returns opentelemetry key/value attributes.

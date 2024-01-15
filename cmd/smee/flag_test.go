@@ -30,6 +30,7 @@ func TestParser(t *testing.T) {
 		},
 		dhcp: dhcpConfig{
 			enabled:           true,
+			mode:              "reservation",
 			bindAddr:          "0.0.0.0:67",
 			ipForPacket:       "192.168.2.4",
 			syslogIP:          "192.168.2.4",
@@ -98,6 +99,7 @@ FLAGS
   -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets (default "http://%[1]v/auto.ipxe")
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "%[1]v")
+  -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy) (default "reservation")
   -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
   -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v:69")
   -disable-discover-trusted-proxies   [http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend (default "false")
