@@ -20,15 +20,15 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/tinkerbell/dhcp"
-	"github.com/tinkerbell/dhcp/handler"
-	"github.com/tinkerbell/dhcp/handler/reservation"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
-	"github.com/tinkerbell/smee/ipxe/http"
-	"github.com/tinkerbell/smee/ipxe/script"
-	"github.com/tinkerbell/smee/metrics"
-	"github.com/tinkerbell/smee/syslog"
+	"github.com/tinkerbell/smee/internal/dhcp"
+	"github.com/tinkerbell/smee/internal/dhcp/handler"
+	"github.com/tinkerbell/smee/internal/dhcp/handler/reservation"
+	"github.com/tinkerbell/smee/internal/ipxe/http"
+	"github.com/tinkerbell/smee/internal/ipxe/script"
+	"github.com/tinkerbell/smee/internal/metric"
+	"github.com/tinkerbell/smee/internal/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
@@ -116,7 +116,7 @@ func main() {
 	defer done()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
 	defer otelShutdown(ctx)
-	metrics.Init()
+	metric.Init()
 
 	log := defaultLogger(cfg.logLevel)
 	log.Info("starting", "version", GitRev)

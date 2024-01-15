@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/dhcp/backend/file"
-	"github.com/tinkerbell/dhcp/backend/kube"
-	"github.com/tinkerbell/dhcp/handler"
+	"github.com/tinkerbell/smee/internal/backend/file"
+	"github.com/tinkerbell/smee/internal/backend/kube"
+	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"

@@ -17,6 +17,7 @@ sleep $sleep_at_start
 # -q tells udhcpc to exit after getting a lease, otherwise it will keep generating new traces
 # opt60 (-V PXEClient) pretend to be an Intel PXE client. required to be noticed by smee
 # opt93 (-x 0x5d) set to 0 for "Intel x86PC" platform, required by smee
+# opt94 (-x 0x5e) set to 0 for "UNDI" firmware type, required by smee
 # opt97 (-x 0x61) sets the client guid (https://datatracker.ietf.org/doc/html/rfc4578#section-2.3)
 #              first 8 octets should be zeroes to make smee happy (Intel PXE does this)
 #              ID: 4a525bd43517df7f8b4799c18d (randomly generated and hard-coded here)
@@ -25,6 +26,7 @@ busybox udhcpc \
 	-s /busybox-udhcpc-script.sh \
 	-V PXEClient \
 	-x 0x5d:0000 \
+	-x 0x5e:0000 \
 	-x 0x61:000000004a525bd43517df7f8b4799c18d
 
 # set boot_file variable ahead of sourcing dhcpoffer-vars.sh to please the linter
@@ -51,9 +53,8 @@ curl -H "$tp_header" http://192.168.99.42/auto.ipxe
 # TODO: test opportunity here: validate the returned traceparent matches the one in boot_file
 
 # boot_file is set by the DHCP envvars
-# if smee gets the filename with traceparent appended, it will remove it before serving
-# the file and use it to set the trace context
-tftp 192.168.99.42 -c get "${boot_file}-${TRACEPARENT}"
+# OTEL in Smee is enabled by default.
+tftp 192.168.99.42 -c get "${boot_file}"
 
 # sleep a long time so you can enter the container with
 # docker exec -ti smee_client_1 /bin/sh

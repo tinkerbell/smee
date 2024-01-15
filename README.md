@@ -22,6 +22,15 @@ Smee is the network boot service in the [Tinkerbell stack](https://tinkerbell.or
 - Syslog server
   - receives syslog messages and logs them
 
+## Definitions
+
+**DHCP Reservation:**
+A fixed IP address that is reserved for a specific client.
+
+**DHCP Lease:**
+An IP address, that can potentially change, that is assigned to a client by the DHCP server.
+The IP is typically pulled from a pool or subnet of available IP addresses.
+
 ## Running Smee
 
 The DHCP server of Smee serves explicit host reservations only. This means that only hosts that are configured will be served an IP address and network boot details.
