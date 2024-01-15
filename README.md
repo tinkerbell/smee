@@ -37,7 +37,9 @@ The IP is typically pulled from a pool or subnet of available IP addresses.
 The responses given by the PXE Proxy DHCP server contain the mechanism by which the client locates the boot servers or the network addresses and descriptions of the supported, compatible boot servers."
 -- [IBM](https://www.ibm.com/docs/en/aix/7.1?topic=protocol-preboot-execution-environment-proxy-dhcp-daemon)
 
-## DHCP Modes
+## Running Smee
+
+### DHCP Modes
 
 Smee's DHCP functionality can operate in one of the following modes:
 
@@ -46,20 +48,16 @@ Smee's DHCP functionality can operate in one of the following modes:
    To enable this mode set `-dhcp-mode=reservation`.
 
 1. **Proxy DHCP**  
-   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode you will need an existing DHCP server that does not serve network boot information. Smee will respond to PXE enabled DHCP requests and provide the client with the next boot info. There must be a corresponding hardware record for the requesting client's MAC address. The `auto.ipxe` script will be served with the MAC address in the URL and the MAC address will be used to lookup the corresponding hardware record. In this mode you will still need layer 2 access to machines or need a DHCP relay agent in your environment that will forward the DHCP requests to Smee.  
+   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. Smee will respond to PXE enabled DHCP requests and provide the client with the next boot info. There must be a corresponding hardware record for the requesting client's MAC address. The `auto.ipxe` script will be served with the MAC address in the URL and the MAC address will be used to lookup the corresponding hardware record. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.  
    To enable this mode set `-dhcp-mode=proxy`.
 
 1. **DHCP disabled**  
-   Smee will not respond to DHCP requests from clients. This is useful if you have another DHCP server on your network that will provide both IP and next boot info and you want to use Smee's TFTP and HTTP functionality. The IP address in the hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script.  
+   Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details.  
    To enable this mode set `-dhcp-enabled=false`.
 
-## Running Smee
+### Interoperability with other DHCP servers
 
-The DHCP server of Smee serves explicit host reservations only. This means that only hosts that are configured will be served an IP address and network boot details.
-
-## Interoperability with other DHCP servers
-
-It is not recommended, but it is possible for Smee to be run in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.
+It is not recommended, but it is possible for Smee to be run in `reservation` mode in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.
 
 1. All DHCP servers are configured to serve the same IPAM info as Smee and Smee is the only DHCP server to provide network boot info.
 
@@ -139,7 +137,7 @@ docker compose up --build   # build images and start the network & services
 docker compose down  # stop the network & containers
 ```
 
-Alternatively you can manually run Smee by itself. It requires a few
+Alternatively Smee can be run by itself. It requires a few
 flags or environment variables for configuration.
 
 `test/hardware.yaml` should be safe enough for most developers to
