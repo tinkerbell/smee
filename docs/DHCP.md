@@ -18,11 +18,11 @@ As a prerequisite, your existing DHCP must serve [host/address/static reservatio
 
 Configure your existing DHCP service to provide the location of the iPXE binary and script. This is a two-step interaction between machines and the DHCP service and enables the network boot process to start.
 
-- __Step 1__: The machine broadcasts a request to network boot. Your existing DHCP service then provides the machine with all IPAM info as well as the location of the Tinkerbell iPXE binary (`ipxe.efi`). The machine configures its network interface with the IPAM info then downloads the Tinkerbell iPXE binary from the location provided by the DHCP service and runs it.
+- **Step 1**: The machine broadcasts a request to network boot. Your existing DHCP service then provides the machine with all IPAM info as well as the location of the Tinkerbell iPXE binary (`ipxe.efi`). The machine configures its network interface with the IPAM info then downloads the Tinkerbell iPXE binary from the location provided by the DHCP service and runs it.
 
-- __Step 2__: Now with the Tinkerbell iPXE binary loaded and running, iPXE again broadcasts a request to network boot. The DHCP service again provides all IPAM info as well as the location of the Tinkerbell iPXE script (`auto.ipxe`). iPXE configures its network interface using the IPAM info and then downloads the Tinkerbell iPXE script from the location provided by the DHCP service and runs it.
+- **Step 2**: Now with the Tinkerbell iPXE binary loaded and running, iPXE again broadcasts a request to network boot. The DHCP service again provides all IPAM info as well as the location of the Tinkerbell iPXE script (`auto.ipxe`). iPXE configures its network interface using the IPAM info and then downloads the Tinkerbell iPXE script from the location provided by the DHCP service and runs it.
 
->Note The `auto.ipxe` is an [iPXE script](https://ipxe.org/scripting) that tells iPXE from where to download the [HookOS](https://github.com/tinkerbell/hook) kernel and initrd so that they can be loaded into memory.
+> Note The `auto.ipxe` is an [iPXE script](https://ipxe.org/scripting) that tells iPXE from where to download the [HookOS](https://github.com/tinkerbell/hook) kernel and initrd so that they can be loaded into memory.
 
 The following diagram illustrates the process described above. Note that the diagram only describes the network booting parts of the DHCP interaction, not the exchange of IPAM info.
 
@@ -56,25 +56,25 @@ dhcp-boot=tag:tinkerbell,http://192.168.2.112/auto.ipxe
 
 ```json
 {
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "tinkerbell",
-                "test": "substring(option[77].hex,0,10) == 'Tinkerbell'",
-                "boot-file-name": "http://192.168.2.112/auto.ipxe"
-            },
-            {
-                "name": "default",
-                "test": "not(substring(option[77].hex,0,10) == 'Tinkerbell')",
-                "boot-file-name": "ipxe.efi"
-            }
-        ],
-        "subnet4": [
-            {
-                "next-server": "192.168.2.112"
-            }
-        ]
-    }
+  "Dhcp4": {
+    "client-classes": [
+      {
+        "name": "tinkerbell",
+        "test": "substring(option[77].hex,0,10) == 'Tinkerbell'",
+        "boot-file-name": "http://192.168.2.112/auto.ipxe"
+      },
+      {
+        "name": "default",
+        "test": "not(substring(option[77].hex,0,10) == 'Tinkerbell')",
+        "boot-file-name": "ipxe.efi"
+      }
+    ],
+    "subnet4": [
+      {
+        "next-server": "192.168.2.112"
+      }
+    ]
+  }
 }
 ```
 
