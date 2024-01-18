@@ -9,7 +9,7 @@ import (
 	"net/netip"
 	"net/url"
 
-	"github.com/tinkerbell/smee/dhcp/data"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
