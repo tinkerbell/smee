@@ -15,7 +15,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/smee/dhcp/data"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
