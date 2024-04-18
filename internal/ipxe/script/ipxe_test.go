@@ -51,13 +51,31 @@ echo Loading the Tinkerbell Hook iPXE script...
 set arch x86_64
 set download-url http://127.1.1.1
 
+set idx:int32 0
+:retry_kernel
 kernel ${download-url}/vmlinuz-${arch} vlan_id=1234 \
 facility=onprem syslog_host= grpc_authority= tinkerbell_tls=false worker_id=00:01:02:03:04:05 hw_addr=00:01:02:03:04:05 \
-modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 || iseq ${idx} 10 && goto kernel-error || inc idx && goto retry_kernel
 
-initrd ${download-url}/initramfs-${arch}
+set idx:int32 0
+:retry_initrd
+initrd ${download-url}/initramfs-${arch} || iseq ${idx} 10 && goto initrd-error || inc idx && goto retry_initrd
 
-boot
+set idx:int32 0
+:retry_boot
+boot || iseq ${idx} 10 && goto boot-error || inc idx && goto retry_boot
+
+:kernel-error
+echo Failed to load kernel
+exit
+
+:initrd-error
+echo Failed to load initrd
+exit
+
+:boot-error
+echo Failed to boot
+exit
 `
 	tests := map[string]struct {
 		want string

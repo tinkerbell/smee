@@ -11,13 +11,31 @@ echo Debug TraceID: {{ .TraceID }}
 set arch {{ .Arch }}
 set download-url {{ .DownloadURL }}
 
+set idx:int32 0
+:retry_kernel
 kernel ${download-url}/vmlinuz-${arch} {{- if ne .VLANID "" }} vlan_id={{ .VLANID }} {{- end }} {{- range .ExtraKernelParams}} {{.}} {{- end}} \
 facility={{ .Facility }} syslog_host={{ .SyslogHost }} grpc_authority={{ .TinkGRPCAuthority }} tinkerbell_tls={{ .TinkerbellTLS }} worker_id={{ .WorkerID }} hw_addr={{ .HWAddr }} \
-modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200
+modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 || iseq ${idx} 10 && goto kernel-error || inc idx && goto retry_kernel
 
-initrd ${download-url}/initramfs-${arch}
+set idx:int32 0
+:retry_initrd
+initrd ${download-url}/initramfs-${arch} || iseq ${idx} 10 && goto initrd-error || inc idx && goto retry_initrd
 
-boot
+set idx:int32 0
+:retry_boot
+boot || iseq ${idx} 10 && goto boot-error || inc idx && goto retry_boot
+
+:kernel-error
+echo Failed to load kernel
+exit
+
+:initrd-error
+echo Failed to load initrd
+exit
+
+:boot-error
+echo Failed to boot
+exit
 `
 
 // Hook holds the values used to generate the iPXE script that loads the Hook OS.
