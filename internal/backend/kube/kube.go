@@ -228,6 +228,15 @@ func toDHCPData(h *v1alpha1.DHCP) (*data.DHCP, error) {
 		d.NameServers = append(d.NameServers, ip)
 	}
 
+	// timeservers, optional
+	for _, s := range h.TimeServers {
+		ip := net.ParseIP(s)
+		if ip == nil {
+			break
+		}
+		d.NTPServers = append(d.NTPServers, ip)
+	}
+
 	// hostname, optional
 	d.Hostname = h.Hostname
 
