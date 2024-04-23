@@ -55,6 +55,18 @@ Smee's DHCP functionality can operate in one of the following modes:
    Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details.  
    To enable this mode set `-dhcp-enabled=false`.
 
+### Auto discovery
+
+In proxy DHCP mode, Smee can optionally be configured to provide network boot options to all network boot clients. This is called auto discovery or auto enrollment. 
+
+implementation notes:
+
+1. new ipxe script
+1. modify the proxyDHCP handler to not check the backend for a hardware record
+
+TODO:
+- add logging thats says we are in auto discovery mode
+
 ### Interoperability with other DHCP servers
 
 It is not recommended, but it is possible for Smee to be run in `reservation` mode in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.

@@ -28,6 +28,7 @@ type Handler struct {
 	TinkServerGRPCAddr   string
 	IPXEScriptRetries    int
 	IPXEScriptRetryDelay int
+	AutoDiscoveryEnabled bool
 }
 
 type data struct {
@@ -100,6 +101,29 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		defer timer.ObserveDuration()
 
 		ctx := r.Context()
+
+		// Auto discovery mode
+		if h.AutoDiscoveryEnabled {
+			auto := AutoDiscovery{
+				DownloadURL:       h.OSIEURL,
+				ExtraKernelParams: h.ExtraKernelParams,
+				SyslogHost:        h.PublicSyslogFQDN,
+				TinkerbellTLS:     h.TinkServerTLS,
+				TinkGRPCAuthority: h.TinkServerGRPCAddr,
+			}
+			script, err := GenerateTemplate(auto, AutoDiscoveryScript)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.Logger.Error(err, "error generating auto discovery ipxe script")
+				return
+			}
+			if _, err := w.Write([]byte(script)); err != nil {
+				h.Logger.Error(err, "unable to send auto discovery script to client")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
 		// Should we serve a custom ipxe script?
 		// This gates serving PXE file by
 		// 1. the existence of a hardware record in tink server
