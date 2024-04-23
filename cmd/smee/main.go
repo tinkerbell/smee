@@ -93,6 +93,7 @@ type ipxeHTTPScript struct {
 type dhcpConfig struct {
 	enabled           bool
 	mode              string
+	autoDiscovery     bool
 	bindAddr          string
 	bindInterface     string
 	ipForPacket       string
@@ -236,6 +237,7 @@ func main() {
 			TinkServerGRPCAddr:   cfg.ipxeHTTPScript.tinkServer,
 			IPXEScriptRetries:    cfg.ipxeHTTPScript.retries,
 			IPXEScriptRetryDelay: cfg.ipxeHTTPScript.retryDelay,
+			AutoDiscoveryEnabled: (cfg.dhcp.mode == "proxy" && cfg.dhcp.autoDiscovery),
 		}
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
@@ -381,7 +383,8 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 				IPXEScriptURL:     ipxeScript,
 				Enabled:           true,
 			},
-			OTELEnabled: true,
+			OTELEnabled:          true,
+			AutoDiscoveryEnabled: c.dhcp.autoDiscovery,
 		}
 		return dh, nil
 	}

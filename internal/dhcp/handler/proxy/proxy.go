@@ -58,6 +58,10 @@ type Handler struct {
 	// For example, the filename will be "snp.efi-00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01".
 	// <original filename>-00-<trace id>-<span id>-<trace flags>
 	OTELEnabled bool
+
+	// AutoDiscoveryEnabled is used to determine if the proxyDHCP handler should do any Backend calls or not.
+	// When enabled no Backend calls are made and all valid network boot clients are responded to.
+	AutoDiscoveryEnabled bool
 }
 
 // Netboot holds the netboot configuration details used in running a DHCP server.
@@ -184,20 +188,23 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	// set bootfile header
 	reply.BootFileName = i.Bootfile("", h.Netboot.IPXEScriptURL(dp.Pkt), h.Netboot.IPXEBinServerHTTP, h.Netboot.IPXEBinServerTFTP)
 
-	// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
-	_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
-	if err != nil || (n != nil && !n.AllowNetboot) {
-		l := log.V(1)
-		if err != nil {
-			l = l.WithValues("error", err.Error())
+	if !h.AutoDiscoveryEnabled {
+		// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
+		_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
+		if err != nil || (n != nil && !n.AllowNetboot) {
+			l := log.V(1)
+			if err != nil {
+				l = l.WithValues("error", err.Error())
+			}
+			if n != nil {
+				l = l.WithValues("netbootAllowed", n.AllowNetboot)
+			}
+			l.Info("Ignoring packet")
+			span.SetStatus(codes.Ok, "netboot not allowed")
+			return
 		}
-		if n != nil {
-			l = l.WithValues("netbootAllowed", n.AllowNetboot)
-		}
-		l.Info("Ignoring packet")
-		span.SetStatus(codes.Ok, "netboot not allowed")
-		return
 	}
+
 	log.Info(
 		"received DHCP packet",
 		"type", dp.Pkt.MessageType().String(),
