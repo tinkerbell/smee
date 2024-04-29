@@ -181,7 +181,6 @@ func (c Config) initTracing(ctx context.Context) (context.Context, context.Cance
 			c.Logger.Info("shutdown of OpenTelemetry OTLP exporter failed: %s", err)
 		}
 		done()
-
 	}, nil
 }
 
