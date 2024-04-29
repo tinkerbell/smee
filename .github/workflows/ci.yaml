@@ -31,7 +31,7 @@ jobs:
         run: |
           # fixes "write /run/user/1001/355792648: no space left on device" error
           sudo mount -o remount,size=3G /run/user/1001 || true
-          nix-shell --run 'go get -t ./... && go mod tidy'
+          nix-shell --run 'go get -t ./... && go mod tidy' shell.nix
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
