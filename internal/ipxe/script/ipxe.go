@@ -104,7 +104,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 
 		// Auto discovery mode
 		if h.AutoDiscoveryEnabled {
-			auto := AutoDiscovery{
+			auto := Hook{
 				DownloadURL:       h.OSIEURL,
 				ExtraKernelParams: h.ExtraKernelParams,
 				SyslogHost:        h.PublicSyslogFQDN,
