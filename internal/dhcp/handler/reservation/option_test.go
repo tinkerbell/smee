@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -18,6 +17,7 @@ import (
 	"github.com/tinkerbell/smee/internal/dhcp"
 	"github.com/tinkerbell/smee/internal/dhcp/data"
 	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
+	dhcpotel "github.com/tinkerbell/smee/internal/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 )
@@ -237,7 +237,7 @@ func TestBootfileAndNextServer(t *testing.T) {
 				// set global propagator to tracecontext (the default is no-op).
 				prop := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
 				otel.SetTextMapPropagator(prop)
-				ctx = otelhelpers.ContextWithTraceparentString(ctx, "00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01")
+				ctx = dhcpotel.ContextWithTraceparentString(ctx, "00-23b1e307bb35484f535a1f772c06910e-d887dc3912240434-01")
 			}
 			bootfile, nextServer := tt.server.bootfileAndNextServer(ctx, tt.args.pkt, tt.args.uClass, tt.args.tftp, tt.args.ipxe, tt.args.iscript)
 			if diff := cmp.Diff(bootfile, tt.wantBootFile); diff != "" {

@@ -46,6 +46,9 @@ func TestParser(t *testing.T) {
 			file:       File{},
 			kubernetes: Kube{Enabled: true},
 		},
+		otel: otelConfig{
+			insecure: true,
+		},
 	}
 	got := config{}
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
@@ -71,6 +74,7 @@ func TestParser(t *testing.T) {
 		cmp.AllowUnexported(dhcpConfig{}),
 		cmp.AllowUnexported(dhcpBackends{}),
 		cmp.AllowUnexported(httpIpxeScript{}),
+		cmp.AllowUnexported(otelConfig{}),
 	}
 	if diff := cmp.Diff(want, got, opts); diff != "" {
 		t.Fatal(diff)
@@ -111,6 +115,8 @@ FLAGS
   -tink-server                        [http] IP:Port for the Tink server
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
+  -otel-endpoint                      [otel] OpenTelemetry collector endpoint
+  -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
   -syslog-addr                        [syslog] local IP:Port to listen on for Syslog messages (default "%[1]v:514")
   -syslog-enabled                     [syslog] enable Syslog server(receiver) (default "true")
   -ipxe-script-patch                  [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP

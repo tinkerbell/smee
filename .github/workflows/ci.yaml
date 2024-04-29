@@ -19,6 +19,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
 
       - name: Install nix
         uses: cachix/install-nix-action@v26
@@ -41,7 +43,9 @@ jobs:
         run: nix-shell --run 'make ci'
 
       - name: upload codecov
-        run: bash <(curl -s https://codecov.io/bash)
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: compile binaries
         run: nix-shell --run 'make crosscompile'
