@@ -16,18 +16,10 @@ echo syslog_host={{ .SyslogHost }}
 echo tinkerbell_tls={{ .TinkerbellTLS }}
 
 kernel ${download-url}/vmlinuz-${arch} \
-syslog_host={{ .SyslogHost }} grpc_authority={{ .TinkGRPCAuthority }} tinkerbell_tls={{ .TinkerbellTLS }} \
-worker_id=${mac} hw_addr=${mac} initrd=initramfs-${arch} {{- range .ExtraKernelParams}} {{.}} {{- end}} console=tty0 console=ttyS1,115200
-
+syslog_host={{ .SyslogHost }} grpc_authority={{ .TinkGRPCAuthority }} tinkerbell_tls={{ .TinkerbellTLS }} {{- range .ExtraKernelParams}} {{.}} {{- end}} \
+worker_id=${mac} hw_addr=${mac} initrd=initramfs-${arch} console=tty1 console=tty2 console=tty3 console=tty4 console=tty5 console=ttyS3,9600 console=ttyS2,9600 console=tty6 console=ttyS1,9600 console=hvc0 console=ttyAMA0 console=ttyAMA1 console=tty0 console=ttyS0,9600
+# linuxkit.unified_cgroup_hierarchy=1
 initrd ${download-url}/initramfs-${arch}
 
 boot
 `
-
-type AutoDiscovery struct {
-	DownloadURL       string   // example https://location:8080/to/kernel/and/initrd
-	ExtraKernelParams []string // example tink_worker_image=quay.io/tinkerbell/tink-worker:v0.8.0
-	SyslogHost        string
-	TinkerbellTLS     bool
-	TinkGRPCAuthority string // example 192.168.2.111:42113
-}
