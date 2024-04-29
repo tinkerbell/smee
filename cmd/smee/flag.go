@@ -130,6 +130,11 @@ func backendFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "[backend] an optional Kubernetes namespace override to query hardware data from, kube backend only")
 }
 
+func otelFlags(c *config, fs *flag.FlagSet) {
+	fs.StringVar(&c.otel.endpoint, "otel-endpoint", "", "[otel] OpenTelemetry collector endpoint")
+	fs.BoolVar(&c.otel.insecure, "otel-insecure", true, "[otel] OpenTelemetry collector insecure")
+}
+
 func setFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.logLevel, "log-level", "info", "log level (debug, info)")
 	dhcpFlags(c, fs)
@@ -138,6 +143,7 @@ func setFlags(c *config, fs *flag.FlagSet) {
 	ipxeHTTPScriptFlags(c, fs)
 	syslogFlags(c, fs)
 	backendFlags(c, fs)
+	otelFlags(c, fs)
 }
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {

@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/tinkerbell/smee/internal/dhcp"
 	"github.com/tinkerbell/smee/internal/dhcp/data"
-	"github.com/tinkerbell/smee/internal/dhcp/otel"
+	dhcpotel "github.com/tinkerbell/smee/internal/dhcp/otel"
+	"github.com/tinkerbell/smee/internal/otel"
 )
 
 // setDHCPOpts takes a client dhcp packet and data (typically from a backend) and creates a slice of DHCP packet modifiers.
@@ -96,7 +96,7 @@ func (h *Handler) setNetworkBootOpts(ctx context.Context, m *dhcpv4.DHCPv4, n *d
 			pxe := dhcpv4.Options{ // FYI, these are suboptions of option43. ref: https://datatracker.ietf.org/doc/html/rfc2132#section-8.4
 				// PXE Boot Server Discovery Control - bypass, just boot from filename.
 				6:  []byte{8},
-				69: otel.TraceparentFromContext(ctx),
+				69: dhcpotel.TraceparentFromContext(ctx),
 			}
 			d.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionVendorSpecificInformation, i.AddRPIOpt43(pxe)))
 		}
@@ -112,7 +112,7 @@ func (h *Handler) bootfileAndNextServer(ctx context.Context, pkt *dhcpv4.DHCPv4,
 	var nextServer net.IP
 	var bootfile string
 	i := dhcp.NewInfo(pkt)
-	if tp := otelhelpers.TraceparentStringFromContext(ctx); h.OTELEnabled && tp != "" {
+	if tp := otel.TraceparentStringFromContext(ctx); h.OTELEnabled && tp != "" {
 		i.IPXEBinary = fmt.Sprintf("%s-%v", i.IPXEBinary, tp)
 	}
 	nextServer = i.NextServer(ipxe, tftp)

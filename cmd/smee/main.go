@@ -15,7 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -29,6 +28,7 @@ import (
 	"github.com/tinkerbell/smee/internal/ipxe/http"
 	"github.com/tinkerbell/smee/internal/ipxe/script"
 	"github.com/tinkerbell/smee/internal/metric"
+	"github.com/tinkerbell/smee/internal/otel"
 	"github.com/tinkerbell/smee/internal/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -54,6 +54,7 @@ type config struct {
 	// loglevel is the log level for smee.
 	logLevel string
 	backends dhcpBackends
+	otel     otelConfig
 }
 
 type syslogConfig struct {
@@ -109,19 +110,34 @@ type dhcpBackends struct {
 	kubernetes Kube
 }
 
+type otelConfig struct {
+	endpoint string
+	insecure bool
+}
+
 func main() {
 	cfg := &config{}
 	cli := newCLI(cfg, flag.NewFlagSet(name, flag.ExitOnError))
 	_ = cli.Parse(os.Args[1:])
 
-	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
-	defer done()
-	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, name)
-	defer otelShutdown(ctx)
-	metric.Init()
-
 	log := defaultLogger(cfg.logLevel)
 	log.Info("starting", "version", GitRev)
+
+	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
+	defer done()
+	oCfg := otel.Config{
+		Servicename: "smee",
+		Endpoint:    cfg.otel.endpoint,
+		Insecure:    cfg.otel.insecure,
+		Logger:      log,
+	}
+	ctx, otelShutdown, err := otel.Init(ctx, oCfg)
+	if err != nil {
+		log.Error(err, "failed to initialize OpenTelemetry")
+		panic(err)
+	}
+	defer otelShutdown()
+	metric.Init()
 
 	g, ctx := errgroup.WithContext(ctx)
 	// syslog
