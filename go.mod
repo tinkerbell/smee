@@ -2,8 +2,6 @@ module github.com/tinkerbell/smee
 
 go 1.21
 
-toolchain go1.21.2
-
 require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/ghodss/yaml v1.0.0
