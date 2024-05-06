@@ -79,7 +79,7 @@ If you have `direnv` installed the included `.envrc` will make that step automat
 #### Runtime dependencies
 
 At runtime Smee needs to communicate with a Tink server.
-Follow this [guide](https://docs.tinkerbell.org/setup/local-vagrant/) for running Tink server.
+Follow this [guide](https://tinkerbell.org/docs/setup/getting_started/) for running Tink server.
 
 ## Development
 
@@ -153,7 +153,7 @@ make vet
 
 ### Functional testing
 
-1. Create a hardware record in Tink server - follow the guide [here](https://docs.tinkerbell.org/hardware-data/)
+1. Create a hardware record in Tink server - follow the guide [here](https://tinkerbell.org/docs/concepts/hardware/)
 2. boot the machine
 
 ### Running Smee
