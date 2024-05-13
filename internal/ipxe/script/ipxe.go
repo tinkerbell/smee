@@ -26,6 +26,7 @@ type Handler struct {
 	PublicSyslogFQDN   string
 	TinkServerTLS      bool
 	TinkServerGRPCAddr string
+	IPXEScriptRetries  int
 }
 
 type data struct {
@@ -227,6 +228,7 @@ func (h *Handler) defaultScript(span trace.Span, hw data) (string, error) {
 		TinkGRPCAuthority: h.TinkServerGRPCAddr,
 		VLANID:            hw.VLANID,
 		WorkerID:          wID,
+		Retries:           h.IPXEScriptRetries,
 	}
 	if sc := span.SpanContext(); sc.IsSampled() {
 		auto.TraceID = sc.TraceID().String()

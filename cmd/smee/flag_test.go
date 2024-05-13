@@ -111,6 +111,7 @@ FLAGS
   -http-addr                          [http] local IP:Port to listen on for iPXE HTTP script requests (default "%[1]v:80")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
   -http-ipxe-script-enabled           [http] enable iPXE HTTP script server (default "true")
+  -ipxe-script-retries                [http] number of retries to attempt when fetching kernel and initrd files in the iPXE script (default "0")
   -osie-url                           [http] URL where OSIE (HookOS) images are located
   -tink-server                        [http] IP:Port for the Tink server
   -tink-server-tls                    [http] use TLS for Tink server (default "false")

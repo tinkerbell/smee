@@ -83,6 +83,7 @@ type ipxeHTTPScript struct {
 	tinkServerUseTLS              bool
 	trustedProxies                string
 	disableDiscoverTrustedProxies bool
+	retries                       int
 }
 
 type dhcpConfig struct {
@@ -219,6 +220,7 @@ func main() {
 			PublicSyslogFQDN:   cfg.dhcp.syslogIP,
 			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
 			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
+			IPXEScriptRetries:  cfg.ipxeHTTPScript.retries,
 		}
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
