@@ -107,6 +107,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")
 	fs.IntVar(&c.ipxeHTTPScript.retries, "ipxe-script-retries", 0, "[http] number of retries to attempt when fetching kernel and initrd files in the iPXE script")
+	fs.IntVar(&c.ipxeHTTPScript.retryDelay, "ipxe-script-retry-delay", 2, "[http] delay (in seconds) between retries when fetching kernel and initrd files in the iPXE script")
 }
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {

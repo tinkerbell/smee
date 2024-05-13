@@ -25,8 +25,9 @@ func TestParser(t *testing.T) {
 			enabled: true,
 		},
 		ipxeHTTPScript: ipxeHTTPScript{
-			enabled:  true,
-			bindAddr: "192.168.2.4:80",
+			enabled:    true,
+			bindAddr:   "192.168.2.4:80",
+			retryDelay: 2,
 		},
 		dhcp: dhcpConfig{
 			enabled:           true,
@@ -112,6 +113,7 @@ FLAGS
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
   -http-ipxe-script-enabled           [http] enable iPXE HTTP script server (default "true")
   -ipxe-script-retries                [http] number of retries to attempt when fetching kernel and initrd files in the iPXE script (default "0")
+  -ipxe-script-retry-delay            [http] delay (in seconds) between retries when fetching kernel and initrd files in the iPXE script (default "2")
   -osie-url                           [http] URL where OSIE (HookOS) images are located
   -tink-server                        [http] IP:Port for the Tink server
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
