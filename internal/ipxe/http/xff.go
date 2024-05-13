@@ -27,8 +27,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
-	"github.com/go-logr/logr"
 )
 
 // xffOptions is a configuration container to setup the XFF middleware.
@@ -43,8 +41,6 @@ type xffOptions struct {
 
 // xff http handler.
 type xff struct {
-	// Debug logger
-	Log *logr.Logger
 	// Set to true if all IPs or Subnets are allowed.
 	allowAll bool
 	// List of IP subnets that are allowed.
@@ -61,9 +57,7 @@ func newXFF(options xffOptions) (*xff, error) {
 		allowAll:     len(options.AllowedSubnets) == 0,
 		allowedMasks: allowedMasks,
 	}
-	if options.Debug {
-		xff.Log = nil // logr.New(os.Stdout, "[xff] ", log.LstdFlags)
-	}
+
 	return xff, nil
 }
 
