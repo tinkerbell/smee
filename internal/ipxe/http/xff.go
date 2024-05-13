@@ -41,7 +41,7 @@ type xffOptions struct {
 	Debug bool
 }
 
-// xff http handler
+// xff http handler.
 type xff struct {
 	// Debug logger
 	Log *logr.Logger
@@ -146,7 +146,7 @@ func (xff *xff) allowed(sip string) bool {
 	return false
 }
 
-// checks if a net.IP is in a list of net.IPNet
+// checks if a net.IP is in a list of net.IPNet.
 func ipInMasks(ip net.IP, masks []net.IPNet) bool {
 	for _, mask := range masks {
 		if mask.Contains(ip) {
