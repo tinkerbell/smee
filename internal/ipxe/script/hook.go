@@ -52,4 +52,5 @@ type Hook struct {
 	TraceID           string
 	VLANID            string // string number between 1-4095
 	WorkerID          string // example 3c:ec:ef:4c:4f:54 or worker1
+	Retries           int // number of retries to attempt when fetching kernel and initrd files
 }

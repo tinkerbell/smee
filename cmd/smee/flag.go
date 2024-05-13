@@ -106,6 +106,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] URL where OSIE (HookOS) images are located")
 	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")
+	fs.IntVar(&c.ipxeHTTPScript.retries, "ipxe-script-retries", 0, "[http] number of retries to attempt when fetching kernel and initrd files in the iPXE script")
 }
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {
