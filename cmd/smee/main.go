@@ -84,6 +84,7 @@ type ipxeHTTPScript struct {
 	trustedProxies                string
 	disableDiscoverTrustedProxies bool
 	retries                       int
+	retryDelay                    int
 }
 
 type dhcpConfig struct {
@@ -213,14 +214,15 @@ func main() {
 		}
 
 		jh := script.Handler{
-			Logger:             log,
-			Backend:            br,
-			OSIEURL:            cfg.ipxeHTTPScript.hookURL,
-			ExtraKernelParams:  strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
-			PublicSyslogFQDN:   cfg.dhcp.syslogIP,
-			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
-			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
-			IPXEScriptRetries:  cfg.ipxeHTTPScript.retries,
+			Logger:               log,
+			Backend:              br,
+			OSIEURL:              cfg.ipxeHTTPScript.hookURL,
+			ExtraKernelParams:    strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
+			PublicSyslogFQDN:     cfg.dhcp.syslogIP,
+			TinkServerTLS:        cfg.ipxeHTTPScript.tinkServerUseTLS,
+			TinkServerGRPCAddr:   cfg.ipxeHTTPScript.tinkServer,
+			IPXEScriptRetries:    cfg.ipxeHTTPScript.retries,
+			IPXEScriptRetryDelay: cfg.ipxeHTTPScript.retryDelay,
 		}
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()

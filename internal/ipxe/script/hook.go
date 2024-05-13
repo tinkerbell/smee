@@ -11,31 +11,37 @@ echo Debug TraceID: {{ .TraceID }}
 set arch {{ .Arch }}
 set download-url {{ .DownloadURL }}
 set retries:int32 {{ .Retries }}
+set retry_delay:int32 {{ .RetryDelay }}
 
 set idx:int32 0
 :retry_kernel
 kernel ${download-url}/vmlinuz-${arch} {{- if ne .VLANID "" }} vlan_id={{ .VLANID }} {{- end }} {{- range .ExtraKernelParams}} {{.}} {{- end}} \
 facility={{ .Facility }} syslog_host={{ .SyslogHost }} grpc_authority={{ .TinkGRPCAuthority }} tinkerbell_tls={{ .TinkerbellTLS }} worker_id={{ .WorkerID }} hw_addr={{ .HWAddr }} \
-modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 || iseq ${idx} ${retries} && goto kernel-error || inc idx && goto retry_kernel
+modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 && goto download_initrd || iseq ${idx} ${retries} && goto kernel-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_kernel
 
+:download_initrd
 set idx:int32 0
 :retry_initrd
-initrd ${download-url}/initramfs-${arch} || iseq ${idx} ${retries} && goto initrd-error || inc idx && goto retry_initrd
+initrd ${download-url}/initramfs-${arch} && goto boot || iseq ${idx} ${retries} && goto initrd-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_initrd
 
+:boot
 set idx:int32 0
 :retry_boot
-boot || iseq ${idx} ${retries} && goto boot-error || inc idx && goto retry_boot
+boot || iseq ${idx} ${retries} && goto boot-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_boot
 
 :kernel-error
 echo Failed to load kernel
+imgfree
 exit
 
 :initrd-error
 echo Failed to load initrd
+imgfree
 exit
 
 :boot-error
 echo Failed to boot
+imgfree
 exit
 `
 
@@ -54,4 +60,5 @@ type Hook struct {
 	VLANID            string // string number between 1-4095
 	WorkerID          string // example 3c:ec:ef:4c:4f:54 or worker1
 	Retries           int    // number of retries to attempt when fetching kernel and initrd files
+	RetryDelay        int    // number of seconds to wait between retries
 }

@@ -51,31 +51,37 @@ echo Loading the Tinkerbell Hook iPXE script...
 set arch x86_64
 set download-url http://127.1.1.1
 set retries:int32 10
+set retry_delay:int32 3
 
 set idx:int32 0
 :retry_kernel
 kernel ${download-url}/vmlinuz-${arch} vlan_id=1234 \
 facility=onprem syslog_host= grpc_authority= tinkerbell_tls=false worker_id=00:01:02:03:04:05 hw_addr=00:01:02:03:04:05 \
-modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 || iseq ${idx} ${retries} && goto kernel-error || inc idx && goto retry_kernel
+modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 && goto download_initrd || iseq ${idx} ${retries} && goto kernel-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_kernel
 
+:download_initrd
 set idx:int32 0
 :retry_initrd
-initrd ${download-url}/initramfs-${arch} || iseq ${idx} ${retries} && goto initrd-error || inc idx && goto retry_initrd
+initrd ${download-url}/initramfs-${arch} && goto boot || iseq ${idx} ${retries} && goto initrd-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_initrd
 
+:boot
 set idx:int32 0
 :retry_boot
-boot || iseq ${idx} ${retries} && goto boot-error || inc idx && goto retry_boot
+boot || iseq ${idx} ${retries} && goto boot-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_boot
 
 :kernel-error
 echo Failed to load kernel
+imgfree
 exit
 
 :initrd-error
 echo Failed to load initrd
+imgfree
 exit
 
 :boot-error
 echo Failed to boot
+imgfree
 exit
 `
 	tests := map[string]struct {
@@ -86,8 +92,9 @@ exit
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			h := &Handler{
-				OSIEURL:           "http://127.1.1.1",
-				IPXEScriptRetries: 10,
+				OSIEURL:              "http://127.1.1.1",
+				IPXEScriptRetries:    10,
+				IPXEScriptRetryDelay: 3,
 			}
 			d := data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, VLANID: "1234", Facility: "onprem", Arch: "x86_64"}
 			sp := trace.SpanFromContext(context.Background())
