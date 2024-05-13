@@ -86,7 +86,7 @@ exit
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			h := &Handler{
-				OSIEURL: "http://127.1.1.1",
+				OSIEURL:           "http://127.1.1.1",
 				IPXEScriptRetries: 10,
 			}
 			d := data{MACAddress: net.HardwareAddr{0x00, 0x01, 0x02, 0x03, 0x04, 0x05}, VLANID: "1234", Facility: "onprem", Arch: "x86_64"}
