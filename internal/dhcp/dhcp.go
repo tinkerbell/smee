@@ -57,7 +57,7 @@ var ArchToBootFile = map[iana.Arch]string{
 	iana.EFI_X86_64_HTTP:   "ipxe.efi",
 	iana.EFI_ARM32_HTTP:    "snp.efi",
 	iana.EFI_ARM64_HTTP:    "snp.efi",
-	iana.Arch(41):          "snp.efi", // arm rpiboot: https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
+	iana.Arch(41):          "snp.efi", // arm rpiboot (0x29): https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
 }
 
 // ErrUnknownArch is used when the PXE client request is from an unknown architecture.
@@ -119,8 +119,9 @@ func isRaspberryPI(mac net.HardwareAddr) bool {
 
 // Arch returns the Arch of the client pulled from DHCP option 93.
 func Arch(d *dhcpv4.DHCPv4) iana.Arch {
-	// if the mac address is from a Raspberry PI, use the Raspberry PI boot file.
-	// Some Raspberry PI's (Raspberry PI 5) report a PXEClient:Arch:00000:UNDI:002001 arch, which is for iana.INTEL_X86PC.
+	// if the mac address is from a Raspberry PI, use the Raspberry PI architecture.
+	// Some Raspberry PI's (Raspberry PI 5) report an option 93 of 0.
+	// This translates to iana.INTEL_X86PC and causes us to map to undionly.kpxe.
 	if isRaspberryPI(d.ClientHWAddr) {
 		return iana.Arch(41)
 	}
