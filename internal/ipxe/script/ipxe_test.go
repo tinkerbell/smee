@@ -183,5 +183,4 @@ exit
 	if diff := cmp.Diff(writer.Body.String(), want); diff != "" {
 		t.Fatalf("expected custom script, got %s", diff)
 	}
-
 }
