@@ -111,7 +111,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 				TinkerbellTLS:     h.TinkServerTLS,
 				TinkGRPCAuthority: h.TinkServerGRPCAddr,
 			}
-			script, err := GenerateTemplate(auto, AutoDiscoveryScript)
+			script, err := GenerateTemplate(auto, StaticScript)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.Logger.Error(err, "error generating auto discovery ipxe script")
