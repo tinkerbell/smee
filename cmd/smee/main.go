@@ -42,7 +42,12 @@ var (
 	startTime = time.Now()
 )
 
-const name = "smee"
+const (
+	name                         = "smee"
+	dhcpModeProxy       dhcpMode = "proxy"
+	dhcpModeReservation dhcpMode = "reservation"
+	dhcpModeAutoProxy   dhcpMode = "auto-proxy"
+)
 
 type config struct {
 	syslog         syslogConfig
@@ -75,22 +80,22 @@ type ipxeHTTPBinary struct {
 }
 
 type ipxeHTTPScript struct {
-	enabled                       bool
-	bindAddr                      string
-	extraKernelArgs               string
-	hookURL                       string
-	tinkServer                    string
-	tinkServerUseTLS              bool
-	trustedProxies                string
-	disableDiscoverTrustedProxies bool
-	retries                       int
-	retryDelay                    int
+	enabled          bool
+	bindAddr         string
+	extraKernelArgs  string
+	hookURL          string
+	tinkServer       string
+	tinkServerUseTLS bool
+	trustedProxies   string
+	retries          int
+	retryDelay       int
 }
+
+type dhcpMode string
 
 type dhcpConfig struct {
 	enabled           bool
 	mode              string
-	autoDiscovery     bool
 	bindAddr          string
 	bindInterface     string
 	ipForPacket       string
@@ -198,6 +203,8 @@ func main() {
 	if cfg.ipxeHTTPScript.enabled {
 		var br handler.BackendReader
 		switch {
+		case cfg.dhcp.mode == string(dhcpModeAutoProxy):
+			br = nil
 		case cfg.backends.file.Enabled && cfg.backends.kubernetes.Enabled:
 			panic("only one backend can be enabled at a time")
 		case cfg.backends.file.Enabled:
@@ -224,8 +231,9 @@ func main() {
 			TinkServerGRPCAddr:   cfg.ipxeHTTPScript.tinkServer,
 			IPXEScriptRetries:    cfg.ipxeHTTPScript.retries,
 			IPXEScriptRetryDelay: cfg.ipxeHTTPScript.retryDelay,
-			AutoDiscoveryEnabled: (cfg.dhcp.mode == "proxy" && cfg.dhcp.autoDiscovery),
+			StaticIPXEEnabled:    (dhcpMode(cfg.dhcp.mode) == dhcpModeAutoProxy),
 		}
+		fmt.Printf("StaticIPXEEnabled: %v\n", jh.StaticIPXEEnabled)
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
 	}
@@ -309,6 +317,8 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 	}
 	var backend handler.BackendReader
 	switch {
+	case c.dhcp.mode == string(dhcpModeAutoProxy):
+		backend = nil
 	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
 		panic("only one backend can be enabled at a time")
 	case c.backends.file.Enabled:
@@ -324,8 +334,8 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 		}
 		backend = b
 	}
-	switch c.dhcp.mode {
-	case "reservation":
+	switch dhcpMode(c.dhcp.mode) {
+	case dhcpModeReservation:
 		syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
 		if err != nil {
 			return nil, fmt.Errorf("invalid syslog address: %w", err)
@@ -344,7 +354,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 			SyslogAddr:  syslogIP,
 		}
 		return dh, nil
-	case "proxy":
+	case dhcpModeProxy:
 		dh := &proxy.Handler{
 			Backend: backend,
 			IPAddr:  pktIP,
@@ -355,8 +365,23 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 				IPXEScriptURL:     ipxeScript,
 				Enabled:           true,
 			},
-			OTELEnabled:          true,
-			AutoDiscoveryEnabled: c.dhcp.autoDiscovery,
+			OTELEnabled:      true,
+			AutoProxyEnabled: false,
+		}
+		return dh, nil
+	case dhcpModeAutoProxy:
+		dh := &proxy.Handler{
+			Backend: backend,
+			IPAddr:  pktIP,
+			Log:     log,
+			Netboot: proxy.Netboot{
+				IPXEBinServerTFTP: tftpIP,
+				IPXEBinServerHTTP: httpBinaryURL,
+				IPXEScriptURL:     ipxeScript,
+				Enabled:           true,
+			},
+			OTELEnabled:      true,
+			AutoProxyEnabled: true,
 		}
 		return dh, nil
 	}
