@@ -59,9 +59,9 @@ type Handler struct {
 	// <original filename>-00-<trace id>-<span id>-<trace flags>
 	OTELEnabled bool
 
-	// AutoDiscoveryEnabled is used to determine if the proxyDHCP handler should do any Backend calls or not.
-	// When enabled no Backend calls are made and all valid network boot clients are responded to.
-	AutoDiscoveryEnabled bool
+	// AutoProxyEnabled is used to determine if the proxyDHCP handler should do any Backend calls or not.
+	// When enabled no Backend calls are made and responses are sent to all valid network boot clients.
+	AutoProxyEnabled bool
 }
 
 // Netboot holds the netboot configuration details used in running a DHCP server.
@@ -188,7 +188,7 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	// set bootfile header
 	reply.BootFileName = i.Bootfile("", h.Netboot.IPXEScriptURL(dp.Pkt), h.Netboot.IPXEBinServerHTTP, h.Netboot.IPXEBinServerTFTP)
 
-	if !h.AutoDiscoveryEnabled {
+	if !h.AutoProxyEnabled {
 		// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
 		_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
 		if err != nil || (n != nil && !n.AllowNetboot) {

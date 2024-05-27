@@ -105,7 +105,6 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 	fs.IntVar(&c.ipxeHTTPScript.bindPort, "http-port", 8080, "[http] local port to listen on for iPXE HTTP script requests")
 	fs.StringVar(&c.ipxeHTTPScript.extraKernelArgs, "extra-kernel-args", "", "[http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script")
 	fs.StringVar(&c.ipxeHTTPScript.trustedProxies, "trusted-proxies", "", "[http] comma separated list of trusted proxies in CIDR notation")
-	fs.BoolVar(&c.ipxeHTTPScript.disableDiscoverTrustedProxies, "disable-discover-trusted-proxies", false, "[http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend")
 	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] URL where OSIE (HookOS) images are located")
 	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")
@@ -115,8 +114,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.dhcp.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP server")
-	fs.StringVar(&c.dhcp.mode, "dhcp-mode", "reservation", "[dhcp] DHCP mode (reservation, proxy)")
-	fs.BoolVar(&c.dhcp.autoDiscovery, "dhcp-auto-discovery", false, "[dhcp] enable auto discovery mode (only available with -dhcp-mode=proxy)")
+	fs.StringVar(&c.dhcp.mode, "dhcp-mode", "reservation", "[dhcp] DHCP mode (reservation, proxy, auto-proxy)")
 	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP:Port to listen on for DHCP requests")
 	fs.StringVar(&c.dhcp.bindInterface, "dhcp-iface", "", "[dhcp] interface to bind to for DHCP requests")
 	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")

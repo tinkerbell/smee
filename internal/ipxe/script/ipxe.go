@@ -28,7 +28,7 @@ type Handler struct {
 	TinkServerGRPCAddr   string
 	IPXEScriptRetries    int
 	IPXEScriptRetryDelay int
-	AutoDiscoveryEnabled bool
+	StaticIPXEEnabled    bool
 }
 
 type data struct {
@@ -102,8 +102,8 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 
 		ctx := r.Context()
 
-		// Auto discovery mode
-		if h.AutoDiscoveryEnabled {
+		// Serve static iPXE script.
+		if h.StaticIPXEEnabled {
 			auto := Hook{
 				DownloadURL:       h.OSIEURL,
 				ExtraKernelParams: h.ExtraKernelParams,
@@ -122,6 +122,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			return
 		}
 
 		// Should we serve a custom ipxe script?
