@@ -127,10 +127,6 @@ FLAGS
   -tftp-timeout                       [tftp] iPXE TFTP binary server requests timeout (default "5s")
 ```
 
-You can use NixOS shell, which will have Go and other dependencies.
-
-`nix-shell`
-
 ### Developing using the file backend
 
 The quickest way to get started is `docker-compose up`. This will start Smee using the file backend. This uses the example Yaml file (hardware.yaml) in the `test/` directory. It also starts a client container that runs some tests.
