@@ -7,6 +7,12 @@ on:
       - "v*"
   pull_request:
 
+env:
+  REGISTRY: quay.io
+  IMAGE: quay.io/${{ github.repository }}
+  CGO_ENABLED: 0
+  GO_VERSION: "1.21"
+
 jobs:
   validation:
     runs-on: ubuntu-latest
@@ -22,25 +28,26 @@ jobs:
         with:
           fetch-depth: 5
 
-      - name: Install nix
-        uses: cachix/install-nix-action@V27
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          nix_path: nixpkgs=channel:nixpkgs-unstable
+          go-version: "${{ env.GO_VERSION }}"
+          cache: true
 
       - name: Fetch Deps
         run: |
           # fixes "write /run/user/1001/355792648: no space left on device" error
           sudo mount -o remount,size=3G /run/user/1001 || true
-          nix-shell --run 'go get -t ./... && go mod tidy' shell.nix
+          go get -t ./... && go mod tidy
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Generate all files
-        run: nix-shell --run 'make -j1 gen'
+        run: make -j1 gen
 
       - name: Run all the tests
-        run: nix-shell --run 'make ci'
+        run: make ci
 
       - name: upload codecov
         uses: codecov/codecov-action@v4
@@ -48,18 +55,18 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: compile binaries
-        run: nix-shell --run 'make crosscompile'
+        run: make crosscompile
 
       - name: Figure out Docker Tags
         id: docker-image-tag
         run: |
-          echo ::set-output name=tags::quay.io/tinkerbell/smee:latest,quay.io/tinkerbell/smee:sha-${GITHUB_SHA::8}
+          echo ::set-output name=tags::${{ env.IMAGE }}:latest,${{ env.IMAGE }}:sha-${GITHUB_SHA::8}
 
       - name: Login to quay.io
         uses: docker/login-action@v3
         if: ${{ startsWith(github.ref, 'refs/heads/main') }}
         with:
-          registry: quay.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
@@ -68,7 +75,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          cache-from: type=registry,ref=quay.io/tinkerbell/smee:latest
+          cache-from: type=registry,ref=${{ env.IMAGE }}:latest
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.docker-image-tag.outputs.tags }}
 
@@ -79,7 +86,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          cache-from: type=registry,ref=quay.io/tinkerbell/smee:latest
+          cache-from: type=registry,ref=${{ env.IMAGE }}:latest
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-image-tag.outputs.tags }}
