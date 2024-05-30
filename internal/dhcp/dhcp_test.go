@@ -84,6 +84,10 @@ func TestArch(t *testing.T) {
 			pkt:  &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptClientArch(iana.INTEL_X86PC))},
 			want: iana.INTEL_X86PC,
 		},
+		"raspberry pi": {
+			pkt:  &dhcpv4.DHCPv4{ClientHWAddr: net.HardwareAddr{0xb8, 0x27, 0xeb, 0x00, 0x00, 0x00}},
+			want: iana.Arch(41),
+		},
 		"unknown": {
 			pkt:  &dhcpv4.DHCPv4{Options: dhcpv4.OptionsFromList(dhcpv4.OptClientArch(iana.Arch(255)))},
 			want: iana.Arch(255),
@@ -303,5 +307,29 @@ func TestUserClassString(t *testing.T) {
 	u := UserClass("test")
 	if diff := cmp.Diff("test", u.String()); diff != "" {
 		t.Fatal(diff)
+	}
+}
+
+func TestIsRaspberryPI(t *testing.T) {
+	tests := map[string]struct {
+		mac  net.HardwareAddr
+		want bool
+	}{
+		"not a raspberry pi": {
+			mac:  net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06},
+			want: false,
+		},
+		"raspberry pi": {
+			mac:  net.HardwareAddr{0xb8, 0x27, 0xeb, 0x00, 0x00, 0x00},
+			want: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := isRaspberryPI(tt.mac)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Fatal(diff)
+			}
+		})
 	}
 }

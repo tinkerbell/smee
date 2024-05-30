@@ -1,6 +1,7 @@
 package dhcp
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"net"
@@ -56,7 +57,7 @@ var ArchToBootFile = map[iana.Arch]string{
 	iana.EFI_X86_64_HTTP:   "ipxe.efi",
 	iana.EFI_ARM32_HTTP:    "snp.efi",
 	iana.EFI_ARM64_HTTP:    "snp.efi",
-	iana.Arch(41):          "snp.efi", // arm rpiboot: https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
+	iana.Arch(41):          "snp.efi", // arm rpiboot (0x29): https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
 }
 
 // ErrUnknownArch is used when the PXE client request is from an unknown architecture.
@@ -95,8 +96,36 @@ func NewInfo(pkt *dhcpv4.DHCPv4) Info {
 	return i
 }
 
+// isRaspberryPI checks if the mac address is from a Raspberry PI by matching prefixes against OUI registrations of the Raspberry Pi Trading Ltd.
+// https://www.netify.ai/resources/macs/brands/raspberry-pi
+// https://udger.com/resources/mac-address-vendor-detail?name=raspberry_pi_foundation
+// https://macaddress.io/statistics/company/27594
+func isRaspberryPI(mac net.HardwareAddr) bool {
+	prefixes := [][]byte{
+		{0xb8, 0x27, 0xeb}, // B8:27:EB
+		{0xdc, 0xa6, 0x32}, // DC:A6:32
+		{0xe4, 0x5f, 0x01}, // E4:5F:01
+		{0x28, 0xcd, 0xc1}, // 28:CD:C1
+		{0xd8, 0x3a, 0xdd}, // D8:3A:DD
+	}
+	for _, prefix := range prefixes {
+		if bytes.HasPrefix(mac, prefix) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Arch returns the Arch of the client pulled from DHCP option 93.
 func Arch(d *dhcpv4.DHCPv4) iana.Arch {
+	// if the mac address is from a Raspberry PI, use the Raspberry PI architecture.
+	// Some Raspberry PI's (Raspberry PI 5) report an option 93 of 0.
+	// This translates to iana.INTEL_X86PC and causes us to map to undionly.kpxe.
+	if isRaspberryPI(d.ClientHWAddr) {
+		return iana.Arch(41)
+	}
+
 	// get option 93 ; arch
 	fwt := d.ClientArch()
 	if len(fwt) == 0 {
@@ -291,10 +320,7 @@ func (i Info) NextServer(ipxeHTTPBinServer *url.URL, ipxeTFTPBinServer netip.Add
 // AddRPIOpt43 adds the Raspberry PI required option43 sub options to an existing opt 43.
 func (i Info) AddRPIOpt43(opts dhcpv4.Options) []byte {
 	// these are suboptions of option43. ref: https://datatracker.ietf.org/doc/html/rfc2132#section-8.4
-	h := strings.ToLower(i.Mac.String())
-	if strings.HasPrefix(h, strings.ToLower("B8:27:EB")) ||
-		strings.HasPrefix(h, strings.ToLower("DC:A6:32")) ||
-		strings.HasPrefix(h, strings.ToLower("E4:5F:01")) {
+	if isRaspberryPI(i.Mac) {
 		// TODO document what these hex strings are and why they are needed.
 		// https://www.raspberrypi.org/documentation/computers/raspberry-pi.html#PXE_OPTION43
 		// tested with Raspberry Pi 4 using UEFI from here: https://github.com/pftf/RPi4/releases/tag/v1.31
