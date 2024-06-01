@@ -63,19 +63,6 @@ Please read and understand the code of conduct found [here](https://github.com/t
 
 #### Build time dependencies
 
-#### Nix
-
-This repo's build environment can be reproduced using `nix` (except for gcc cross compiler on mac).
-
-##### Install Nix
-
-Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
-
-##### Load Dependencies
-
-Loading build dependencies is as simple as running `nix-shell` or using [lorri](https://github.com/nix-community/lorri).
-If you have `direnv` installed the included `.envrc` will make that step automatic.
-
 #### Runtime dependencies
 
 At runtime Smee needs to communicate with a Tink server.
@@ -90,9 +77,6 @@ Follow this [guide](https://tinkerbell.org/docs/setup/getting_started/) for runn
 To build Smee, run:
 
 ```bash
-# drop into a shell with all build dependencies
-nix-shell
-
 # build all ipxe files, embed them, and build the Go binary
 # Built binary can be found in the top level directory.
 make build

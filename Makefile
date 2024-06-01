@@ -25,7 +25,7 @@ vet: ## Run go vet
 goimports: gen ## Run goimports
 	$(GOIMPORTS) -w .
 
-ci-checks: .github/workflows/ci-checks.sh shell.nix gen
+ci-checks: .github/workflows/ci-checks.sh gen
 	./.github/workflows/ci-checks.sh
 
 ci: ci-checks coverage goimports lint vet ## Runs all the same validations and tests that run in CI
