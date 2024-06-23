@@ -71,7 +71,7 @@ jobs:
           password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Build Docker Images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./Dockerfile
@@ -81,7 +81,7 @@ jobs:
 
       # looks just like Build Docker Images except with push:true and this will only run for builds for main
       - name: Push Docker Images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         if: ${{ startsWith(github.ref, 'refs/heads/main') }}
         with:
           context: ./
