@@ -153,9 +153,13 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 	}
 
 	i := v1alpha1.Interface{}
+	facility := ""
 	for _, iface := range hardwareList.Items[0].Spec.Interfaces {
 		if iface.DHCP.IP.Address == ip.String() {
 			i = iface
+			if hardwareList.Items[0].Spec.Metadata != nil && hardwareList.Items[0].Spec.Metadata.Facility != nil {
+				facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
+			}
 			break
 		}
 	}
@@ -174,6 +178,8 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 
 		return nil, nil, err
 	}
+
+	n.Facility = facility
 
 	span.SetAttributes(d.EncodeToAttributes()...)
 	span.SetAttributes(n.EncodeToAttributes()...)

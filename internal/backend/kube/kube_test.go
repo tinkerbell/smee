@@ -199,6 +199,7 @@ func TestGetByIP(t *testing.T) {
 				Scheme: "http",
 				Host:   "netboot.xyz",
 			},
+			Facility: "ewr1",
 		}},
 	}
 
@@ -397,6 +398,11 @@ var hwObject1 = v1alpha1.Hardware{
 				},
 			},
 		},
+		Metadata: &v1alpha1.HardwareMetadata{
+			Facility: &v1alpha1.MetadataFacility{
+				FacilityCode: "ewr1",
+			},
+		},
 	},
 }
 
@@ -432,6 +438,11 @@ var hwObject2 = v1alpha1.Hardware{
 					NameServers: []string{"1.1.1.1"},
 					UEFI:        true,
 				},
+			},
+		},
+		Metadata: &v1alpha1.HardwareMetadata{
+			Facility: &v1alpha1.MetadataFacility{
+				FacilityCode: "ewr2",
 			},
 		},
 	},
