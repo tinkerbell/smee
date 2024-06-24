@@ -160,9 +160,13 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 	}
 
 	i := v1alpha1.Interface{}
+	facility := ""
 	for _, iface := range hardwareList.Items[0].Spec.Interfaces {
 		if iface.DHCP.IP.Address == ip.String() {
 			i = iface
+			if hardwareList.Items[0].Spec.Metadata != nil && hardwareList.Items[0].Spec.Metadata.Facility != nil {
+				facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
+			}
 			break
 		}
 	}
@@ -175,7 +179,6 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 		return nil, nil, err
 	}
 	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
-	facility := ""
 	if hardwareList.Items[0].Spec.Metadata != nil {
 		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
 			facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
@@ -189,12 +192,7 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 		return nil, nil, err
 	}
 
-	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
-	if hardwareList.Items[0].Spec.Metadata != nil {
-		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
-			n.Facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
-		}
-	}
+	n.Facility = facility
 
 	span.SetAttributes(d.EncodeToAttributes()...)
 	span.SetAttributes(n.EncodeToAttributes()...)

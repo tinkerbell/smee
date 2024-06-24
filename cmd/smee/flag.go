@@ -139,6 +139,7 @@ func backendFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kube-config", "", "[backend] the Kubernetes config file location, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.APIURL, "backend-kube-api", "", "[backend] the Kubernetes API URL, used for in-cluster client construction, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "[backend] an optional Kubernetes namespace override to query hardware data from, kube backend only")
+	fs.BoolVar(&c.backends.Noop.Enabled, "backend-noop-enabled", false, "[backend] enable the noop backend for DHCP and the HTTP iPXE script")
 }
 
 func otelFlags(c *config, fs *flag.FlagSet) {

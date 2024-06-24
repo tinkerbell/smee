@@ -112,6 +112,7 @@ FLAGS
   -backend-kube-config                [backend] the Kubernetes config file location, kube backend only
   -backend-kube-enabled               [backend] enable the kubernetes backend for DHCP and the HTTP iPXE script (default "true")
   -backend-kube-namespace             [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
+  -backend-noop-enabled               [backend] enable the noop backend for DHCP and the HTTP iPXE script (default "false")
   -dhcp-addr                          [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled                       [dhcp] enable DHCP server (default "true")
   -dhcp-http-ipxe-binary-host         [dhcp] HTTP iPXE binaries host or IP to use in DHCP packets (default "%[1]v")

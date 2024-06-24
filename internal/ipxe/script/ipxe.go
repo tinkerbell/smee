@@ -46,6 +46,9 @@ type data struct {
 // getByMac uses the handler.BackendReader to get the (hardware) data and then
 // translates it to the script.Data struct.
 func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReader) (data, error) {
+	if br == nil {
+		return data{}, errors.New("backend is nil")
+	}
 	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
 		return data{}, err
@@ -65,6 +68,9 @@ func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReade
 }
 
 func getByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (data, error) {
+	if br == nil {
+		return data{}, errors.New("backend is nil")
+	}
 	d, n, err := br.GetByIP(ctx, ip)
 	if err != nil {
 		return data{}, err
@@ -102,29 +108,6 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 
 		ctx := r.Context()
 
-		// Serve static iPXE script.
-		if h.StaticIPXEEnabled {
-			auto := Hook{
-				DownloadURL:       h.OSIEURL,
-				ExtraKernelParams: h.ExtraKernelParams,
-				SyslogHost:        h.PublicSyslogFQDN,
-				TinkerbellTLS:     h.TinkServerTLS,
-				TinkGRPCAuthority: h.TinkServerGRPCAddr,
-			}
-			script, err := GenerateTemplate(auto, StaticScript)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.Logger.Error(err, "error generating auto discovery ipxe script")
-				return
-			}
-			if _, err := w.Write([]byte(script)); err != nil {
-				h.Logger.Error(err, "unable to send auto discovery script to client")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		}
-
 		// Should we serve a custom ipxe script?
 		// This gates serving PXE file by
 		// 1. the existence of a hardware record in tink server
@@ -136,6 +119,10 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		// Try to get the MAC address from the URL path, if not available get the source IP address.
 		if ha, err := getMAC(r.URL.Path); err == nil {
 			hw, err := getByMac(ctx, ha, h.Backend)
+			if err != nil && h.StaticIPXEEnabled {
+				h.serveStaticIPXEScript(w)
+				return
+			}
 			if err != nil || !hw.AllowNetboot {
 				w.WriteHeader(http.StatusNotFound)
 				h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", ha, "error", err)
@@ -147,6 +134,10 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		}
 		if ip, err := getIP(r.RemoteAddr); err == nil {
 			hw, err := getByIP(ctx, ip, h.Backend)
+			if err != nil && h.StaticIPXEEnabled {
+				h.serveStaticIPXEScript(w)
+				return
+			}
 			if err != nil || !hw.AllowNetboot {
 				w.WriteHeader(http.StatusNotFound)
 				h.Logger.Info("the hardware data for this machine, or lack there of, does not allow it to pxe", "client", r.RemoteAddr, "error", err)
@@ -160,6 +151,28 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		// If we get here, we were unable to get the MAC address from the URL path or the source IP address.
 		w.WriteHeader(http.StatusNotFound)
 		h.Logger.Info("unable to get the MAC address from the URL path or the source IP address", "client", r.RemoteAddr, "urlPath", r.URL.Path)
+	}
+}
+
+func (h *Handler) serveStaticIPXEScript(w http.ResponseWriter) {
+	// Serve static iPXE script.
+	auto := Hook{
+		DownloadURL:       h.OSIEURL,
+		ExtraKernelParams: h.ExtraKernelParams,
+		SyslogHost:        h.PublicSyslogFQDN,
+		TinkerbellTLS:     h.TinkServerTLS,
+		TinkGRPCAuthority: h.TinkServerGRPCAddr,
+	}
+	script, err := GenerateTemplate(auto, StaticScript)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.Logger.Error(err, "error generating the static ipxe script")
+		return
+	}
+	if _, err := w.Write([]byte(script)); err != nil {
+		h.Logger.Error(err, "unable to send the static ipxe script")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
 
