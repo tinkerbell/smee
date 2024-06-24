@@ -28,6 +28,10 @@ type File struct {
 	Enabled  bool
 }
 
+type Noop struct {
+	Enabled bool
+}
+
 func (k *Kube) getClient() (*rest.Config, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{
