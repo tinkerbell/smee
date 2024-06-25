@@ -110,7 +110,14 @@ func (b *Backend) GetByMac(ctx context.Context, mac net.HardwareAddr) (*data.DHC
 
 		return nil, nil, err
 	}
-	n, err := toNetbootData(i.Netboot)
+	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
+	facility := ""
+	if hardwareList.Items[0].Spec.Metadata != nil {
+		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
+			facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
+		}
+	}
+	n, err := toNetbootData(i.Netboot, facility)
 	if err != nil {
 		err = fmt.Errorf("failed to convert hardware to netboot data: %w", err)
 		span.SetStatus(codes.Error, err.Error())
@@ -167,12 +174,26 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 
 		return nil, nil, err
 	}
-	n, err := toNetbootData(i.Netboot)
+	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
+	facility := ""
+	if hardwareList.Items[0].Spec.Metadata != nil {
+		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
+			facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
+		}
+	}
+	n, err := toNetbootData(i.Netboot, facility)
 	if err != nil {
 		err = fmt.Errorf("failed to convert hardware to netboot data: %w", err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return nil, nil, err
+	}
+
+	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
+	if hardwareList.Items[0].Spec.Metadata != nil {
+		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
+			n.Facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
+		}
 	}
 
 	span.SetAttributes(d.EncodeToAttributes()...)
@@ -253,7 +274,7 @@ func toDHCPData(h *v1alpha1.DHCP) (*data.DHCP, error) {
 }
 
 // toNetbootData converts a hardware interface to a data.Netboot data structure.
-func toNetbootData(i *v1alpha1.Netboot) (*data.Netboot, error) {
+func toNetbootData(i *v1alpha1.Netboot, facility string) (*data.Netboot, error) {
 	if i == nil {
 		return nil, errors.New("no netboot data")
 	}
@@ -284,7 +305,7 @@ func toNetbootData(i *v1alpha1.Netboot) (*data.Netboot, error) {
 	n.Console = ""
 
 	// facility
-	n.Facility = ""
+	n.Facility = facility
 
 	return n, nil
 }
