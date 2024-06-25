@@ -158,7 +158,7 @@ func TestToNetbootData(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := toNetbootData(tt.in)
+			got, err := toNetbootData(tt.in, "")
 			if tt.shouldErr && err == nil {
 				t.Fatal("expected error")
 			}
@@ -199,6 +199,7 @@ func TestGetByIP(t *testing.T) {
 				Scheme: "http",
 				Host:   "netboot.xyz",
 			},
+			Facility: "onprem",
 		}},
 	}
 
@@ -296,6 +297,7 @@ func TestGetByMac(t *testing.T) {
 				Scheme: "http",
 				Host:   "netboot.xyz",
 			},
+			Facility: "onprem",
 		}},
 	}
 
@@ -373,6 +375,11 @@ var hwObject1 = v1alpha1.Hardware{
 		Namespace: "default",
 	},
 	Spec: v1alpha1.HardwareSpec{
+		Metadata: &v1alpha1.HardwareMetadata{
+			Facility: &v1alpha1.MetadataFacility{
+				FacilityCode: "onprem",
+			},
+		},
 		Interfaces: []v1alpha1.Interface{
 			{
 				Netboot: &v1alpha1.Netboot{
