@@ -60,6 +60,7 @@ type config struct {
 type syslogConfig struct {
 	enabled  bool
 	bindAddr string
+	bindPort int
 }
 
 type tftp struct {
@@ -154,9 +155,10 @@ func main() {
 	g, ctx := errgroup.WithContext(ctx)
 	// syslog
 	if cfg.syslog.enabled {
-		log.Info("starting syslog server", "bind_addr", cfg.syslog.bindAddr)
+		addr := fmt.Sprintf("%s:%d", cfg.syslog.bindAddr, cfg.syslog.bindPort)
+		log.Info("starting syslog server", "bind_addr", addr)
 		g.Go(func() error {
-			if err := syslog.StartReceiver(ctx, log, cfg.syslog.bindAddr, 1); err != nil {
+			if err := syslog.StartReceiver(ctx, log, addr, 1); err != nil {
 				log.Error(err, "syslog server failure")
 				return err
 			}
