@@ -13,7 +13,8 @@ func TestParser(t *testing.T) {
 	want := config{
 		syslog: syslogConfig{
 			enabled:  true,
-			bindAddr: "192.168.2.4:514",
+			bindAddr: "192.168.2.4",
+			bindPort: 514,
 		},
 		tftp: tftp{
 			blockSize: 512,
@@ -68,7 +69,7 @@ func TestParser(t *testing.T) {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	args := []string{
 		"-log-level", "info",
-		"-syslog-addr", "192.168.2.4:514",
+		"-syslog-addr", "192.168.2.4",
 		"-tftp-addr", "192.168.2.4",
 		"-http-addr", "192.168.2.4",
 		"-dhcp-ip-for-packet", "192.168.2.4",
@@ -142,8 +143,9 @@ FLAGS
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
   -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
-  -syslog-addr                        [syslog] local IP:Port to listen on for Syslog messages (default "%[1]v:514")
+  -syslog-addr                        [syslog] local IP to listen on for Syslog messages (default "%[1]v")
   -syslog-enabled                     [syslog] enable Syslog server(receiver) (default "true")
+  -syslog-port                        [syslog] local port to listen on for Syslog messages (default "514")
   -ipxe-script-patch                  [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
   -tftp-addr                          [tftp] local IP to listen on for iPXE TFTP binary requests (default "%[1]v")
   -tftp-block-size                    [tftp] TFTP block size a value between 512 (the default block size for TFTP) and 65456 (the max size a UDP packet payload can be) (default "512")

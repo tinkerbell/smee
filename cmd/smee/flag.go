@@ -82,7 +82,8 @@ func countFlags(fs *flag.FlagSet) (n int) {
 
 func syslogFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.syslog.enabled, "syslog-enabled", true, "[syslog] enable Syslog server(receiver)")
-	fs.StringVar(&c.syslog.bindAddr, "syslog-addr", detectPublicIPv4(":514"), "[syslog] local IP:Port to listen on for Syslog messages")
+	fs.StringVar(&c.syslog.bindAddr, "syslog-addr", detectPublicIPv4(""), "[syslog] local IP to listen on for Syslog messages")
+	fs.IntVar(&c.syslog.bindPort, "syslog-port", 514, "[syslog] local port to listen on for Syslog messages")
 }
 
 func tftpFlags(c *config, fs *flag.FlagSet) {
