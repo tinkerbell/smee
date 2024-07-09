@@ -140,6 +140,7 @@ FLAGS
   -ipxe-script-retry-delay            [http] delay (in seconds) between retries when fetching kernel and initrd files in the iPXE script (default "2")
   -osie-url                           [http] URL where OSIE (HookOS) images are located
   -tink-server                        [http] IP:Port for the Tink server
+  -tink-server-insecure-tls           [http] use insecure TLS for Tink server (default "false")
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
