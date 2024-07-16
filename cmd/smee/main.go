@@ -83,17 +83,16 @@ type ipxeHTTPBinary struct {
 }
 
 type ipxeHTTPScript struct {
-	enabled                       bool
-	bindAddr                      string
-	bindPort                      int
-	extraKernelArgs               string
-	hookURL                       string
-	tinkServer                    string
-	tinkServerUseTLS              bool
-	trustedProxies                string
-	disableDiscoverTrustedProxies bool
-	retries                       int
-	retryDelay                    int
+	enabled          bool
+	bindAddr         string
+	bindPort         int
+	extraKernelArgs  string
+	hookURL          string
+	tinkServer       string
+	tinkServerUseTLS bool
+	trustedProxies   string
+	retries          int
+	retryDelay       int
 }
 
 type dhcpMode string
