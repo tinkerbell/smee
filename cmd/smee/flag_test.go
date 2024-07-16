@@ -130,7 +130,6 @@ FLAGS
   -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
   -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v")
   -dhcp-tftp-port                     [dhcp] TFTP server port to use in DHCP packets (opt 66, etc) (default "69")
-  -disable-discover-trusted-proxies   [http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend (default "false")
   -extra-kernel-args                  [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
   -http-addr                          [http] local IP to listen on for iPXE HTTP script requests (default "%[1]v")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
