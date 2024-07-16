@@ -67,7 +67,7 @@ Smee's DHCP functionality can operate in one of the following modes:
 
 1. **DHCP disabled**  
    To enable this mode set `-dhcp-enabled=false`.
-   Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the Hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details.
+   Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the Hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details. In most situations`--dhcp-http-ipxe-script-prepend-mac=false` should also be set when in this mode.
 
 ### Interoperability with other DHCP servers
 
@@ -77,7 +77,7 @@ It is not recommended, but it is possible for Smee to be run in `reservation` mo
 
 1. All DHCP servers besides Smee are configured to ignore the MAC addresses that Smee is configured to serve.
 
-1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would most likely be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the doc on using your existing DHCP service for more details.
+1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the [doc](./docs/DHCP.md) on using your existing DHCP service for more details.
 
 ### Local Setup
 
