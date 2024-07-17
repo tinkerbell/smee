@@ -189,10 +189,10 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	if err != nil || (n != nil && !n.AllowNetboot) {
 		l := log.V(1)
 		if err != nil {
-			l.WithValues("error", err.Error())
+			l = l.WithValues("error", err.Error())
 		}
 		if n != nil {
-			l.WithValues("netbootAllowed", n.AllowNetboot)
+			l = l.WithValues("netbootAllowed", n.AllowNetboot)
 		}
 		l.Info("Ignoring packet")
 		span.SetStatus(codes.Ok, "netboot not allowed")
