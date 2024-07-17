@@ -187,7 +187,14 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, dp data.Pac
 	// check the backend, if PXE is NOT allowed, set the boot file name to "/<mac address>/not-allowed"
 	_, n, err := h.Backend.GetByMac(ctx, dp.Pkt.ClientHWAddr)
 	if err != nil || (n != nil && !n.AllowNetboot) {
-		log.V(1).Info("Ignoring packet", "error", err.Error(), "netbootAllowed", n.AllowNetboot)
+		l := log.V(1)
+		if err != nil {
+			l.WithValues("error", err.Error())
+		}
+		if n != nil {
+			l.WithValues("netbootAllowed", n.AllowNetboot)
+		}
+		l.Info("Ignoring packet")
 		span.SetStatus(codes.Ok, "netboot not allowed")
 		return
 	}
