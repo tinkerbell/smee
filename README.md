@@ -78,7 +78,7 @@ Build/Run Smee
 
 ```bash
 # make the binary
-make smee
+make build
 # run Smee
 ./smee -h
 
@@ -97,19 +97,27 @@ FLAGS
   -backend-kube-namespace             [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
   -dhcp-addr                          [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled                       [dhcp] enable DHCP server (default "true")
-  -dhcp-http-ipxe-binary-url          [dhcp] HTTP iPXE binaries URL to use in DHCP packets (default "http://172.17.0.3:8080/ipxe/")
+  -dhcp-http-ipxe-binary-host         [dhcp] HTTP iPXE binaries host or IP to use in DHCP packets (default "172.17.0.3")
+  -dhcp-http-ipxe-binary-path         [dhcp] HTTP iPXE binaries path to use in DHCP packets (default "/ipxe/")
+  -dhcp-http-ipxe-binary-port         [dhcp] HTTP iPXE binaries port to use in DHCP packets (default "8080")
+  -dhcp-http-ipxe-binary-scheme       [dhcp] HTTP iPXE binaries scheme to use in DHCP packets (default "http")
+  -dhcp-http-ipxe-script-host         [dhcp] HTTP iPXE script host or IP to use in DHCP packets (default "172.17.0.3")
+  -dhcp-http-ipxe-script-path         [dhcp] HTTP iPXE script path to use in DHCP packets (default "/auto.ipxe")
+  -dhcp-http-ipxe-script-port         [dhcp] HTTP iPXE script port to use in DHCP packets (default "8080")
   -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
-  -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets (default "http://172.17.0.3/auto.ipxe")
+  -dhcp-http-ipxe-script-scheme       [dhcp] HTTP iPXE script scheme to use in DHCP packets (default "http")
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "172.17.0.3")
   -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy) (default "reservation")
   -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.3")
-  -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.3:69")
+  -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.3")
+  -dhcp-tftp-port                     [dhcp] TFTP server port to use in DHCP packets (opt 66, etc) (default "69")
   -disable-discover-trusted-proxies   [http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend (default "false")
   -extra-kernel-args                  [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
-  -http-addr                          [http] local IP:Port to listen on for iPXE HTTP script requests (default "172.17.0.3:80")
+  -http-addr                          [http] local IP to listen on for iPXE HTTP script requests (default "172.17.0.3")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
   -http-ipxe-script-enabled           [http] enable iPXE HTTP script server (default "true")
+  -http-port                          [http] local port to listen on for iPXE HTTP script requests (default "8080")
   -ipxe-script-retries                [http] number of retries to attempt when fetching kernel and initrd files in the iPXE script (default "0")
   -ipxe-script-retry-delay            [http] delay (in seconds) between retries when fetching kernel and initrd files in the iPXE script (default "2")
   -osie-url                           [http] URL where OSIE (HookOS) images are located
@@ -118,12 +126,14 @@ FLAGS
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
   -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
-  -syslog-addr                        [syslog] local IP:Port to listen on for Syslog messages (default "172.17.0.3:514")
+  -syslog-addr                        [syslog] local IP to listen on for Syslog messages (default "172.17.0.3")
   -syslog-enabled                     [syslog] enable Syslog server(receiver) (default "true")
+  -syslog-port                        [syslog] local port to listen on for Syslog messages (default "514")
   -ipxe-script-patch                  [tftp/http] iPXE script fragment to patch into served iPXE binaries served via TFTP or HTTP
-  -tftp-addr                          [tftp] local IP:Port to listen on for iPXE TFTP binary requests (default "172.17.0.3:69")
+  -tftp-addr                          [tftp] local IP to listen on for iPXE TFTP binary requests (default "172.17.0.3")
   -tftp-block-size                    [tftp] TFTP block size a value between 512 (the default block size for TFTP) and 65456 (the max size a UDP packet payload can be) (default "512")
   -tftp-enabled                       [tftp] enable iPXE TFTP binary server) (default "true")
+  -tftp-port                          [tftp] local port to listen on for iPXE TFTP binary requests (default "69")
   -tftp-timeout                       [tftp] iPXE TFTP binary server requests timeout (default "5s")
 ```
 
