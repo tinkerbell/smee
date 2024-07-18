@@ -60,10 +60,12 @@ type config struct {
 type syslogConfig struct {
 	enabled  bool
 	bindAddr string
+	bindPort int
 }
 
 type tftp struct {
 	bindAddr        string
+	bindPort        int
 	blockSize       int
 	enabled         bool
 	ipxeScriptPatch string
@@ -77,6 +79,7 @@ type ipxeHTTPBinary struct {
 type ipxeHTTPScript struct {
 	enabled                       bool
 	bindAddr                      string
+	bindPort                      int
 	extraKernelArgs               string
 	hookURL                       string
 	tinkServer                    string
@@ -95,12 +98,20 @@ type dhcpConfig struct {
 	ipForPacket       string
 	syslogIP          string
 	tftpIP            string
-	httpIpxeBinaryURL string
+	tftpPort          int
+	httpIpxeBinaryURL urlBuilder
 	httpIpxeScript    httpIpxeScript
 }
 
+type urlBuilder struct {
+	Scheme string
+	Host   string
+	Port   int
+	Path   string
+}
+
 type httpIpxeScript struct {
-	url string
+	urlBuilder
 	// injectMacAddress will prepend the hardware mac address to the ipxe script URL file name.
 	// For example: http://1.2.3.4/my/loc/auto.ipxe -> http://1.2.3.4/my/loc/40:15:ff:89:cc:0e/auto.ipxe
 	// Setting this to false is useful when you are not using the auto.ipxe script in Smee.
@@ -144,9 +155,10 @@ func main() {
 	g, ctx := errgroup.WithContext(ctx)
 	// syslog
 	if cfg.syslog.enabled {
-		log.Info("starting syslog server", "bind_addr", cfg.syslog.bindAddr)
+		addr := fmt.Sprintf("%s:%d", cfg.syslog.bindAddr, cfg.syslog.bindPort)
+		log.Info("starting syslog server", "bind_addr", addr)
 		g.Go(func() error {
-			if err := syslog.StartReceiver(ctx, log, cfg.syslog.bindAddr, 1); err != nil {
+			if err := syslog.StartReceiver(ctx, log, addr, 1); err != nil {
 				log.Error(err, "syslog server failure")
 				return err
 			}
@@ -164,7 +176,8 @@ func main() {
 			EnableTFTPSinglePort: true,
 		}
 		tftpServer.EnableTFTPSinglePort = true
-		if ip, err := netip.ParseAddrPort(cfg.tftp.bindAddr); err == nil {
+		addr := fmt.Sprintf("%s:%d", cfg.tftp.bindAddr, cfg.tftp.bindPort)
+		if ip, err := netip.ParseAddrPort(addr); err == nil {
 			tftpServer.TFTP = ipxedust.ServerSpec{
 				Disabled:  false,
 				Addr:      ip,
@@ -173,7 +186,7 @@ func main() {
 				BlockSize: cfg.tftp.blockSize,
 			}
 			// start the ipxe binary tftp server
-			log.Info("starting tftp server", "bind_addr", cfg.tftp.bindAddr)
+			log.Info("starting tftp server", "bind_addr", addr)
 			g.Go(func() error {
 				return tftpServer.ListenAndServe(ctx)
 			})
@@ -237,9 +250,10 @@ func main() {
 			Logger:         log,
 			TrustedProxies: tp,
 		}
-		log.Info("serving http", "addr", cfg.ipxeHTTPScript.bindAddr, "trusted_proxies", tp)
+		bindAddr := fmt.Sprintf("%s:%d", cfg.ipxeHTTPScript.bindAddr, cfg.ipxeHTTPScript.bindPort)
+		log.Info("serving http", "addr", bindAddr, "trusted_proxies", tp)
 		g.Go(func() error {
-			return httpServer.ServeHTTP(ctx, cfg.ipxeHTTPScript.bindAddr, handlers)
+			return httpServer.ServeHTTP(ctx, bindAddr, handlers)
 		})
 	}
 
@@ -282,16 +296,30 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 	if err != nil {
 		return nil, fmt.Errorf("invalid bind address: %w", err)
 	}
-	tftpIP, err := netip.ParseAddrPort(c.dhcp.tftpIP)
+	tftpIP, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", c.dhcp.tftpIP, c.dhcp.tftpPort))
 	if err != nil {
 		return nil, fmt.Errorf("invalid tftp address for DHCP server: %w", err)
 	}
-	httpBinaryURL, err := url.Parse(c.dhcp.httpIpxeBinaryURL)
-	if err != nil || httpBinaryURL == nil {
+	httpBinaryURL := &url.URL{
+		Scheme: c.dhcp.httpIpxeBinaryURL.Scheme,
+		Host:   fmt.Sprintf("%s:%d", c.dhcp.httpIpxeBinaryURL.Host, c.dhcp.httpIpxeBinaryURL.Port),
+		Path:   c.dhcp.httpIpxeBinaryURL.Path,
+	}
+	if _, err := url.Parse(httpBinaryURL.String()); err != nil {
 		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}
-	httpScriptURL, err := url.Parse(c.dhcp.httpIpxeScript.url)
-	if err != nil || httpScriptURL == nil {
+
+	httpScriptURL := &url.URL{
+		Scheme: c.dhcp.httpIpxeScript.Scheme,
+		Host: func() string {
+			if c.dhcp.httpIpxeScript.Port == 80 {
+				return c.dhcp.httpIpxeScript.Host
+			}
+			return fmt.Sprintf("%s:%d", c.dhcp.httpIpxeScript.Host, c.dhcp.httpIpxeScript.Port)
+		}(),
+		Path: c.dhcp.httpIpxeScript.Path,
+	}
+	if _, err := url.Parse(httpScriptURL.String()); err != nil {
 		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
 	}
 	ipxeScript := func(d *dhcpv4.DHCPv4) *url.URL {
