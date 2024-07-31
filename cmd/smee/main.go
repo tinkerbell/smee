@@ -298,7 +298,8 @@ func numTrue(b ...bool) int {
 func (c *config) backend(ctx context.Context, log logr.Logger) (handler.BackendReader, error) {
 	if c.backends.file.Enabled || c.backends.Noop.Enabled {
 		// the kubernetes backend is enabled by default so we disable it
-		// if another backend is enabled.
+		// if another backend is enabled so that users don't have to explicitly
+		// set the CLI flag to disable it when using another backend.
 		c.backends.kubernetes.Enabled = false
 	}
 	var be handler.BackendReader
