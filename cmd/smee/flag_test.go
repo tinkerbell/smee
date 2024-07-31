@@ -124,6 +124,7 @@ FLAGS
   -dhcp-http-ipxe-script-port         [dhcp] HTTP iPXE script port to use in DHCP packets (default "8080")
   -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
   -dhcp-http-ipxe-script-scheme       [dhcp] HTTP iPXE script scheme to use in DHCP packets (default "http")
+  -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets, this overrides the flags for dhcp-http-ipxe-script-{scheme, host, port, path}
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "%[1]v")
   -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy, auto-proxy) (default "reservation")

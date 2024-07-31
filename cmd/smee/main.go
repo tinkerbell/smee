@@ -108,6 +108,7 @@ type dhcpConfig struct {
 	tftpPort          int
 	httpIpxeBinaryURL urlBuilder
 	httpIpxeScript    httpIpxeScript
+	httpIpxeScriptURL string
 }
 
 type urlBuilder struct {
@@ -295,6 +296,11 @@ func numTrue(b ...bool) int {
 }
 
 func (c *config) backend(ctx context.Context, log logr.Logger) (handler.BackendReader, error) {
+	if c.backends.file.Enabled || c.backends.Noop.Enabled {
+		// the kubernetes backend is enabled by default so we disable it
+		// if another backend is enabled.
+		c.backends.kubernetes.Enabled = false
+	}
 	var be handler.BackendReader
 	switch {
 	case numTrue(c.backends.file.Enabled, c.backends.kubernetes.Enabled, c.backends.Noop.Enabled) > 1:
@@ -342,16 +348,32 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}
 
-	httpScriptURL := &url.URL{
-		Scheme: c.dhcp.httpIpxeScript.Scheme,
-		Host: func() string {
-			if c.dhcp.httpIpxeScript.Port == 80 {
-				return c.dhcp.httpIpxeScript.Host
-			}
-			return fmt.Sprintf("%s:%d", c.dhcp.httpIpxeScript.Host, c.dhcp.httpIpxeScript.Port)
-		}(),
-		Path: c.dhcp.httpIpxeScript.Path,
+	var httpScriptURL *url.URL
+	if c.dhcp.httpIpxeScriptURL != "" {
+		httpScriptURL, err = url.Parse(c.dhcp.httpIpxeScriptURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
+		}
+	} else {
+		httpScriptURL = &url.URL{
+			Scheme: c.dhcp.httpIpxeScript.Scheme,
+			Host: func() string {
+				switch c.dhcp.httpIpxeScript.Scheme {
+				case "http":
+					if c.dhcp.httpIpxeScript.Port == 80 {
+						return c.dhcp.httpIpxeScript.Host
+					}
+				case "https":
+					if c.dhcp.httpIpxeScript.Port == 443 {
+						return c.dhcp.httpIpxeScript.Host
+					}
+				}
+				return fmt.Sprintf("%s:%d", c.dhcp.httpIpxeScript.Host, c.dhcp.httpIpxeScript.Port)
+			}(),
+			Path: c.dhcp.httpIpxeScript.Path,
+		}
 	}
+
 	if _, err := url.Parse(httpScriptURL.String()); err != nil {
 		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
 	}

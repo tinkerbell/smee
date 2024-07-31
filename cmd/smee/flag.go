@@ -129,6 +129,7 @@ func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.dhcp.httpIpxeScript.Host, "dhcp-http-ipxe-script-host", detectPublicIPv4(), "[dhcp] HTTP iPXE script host or IP to use in DHCP packets")
 	fs.IntVar(&c.dhcp.httpIpxeScript.Port, "dhcp-http-ipxe-script-port", 8080, "[dhcp] HTTP iPXE script port to use in DHCP packets")
 	fs.StringVar(&c.dhcp.httpIpxeScript.Path, "dhcp-http-ipxe-script-path", "/auto.ipxe", "[dhcp] HTTP iPXE script path to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "", "[dhcp] HTTP iPXE script URL to use in DHCP packets, this overrides the flags for dhcp-http-ipxe-script-{scheme, host, port, path}")
 	fs.BoolVar(&c.dhcp.httpIpxeScript.injectMacAddress, "dhcp-http-ipxe-script-prepend-mac", true, "[dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe")
 }
 
