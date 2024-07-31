@@ -114,7 +114,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.dhcp.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP server")
-	fs.StringVar(&c.dhcp.mode, "dhcp-mode", "reservation", "[dhcp] DHCP mode (reservation, proxy, auto-proxy)")
+	fs.StringVar(&c.dhcp.mode, "dhcp-mode", dhcpModeReservation.String(), fmt.Sprintf("[dhcp] DHCP mode (%s, %s, %s)", dhcpModeReservation, dhcpModeProxy, dhcpModeAutoProxy))
 	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP:Port to listen on for DHCP requests")
 	fs.StringVar(&c.dhcp.bindInterface, "dhcp-iface", "", "[dhcp] interface to bind to for DHCP requests")
 	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")

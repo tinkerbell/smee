@@ -491,3 +491,7 @@ func parseTrustedProxies(trustedProxies string) (result []string) {
 
 	return result
 }
+
+func (d dhcpMode) String() string {
+	return string(d)
+}
