@@ -21,7 +21,6 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
-	"github.com/tinkerbell/smee/internal/backend/noop"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"github.com/tinkerbell/smee/internal/dhcp/handler/proxy"
 	"github.com/tinkerbell/smee/internal/dhcp/handler/reservation"
@@ -310,7 +309,7 @@ func (c *config) backend(ctx context.Context, log logr.Logger) (handler.BackendR
 		if c.dhcp.mode != string(dhcpModeAutoProxy) {
 			return nil, errors.New("noop backend can only be used with --dhcp-mode=auto-proxy")
 		}
-		be = noop.Backend{}
+		be = c.backends.Noop.backend()
 	case c.backends.file.Enabled:
 		b, err := c.backends.file.backend(ctx, log)
 		if err != nil {
