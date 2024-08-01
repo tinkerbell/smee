@@ -123,6 +123,7 @@ set arch ${buildarch}
 # https://ipxe.org/cfg/buildarch
 iseq ${arch} i386 && set arch x86_64 ||
 iseq ${arch} arm32 && set arch aarch64 ||
+iseq ${arch} arm64 && set arch aarch64 ||
 set download-url http://127.0.0.1
 set retries:int32 0
 set retry_delay:int32 0
