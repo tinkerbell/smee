@@ -11,7 +11,7 @@ set arch ${buildarch}
 # The build architecture does not necessarily represent the architecture of the machine on which iPXE is running.
 # https://ipxe.org/cfg/buildarch
 iseq ${arch} i386 && set arch x86_64 ||
-iseq ${arch} arm32 && set arch arm64 ||
+iseq ${arch} arm32 && set arch aarch64 ||
 set download-url {{ .DownloadURL }}
 set retries:int32 {{ .Retries }}
 set retry_delay:int32 {{ .RetryDelay }}

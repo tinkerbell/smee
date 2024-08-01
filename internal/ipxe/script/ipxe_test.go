@@ -122,7 +122,7 @@ set arch ${buildarch}
 # The build architecture does not necessarily represent the architecture of the machine on which iPXE is running.
 # https://ipxe.org/cfg/buildarch
 iseq ${arch} i386 && set arch x86_64 ||
-iseq ${arch} arm32 && set arch arm64 ||
+iseq ${arch} arm32 && set arch aarch64 ||
 set download-url http://127.0.0.1
 set retries:int32 0
 set retry_delay:int32 0
