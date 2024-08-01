@@ -120,6 +120,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		if ha, err := getMAC(r.URL.Path); err == nil {
 			hw, err := getByMac(ctx, ha, h.Backend)
 			if err != nil && h.StaticIPXEEnabled {
+				h.Logger.Info("serving static ipxe script", "mac", ha, "error", err)
 				h.serveStaticIPXEScript(w)
 				return
 			}
@@ -135,6 +136,7 @@ func (h *Handler) HandlerFunc() http.HandlerFunc {
 		if ip, err := getIP(r.RemoteAddr); err == nil {
 			hw, err := getByIP(ctx, ip, h.Backend)
 			if err != nil && h.StaticIPXEEnabled {
+				h.Logger.Info("serving static ipxe script", "client", r.RemoteAddr, "error", err)
 				h.serveStaticIPXEScript(w)
 				return
 			}
