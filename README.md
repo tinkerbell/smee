@@ -53,7 +53,7 @@ Smee's DHCP functionality can operate in one of the following modes:
 
 1. **Auto Proxy DHCP**
    To enable this mode set `-dhcp-mode=auto-proxy`.
-   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. In this mode, if no corresponding Hardware record is found for the requesting client's MAC address, Smee will provide the client with a statically defined iPXE script. If a Hardware record is found, then the normal `auto.ipxe` script will be served. There is a builtin static iPXE script. To override the builtin static iPXE script use `--dhcp-http-ipxe-script-url`. If `--dhcp-http-ipxe-script-url` is specified to a non default location (i.e. not Smee) then be sure to also set `--dhcp-http-ipxe-script-prepend-mac=false`. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.
+   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. In this mode, if no corresponding Hardware record is found for the requesting client's MAC address, Smee will provide the client with a statically defined iPXE script. If a Hardware record is found, then the normal `auto.ipxe` script will be served. Use `-backend-noop-enabled` to disable all backend look ups. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.
 
    - When using Smee's auto.ipxe, you'll generally want to set the following flags:  
      - `-dhcp-mode=auto-proxy`
