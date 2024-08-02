@@ -105,7 +105,6 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 	fs.IntVar(&c.ipxeHTTPScript.bindPort, "http-port", 8080, "[http] local port to listen on for iPXE HTTP script requests")
 	fs.StringVar(&c.ipxeHTTPScript.extraKernelArgs, "extra-kernel-args", "", "[http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script")
 	fs.StringVar(&c.ipxeHTTPScript.trustedProxies, "trusted-proxies", "", "[http] comma separated list of trusted proxies in CIDR notation")
-	fs.BoolVar(&c.ipxeHTTPScript.disableDiscoverTrustedProxies, "disable-discover-trusted-proxies", false, "[http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend")
 	fs.StringVar(&c.ipxeHTTPScript.hookURL, "osie-url", "", "[http] URL where OSIE (HookOS) images are located")
 	fs.StringVar(&c.ipxeHTTPScript.tinkServer, "tink-server", "", "[http] IP:Port for the Tink server")
 	fs.BoolVar(&c.ipxeHTTPScript.tinkServerUseTLS, "tink-server-tls", false, "[http] use TLS for Tink server")
@@ -115,7 +114,7 @@ func ipxeHTTPScriptFlags(c *config, fs *flag.FlagSet) {
 
 func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.dhcp.enabled, "dhcp-enabled", true, "[dhcp] enable DHCP server")
-	fs.StringVar(&c.dhcp.mode, "dhcp-mode", "reservation", "[dhcp] DHCP mode (reservation, proxy)")
+	fs.StringVar(&c.dhcp.mode, "dhcp-mode", dhcpModeReservation.String(), fmt.Sprintf("[dhcp] DHCP mode (%s, %s, %s)", dhcpModeReservation, dhcpModeProxy, dhcpModeAutoProxy))
 	fs.StringVar(&c.dhcp.bindAddr, "dhcp-addr", "0.0.0.0:67", "[dhcp] local IP:Port to listen on for DHCP requests")
 	fs.StringVar(&c.dhcp.bindInterface, "dhcp-iface", "", "[dhcp] interface to bind to for DHCP requests")
 	fs.StringVar(&c.dhcp.ipForPacket, "dhcp-ip-for-packet", detectPublicIPv4(), "[dhcp] IP address to use in DHCP packets (opt 54, etc)")
@@ -130,6 +129,7 @@ func dhcpFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.dhcp.httpIpxeScript.Host, "dhcp-http-ipxe-script-host", detectPublicIPv4(), "[dhcp] HTTP iPXE script host or IP to use in DHCP packets")
 	fs.IntVar(&c.dhcp.httpIpxeScript.Port, "dhcp-http-ipxe-script-port", 8080, "[dhcp] HTTP iPXE script port to use in DHCP packets")
 	fs.StringVar(&c.dhcp.httpIpxeScript.Path, "dhcp-http-ipxe-script-path", "/auto.ipxe", "[dhcp] HTTP iPXE script path to use in DHCP packets")
+	fs.StringVar(&c.dhcp.httpIpxeScriptURL, "dhcp-http-ipxe-script-url", "", "[dhcp] HTTP iPXE script URL to use in DHCP packets, this overrides the flags for dhcp-http-ipxe-script-{scheme, host, port, path}")
 	fs.BoolVar(&c.dhcp.httpIpxeScript.injectMacAddress, "dhcp-http-ipxe-script-prepend-mac", true, "[dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe")
 }
 
@@ -140,6 +140,7 @@ func backendFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.backends.kubernetes.ConfigFilePath, "backend-kube-config", "", "[backend] the Kubernetes config file location, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.APIURL, "backend-kube-api", "", "[backend] the Kubernetes API URL, used for in-cluster client construction, kube backend only")
 	fs.StringVar(&c.backends.kubernetes.Namespace, "backend-kube-namespace", "", "[backend] an optional Kubernetes namespace override to query hardware data from, kube backend only")
+	fs.BoolVar(&c.backends.Noop.Enabled, "backend-noop-enabled", false, "[backend] enable the noop backend for DHCP and the HTTP iPXE script")
 }
 
 func otelFlags(c *config, fs *flag.FlagSet) {

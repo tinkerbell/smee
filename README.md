@@ -44,26 +44,40 @@ The responses given by the PXE Proxy DHCP server contain the mechanism by which 
 Smee's DHCP functionality can operate in one of the following modes:
 
 1. **DHCP Reservation**  
-   Smee will respond to DHCP requests from clients and provide them with IP and next boot info when netbooting. This is the default mode. IP info is all reservation based. There must be a corresponding hardware record for the requesting client's MAC address.  
    To enable this mode set `-dhcp-mode=reservation`.
+   Smee will respond to DHCP requests from clients and provide them with IP and next boot info when netbooting. This is the default mode. IP info is all reservation based. There must be a corresponding Hardware record for the requesting client's MAC address.  
 
 1. **Proxy DHCP**  
-   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. Smee will respond to PXE enabled DHCP requests and provide the client with the next boot info. There must be a corresponding hardware record for the requesting client's MAC address. The `auto.ipxe` script will be served with the MAC address in the URL and the MAC address will be used to lookup the corresponding hardware record. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.  
    To enable this mode set `-dhcp-mode=proxy`.
+   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. Smee will respond to PXE enabled DHCP requests and provide the client with the next boot info. There must be a corresponding Hardware record for the requesting client's MAC address. The `auto.ipxe` script will be served with the MAC address in the URL and the MAC address will be used to lookup the corresponding Hardware record. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.
+
+1. **Auto Proxy DHCP**
+   To enable this mode set `-dhcp-mode=auto-proxy`.
+   Smee will respond to PXE enabled DHCP requests from clients and provide them with next boot info when netbooting. In this mode an existing DHCP server that does not serve network boot information is required. In this mode, if no corresponding Hardware record is found for the requesting client's MAC address, Smee will provide the client with a statically defined iPXE script. If a Hardware record is found, then the normal `auto.ipxe` script will be served. Use `-backend-noop-enabled` to disable all backend look ups. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.
+
+   - When using Smee's auto.ipxe, you'll generally want to set the following flags:  
+     - `-dhcp-mode=auto-proxy`
+     - `-osie-url <URL to HookOS kernel and initrd>`
+     - `-tink-server <IP and port of Tink server>`
+     - `-extra-kernel-args="tink_worker_image=quay.io/tinkerbell/tink-worker:<use a version/commit tag>"`
+   - When not using Smee's auto.ipxe, you'll generally want to set the following flags:  
+     - `-dhcp-mode=auto-proxy`
+     - `-dhcp-http-ipxe-script-url=https://boot.netboot.xyz`
+     - `-dhcp-http-ipxe-script-prepend-mac=false`
 
 1. **DHCP disabled**  
-   Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details.  
    To enable this mode set `-dhcp-enabled=false`.
+   Smee will not respond to DHCP requests from clients. This is useful when the network has an existing DHCP server that will provide both IP and next boot info and Smee's TFTP and HTTP functionality will be used. The IP address in the Hardware record must be the same as the IP address of the client requesting the `auto.ipxe` script. See this [doc](docs/DHCP.md) for more details. In most situations`--dhcp-http-ipxe-script-prepend-mac=false` should also be set when in this mode.
 
 ### Interoperability with other DHCP servers
 
-It is not recommended, but it is possible for Smee to be run in `reservation` mode in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.
+When a DHCP server exists on the network, Smee should be set to run `proxy` or `auto-proxy` mode. This will allow Smee to provide the next boot information to clients that request it. The existing DHCP server will provide the IP address and other network boot details. Layer 2 access to machines or a DHCP relay agent that will forward the DHCP requests to Smee is required.
 
-1. All DHCP servers are configured to serve the same IPAM info as Smee and Smee is the only DHCP server to provide network boot info.
+It is not recommended, but it is possible for Smee to be run in `reservation` mode in networks with another DHCP server(s). To get the intended behavior from Smee one of the following must be true.
 
 1. All DHCP servers besides Smee are configured to ignore the MAC addresses that Smee is configured to serve.
 
-1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would most likely be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the doc on using your existing DHCP service for more details.
+1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the [doc](./docs/DHCP.md) on using your existing DHCP service for more details.
 
 ### Local Setup
 
@@ -95,6 +109,7 @@ FLAGS
   -backend-kube-config                [backend] the Kubernetes config file location, kube backend only
   -backend-kube-enabled               [backend] enable the kubernetes backend for DHCP and the HTTP iPXE script (default "true")
   -backend-kube-namespace             [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
+  -backend-noop-enabled               [backend] enable the noop backend for DHCP and the HTTP iPXE script (default "false")
   -dhcp-addr                          [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled                       [dhcp] enable DHCP server (default "true")
   -dhcp-http-ipxe-binary-host         [dhcp] HTTP iPXE binaries host or IP to use in DHCP packets (default "172.17.0.3")
@@ -106,13 +121,13 @@ FLAGS
   -dhcp-http-ipxe-script-port         [dhcp] HTTP iPXE script port to use in DHCP packets (default "8080")
   -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
   -dhcp-http-ipxe-script-scheme       [dhcp] HTTP iPXE script scheme to use in DHCP packets (default "http")
+  -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets, this overrides the flags for dhcp-http-ipxe-script-{scheme, host, port, path}
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "172.17.0.3")
-  -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy) (default "reservation")
+  -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy, auto-proxy) (default "reservation")
   -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "172.17.0.3")
   -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "172.17.0.3")
   -dhcp-tftp-port                     [dhcp] TFTP server port to use in DHCP packets (opt 66, etc) (default "69")
-  -disable-discover-trusted-proxies   [http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend (default "false")
   -extra-kernel-args                  [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
   -http-addr                          [http] local IP to listen on for iPXE HTTP script requests (default "172.17.0.3")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")

@@ -189,13 +189,6 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 		return nil, nil, err
 	}
 
-	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
-	if hardwareList.Items[0].Spec.Metadata != nil {
-		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
-			n.Facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
-		}
-	}
-
 	span.SetAttributes(d.EncodeToAttributes()...)
 	span.SetAttributes(n.EncodeToAttributes()...)
 	span.SetStatus(codes.Ok, "")

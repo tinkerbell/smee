@@ -441,6 +441,11 @@ var hwObject2 = v1alpha1.Hardware{
 				},
 			},
 		},
+		Metadata: &v1alpha1.HardwareMetadata{
+			Facility: &v1alpha1.MetadataFacility{
+				FacilityCode: "ewr2",
+			},
+		},
 	},
 }
 

@@ -42,7 +42,12 @@ var (
 	startTime = time.Now()
 )
 
-const name = "smee"
+const (
+	name                         = "smee"
+	dhcpModeProxy       dhcpMode = "proxy"
+	dhcpModeReservation dhcpMode = "reservation"
+	dhcpModeAutoProxy   dhcpMode = "auto-proxy"
+)
 
 type config struct {
 	syslog         syslogConfig
@@ -77,18 +82,19 @@ type ipxeHTTPBinary struct {
 }
 
 type ipxeHTTPScript struct {
-	enabled                       bool
-	bindAddr                      string
-	bindPort                      int
-	extraKernelArgs               string
-	hookURL                       string
-	tinkServer                    string
-	tinkServerUseTLS              bool
-	trustedProxies                string
-	disableDiscoverTrustedProxies bool
-	retries                       int
-	retryDelay                    int
+	enabled          bool
+	bindAddr         string
+	bindPort         int
+	extraKernelArgs  string
+	hookURL          string
+	tinkServer       string
+	tinkServerUseTLS bool
+	trustedProxies   string
+	retries          int
+	retryDelay       int
 }
+
+type dhcpMode string
 
 type dhcpConfig struct {
 	enabled           bool
@@ -101,6 +107,7 @@ type dhcpConfig struct {
 	tftpPort          int
 	httpIpxeBinaryURL urlBuilder
 	httpIpxeScript    httpIpxeScript
+	httpIpxeScriptURL string
 }
 
 type urlBuilder struct {
@@ -121,6 +128,7 @@ type httpIpxeScript struct {
 type dhcpBackends struct {
 	file       File
 	kubernetes Kube
+	Noop       Noop
 }
 
 type otelConfig struct {
@@ -208,24 +216,10 @@ func main() {
 
 	// http ipxe script
 	if cfg.ipxeHTTPScript.enabled {
-		var br handler.BackendReader
-		switch {
-		case cfg.backends.file.Enabled && cfg.backends.kubernetes.Enabled:
-			panic("only one backend can be enabled at a time")
-		case cfg.backends.file.Enabled:
-			b, err := cfg.backends.file.backend(ctx, log)
-			if err != nil {
-				panic(fmt.Errorf("failed to run file backend: %w", err))
-			}
-			br = b
-		default: // default backend is kubernetes
-			b, err := cfg.backends.kubernetes.backend(ctx)
-			if err != nil {
-				panic(fmt.Errorf("failed to run kubernetes backend: %w", err))
-			}
-			br = b
+		br, err := cfg.backend(ctx, log)
+		if err != nil {
+			panic(fmt.Errorf("failed to create backend: %w", err))
 		}
-
 		jh := script.Handler{
 			Logger:               log,
 			Backend:              br,
@@ -236,7 +230,9 @@ func main() {
 			TinkServerGRPCAddr:   cfg.ipxeHTTPScript.tinkServer,
 			IPXEScriptRetries:    cfg.ipxeHTTPScript.retries,
 			IPXEScriptRetryDelay: cfg.ipxeHTTPScript.retryDelay,
+			StaticIPXEEnabled:    (dhcpMode(cfg.dhcp.mode) == dhcpModeAutoProxy),
 		}
+
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
 	}
@@ -288,6 +284,49 @@ func main() {
 	log.Info("smee is shutting down")
 }
 
+func numTrue(b ...bool) int {
+	n := 0
+	for _, v := range b {
+		if v {
+			n++
+		}
+	}
+	return n
+}
+
+func (c *config) backend(ctx context.Context, log logr.Logger) (handler.BackendReader, error) {
+	if c.backends.file.Enabled || c.backends.Noop.Enabled {
+		// the kubernetes backend is enabled by default so we disable it
+		// if another backend is enabled so that users don't have to explicitly
+		// set the CLI flag to disable it when using another backend.
+		c.backends.kubernetes.Enabled = false
+	}
+	var be handler.BackendReader
+	switch {
+	case numTrue(c.backends.file.Enabled, c.backends.kubernetes.Enabled, c.backends.Noop.Enabled) > 1:
+		return nil, errors.New("only one backend can be enabled at a time")
+	case c.backends.Noop.Enabled:
+		if c.dhcp.mode != string(dhcpModeAutoProxy) {
+			return nil, errors.New("noop backend can only be used with --dhcp-mode=auto-proxy")
+		}
+		be = c.backends.Noop.backend()
+	case c.backends.file.Enabled:
+		b, err := c.backends.file.backend(ctx, log)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create file backend: %w", err)
+		}
+		be = b
+	default: // default backend is kubernetes
+		b, err := c.backends.kubernetes.backend(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
+		}
+		be = b
+	}
+
+	return be, nil
+}
+
 func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handler, error) {
 	// 1. create the handler
 	// 2. create the backend
@@ -309,16 +348,32 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 		return nil, fmt.Errorf("invalid http ipxe binary url: %w", err)
 	}
 
-	httpScriptURL := &url.URL{
-		Scheme: c.dhcp.httpIpxeScript.Scheme,
-		Host: func() string {
-			if c.dhcp.httpIpxeScript.Port == 80 {
-				return c.dhcp.httpIpxeScript.Host
-			}
-			return fmt.Sprintf("%s:%d", c.dhcp.httpIpxeScript.Host, c.dhcp.httpIpxeScript.Port)
-		}(),
-		Path: c.dhcp.httpIpxeScript.Path,
+	var httpScriptURL *url.URL
+	if c.dhcp.httpIpxeScriptURL != "" {
+		httpScriptURL, err = url.Parse(c.dhcp.httpIpxeScriptURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
+		}
+	} else {
+		httpScriptURL = &url.URL{
+			Scheme: c.dhcp.httpIpxeScript.Scheme,
+			Host: func() string {
+				switch c.dhcp.httpIpxeScript.Scheme {
+				case "http":
+					if c.dhcp.httpIpxeScript.Port == 80 {
+						return c.dhcp.httpIpxeScript.Host
+					}
+				case "https":
+					if c.dhcp.httpIpxeScript.Port == 443 {
+						return c.dhcp.httpIpxeScript.Host
+					}
+				}
+				return fmt.Sprintf("%s:%d", c.dhcp.httpIpxeScript.Host, c.dhcp.httpIpxeScript.Port)
+			}(),
+			Path: c.dhcp.httpIpxeScript.Path,
+		}
 	}
+
 	if _, err := url.Parse(httpScriptURL.String()); err != nil {
 		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
 	}
@@ -333,25 +388,13 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 			return &u
 		}
 	}
-	var backend handler.BackendReader
-	switch {
-	case c.backends.file.Enabled && c.backends.kubernetes.Enabled:
-		panic("only one backend can be enabled at a time")
-	case c.backends.file.Enabled:
-		b, err := c.backends.file.backend(ctx, log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create file backend: %w", err)
-		}
-		backend = b
-	default: // default backend is kubernetes
-		b, err := c.backends.kubernetes.backend(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create kubernetes backend: %w", err)
-		}
-		backend = b
+	backend, err := c.backend(ctx, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create backend: %w", err)
 	}
-	switch c.dhcp.mode {
-	case "reservation":
+
+	switch dhcpMode(c.dhcp.mode) {
+	case dhcpModeReservation:
 		syslogIP, err := netip.ParseAddr(c.dhcp.syslogIP)
 		if err != nil {
 			return nil, fmt.Errorf("invalid syslog address: %w", err)
@@ -370,7 +413,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 			SyslogAddr:  syslogIP,
 		}
 		return dh, nil
-	case "proxy":
+	case dhcpModeProxy:
 		dh := &proxy.Handler{
 			Backend: backend,
 			IPAddr:  pktIP,
@@ -381,7 +424,23 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 				IPXEScriptURL:     ipxeScript,
 				Enabled:           true,
 			},
-			OTELEnabled: true,
+			OTELEnabled:      true,
+			AutoProxyEnabled: false,
+		}
+		return dh, nil
+	case dhcpModeAutoProxy:
+		dh := &proxy.Handler{
+			Backend: backend,
+			IPAddr:  pktIP,
+			Log:     log,
+			Netboot: proxy.Netboot{
+				IPXEBinServerTFTP: tftpIP,
+				IPXEBinServerHTTP: httpBinaryURL,
+				IPXEScriptURL:     ipxeScript,
+				Enabled:           true,
+			},
+			OTELEnabled:      true,
+			AutoProxyEnabled: true,
 		}
 		return dh, nil
 	}
@@ -431,4 +490,8 @@ func parseTrustedProxies(trustedProxies string) (result []string) {
 	}
 
 	return result
+}
+
+func (d dhcpMode) String() string {
+	return string(d)
 }

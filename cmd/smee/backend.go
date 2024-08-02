@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/smee/internal/backend/file"
 	"github.com/tinkerbell/smee/internal/backend/kube"
+	"github.com/tinkerbell/smee/internal/backend/noop"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -26,6 +27,14 @@ type File struct {
 	// FilePath is the path to a JSON FilePath containing hardware data.
 	FilePath string
 	Enabled  bool
+}
+
+type Noop struct {
+	Enabled bool
+}
+
+func (n *Noop) backend() handler.BackendReader {
+	return &noop.Backend{}
 }
 
 func (k *Kube) getClient() (*rest.Config, error) {

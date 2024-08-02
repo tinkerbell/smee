@@ -112,6 +112,7 @@ FLAGS
   -backend-kube-config                [backend] the Kubernetes config file location, kube backend only
   -backend-kube-enabled               [backend] enable the kubernetes backend for DHCP and the HTTP iPXE script (default "true")
   -backend-kube-namespace             [backend] an optional Kubernetes namespace override to query hardware data from, kube backend only
+  -backend-noop-enabled               [backend] enable the noop backend for DHCP and the HTTP iPXE script (default "false")
   -dhcp-addr                          [dhcp] local IP:Port to listen on for DHCP requests (default "0.0.0.0:67")
   -dhcp-enabled                       [dhcp] enable DHCP server (default "true")
   -dhcp-http-ipxe-binary-host         [dhcp] HTTP iPXE binaries host or IP to use in DHCP packets (default "%[1]v")
@@ -123,13 +124,13 @@ FLAGS
   -dhcp-http-ipxe-script-port         [dhcp] HTTP iPXE script port to use in DHCP packets (default "8080")
   -dhcp-http-ipxe-script-prepend-mac  [dhcp] prepend the hardware MAC address to iPXE script URL base, http://1.2.3.4/auto.ipxe -> http://1.2.3.4/40:15:ff:89:cc:0e/auto.ipxe (default "true")
   -dhcp-http-ipxe-script-scheme       [dhcp] HTTP iPXE script scheme to use in DHCP packets (default "http")
+  -dhcp-http-ipxe-script-url          [dhcp] HTTP iPXE script URL to use in DHCP packets, this overrides the flags for dhcp-http-ipxe-script-{scheme, host, port, path}
   -dhcp-iface                         [dhcp] interface to bind to for DHCP requests
   -dhcp-ip-for-packet                 [dhcp] IP address to use in DHCP packets (opt 54, etc) (default "%[1]v")
-  -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy) (default "reservation")
+  -dhcp-mode                          [dhcp] DHCP mode (reservation, proxy, auto-proxy) (default "reservation")
   -dhcp-syslog-ip                     [dhcp] Syslog server IP address to use in DHCP packets (opt 7) (default "%[1]v")
   -dhcp-tftp-ip                       [dhcp] TFTP server IP address to use in DHCP packets (opt 66, etc) (default "%[1]v")
   -dhcp-tftp-port                     [dhcp] TFTP server port to use in DHCP packets (opt 66, etc) (default "69")
-  -disable-discover-trusted-proxies   [http] disable discovery of trusted proxies from Kubernetes, only available for the Kubernetes backend (default "false")
   -extra-kernel-args                  [http] extra set of kernel args (k=v k=v) that are appended to the kernel cmdline iPXE script
   -http-addr                          [http] local IP to listen on for iPXE HTTP script requests (default "%[1]v")
   -http-ipxe-binary-enabled           [http] enable iPXE HTTP binary server (default "true")
