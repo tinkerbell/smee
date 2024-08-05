@@ -11,8 +11,11 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
+	"github.com/vishvananda/netlink"
 )
 
 // customUsageFunc is a custom UsageFunc used for all commands.
@@ -172,6 +175,11 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 }
 
 func detectPublicIPv4() string {
+	ipDgw, err := autoDetectPublicIpv4WithDefaultGateway()
+	if err == nil {
+		return ipDgw.String()
+	}
+
 	ip, err := autoDetectPublicIPv4()
 	if err != nil {
 		return ""
@@ -199,4 +207,42 @@ func autoDetectPublicIPv4() (net.IP, error) {
 	}
 
 	return nil, errors.New("unable to auto-detect public IPv4")
+}
+
+// autoDetectPublicIpv4WithDefaultGateway finds the network interface with a default gateway
+// and returns the first net.IP address of the first interface that has a default gateway.
+func autoDetectPublicIpv4WithDefaultGateway() (net.IP, error) {
+	// Get the list of routes from netlink
+	routes, err := netlink.RouteList(nil, unix.AF_INET)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list routes: %v", err)
+	}
+
+	// Find the route with a default gateway (Dst == nil)
+	for _, route := range routes {
+		if route.Dst == nil && route.Gw != nil {
+			// Get the interface associated with this route
+			iface, err := net.InterfaceByIndex(route.LinkIndex)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get interface by index: %v", err)
+			}
+
+			// Get the addresses assigned to this interface
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get addresses for interface %v: %v", iface.Name, err)
+			}
+
+			// Return the first valid IP address found
+			for _, addr := range addrs {
+				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+					if ipNet.IP.To4() != nil {
+						return ipNet.IP, nil
+					}
+				}
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("no default gateway found")
 }
