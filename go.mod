@@ -17,6 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/tinkerbell/ipxedust v0.0.0-20240726225714-c9bd1dd89cc3
 	github.com/tinkerbell/tink v0.10.0
+	github.com/vishvananda/netlink v1.1.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
 	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0
@@ -25,6 +26,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.27.0
 	golang.org/x/sync v0.7.0
+	golang.org/x/sys v0.22.0
 	google.golang.org/grpc v1.65.0
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
@@ -78,6 +80,7 @@ require (
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
+	github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
@@ -85,7 +88,6 @@ require (
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
