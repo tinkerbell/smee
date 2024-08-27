@@ -58,7 +58,7 @@ set retry_delay:int32 3
 set idx:int32 0
 :retry_kernel
 kernel ${download-url}/vmlinuz-${arch} vlan_id=1234 \
-facility=onprem syslog_host= grpc_authority= tinkerbell_tls=false worker_id=00:01:02:03:04:05 hw_addr=00:01:02:03:04:05 \
+facility=onprem syslog_host= grpc_authority= tinkerbell_tls=false tinkerbell_insecure_tls=false worker_id=00:01:02:03:04:05 hw_addr=00:01:02:03:04:05 \
 modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 && goto download_initrd || iseq ${idx} ${retries} && goto kernel-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_kernel
 
 :download_initrd
