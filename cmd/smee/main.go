@@ -82,16 +82,17 @@ type ipxeHTTPBinary struct {
 }
 
 type ipxeHTTPScript struct {
-	enabled          bool
-	bindAddr         string
-	bindPort         int
-	extraKernelArgs  string
-	hookURL          string
-	tinkServer       string
-	tinkServerUseTLS bool
-	trustedProxies   string
-	retries          int
-	retryDelay       int
+	enabled               bool
+	bindAddr              string
+	bindPort              int
+	extraKernelArgs       string
+	hookURL               string
+	tinkServer            string
+	tinkServerUseTLS      bool
+	tinkServerInsecureTLS bool
+	trustedProxies        string
+	retries               int
+	retryDelay            int
 }
 
 type dhcpMode string
@@ -221,16 +222,17 @@ func main() {
 			panic(fmt.Errorf("failed to create backend: %w", err))
 		}
 		jh := script.Handler{
-			Logger:               log,
-			Backend:              br,
-			OSIEURL:              cfg.ipxeHTTPScript.hookURL,
-			ExtraKernelParams:    strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
-			PublicSyslogFQDN:     cfg.dhcp.syslogIP,
-			TinkServerTLS:        cfg.ipxeHTTPScript.tinkServerUseTLS,
-			TinkServerGRPCAddr:   cfg.ipxeHTTPScript.tinkServer,
-			IPXEScriptRetries:    cfg.ipxeHTTPScript.retries,
-			IPXEScriptRetryDelay: cfg.ipxeHTTPScript.retryDelay,
-			StaticIPXEEnabled:    (dhcpMode(cfg.dhcp.mode) == dhcpModeAutoProxy),
+			Logger:                log,
+			Backend:               br,
+			OSIEURL:               cfg.ipxeHTTPScript.hookURL,
+			ExtraKernelParams:     strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
+			PublicSyslogFQDN:      cfg.dhcp.syslogIP,
+			TinkServerTLS:         cfg.ipxeHTTPScript.tinkServerUseTLS,
+			TinkServerInsecureTLS: cfg.ipxeHTTPScript.tinkServerInsecureTLS,
+			TinkServerGRPCAddr:    cfg.ipxeHTTPScript.tinkServer,
+			IPXEScriptRetries:     cfg.ipxeHTTPScript.retries,
+			IPXEScriptRetryDelay:  cfg.ipxeHTTPScript.retryDelay,
+			StaticIPXEEnabled:     (dhcpMode(cfg.dhcp.mode) == dhcpModeAutoProxy),
 		}
 
 		// serve ipxe script from the "/" URI.
