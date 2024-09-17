@@ -18,7 +18,7 @@ require (
 	github.com/tinkerbell/ipxedust v0.0.0-20240726225714-c9bd1dd89cc3
 	github.com/tinkerbell/tink v0.10.1
 	github.com/vishvananda/netlink v1.3.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0
 	go.opentelemetry.io/otel v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.30.0
 	go.opentelemetry.io/otel/sdk v1.30.0
