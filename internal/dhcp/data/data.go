@@ -54,6 +54,17 @@ type Netboot struct {
 	IPXEScript    string   // Overrides a default value that is passed into DHCP on startup.
 	Console       string
 	Facility      string
+	OSIE          OSIE
+}
+
+// OSIE or OS Installation Environment is the data about where the OSIE parts are located.
+type OSIE struct {
+	// BaseURL is the URL where the OSIE parts are located.
+	BaseURL *url.URL
+	// Kernel is the name of the kernel file.
+	Kernel string
+	// Initrd is the name of the initrd file.
+	Initrd string
 }
 
 // EncodeToAttributes returns a slice of opentelemetry attributes that can be used to set span.SetAttributes.

@@ -300,5 +300,15 @@ func toNetbootData(i *v1alpha1.Netboot, facility string) (*data.Netboot, error) 
 	// facility
 	n.Facility = facility
 
+	// OSIE data
+	n.OSIE = data.OSIE{}
+	if i.OSIE != nil {
+		if b, err := url.Parse(i.OSIE.BaseURL); err == nil {
+			n.OSIE.BaseURL = b
+		}
+		n.OSIE.Kernel = i.OSIE.Kernel
+		n.OSIE.Initrd = i.OSIE.Initrd
+	}
+
 	return n, nil
 }

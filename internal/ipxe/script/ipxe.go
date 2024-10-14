@@ -42,6 +42,17 @@ type data struct {
 	Facility      string
 	IPXEScript    string
 	IPXEScriptURL *url.URL
+	OSIE          OSIE
+}
+
+// OSIE or OS Installation Environment is the data about where the OSIE parts are located.
+type OSIE struct {
+	// BaseURL is the URL where the OSIE parts are located.
+	BaseURL *url.URL
+	// Kernel is the name of the kernel file.
+	Kernel string
+	// Initrd is the name of the initrd file.
+	Initrd string
 }
 
 // getByMac uses the handler.BackendReader to get the (hardware) data and then
@@ -65,6 +76,7 @@ func getByMac(ctx context.Context, mac net.HardwareAddr, br handler.BackendReade
 		Facility:      n.Facility,
 		IPXEScript:    n.IPXEScript,
 		IPXEScriptURL: n.IPXEScriptURL,
+		OSIE:          OSIE(n.OSIE),
 	}, nil
 }
 
@@ -87,6 +99,7 @@ func getByIP(ctx context.Context, ip net.IP, br handler.BackendReader) (data, er
 		Facility:      n.Facility,
 		IPXEScript:    n.IPXEScript,
 		IPXEScriptURL: n.IPXEScriptURL,
+		OSIE:          OSIE(n.OSIE),
 	}, nil
 }
 
@@ -273,6 +286,15 @@ func (h *Handler) defaultScript(span trace.Span, hw data) (string, error) {
 		WorkerID:              wID,
 		Retries:               h.IPXEScriptRetries,
 		RetryDelay:            h.IPXEScriptRetryDelay,
+	}
+	if hw.OSIE.BaseURL != nil {
+		auto.DownloadURL = hw.OSIE.BaseURL.String()
+	}
+	if hw.OSIE.Kernel != "" {
+		auto.Kernel = hw.OSIE.Kernel
+	}
+	if hw.OSIE.Initrd != "" {
+		auto.Initrd = hw.OSIE.Initrd
 	}
 	if sc := span.SpanContext(); sc.IsSampled() {
 		auto.TraceID = sc.TraceID().String()
