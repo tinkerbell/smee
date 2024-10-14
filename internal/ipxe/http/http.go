@@ -90,7 +90,7 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 }
 
 func (s *Config) serveHealthchecker(rev string, start time.Time) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		res := struct {
 			GitRev     string  `json:"git_rev"`

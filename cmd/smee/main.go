@@ -379,7 +379,7 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 	if _, err := url.Parse(httpScriptURL.String()); err != nil {
 		return nil, fmt.Errorf("invalid http ipxe script url: %w", err)
 	}
-	ipxeScript := func(d *dhcpv4.DHCPv4) *url.URL {
+	ipxeScript := func(*dhcpv4.DHCPv4) *url.URL {
 		return httpScriptURL
 	}
 	if c.dhcp.httpIpxeScript.injectMacAddress {

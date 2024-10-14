@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"net/url"
 
+	"github.com/ccoveille/go-safecast"
 	"github.com/tinkerbell/smee/internal/dhcp/data"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.opentelemetry.io/otel"
@@ -255,7 +256,11 @@ func toDHCPData(h *v1alpha1.DHCP) (*data.DHCP, error) {
 	d.Hostname = h.Hostname
 
 	// lease time required
-	d.LeaseTime = uint32(h.LeaseTime)
+	// Default to one week
+	d.LeaseTime = 604800
+	if v, err := safecast.ToUint32(h.LeaseTime); err == nil {
+		d.LeaseTime = v
+	}
 
 	// arch
 	d.Arch = h.Arch
@@ -299,6 +304,16 @@ func toNetbootData(i *v1alpha1.Netboot, facility string) (*data.Netboot, error) 
 
 	// facility
 	n.Facility = facility
+
+	// OSIE data
+	n.OSIE = data.OSIE{}
+	if i.OSIE != nil {
+		if b, err := url.Parse(i.OSIE.BaseURL); err == nil {
+			n.OSIE.BaseURL = b
+		}
+		n.OSIE.Kernel = i.OSIE.Kernel
+		n.OSIE.Initrd = i.OSIE.Initrd
+	}
 
 	return n, nil
 }

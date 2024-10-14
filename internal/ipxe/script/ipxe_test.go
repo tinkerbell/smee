@@ -39,7 +39,7 @@ func TestCustomScript(t *testing.T) {
 				t.Fatal(err)
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}
@@ -52,19 +52,21 @@ echo Loading the Tinkerbell Hook iPXE script...
 
 set arch x86_64
 set download-url http://127.1.1.1
+set kernel vmlinuz-${arch}
+set initrd initramfs-${arch}
 set retries:int32 10
 set retry_delay:int32 3
 
 set idx:int32 0
 :retry_kernel
-kernel ${download-url}/vmlinuz-${arch} vlan_id=1234 \
+kernel ${download-url}/${kernel} vlan_id=1234 \
 facility=onprem syslog_host= grpc_authority= tinkerbell_tls=false tinkerbell_insecure_tls=false worker_id=00:01:02:03:04:05 hw_addr=00:01:02:03:04:05 \
 modules=loop,squashfs,sd-mod,usb-storage intel_iommu=on iommu=pt initrd=initramfs-${arch} console=tty0 console=ttyS1,115200 && goto download_initrd || iseq ${idx} ${retries} && goto kernel-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_kernel
 
 :download_initrd
 set idx:int32 0
 :retry_initrd
-initrd ${download-url}/initramfs-${arch} && goto boot || iseq ${idx} ${retries} && goto initrd-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_initrd
+initrd ${download-url}/${initrd} && goto boot || iseq ${idx} ${retries} && goto initrd-error || inc idx && echo retry in ${retry_delay} seconds ; sleep ${retry_delay} ; goto retry_initrd
 
 :boot
 set idx:int32 0
@@ -106,7 +108,7 @@ exit
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Log(got)
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}

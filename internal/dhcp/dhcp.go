@@ -3,6 +3,7 @@ package dhcp
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -255,7 +256,7 @@ func IsNetbootClient(pkt *dhcpv4.DHCPv4) error {
 
 func wrapNonNil(err error, format string) error {
 	if err == nil {
-		return fmt.Errorf(format)
+		return errors.New(format)
 	}
 
 	return fmt.Errorf("%w: %v", err, format)
