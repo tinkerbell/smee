@@ -33,10 +33,10 @@ func TestNewBackend(t *testing.T) {
 		"no config": {shouldErr: true},
 		"failed index field": {shouldErr: true, conf: new(rest.Config), opt: func(o *cluster.Options) {
 			cl := fake.NewClientBuilder().Build()
-			o.NewClient = func(config *rest.Config, options client.Options) (client.Client, error) {
+			o.NewClient = func(*rest.Config, client.Options) (client.Client, error) {
 				return cl, nil
 			}
-			o.MapperProvider = func(c *rest.Config, httpClient *http.Client) (meta.RESTMapper, error) {
+			o.MapperProvider = func(*rest.Config, *http.Client) (meta.RESTMapper, error) {
 				return cl.RESTMapper(), nil
 			}
 		}},
@@ -217,7 +217,7 @@ func TestGetByIP(t *testing.T) {
 			if !tc.failToList {
 				ct = ct.WithScheme(rs)
 				ct = ct.WithRuntimeObjects(&v1alpha1.HardwareList{})
-				ct = ct.WithIndex(&v1alpha1.Hardware{}, IPAddrIndex, func(obj client.Object) []string {
+				ct = ct.WithIndex(&v1alpha1.Hardware{}, IPAddrIndex, func(client.Object) []string {
 					var list []string
 					for _, elem := range tc.hwObject {
 						list = append(list, elem.Spec.Interfaces[0].DHCP.IP.Address)
@@ -233,13 +233,13 @@ func TestGetByIP(t *testing.T) {
 			cl := ct.Build()
 
 			fn := func(o *cluster.Options) {
-				o.NewClient = func(config *rest.Config, options client.Options) (client.Client, error) {
+				o.NewClient = func(*rest.Config, client.Options) (client.Client, error) {
 					return cl, nil
 				}
-				o.MapperProvider = func(_ *rest.Config, _ *http.Client) (meta.RESTMapper, error) {
+				o.MapperProvider = func(*rest.Config, *http.Client) (meta.RESTMapper, error) {
 					return cl.RESTMapper(), nil
 				}
-				o.NewCache = func(config *rest.Config, options cache.Options) (cache.Cache, error) {
+				o.NewCache = func(*rest.Config, cache.Options) (cache.Cache, error) {
 					return &informertest.FakeInformers{Scheme: cl.Scheme()}, nil
 				}
 			}
@@ -315,7 +315,7 @@ func TestGetByMac(t *testing.T) {
 			if !tc.failToList {
 				ct = ct.WithScheme(rs)
 				ct = ct.WithRuntimeObjects(&v1alpha1.HardwareList{})
-				ct = ct.WithIndex(&v1alpha1.Hardware{}, MACAddrIndex, func(obj client.Object) []string {
+				ct = ct.WithIndex(&v1alpha1.Hardware{}, MACAddrIndex, func(client.Object) []string {
 					var list []string
 					for _, elem := range tc.hwObject {
 						list = append(list, elem.Spec.Interfaces[0].DHCP.MAC)
@@ -331,13 +331,13 @@ func TestGetByMac(t *testing.T) {
 			cl := ct.Build()
 
 			fn := func(o *cluster.Options) {
-				o.NewClient = func(config *rest.Config, options client.Options) (client.Client, error) {
+				o.NewClient = func(*rest.Config, client.Options) (client.Client, error) {
 					return cl, nil
 				}
-				o.MapperProvider = func(c *rest.Config, httpClient *http.Client) (meta.RESTMapper, error) {
+				o.MapperProvider = func(*rest.Config, *http.Client) (meta.RESTMapper, error) {
 					return cl.RESTMapper(), nil
 				}
-				o.NewCache = func(config *rest.Config, options cache.Options) (cache.Cache, error) {
+				o.NewCache = func(*rest.Config, cache.Options) (cache.Cache, error) {
 					return &informertest.FakeInformers{Scheme: cl.Scheme()}, nil
 				}
 			}

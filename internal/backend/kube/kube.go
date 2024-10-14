@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"net/url"
 
+	"github.com/ccoveille/go-safecast"
 	"github.com/tinkerbell/smee/internal/dhcp/data"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.opentelemetry.io/otel"
@@ -255,7 +256,11 @@ func toDHCPData(h *v1alpha1.DHCP) (*data.DHCP, error) {
 	d.Hostname = h.Hostname
 
 	// lease time required
-	d.LeaseTime = uint32(h.LeaseTime)
+	// Default to one week
+	d.LeaseTime = 604800
+	if v, err := safecast.ToUint32(d.LeaseTime); err == nil {
+		d.LeaseTime = v
+	}
 
 	// arch
 	d.Arch = h.Arch

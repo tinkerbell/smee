@@ -39,7 +39,7 @@ func TestCustomScript(t *testing.T) {
 				t.Fatal(err)
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}
@@ -108,7 +108,7 @@ exit
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Log(got)
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}
