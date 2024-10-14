@@ -258,7 +258,7 @@ func toDHCPData(h *v1alpha1.DHCP) (*data.DHCP, error) {
 	// lease time required
 	// Default to one week
 	d.LeaseTime = 604800
-	if v, err := safecast.ToUint32(d.LeaseTime); err == nil {
+	if v, err := safecast.ToUint32(h.LeaseTime); err == nil {
 		d.LeaseTime = v
 	}
 
