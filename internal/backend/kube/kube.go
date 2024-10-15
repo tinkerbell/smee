@@ -14,8 +14,6 @@ import (
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
@@ -35,20 +33,7 @@ type Backend struct {
 //
 // Callers must instantiate the client-side cache by calling Start() before use.
 func NewBackend(conf *rest.Config, opts ...cluster.Option) (*Backend, error) {
-	rs := runtime.NewScheme()
-
-	if err := scheme.AddToScheme(rs); err != nil {
-		return nil, err
-	}
-
-	if err := v1alpha1.AddToScheme(rs); err != nil {
-		return nil, err
-	}
-
-	opts = append([]cluster.Option{func(o *cluster.Options) { o.Scheme = rs }}, opts...)
-	o := []cluster.Option{func(o *cluster.Options) { o.Scheme = rs }}
-	o = append(o, opts...)
-	c, err := cluster.New(conf, o...)
+	c, err := cluster.New(conf, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new cluster config: %w", err)
 	}
