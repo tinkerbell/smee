@@ -8,9 +8,14 @@ import (
 	"github.com/tinkerbell/smee/internal/backend/kube"
 	"github.com/tinkerbell/smee/internal/backend/noop"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/scale/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
 type Kube struct {
@@ -38,26 +43,20 @@ func (n *Noop) backend() handler.BackendReader {
 }
 
 func (k *Kube) getClient() (*rest.Config, error) {
-	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{
-			ExplicitPath: k.ConfigFilePath,
-		},
-		&clientcmd.ConfigOverrides{
-			ClusterInfo: clientcmdapi.Cluster{
-				Server: k.APIURL,
-			},
-			Context: clientcmdapi.Context{
-				Namespace: k.Namespace,
-			},
-		},
-	)
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.ExplicitPath = k.ConfigFilePath
 
-	config, err := ccfg.ClientConfig()
-	if err != nil {
-		return nil, err
+	overrides := &clientcmd.ConfigOverrides{
+		ClusterInfo: clientcmdapi.Cluster{
+			Server: k.APIURL,
+		},
+		Context: clientcmdapi.Context{
+			Namespace: k.Namespace,
+		},
 	}
+	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides)
 
-	return config, nil
+	return loader.ClientConfig()
 }
 
 func (k *Kube) backend(ctx context.Context) (handler.BackendReader, error) {
@@ -66,7 +65,24 @@ func (k *Kube) backend(ctx context.Context) (handler.BackendReader, error) {
 		return nil, err
 	}
 
-	kb, err := kube.NewBackend(config)
+	rs := runtime.NewScheme()
+
+	if err := scheme.AddToScheme(rs); err != nil {
+		return nil, err
+	}
+
+	if err := v1alpha1.AddToScheme(rs); err != nil {
+		return nil, err
+	}
+
+	conf := func(opts *cluster.Options) {
+		opts.Scheme = rs
+		if k.Namespace != "" {
+			opts.Cache.DefaultNamespaces = map[string]cache.Config{k.Namespace: {}}
+		}
+	}
+
+	kb, err := kube.NewBackend(config, conf)
 	if err != nil {
 		return nil, err
 	}
