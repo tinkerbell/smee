@@ -158,8 +158,8 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tinkerbell/ipxedust v0.0.0-20241012034445-f4626d47a3d8 h1:w91nBcdEy6ut5wzwddNCjlXUSc5ipmm7uu9Eu1rXPcQ=
 github.com/tinkerbell/ipxedust v0.0.0-20241012034445-f4626d47a3d8/go.mod h1:zV3E8AR1kG1PCQPFFV3VftTeYmDf29I2ivUJrdagDFA=
-github.com/tinkerbell/tink v0.12.0 h1:ceUEo1w0iZiIVFwBNc3+64Rh8HaUZqamBGukj0spJWE=
-github.com/tinkerbell/tink v0.12.0/go.mod h1:jyfsFfcJVUB+MK9938uElcyf6jeW0YNPD7/iP1XuoPw=
+github.com/tinkerbell/tink v0.12.1 h1:5ZCiGY1te59Qz/udFlzjh1UwKtmFBPOgo/LSK0J9JyY=
+github.com/tinkerbell/tink v0.12.1/go.mod h1:H4w56sG0rMsEgHB3rBpW8/6KWKAvvAQWYHuZFpURkoU=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 h1:YcojQL98T/OO+rybuzn2+5KrD5dBwXIvYBvQ2cD3Avg=
 github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63/go.mod h1:eLL9Nub3yfAho7qB0MzZizFhTU2QkLeoVsWdHtDW264=
 github.com/vishvananda/netlink v1.3.0 h1:X7l42GfcV4S6E4vHTsw48qbrV+9PVojNfIhZcwQdrZk=

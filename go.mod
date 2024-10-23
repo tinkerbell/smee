@@ -17,7 +17,7 @@ require (
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/tinkerbell/ipxedust v0.0.0-20241012034445-f4626d47a3d8
-	github.com/tinkerbell/tink v0.12.0
+	github.com/tinkerbell/tink v0.12.1
 	github.com/vishvananda/netlink v1.3.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0
 	go.opentelemetry.io/otel v1.31.0
