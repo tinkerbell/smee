@@ -57,6 +57,7 @@ type dhcp struct {
 	LeaseTime        int              `yaml:"leaseTime"`        // DHCP option 51.
 	Arch             string           `yaml:"arch"`             // DHCP option 93.
 	DomainSearch     []string         `yaml:"domainSearch"`     // DHCP option 119.
+	Disabled         bool             // If true, no DHCP response should be sent.
 	Netboot          netboot          `yaml:"netboot"`
 }
 
@@ -304,6 +305,9 @@ func (w *Watcher) translate(r dhcp) (*data.DHCP, *data.Netboot, error) {
 
 	// domain search
 	d.DomainSearch = r.DomainSearch
+
+	// disabled
+	d.Disabled = r.Disabled
 
 	// allow machine to netboot
 	n.AllowNetboot = r.Netboot.AllowPXE
