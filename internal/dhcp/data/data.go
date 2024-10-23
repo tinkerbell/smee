@@ -45,6 +45,7 @@ type DHCP struct {
 	LeaseTime        uint32           // DHCP option 51.
 	Arch             string           // DHCP option 93.
 	DomainSearch     []string         // DHCP option 119.
+	Disabled         bool             // If true, no DHCP response should be sent.
 }
 
 // Netboot holds info used in netbooting a client.

@@ -89,23 +89,8 @@ func (b *Backend) GetByMac(ctx context.Context, mac net.HardwareAddr) (*data.DHC
 		}
 	}
 
-	d, err := toDHCPData(i.DHCP)
+	d, n, err := transform(i, hardwareList.Items[0].Spec.Metadata)
 	if err != nil {
-		err = fmt.Errorf("failed to convert hardware to DHCP data: %w", err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return nil, nil, err
-	}
-	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
-	facility := ""
-	if hardwareList.Items[0].Spec.Metadata != nil {
-		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
-			facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
-		}
-	}
-	n, err := toNetbootData(i.Netboot, facility)
-	if err != nil {
-		err = fmt.Errorf("failed to convert hardware to netboot data: %w", err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return nil, nil, err
@@ -153,23 +138,8 @@ func (b *Backend) GetByIP(ctx context.Context, ip net.IP) (*data.DHCP, *data.Net
 		}
 	}
 
-	d, err := toDHCPData(i.DHCP)
+	d, n, err := transform(i, hardwareList.Items[0].Spec.Metadata)
 	if err != nil {
-		err = fmt.Errorf("failed to convert hardware to DHCP data: %w", err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return nil, nil, err
-	}
-	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
-	facility := ""
-	if hardwareList.Items[0].Spec.Metadata != nil {
-		if hardwareList.Items[0].Spec.Metadata.Facility != nil {
-			facility = hardwareList.Items[0].Spec.Metadata.Facility.FacilityCode
-		}
-	}
-	n, err := toNetbootData(i.Netboot, facility)
-	if err != nil {
-		err = fmt.Errorf("failed to convert hardware to netboot data: %w", err)
 		span.SetStatus(codes.Error, err.Error())
 
 		return nil, nil, err
@@ -301,4 +271,28 @@ func toNetbootData(i *v1alpha1.Netboot, facility string) (*data.Netboot, error) 
 	}
 
 	return n, nil
+}
+
+// transform returns data.DHCP and data.Netboot from part a v1alpha1.Interface and *v1alpha1.HardwareMetadata.
+func transform(i v1alpha1.Interface, m *v1alpha1.HardwareMetadata) (*data.DHCP, *data.Netboot, error) {
+	d, err := toDHCPData(i.DHCP)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to convert hardware to DHCP data: %w", err)
+	}
+	d.Disabled = i.DisableDHCP
+
+	// Facility is used in the default HookOS iPXE script so we get it from the hardware metadata, if set.
+	facility := ""
+	if m != nil {
+		if m.Facility != nil {
+			facility = m.Facility.FacilityCode
+		}
+	}
+
+	n, err := toNetbootData(i.Netboot, facility)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to convert hardware to netboot data: %w", err)
+	}
+
+	return d, n, nil
 }

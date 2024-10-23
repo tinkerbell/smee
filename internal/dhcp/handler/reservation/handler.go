@@ -83,6 +83,12 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 
 			return
 		}
+		if d.Disabled {
+			log.Info("DHCP is disabled for this MAC address, no response sent", "type", p.Pkt.MessageType().String())
+			span.SetStatus(codes.Ok, "disabled DHCP response")
+
+			return
+		}
 		log.Info("received DHCP packet", "type", p.Pkt.MessageType().String())
 		reply = h.updateMsg(ctx, p.Pkt, d, n, dhcpv4.MessageTypeOffer)
 		log = log.WithValues("type", dhcpv4.MessageTypeOffer.String())
@@ -95,6 +101,12 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 			}
 			log.Info("error reading from backend", "error", err)
 			span.SetStatus(codes.Error, err.Error())
+
+			return
+		}
+		if d.Disabled {
+			log.Info("DHCP is disabled for this MAC address, no response sent", "type", p.Pkt.MessageType().String())
+			span.SetStatus(codes.Ok, "disabled DHCP response")
 
 			return
 		}
