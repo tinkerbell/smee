@@ -91,12 +91,6 @@ linters-settings:
       - name: unconditional-recursion
       - name: waitgroup-by-value
 
-  staticcheck:
-    go: "1.20"
-
-  unused:
-    go: "1.20"
-
 output:
   sort-results: true
 
@@ -113,7 +107,7 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - gocognit
     - goconst
