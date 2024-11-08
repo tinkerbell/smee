@@ -79,6 +79,16 @@ It is not recommended, but it is possible for Smee to be run in `reservation` mo
 
 1. All DHCP servers are configured to serve the same IP address and network boot details as Smee. In this scenario the DHCP functionality of Smee is redundant. It would be recommended to run Smee with the DHCP server functionality disabled (`-dhcp=false`). See the [doc](./docs/DHCP.md) on using your existing DHCP service for more details.
 
+### Environment Variables and CLI Flags
+
+It's important to note that CLI flags take precedence over environment variables. All CLI flags can be set as environment variables. Environment variable names are the same as the flag names with some modifications. For example, the flag `-dhcp-addr` has the environment variable of `SMEE_DHCP_ADDR`. The modifications of CLI flags to environment variables are as follows:
+
+- prefixed with `SMEE_`
+- all uppercase
+- hyphens (`-`) are replaced with underscores (`_`)
+
+There is one environment variable that does not have a corresponding CLI flag. The environment variable is `SMEE_PUBLIC_IP_INTERFACE`. This environment variable takes a local network interface name and uses it to auto detect the IP address to use as the default in all other CLI flags that require an IP address. This is useful when the machine running Smee has multiple network interfaces and you want the default detected IP to be from this specified interface.
+
 ### Local Setup
 
 Running the Tests
