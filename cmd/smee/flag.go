@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -175,7 +176,38 @@ func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {
 	}
 }
 
+// ipByInterface returns the first IPv4 address on the named network interface.
+func ipByInterface(name string) string {
+	iface, err := net.InterfaceByName(name)
+	if err != nil {
+		return ""
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+
+		if ipNet.IP.To4() != nil {
+			return ipNet.IP.String()
+		}
+	}
+
+	return ""
+}
+
 func detectPublicIPv4() string {
+	if netint := os.Getenv("SMEE_PUBLIC_IP_INTERFACE"); netint != "" {
+		if ip := ipByInterface(netint); ip != "" {
+			return ip
+		}
+	}
 	ipDgw, err := autoDetectPublicIpv4WithDefaultGateway()
 	if err == nil {
 		return ipDgw.String()
