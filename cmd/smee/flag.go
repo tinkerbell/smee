@@ -203,7 +203,7 @@ func ipByInterface(name string) string {
 }
 
 func detectPublicIPv4() string {
-	if netint := os.Getenv("SMEE_IP_DETECT_INTERFACE"); netint != "" {
+	if netint := os.Getenv("SMEE_PUBLIC_IP_INTERFACE"); netint != "" {
 		if ip := ipByInterface(netint); ip != "" {
 			return ip
 		}
