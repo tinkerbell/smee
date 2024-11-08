@@ -1,8 +1,7 @@
 module github.com/tinkerbell/smee
 
 go 1.22.0
-
-toolchain go1.22.5
+toolchain go1.22.9
 
 require (
 	github.com/ccoveille/go-safecast v1.1.0
@@ -28,7 +27,7 @@ require (
 	golang.org/x/net v0.30.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.26.0
-	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc v1.68.0
 	k8s.io/apimachinery v0.31.2
 	k8s.io/client-go v0.31.2
 	sigs.k8s.io/controller-runtime v0.19.0
@@ -90,7 +89,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
