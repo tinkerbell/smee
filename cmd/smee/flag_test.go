@@ -56,6 +56,11 @@ func TestParser(t *testing.T) {
 				injectMacAddress: true,
 			},
 		},
+		iso: isoConfig{
+			enabled:     true,
+			url:         "http://10.10.10.10:8787/hook.iso",
+			magicString: magicString,
+		},
 		logLevel: "info",
 		backends: dhcpBackends{
 			file:       File{},
@@ -77,6 +82,9 @@ func TestParser(t *testing.T) {
 		"-dhcp-tftp-ip", "192.168.2.4",
 		"-dhcp-http-ipxe-binary-host", "192.168.2.4",
 		"-dhcp-http-ipxe-script-host", "192.168.2.4",
+		"-iso-enabled=true",
+		"-iso-magic-string", magicString,
+		"-iso-url", "http://10.10.10.10:8787/hook.iso",
 	}
 	cli := newCLI(&got, fs)
 	cli.Parse(args)
@@ -89,9 +97,11 @@ func TestParser(t *testing.T) {
 		cmp.AllowUnexported(dhcpConfig{}),
 		cmp.AllowUnexported(dhcpBackends{}),
 		cmp.AllowUnexported(httpIpxeScript{}),
+		cmp.AllowUnexported(isoConfig{}),
 		cmp.AllowUnexported(otelConfig{}),
 		cmp.AllowUnexported(urlBuilder{}),
 	}
+
 	if diff := cmp.Diff(want, got, opts); diff != "" {
 		t.Fatal(diff)
 	}
@@ -143,6 +153,9 @@ FLAGS
   -tink-server-insecure-tls           [http] use insecure TLS for Tink server (default "false")
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
+  -iso-enabled                        [iso] enable serving Hook as an iso (default "false")
+  -iso-magic-string                   [iso] the string pattern to match for in the source iso, if not set the default from HookOS is used
+  -iso-url                            [iso] the url for source iso before binary patching
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
   -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
   -syslog-addr                        [syslog] local IP to listen on for Syslog messages (default "%[1]v")

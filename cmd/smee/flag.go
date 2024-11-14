@@ -153,6 +153,12 @@ func otelFlags(c *config, fs *flag.FlagSet) {
 	fs.BoolVar(&c.otel.insecure, "otel-insecure", true, "[otel] OpenTelemetry collector insecure")
 }
 
+func isoFlags(c *config, fs *flag.FlagSet) {
+	fs.BoolVar(&c.iso.enabled, "iso-enabled", false, "[iso] enable serving Hook as an iso")
+	fs.StringVar(&c.iso.url, "iso-url", "", "[iso] the url for source iso before binary patching")
+	fs.StringVar(&c.iso.magicString, "iso-magic-string", "", "[iso] the string pattern to match for in the source iso, if not set the default from HookOS is used")
+}
+
 func setFlags(c *config, fs *flag.FlagSet) {
 	fs.StringVar(&c.logLevel, "log-level", "info", "log level (debug, info)")
 	dhcpFlags(c, fs)
@@ -162,6 +168,7 @@ func setFlags(c *config, fs *flag.FlagSet) {
 	syslogFlags(c, fs)
 	backendFlags(c, fs)
 	otelFlags(c, fs)
+	isoFlags(c, fs)
 }
 
 func newCLI(cfg *config, fs *flag.FlagSet) *ffcli.Command {

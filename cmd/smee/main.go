@@ -27,6 +27,7 @@ import (
 	"github.com/tinkerbell/smee/internal/dhcp/server"
 	"github.com/tinkerbell/smee/internal/ipxe/http"
 	"github.com/tinkerbell/smee/internal/ipxe/script"
+	"github.com/tinkerbell/smee/internal/iso"
 	"github.com/tinkerbell/smee/internal/metric"
 	"github.com/tinkerbell/smee/internal/otel"
 	"github.com/tinkerbell/smee/internal/syslog"
@@ -47,6 +48,9 @@ const (
 	dhcpModeProxy       dhcpMode = "proxy"
 	dhcpModeReservation dhcpMode = "reservation"
 	dhcpModeAutoProxy   dhcpMode = "auto-proxy"
+	// magicString comes from the HookOS repo
+	// ref: https://github.com/tinkerbell/hook/blob/main/linuxkit-templates/hook.template.yaml
+	magicString = `464vn90e7rbj08xbwdjejmdf4it17c5zfzjyfhthbh19eij201hjgit021bmpdb9ctrc87x2ymc8e7icu4ffi15x1hah9iyaiz38ckyap8hwx2vt5rm44ixv4hau8iw718q5yd019um5dt2xpqqa2rjtdypzr5v1gun8un110hhwp8cex7pqrh2ivh0ynpm4zkkwc8wcn367zyethzy7q8hzudyeyzx3cgmxqbkh825gcak7kxzjbgjajwizryv7ec1xm2h0hh7pz29qmvtgfjj1vphpgq1zcbiiehv52wrjy9yq473d9t1rvryy6929nk435hfx55du3ih05kn5tju3vijreru1p6knc988d4gfdz28eragvryq5x8aibe5trxd0t6t7jwxkde34v6pj1khmp50k6qqj3nzgcfzabtgqkmeqhdedbvwf3byfdma4nkv3rcxugaj2d0ru30pa2fqadjqrtjnv8bu52xzxv7irbhyvygygxu1nt5z4fh9w1vwbdcmagep26d298zknykf2e88kumt59ab7nq79d8amnhhvbexgh48e8qc61vq2e9qkihzt1twk1ijfgw70nwizai15iqyted2dt9gfmf2gg7amzufre79hwqkddc1cd935ywacnkrnak6r7xzcz7zbmq3kt04u2hg1iuupid8rt4nyrju51e6uejb2ruu36g9aibmz3hnmvazptu8x5tyxk820g2cdpxjdij766bt2n3djur7v623a2v44juyfgz80ekgfb9hkibpxh3zgknw8a34t4jifhf116x15cei9hwch0fye3xyq0acuym8uhitu5evc4rag3ui0fny3qg4kju7zkfyy8hwh537urd5uixkzwu5bdvafz4jmv7imypj543xg5em8jk8cgk7c4504xdd5e4e71ihaumt6u5u2t1w7um92fepzae8p0vq93wdrd1756npu1pziiur1payc7kmdwyxg3hj5n4phxbc29x0tcddamjrwt260b0w`
 )
 
 type config struct {
@@ -55,6 +59,7 @@ type config struct {
 	ipxeHTTPBinary ipxeHTTPBinary
 	ipxeHTTPScript ipxeHTTPScript
 	dhcp           dhcpConfig
+	iso            isoConfig
 
 	// loglevel is the log level for smee.
 	logLevel string
@@ -135,6 +140,12 @@ type dhcpBackends struct {
 type otelConfig struct {
 	endpoint string
 	insecure bool
+}
+
+type isoConfig struct {
+	enabled     bool
+	url         string
+	magicString string
 }
 
 func main() {
@@ -237,6 +248,33 @@ func main() {
 
 		// serve ipxe script from the "/" URI.
 		handlers["/"] = jh.HandlerFunc()
+	}
+
+	if cfg.iso.enabled {
+		br, err := cfg.backend(ctx, log)
+		if err != nil {
+			panic(fmt.Errorf("failed to create backend: %w", err))
+		}
+		ih := iso.Handler{
+			Logger:             log,
+			Backend:            br,
+			SourceISO:          cfg.iso.url,
+			ExtraKernelParams:  strings.Split(cfg.ipxeHTTPScript.extraKernelArgs, " "),
+			Syslog:             cfg.dhcp.syslogIP,
+			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
+			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
+			MagicString: func() string {
+				if cfg.iso.magicString == "" {
+					return magicString
+				}
+				return cfg.iso.magicString
+			}(),
+		}
+		isoHandler, err := ih.Reverse()
+		if err != nil {
+			panic(fmt.Errorf("failed to create iso handler: %w", err))
+		}
+		handlers["/iso/"] = isoHandler
 	}
 
 	if len(handlers) > 0 {
