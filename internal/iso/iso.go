@@ -45,7 +45,8 @@ type Handler struct {
 }
 
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
-	h.Logger.V(1).Info("entered the roundtrip func")
+	log := h.Logger.WithValues("method", req.Method, "url", req.URL.Path, "xff", req.Header.Get("X-Forwarded-For"), "remoteAddr", req.RemoteAddr)
+	log.V(1).Info("starting the patching function")
 	if req.Method != http.MethodHead && req.Method != http.MethodGet {
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusNotImplemented, http.StatusText(http.StatusNotImplemented)),
@@ -56,7 +57,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	if filepath.Ext(req.URL.Path) != ".iso" {
-		h.Logger.Info("Extension not supported, only supported type is '.iso'", "path", req.URL.Path)
+		log.Info("Extension not supported, only supported type is '.iso'", "path", req.URL.Path)
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusNotFound, http.StatusText(http.StatusNotFound)),
 			StatusCode: http.StatusNotFound,
@@ -65,7 +66,6 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	ctx := req.Context()
 	// The incoming request url is expected to have the mac address present.
 	// Fetch the mac and validate if there's a hardware object
 	// associated with the mac.
@@ -73,7 +73,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// We serve the iso only if this validation passes.
 	ha, err := getMAC(req.URL.Path)
 	if err != nil {
-		h.Logger.Info("unable to get the mac address", "error", err)
+		log.Info("unable to get the mac address", "error", err)
 		return &http.Response{
 			Status:     "400 BAD REQUEST",
 			StatusCode: http.StatusBadRequest,
@@ -82,9 +82,9 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	f, err := getFacility(ctx, ha, h.Backend)
+	f, err := getFacility(req.Context(), ha, h.Backend)
 	if err != nil {
-		h.Logger.V(1).Info("unable to get facility", "mac", ha, "error", err)
+		log.Info("unable to get facility", "mac", ha, "error", err)
 		if apierrors.IsNotFound(err) {
 			return &http.Response{
 				Status:     fmt.Sprintf("%d %s", http.StatusNotFound, http.StatusText(http.StatusNotFound)),
@@ -101,18 +101,6 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	// The hardware object doesn't contain a specific field for consoles
-	// right now facility is used instead.
-	var consoles string
-	switch {
-	case f != "" && strings.Contains(f, "console="):
-		consoles = f
-	case f != "":
-		consoles = fmt.Sprintf("%s %s", f, defaultConsoles)
-	default:
-		consoles = defaultConsoles
-	}
-
 	// Reverse Proxy modifies the request url to
 	// the same path it received the incoming request.
 	// mac-id is added to the url path to do hardware lookups using the backend reader
@@ -122,15 +110,21 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// RoundTripper needs a Transport to execute a HTTP transaction
 	// For our use case the default transport will suffice.
 	resp, err := http.DefaultTransport.RoundTrip(req)
-	// resp, err := h.RoundTripper.RoundTrip(req)
 	if err != nil {
-		h.Logger.Info("HTTP request didn't receive a response", "sourceIso", h.SourceISO, "error", err)
+		log.Info("issue with getting the source ISO", "sourceIso", h.SourceISO, "error", err)
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		log.Info("the request to get the source ISO returned a status other than ok (200)", "sourceIso", h.SourceISO, "status", resp.Status)
+		return resp, nil
+	}
+	// by setting this header we are telling the logging middleware to not log its default log message.
+	// we do this because there are a lot of partial content requests.
+	resp.Header.Set("X-Global-Logging", "false")
 
 	if req.Method == http.MethodHead {
 		// Fuse client typically make a HEAD request before they start requesting content.
-		h.Logger.V(1).Info("HTTP HEAD request received, patching only occurs on 206 requests")
+		log.V(1).Info("HTTP HEAD request received, patching only occurs on 206 requests")
 		return resp, nil
 	}
 
@@ -139,7 +133,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	if resp.StatusCode == http.StatusPartialContent {
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
-			h.Logger.Error(err, "reading response bytes", "response", resp.Body)
+			log.Error(err, "reading response bytes")
 			return &http.Response{
 				Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
 				StatusCode: http.StatusInternalServerError,
@@ -148,7 +142,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 			}, nil
 		}
 		if err := resp.Body.Close(); err != nil {
-			h.Logger.Error(err, "closing response body", "response", resp.Body)
+			log.Error(err, "closing response body")
 			return &http.Response{
 				Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
 				StatusCode: http.StatusInternalServerError,
@@ -157,6 +151,17 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 			}, nil
 		}
 
+		// The hardware object doesn't contain a specific field for consoles
+		// right now facility is used instead.
+		var consoles string
+		switch {
+		case f != "" && strings.Contains(f, "console="):
+			consoles = fmt.Sprintf("facility=%s", f)
+		case f != "":
+			consoles = fmt.Sprintf("facility=%s %s", f, defaultConsoles)
+		default:
+			consoles = defaultConsoles
+		}
 		magicStringPadding := bytes.Repeat([]byte{' '}, len(h.MagicString))
 
 		// TODO: revisit later to handle the magic string potentially being spread across two chunks.
@@ -164,18 +169,18 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		// magic string spread across multiple response bodies in the future.
 		i := bytes.Index(b, []byte(h.MagicString))
 		if i != -1 {
-			h.Logger.Info("Magic string found, patching the iso at runtime")
+			log.Info("magic string found, patching the ISO")
 			dup := make([]byte, len(b))
 			copy(dup, b)
 			copy(dup[i:], magicStringPadding)
-			copy(dup[i:], []byte(h.constructPatch(fmt.Sprintf("facility=%s", consoles), ha.String())))
+			copy(dup[i:], []byte(h.constructPatch(consoles, ha.String())))
 			b = dup
 		}
 
 		resp.Body = io.NopCloser(bytes.NewReader(b))
 	}
 
-	h.Logger.Info("roundtrip complete")
+	log.V(1).Info("roundtrip complete")
 	return resp, nil
 }
 

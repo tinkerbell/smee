@@ -27,14 +27,13 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	if uri == "/metrics" {
 		log = false
 	}
-	if log {
-		h.log.V(1).Info("request", "method", method, "uri", uri, "client", client)
-	}
 
 	res := &responseWriter{ResponseWriter: w}
 	h.handler.ServeHTTP(res, req) // process the request
 
-	if log {
+	r := res.Header().Get("X-Global-Logging")
+
+	if log && r == "" {
 		h.log.Info("response", "method", method, "uri", uri, "client", client, "duration", time.Since(start), "status", res.statusCode)
 	}
 }
