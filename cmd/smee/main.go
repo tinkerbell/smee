@@ -20,6 +20,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	slogmulti "github.com/samber/slog-multi"
+	slogsampling "github.com/samber/slog-sampling"
 	"github.com/tinkerbell/ipxedust"
 	"github.com/tinkerbell/ipxedust/ihttp"
 	"github.com/tinkerbell/smee/internal/dhcp/handler"
@@ -254,6 +256,17 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("failed to create backend: %w", err))
 		}
+		// Will print 10% of entries.
+		option := slogsampling.UniformSamplingOption{
+			// The sample rate for sampling traces in the range [0.0, 1.0].
+			Rate: 0.002,
+		}
+
+		logger := slog.New(
+			slogmulti.
+				Pipe(option.NewMiddleware()).
+				Handler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true})),
+		)
 		ih := iso.Handler{
 			Logger:             log,
 			Backend:            br,
@@ -268,6 +281,7 @@ func main() {
 				}
 				return cfg.iso.magicString
 			}(),
+			SampleLogger: logger,
 		}
 		isoHandler, err := ih.Reverse()
 		if err != nil {

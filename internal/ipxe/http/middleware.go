@@ -31,6 +31,9 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	res := &responseWriter{ResponseWriter: w}
 	h.handler.ServeHTTP(res, req) // process the request
 
+	// The "X-Global-Logging" header allows all registered HTTP handlers to disable this global logging
+	// by setting the header to any non empty string. This is useful for handlers that handle partial content of
+	// larger file. The ISO handler, for example.
 	r := res.Header().Get("X-Global-Logging")
 
 	if log && r == "" {

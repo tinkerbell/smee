@@ -15,6 +15,8 @@ require (
 	github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
+	github.com/samber/slog-multi v1.2.4
+	github.com/samber/slog-sampling v1.5.2
 	github.com/tinkerbell/ipxedust v0.0.0-20241108174245-aa0c0298057d
 	github.com/tinkerbell/tink v0.12.1
 	github.com/vishvananda/netlink v1.3.0
@@ -35,8 +37,10 @@ require (
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/cornelk/hashmap v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
@@ -78,6 +82,8 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
+	github.com/samber/lo v1.47.0 // indirect
+	github.com/samber/slog-common v0.17.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
