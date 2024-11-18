@@ -122,7 +122,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		log.Info("the request to get the source ISO returned a status other than ok (200)", "sourceIso", h.SourceISO, "status", resp.Status)
+		log.Info("the request to get the source ISO returned a status other than ok (200) or partial content (206)", "sourceIso", h.SourceISO, "status", resp.Status)
 		return resp, nil
 	}
 	// by setting this header we are telling the logging middleware to not log its default log message.
