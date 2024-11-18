@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.2
 
 require (
-	github.com/ccoveille/go-safecast v1.1.0
+	github.com/ccoveille/go-safecast v1.2.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.2
