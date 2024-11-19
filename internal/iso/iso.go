@@ -3,10 +3,11 @@ package iso
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -14,7 +15,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	defaultConsoles = "console=ttyS0 console=ttyAMA0 console=tty1 console=tty0, console=ttyS1,115200"
+	defaultConsoles = "console=ttyS0 console=ttyAMA0 console=tty0, console=ttyS1 console=tty1"
 )
 
 type Handler struct {
@@ -43,16 +43,20 @@ type Handler struct {
 	// in the source iso before patching. The field can be set
 	// during build time by setting this field.
 	// Ref: https://github.com/tinkerbell/hook/blob/main/linuxkit-templates/hook.template.yaml
-	MagicString  string
-	SampleLogger *slog.Logger
+	MagicString string
 }
 
-var total atomic.Int64
+func randomPercentage(precision int64) (float64, error) {
+	random, err := rand.Int(rand.Reader, big.NewInt(precision))
+	if err != nil {
+		return 0, err
+	}
+
+	return float64(random.Int64()) / float64(precision), nil
+}
 
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
-	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "xff", req.Header.Get("X-Forwarded-For"), "remoteAddr", req.RemoteAddr, "total", total.Load())
-	splog := h.SampleLogger.With("method", req.Method, "urlPath", req.URL.Path, "xff", req.Header.Get("X-Forwarded-For"), "remoteAddr", req.RemoteAddr, "total", total.Load())
-	total.Add(1)
+	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "remoteAddr", req.RemoteAddr)
 	log.V(1).Info("starting the ISO patching HTTP handler")
 	if req.Method != http.MethodHead && req.Method != http.MethodGet {
 		return &http.Response{
@@ -140,7 +144,13 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, nil
 	}
 
-	splog.Info("HTTP GET method received with a 206 status code")
+	// 0.002% of the time we log a 206 request message.
+	// In testing, it was observed that about 3000 HTTP 206 requests are made per ISO mount.
+	// 0.002% gives us about 5, +/- 3, log messages per ISO mount.
+	// We're optimizing for showing "enough" log messages so that progress can be observed.
+	if p, _ := randomPercentage(10000); p < 0.002 {
+		log.Info("HTTP GET method received with a 206 status code")
+	}
 
 	// this roundtripper func should only return error when there is no response from the server.
 	// for any other case we log the error and return a 500 response
