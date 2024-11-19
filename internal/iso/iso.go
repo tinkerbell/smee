@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	defaultConsoles = "console=ttyS0 console=ttyAMA0 console=tty0, console=ttyS1 console=tty1"
+	defaultConsoles = "console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1"
 )
 
 type Handler struct {
@@ -136,11 +136,6 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	if req.Method == http.MethodHead {
 		// Fuse clients typically make a HEAD request before they start requesting content.
 		log.Info("HTTP HEAD method received")
-		return resp, nil
-	}
-
-	if resp.StatusCode == http.StatusOK {
-		log.Info("HTTP GET method received with a 200 status code")
 		return resp, nil
 	}
 
