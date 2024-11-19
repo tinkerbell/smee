@@ -5,18 +5,19 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"net/url"
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/tinkerbell/ipxedust"
@@ -31,8 +32,6 @@ import (
 	"github.com/tinkerbell/smee/internal/metric"
 	"github.com/tinkerbell/smee/internal/otel"
 	"github.com/tinkerbell/smee/internal/syslog"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -488,22 +487,40 @@ func (c *config) dhcpHandler(ctx context.Context, log logr.Logger) (server.Handl
 	return nil, errors.New("invalid dhcp mode")
 }
 
-// defaultLogger is zap logr implementation.
+// defaultLogger uses the slog logr implementation.
 func defaultLogger(level string) logr.Logger {
-	config := zap.NewProductionConfig()
-	config.OutputPaths = []string{"stdout"}
+	// source file and function can be long. This makes the logs less readable.
+	// truncate source file and function to last 3 parts for improved readability.
+	customAttr := func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.SourceKey {
+			ss, ok := a.Value.Any().(*slog.Source)
+			if !ok || ss == nil {
+				return a
+			}
+			f := strings.Split(ss.Function, "/")
+			if len(f) > 3 {
+				ss.Function = filepath.Join(f[len(f)-3:]...)
+			}
+			p := strings.Split(ss.File, "/")
+			if len(p) > 3 {
+				ss.File = filepath.Join(p[len(p)-3:]...)
+			}
+
+			return a
+		}
+
+		return a
+	}
+	opts := &slog.HandlerOptions{AddSource: true, ReplaceAttr: customAttr}
 	switch level {
 	case "debug":
-		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		opts.Level = slog.LevelDebug
 	default:
-		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+		opts.Level = slog.LevelInfo
 	}
-	zapLogger, err := config.Build()
-	if err != nil {
-		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
-	}
+	log := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 
-	return zapr.NewLogger(zapLogger)
+	return logr.FromSlogHandler(log.Handler())
 }
 
 func parseTrustedProxies(trustedProxies string) (result []string) {
