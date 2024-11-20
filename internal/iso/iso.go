@@ -46,13 +46,13 @@ type Handler struct {
 	MagicString string
 }
 
-func randomPercentage(precision int64) (float64, error) {
+func randomPercentage(precision int64) float64 {
 	random, err := rand.Int(rand.Reader, big.NewInt(precision))
 	if err != nil {
-		return 0, err
+		return 0
 	}
 
-	return float64(random.Int64()) / float64(precision), nil
+	return float64(random.Int64()) / float64(precision)
 }
 
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -143,7 +143,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// In testing, it was observed that about 3000 HTTP 206 requests are made per ISO mount.
 	// 0.002% gives us about 5, +/- 3, log messages per ISO mount.
 	// We're optimizing for showing "enough" log messages so that progress can be observed.
-	if p, _ := randomPercentage(10000); p < 0.002 {
+	if p := randomPercentage(10000); p < 0.002 {
 		log.Info("HTTP GET method received with a 206 status code")
 	}
 
