@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -131,7 +130,7 @@ menuentry 'LinuxKit ISO Image' {
 	}
 
 	h := &Handler{
-		Logger:             logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})),
+		Logger:             logr.Discard(), //logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelInfo})),
 		Backend:            &mockBackend{},
 		SourceISO:          u,
 		ExtraKernelParams:  []string{},
@@ -189,8 +188,10 @@ menuentry 'LinuxKit ISO Image' {
 	}
 	defer ff.Close()
 	grubCfgFile, err := io.ReadAll(ff)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	t.Log(string(grubCfgFile))
 	if diff := cmp.Diff(wantGrubCfg, string(grubCfgFile)); diff != "" {
 		t.Fatalf("unexpected grub.cfg file: %s", diff)
 	}
