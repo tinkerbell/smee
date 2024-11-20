@@ -13,7 +13,6 @@ require (
 	github.com/go-logr/stdr v1.2.2
 	github.com/google/go-cmp v0.6.0
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475
-	github.com/kdomanski/iso9660 v0.4.0
 	github.com/packethost/xff v0.0.0-20190305172552-d3e9190c41b3
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
