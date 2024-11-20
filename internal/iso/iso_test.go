@@ -54,7 +54,7 @@ func TestReqPathInvalid(t *testing.T) {
 	}
 }
 
-func TestCreateISO2(t *testing.T) {
+func TestCreateISO(t *testing.T) {
 	t.Skip("Unskip this test to create a new ISO file")
 	grubCfg := `set timeout=0
 set gfxpayload=text
