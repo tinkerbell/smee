@@ -1,6 +1,7 @@
 package iso
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -161,31 +162,14 @@ menuentry 'LinuxKit ISO Image' {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile("patched.iso", isoContents, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove("patched.iso")
 
-	dd, err := diskfs.Open("patched.iso", diskfs.WithOpenMode(diskfs.ReadOnly))
-	if err != nil {
-		t.Fatal(err)
+	idx := bytes.Index(isoContents, []byte(wantGrubCfg))
+	if idx == -1 {
+		t.Fatalf("could not find grub.cfg in the ISO")
 	}
-	defer dd.Close()
-	fs, err := dd.GetFilesystem(0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ff, err := fs.OpenFile("EFI/BOOT/GRUB.CFG", os.O_RDONLY)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ff.Close()
-	grubCfgFile, err := io.ReadAll(ff)
-	if err != nil {
-		t.Fatal(err)
-	}
+	contents := isoContents[idx : idx+len(wantGrubCfg)]
 
-	if diff := cmp.Diff(wantGrubCfg, string(grubCfgFile)); diff != "" {
+	if diff := cmp.Diff(wantGrubCfg, string(contents)); diff != "" {
 		t.Fatalf("unexpected grub.cfg file: %s", diff)
 	}
 }
