@@ -130,7 +130,7 @@ menuentry 'LinuxKit ISO Image' {
 	}
 
 	h := &Handler{
-		Logger:             logr.Discard(), //logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelInfo})),
+		Logger:             logr.Discard(),
 		Backend:            &mockBackend{},
 		SourceISO:          u,
 		ExtraKernelParams:  []string{},
@@ -152,6 +152,7 @@ menuentry 'LinuxKit ISO Image' {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("got status code: %d, want status code: %d", res.StatusCode, http.StatusOK)
 	}
@@ -160,18 +161,10 @@ menuentry 'LinuxKit ISO Image' {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile("patched.iso", isoContents, 0644); err != nil {
+	if err := os.WriteFile("patched.iso", isoContents, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove("patched.iso")
-
-	op, err := os.Open("patched.iso")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer op.Close()
-	os.Mkdir("mnt", 0755)
-	defer os.RemoveAll("mnt")
 
 	dd, err := diskfs.Open("patched.iso", diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
