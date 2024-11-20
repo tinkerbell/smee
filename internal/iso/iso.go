@@ -148,7 +148,8 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	// this roundtripper func should only return error when there is no response from the server.
-	// for any other case we log the error and return a 500 response
+	// for any other case we log the error and return a 500 response. See the http.RoundTripper interface code
+	// comments for more details.
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err, "issue reading response bytes")
