@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -132,7 +131,7 @@ menuentry 'LinuxKit ISO Image' {
 	}
 
 	h := &Handler{
-		Logger:             logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})),
+		Logger:             logr.Discard(),
 		Backend:            &mockBackend{},
 		SourceISO:          u,
 		ExtraKernelParams:  []string{},
