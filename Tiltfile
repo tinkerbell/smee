@@ -1,8 +1,12 @@
+load('ext://restart_process', 'docker_build_with_restart')
+load('ext://local_output', 'local_output')
+load('ext://helm_resource', 'helm_resource')
+
 local_resource('compile smee',
   cmd='make cmd/smee/smee-linux-amd64',
-  deps=["go.mod", "go.sum", "internal", "Dockerfile", "cmd/smee/main.go", "cmd/smee/flag.go", "cmd/smee/backend.go"]
+  deps=["go.mod", "go.sum", "internal", "Dockerfile", "cmd/smee/main.go", "cmd/smee/flag.go", "cmd/smee/backend.go"],
 )
-load('ext://restart_process', 'docker_build_with_restart')
+
 #docker_build(
 #  'quay.io/tinkerbell/smee',
 #  '.',
@@ -19,7 +23,6 @@ docker_build_with_restart(
 )
 default_registry('ttl.sh/meohmy-dghentld')
 
-load('ext://local_output', 'local_output')
 default_trusted_proxies = local_output("kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' | tr ' ' ','")
 trusted_proxies = os.getenv('TRUSTED_PROXIES', default_trusted_proxies)
 lb_ip = os.getenv('LB_IP', '')
@@ -30,7 +33,6 @@ namespace = 'tink'
 if lb_ip == '':
   fail('Please set the LB_IP environment variable. This is required to deploy the stack.')
 
-load('ext://helm_resource', 'helm_resource')
 helm_resource('stack',
   chart=stack_location,
   namespace=namespace,

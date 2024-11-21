@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -131,7 +132,7 @@ menuentry 'LinuxKit ISO Image' {
 	}
 
 	h := &Handler{
-		Logger:             logr.Discard(),
+		Logger:             logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})),
 		Backend:            &mockBackend{},
 		SourceISO:          u,
 		ExtraKernelParams:  []string{},
@@ -149,13 +150,14 @@ menuentry 'LinuxKit ISO Image' {
 		Method: http.MethodGet,
 		URL:    purl,
 	}
+	req.Header.Set("Range", "bytes=0-")
 	res, err := h.RoundTrip(&req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		t.Fatalf("got status code: %d, want status code: %d", res.StatusCode, http.StatusOK)
+	if res.StatusCode != http.StatusPartialContent {
+		t.Fatalf("got status code: %d, want status code: %d", res.StatusCode, http.StatusPartialContent)
 	}
 
 	isoContents, err := io.ReadAll(res.Body)

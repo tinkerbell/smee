@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,7 +23,8 @@ import (
 )
 
 const (
-	defaultConsoles = "console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1"
+	defaultConsoles        = "console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1"
+	maxContentLength int64 = 500 * 1024 // 500Kb
 )
 
 type Handler struct {
@@ -113,10 +113,9 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	// Reverse Proxy modifies the request url to
-	// the same path it received the incoming request.
-	// mac-id is added to the url path to do hardware lookups using the backend reader
-	// and is not used when making http calls to the source url.
+	// The httputil.NewSingleHostReverseProxy takes the incoming request url and adds the path to the target (h.SourceISO).
+	// This function is more than a pass through proxy. The MAC address in the url path is required to do hardware lookups using the backend reader
+	// and is not used when making http calls to the target (h.SourceISO). All valid requests are passed through to the target.
 	req.URL.Path = h.parsedURL.Path
 
 	// RoundTripper needs a Transport to execute a HTTP transaction
@@ -127,16 +126,18 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	// by setting this header we are telling the logging middleware to not log its default log message.
-	// we do this because there are a lot of partial content requests.
+	// we do this because there are a lot of partial content requests and it allow this handler to take care of logging.
 	resp.Header.Set("X-Global-Logging", "false")
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		// This log line is not rate limited as we don't anticipate this to be a common occurrence or happen frequently when it does.
 		log.Info("the request to get the source ISO returned a status other than ok (200) or partial content (206)", "sourceIso", h.SourceISO, "status", resp.Status)
 		return resp, nil
 	}
 
 	if req.Method == http.MethodHead {
-		// Fuse clients typically make a HEAD request before they start requesting content.
+		// Fuse clients typically make a HEAD request before they start requesting content. This is not rate limited as the occurrence is expected to be low.
+		// This allows provides us some info on the progress of the client.
 		log.Info("HTTP HEAD method received", "status", resp.Status)
 		return resp, nil
 	}
@@ -148,83 +149,36 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// By returning the `resp` here we allow clients to download the ISO file but without any patching.
 	// This is done so that there can be a minimal amount of troubleshooting for SourceISO issues.
 	if resp.StatusCode != http.StatusPartialContent {
-		log.Info("HTTP GET method received with a status code other than 206, source iso will be unpatched", "status", resp.Status)
+		log.Info("HTTP GET method received with a status code other than 206, source iso will be unpatched", "status", resp.Status, "respHeader", resp.Header, "reqHeaders", resp.Request.Header)
 		return resp, nil
 	}
 	// If the request is a partial content request, we need to validate the Content-Range header.
 	// Because we read the entire response body into memory for patching, we need to ensure that the
-	// Content-Range is within a reasonable size. For now, we are limiting the size to 500Kb.
+	// Content-Range is within a reasonable size. For now, we are limiting the size to 500Kb (partialContentMax).
 
 	// Content range RFC: https://tools.ietf.org/html/rfc7233#section-4.2
 	// https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
 
 	// Get the content range from the response header
-	contentRange := resp.Header.Get("Content-Range")
-	l := strings.Split(contentRange, "/")
-	if len(l) == 2 {
-		sp := strings.Split(l[0], " ")
-		if len(sp) == 2 {
-			contentRange = fmt.Sprintf("%s=%s", sp[0], sp[1])
-		}
+	if resp.ContentLength > maxContentLength {
+		log.Info("content length is greater than max", "contentLengthBytes", resp.ContentLength, "maxAllowedBytes", maxContentLength)
+		return resp, nil
 	}
-	ln := len(l) - 1
-	size := l[ln]
-	sizeInt, err := strconv.ParseInt(size, 10, 64)
-	if err != nil {
-		log.Error(err, "unable to get the size of the content from the range header", "respContentRange", contentRange, "reqContentRange", resp.Request.Header.Get("Range"))
-		return &http.Response{
-			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
-			StatusCode: http.StatusInternalServerError,
-			Body:       http.NoBody,
-			Request:    req,
-			Header:     resp.Header,
-		}, nil
-	}
-
-	crp, err := ParseRange(contentRange, sizeInt)
-	if err != nil {
-		log.Error(err, "issue parsing the content range header", "respContentRange", contentRange, "reqContentRange", resp.Request.Header.Get("Range"))
-		resp.Header.Set("Content-Range", fmt.Sprintf("bytes */%d", sizeInt))
-		return &http.Response{
-			Status:     fmt.Sprintf("%d %s", http.StatusRequestedRangeNotSatisfiable, http.StatusText(http.StatusRequestedRangeNotSatisfiable)),
-			StatusCode: http.StatusRequestedRangeNotSatisfiable,
-			Body:       http.NoBody,
-			Request:    req,
-			Header:     resp.Header,
-		}, nil
-	}
-
-	for _, r := range crp {
-		if r.Length > 500*1024 {
-			log.Info("content range length is greater than 512Kb", "contentRange", contentRange)
-			resp.Header.Set("Content-Range", fmt.Sprintf("bytes */%d", sizeInt))
-			return &http.Response{
-				Status:     fmt.Sprintf("%d %s", http.StatusRequestedRangeNotSatisfiable, http.StatusText(http.StatusRequestedRangeNotSatisfiable)),
-				StatusCode: http.StatusRequestedRangeNotSatisfiable,
-				Body:       http.NoBody,
-				Request:    req,
-				Header:     resp.Header,
-			}, nil
-		}
-	}
-	// Check that it is less than 500Kb
-	//http.StatusRequestedRangeNotSatisfiable
 
 	// 0.002% of the time we log a 206 request message.
 	// In testing, it was observed that about 3000 HTTP 206 requests are made per ISO mount.
-	// 0.002% gives us about 5, +/- 3, log messages per ISO mount.
+	// 0.002% gives us about 5 - 10, log messages per ISO mount.
 	// We're optimizing for showing "enough" log messages so that progress can be observed.
-	if p := randomPercentage(10000); p < 0.002 {
+	if p := randomPercentage(100000); p < 0.002 {
 		log.Info("HTTP GET method received with a 206 status code")
 	}
 
 	// this roundtripper func should only return error when there is no response from the server.
 	// for any other case we log the error and return a 500 response. See the http.RoundTripper interface code
 	// comments for more details.
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		//var b []byte
-		//if _, err := io.LimitReader(resp.Body, 500*1024).Read(b); err != nil {
+	var b []byte
+	respBuf := new(bytes.Buffer)
+	if _, err := io.CopyN(respBuf, resp.Body, resp.ContentLength); err != nil {
 		log.Error(err, "issue reading response bytes")
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
@@ -234,6 +188,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 			Header:     resp.Header,
 		}, nil
 	}
+	b = respBuf.Bytes()
 	if err := resp.Body.Close(); err != nil {
 		log.Error(err, "issue closing response body")
 		return &http.Response{
@@ -276,7 +231,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func (h *Handler) Reverse() (http.HandlerFunc, error) {
+func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
 	target, err := url.Parse(h.SourceISO)
 	if err != nil {
 		return nil, err
@@ -314,6 +269,7 @@ func getFacility(ctx context.Context, mac net.HardwareAddr, br handler.BackendRe
 		return "", errors.New("backend is nil")
 	}
 
+	// TODO(jacobweinstock): Pass DHCP info to kernel cmdline parameters for static IP assignment.
 	_, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
 		return "", err
