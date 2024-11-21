@@ -19,7 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
+	"github.com/tinkerbell/smee/internal/dhcp/data"
 )
 
 const (
@@ -27,35 +27,53 @@ const (
 	maxContentLength int64 = 500 * 1024 // 500Kb
 )
 
+// BackendReader is an interface that defines the method to read data from a backend.
+type BackendReader interface {
+	// Read data (from a backend) based on a mac address
+	// and return DHCP headers and options, including netboot info.
+	GetByMac(context.Context, net.HardwareAddr) (*data.DHCP, *data.Netboot, error)
+}
+
+// HandlerFunc returns a reverse proxy HTTP handler function that performs ISO patching.
+func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
+	target, err := url.Parse(h.SourceISO)
+	if err != nil {
+		return nil, err
+	}
+	h.parsedURL = target
+	proxy := httputil.NewSingleHostReverseProxy(target)
+
+	proxy.Transport = h
+	proxy.FlushInterval = -1
+
+	return proxy.ServeHTTP, nil
+}
+
+// Handler is a struct that contains the necessary fields to patch an ISO file with
+// relevant information for the Tink worker.
 type Handler struct {
-	Logger  logr.Logger
-	Backend handler.BackendReader
-	// SourceISO is the source url where the unmodified iso lives
-	// patch this at runtime, should be a HTTP(S) url.
-	SourceISO          string
-	ExtraKernelParams  []string
-	Syslog             string
-	TinkServerTLS      bool
-	TinkServerGRPCAddr string
-	// parsedURL derives a url.URL from the SourceISO
-	// It helps accessing different parts of URL
-	parsedURL *url.URL
+	Backend           BackendReader
+	ExtraKernelParams []string
+	Logger            logr.Logger
 	// MagicString is the string pattern that will be matched
 	// in the source iso before patching. The field can be set
 	// during build time by setting this field.
 	// Ref: https://github.com/tinkerbell/hook/blob/main/linuxkit-templates/hook.template.yaml
 	MagicString string
+	// SourceISO is the source url where the unmodified iso lives.
+	// It must be a valid url.URL{} object and must have a url.URL{}.Scheme of HTTP or HTTPS.
+	SourceISO          string
+	Syslog             string
+	TinkServerTLS      bool
+	TinkServerGRPCAddr string
+	// parsedURL derives a url.URL from the SourceISO field.
+	// It needed for validation of SourceISO and easier modification.
+	parsedURL *url.URL
 }
 
-func randomPercentage(precision int64) float64 {
-	random, err := rand.Int(rand.Reader, big.NewInt(precision))
-	if err != nil {
-		return 0
-	}
-
-	return float64(random.Int64()) / float64(precision)
-}
-
+// RoundTrip is a method on the Handler struct that implements the http.RoundTripper interface.
+// This method is called by the httputil.NewSingleHostReverseProxy to handle the incoming request.
+// The method is responsible for validating the incoming request, reading the source ISO, patching the ISO.
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "remoteAddr", req.RemoteAddr, "fullURL", req.URL.String())
 	log.V(1).Info("starting the ISO patching HTTP handler")
@@ -228,21 +246,8 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	resp.Body = io.NopCloser(bytes.NewReader(b))
 	log.V(1).Info("roundtrip complete")
+
 	return resp, nil
-}
-
-func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
-	target, err := url.Parse(h.SourceISO)
-	if err != nil {
-		return nil, err
-	}
-	h.parsedURL = target
-	proxy := httputil.NewSingleHostReverseProxy(target)
-
-	proxy.Transport = h
-	proxy.FlushInterval = -1
-
-	return proxy.ServeHTTP, nil
 }
 
 func (h *Handler) constructPatch(console, mac string) string {
@@ -264,7 +269,7 @@ func getMAC(urlPath string) (net.HardwareAddr, error) {
 	return hw, nil
 }
 
-func getFacility(ctx context.Context, mac net.HardwareAddr, br handler.BackendReader) (string, error) {
+func getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, error) {
 	if br == nil {
 		return "", errors.New("backend is nil")
 	}
@@ -276,4 +281,13 @@ func getFacility(ctx context.Context, mac net.HardwareAddr, br handler.BackendRe
 	}
 
 	return n.Facility, nil
+}
+
+func randomPercentage(precision int64) float64 {
+	random, err := rand.Int(rand.Reader, big.NewInt(precision))
+	if err != nil {
+		return 0
+	}
+
+	return float64(random.Int64()) / float64(precision)
 }
