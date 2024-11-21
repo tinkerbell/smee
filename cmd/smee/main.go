@@ -269,7 +269,7 @@ func main() {
 				return cfg.iso.magicString
 			}(),
 		}
-		isoHandler, err := ih.Reverse()
+		isoHandler, err := ih.HandlerFunc()
 		if err != nil {
 			panic(fmt.Errorf("failed to create iso handler: %w", err))
 		}
