@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -56,7 +57,7 @@ func randomPercentage(precision int64) float64 {
 }
 
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
-	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "remoteAddr", req.RemoteAddr)
+	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "remoteAddr", req.RemoteAddr, "fullURL", req.URL.String())
 	log.V(1).Info("starting the ISO patching HTTP handler")
 	if req.Method != http.MethodHead && req.Method != http.MethodGet {
 		return &http.Response{
@@ -125,19 +126,89 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		log.Info("issue getting the source ISO", "sourceIso", h.SourceISO, "error", err)
 		return nil, err
 	}
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		log.Info("the request to get the source ISO returned a status other than ok (200) or partial content (206)", "sourceIso", h.SourceISO, "status", resp.Status)
-		return resp, nil
-	}
 	// by setting this header we are telling the logging middleware to not log its default log message.
 	// we do this because there are a lot of partial content requests.
 	resp.Header.Set("X-Global-Logging", "false")
 
-	if req.Method == http.MethodHead {
-		// Fuse clients typically make a HEAD request before they start requesting content.
-		log.Info("HTTP HEAD method received")
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		log.Info("the request to get the source ISO returned a status other than ok (200) or partial content (206)", "sourceIso", h.SourceISO, "status", resp.Status)
 		return resp, nil
 	}
+
+	if req.Method == http.MethodHead {
+		// Fuse clients typically make a HEAD request before they start requesting content.
+		log.Info("HTTP HEAD method received", "status", resp.Status)
+		return resp, nil
+	}
+
+	// At this point we only allow HTTP GET method with a 206 status code.
+	// Otherwise we are potentially reading the entire ISO file and patching it.
+	// This is not the intended use case for this handler.
+	// And this can cause memory issues, like OOM, if the ISO file is too large.
+	// By returning the `resp` here we allow clients to download the ISO file but without any patching.
+	// This is done so that there can be a minimal amount of troubleshooting for SourceISO issues.
+	if resp.StatusCode != http.StatusPartialContent {
+		log.Info("HTTP GET method received with a status code other than 206, source iso will be unpatched", "status", resp.Status)
+		return resp, nil
+	}
+	// If the request is a partial content request, we need to validate the Content-Range header.
+	// Because we read the entire response body into memory for patching, we need to ensure that the
+	// Content-Range is within a reasonable size. For now, we are limiting the size to 500Kb.
+
+	// Content range RFC: https://tools.ietf.org/html/rfc7233#section-4.2
+	// https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
+
+	// Get the content range from the response header
+	contentRange := resp.Header.Get("Content-Range")
+	l := strings.Split(contentRange, "/")
+	if len(l) == 2 {
+		sp := strings.Split(l[0], " ")
+		if len(sp) == 2 {
+			contentRange = fmt.Sprintf("%s=%s", sp[0], sp[1])
+		}
+	}
+	ln := len(l) - 1
+	size := l[ln]
+	sizeInt, err := strconv.ParseInt(size, 10, 64)
+	if err != nil {
+		log.Error(err, "unable to get the size of the content from the range header", "respContentRange", contentRange, "reqContentRange", resp.Request.Header.Get("Range"))
+		return &http.Response{
+			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
+			StatusCode: http.StatusInternalServerError,
+			Body:       http.NoBody,
+			Request:    req,
+			Header:     resp.Header,
+		}, nil
+	}
+
+	crp, err := ParseRange(contentRange, sizeInt)
+	if err != nil {
+		log.Error(err, "issue parsing the content range header", "respContentRange", contentRange, "reqContentRange", resp.Request.Header.Get("Range"))
+		resp.Header.Set("Content-Range", fmt.Sprintf("bytes */%d", sizeInt))
+		return &http.Response{
+			Status:     fmt.Sprintf("%d %s", http.StatusRequestedRangeNotSatisfiable, http.StatusText(http.StatusRequestedRangeNotSatisfiable)),
+			StatusCode: http.StatusRequestedRangeNotSatisfiable,
+			Body:       http.NoBody,
+			Request:    req,
+			Header:     resp.Header,
+		}, nil
+	}
+
+	for _, r := range crp {
+		if r.Length > 500*1024 {
+			log.Info("content range length is greater than 512Kb", "contentRange", contentRange)
+			resp.Header.Set("Content-Range", fmt.Sprintf("bytes */%d", sizeInt))
+			return &http.Response{
+				Status:     fmt.Sprintf("%d %s", http.StatusRequestedRangeNotSatisfiable, http.StatusText(http.StatusRequestedRangeNotSatisfiable)),
+				StatusCode: http.StatusRequestedRangeNotSatisfiable,
+				Body:       http.NoBody,
+				Request:    req,
+				Header:     resp.Header,
+			}, nil
+		}
+	}
+	// Check that it is less than 500Kb
+	//http.StatusRequestedRangeNotSatisfiable
 
 	// 0.002% of the time we log a 206 request message.
 	// In testing, it was observed that about 3000 HTTP 206 requests are made per ISO mount.
@@ -152,12 +223,15 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// comments for more details.
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
+		//var b []byte
+		//if _, err := io.LimitReader(resp.Body, 500*1024).Read(b); err != nil {
 		log.Error(err, "issue reading response bytes")
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
 			StatusCode: http.StatusInternalServerError,
 			Body:       http.NoBody,
 			Request:    req,
+			Header:     resp.Header,
 		}, nil
 	}
 	if err := resp.Body.Close(); err != nil {
@@ -167,6 +241,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 			StatusCode: http.StatusInternalServerError,
 			Body:       http.NoBody,
 			Request:    req,
+			Header:     resp.Header,
 		}, nil
 	}
 
@@ -197,7 +272,6 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	resp.Body = io.NopCloser(bytes.NewReader(b))
-
 	log.V(1).Info("roundtrip complete")
 	return resp, nil
 }
