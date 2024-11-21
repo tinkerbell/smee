@@ -96,7 +96,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	f, err := getFacility(req.Context(), ha, h.Backend)
 	if err != nil {
-		log.Error(err, "unable to get the hardware object", "mac", ha)
+		log.Info("unable to get the hardware object", "error", err, "mac", ha)
 		if apierrors.IsNotFound(err) {
 			return &http.Response{
 				Status:     fmt.Sprintf("%d %s", http.StatusNotFound, http.StatusText(http.StatusNotFound)),
@@ -122,7 +122,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// For our use case the default transport will suffice.
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
-		log.Info("issue getting the source ISO", "sourceIso", h.SourceISO, "error", err)
+		log.Error(err, "issue getting the source ISO", "sourceIso", h.SourceISO)
 		return nil, err
 	}
 	// by setting this header we are telling the logging middleware to not log its default log message.
@@ -179,7 +179,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	var b []byte
 	respBuf := new(bytes.Buffer)
 	if _, err := io.CopyN(respBuf, resp.Body, resp.ContentLength); err != nil {
-		log.Error(err, "issue reading response bytes")
+		log.Info("unable to read response bytes", "error", err)
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
 			StatusCode: http.StatusInternalServerError,
@@ -190,7 +190,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	b = respBuf.Bytes()
 	if err := resp.Body.Close(); err != nil {
-		log.Error(err, "issue closing response body")
+		log.Info("unable to close response body", "error", err)
 		return &http.Response{
 			Status:     fmt.Sprintf("%d %s", http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)),
 			StatusCode: http.StatusInternalServerError,
