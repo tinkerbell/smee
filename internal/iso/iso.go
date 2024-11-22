@@ -35,21 +35,6 @@ type BackendReader interface {
 	GetByMac(context.Context, net.HardwareAddr) (*data.DHCP, *data.Netboot, error)
 }
 
-// HandlerFunc returns a reverse proxy HTTP handler function that performs ISO patching.
-func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
-	target, err := url.Parse(h.SourceISO)
-	if err != nil {
-		return nil, err
-	}
-	h.parsedURL = target
-	proxy := httputil.NewSingleHostReverseProxy(target)
-
-	proxy.Transport = h
-	proxy.FlushInterval = -1
-
-	return proxy.ServeHTTP, nil
-}
-
 // Handler is a struct that contains the necessary fields to patch an ISO file with
 // relevant information for the Tink worker.
 type Handler struct {
@@ -67,9 +52,25 @@ type Handler struct {
 	Syslog             string
 	TinkServerTLS      bool
 	TinkServerGRPCAddr string
+	StaticIPAMEnabled  bool
 	// parsedURL derives a url.URL from the SourceISO field.
 	// It needed for validation of SourceISO and easier modification.
 	parsedURL *url.URL
+}
+
+// HandlerFunc returns a reverse proxy HTTP handler function that performs ISO patching.
+func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
+	target, err := url.Parse(h.SourceISO)
+	if err != nil {
+		return nil, err
+	}
+	h.parsedURL = target
+	proxy := httputil.NewSingleHostReverseProxy(target)
+
+	proxy.Transport = h
+	proxy.FlushInterval = -1
+
+	return proxy.ServeHTTP, nil
 }
 
 // RoundTrip is a method on the Handler struct that implements the http.RoundTripper interface.
@@ -113,7 +114,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	f, d, err := getFacility(req.Context(), ha, h.Backend)
+	fac, dhcpData, err := h.getFacility(req.Context(), ha, h.Backend)
 	if err != nil {
 		log.Info("unable to get the hardware object", "error", err, "mac", ha)
 		if apierrors.IsNotFound(err) {
@@ -223,10 +224,10 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// historically the facility is used as a way to define consoles on a per Hardware basis.
 	var consoles string
 	switch {
-	case f != "" && strings.Contains(f, "console="):
-		consoles = fmt.Sprintf("facility=%s", f)
-	case f != "":
-		consoles = fmt.Sprintf("facility=%s %s", f, defaultConsoles)
+	case fac != "" && strings.Contains(fac, "console="):
+		consoles = fmt.Sprintf("facility=%s", fac)
+	case fac != "":
+		consoles = fmt.Sprintf("facility=%s %s", fac, defaultConsoles)
 	default:
 		consoles = defaultConsoles
 	}
@@ -241,7 +242,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		dup := make([]byte, len(b))
 		copy(dup, b)
 		copy(dup[i:], magicStringPadding)
-		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String(), d)))
+		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String(), dhcpData)))
 		b = dup
 	}
 
@@ -271,15 +272,17 @@ func getMAC(urlPath string) (net.HardwareAddr, error) {
 	return hw, nil
 }
 
-func getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, *data.DHCP, error) {
+func (h *Handler) getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, *data.DHCP, error) {
 	if br == nil {
 		return "", nil, errors.New("backend is nil")
 	}
 
-	// TODO(jacobweinstock): Pass DHCP info to kernel cmdline parameters for static IP assignment.
 	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
 		return "", nil, err
+	}
+	if !h.StaticIPAMEnabled {
+		d = nil
 	}
 
 	return n.Facility, d, nil
@@ -295,9 +298,12 @@ func randomPercentage(precision int64) float64 {
 }
 
 func parseIPAM(d *data.DHCP) string {
+	if d == nil {
+		return ""
+	}
 	// return format is ipam=<mac-address>:<vlan-id>:<ip-address>:<netmask>:<gateway>:<hostname>:<dns>:<search-domains>:<ntp>
 	ipam := make([]string, 9)
-	ipam[0] = func () string {
+	ipam[0] = func() string {
 		m := d.MACAddress.String()
 
 		return strings.ReplaceAll(m, ":", "-")

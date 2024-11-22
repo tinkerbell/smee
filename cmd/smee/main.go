@@ -142,9 +142,10 @@ type otelConfig struct {
 }
 
 type isoConfig struct {
-	enabled     bool
-	url         string
-	magicString string
+	enabled           bool
+	url               string
+	magicString       string
+	staticIPAMEnabled bool
 }
 
 func main() {
@@ -262,6 +263,7 @@ func main() {
 			Syslog:             cfg.dhcp.syslogIP,
 			TinkServerTLS:      cfg.ipxeHTTPScript.tinkServerUseTLS,
 			TinkServerGRPCAddr: cfg.ipxeHTTPScript.tinkServer,
+			StaticIPAMEnabled:  cfg.iso.staticIPAMEnabled,
 			MagicString: func() string {
 				if cfg.iso.magicString == "" {
 					return magicString

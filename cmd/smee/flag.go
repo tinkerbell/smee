@@ -154,9 +154,10 @@ func otelFlags(c *config, fs *flag.FlagSet) {
 }
 
 func isoFlags(c *config, fs *flag.FlagSet) {
-	fs.BoolVar(&c.iso.enabled, "iso-enabled", false, "[iso] enable serving Hook as an iso")
-	fs.StringVar(&c.iso.url, "iso-url", "", "[iso] the url for source iso before binary patching")
-	fs.StringVar(&c.iso.magicString, "iso-magic-string", "", "[iso] the string pattern to match for in the source iso, if not set the default from HookOS is used")
+	fs.BoolVar(&c.iso.enabled, "iso-enabled", false, "[iso] enable patching an OSIE ISO")
+	fs.StringVar(&c.iso.url, "iso-url", "", "[iso] an ISO source URL target for patching")
+	fs.StringVar(&c.iso.magicString, "iso-magic-string", "", "[iso] the string pattern to match for in the source ISO, defaults to the one defined in HookOS")
+	fs.BoolVar(&c.iso.staticIPAMEnabled, "iso-static-ipam-enabled", false, "[iso] enable static IPAM for HookOS")
 }
 
 func setFlags(c *config, fs *flag.FlagSet) {
