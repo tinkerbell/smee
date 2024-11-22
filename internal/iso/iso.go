@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/netip"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -112,7 +113,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	f, err := getFacility(req.Context(), ha, h.Backend)
+	f, d, err := getFacility(req.Context(), ha, h.Backend)
 	if err != nil {
 		log.Info("unable to get the hardware object", "error", err, "mac", ha)
 		if apierrors.IsNotFound(err) {
@@ -240,7 +241,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		dup := make([]byte, len(b))
 		copy(dup, b)
 		copy(dup[i:], magicStringPadding)
-		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String())))
+		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String(), d)))
 		b = dup
 	}
 
@@ -250,13 +251,14 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func (h *Handler) constructPatch(console, mac string) string {
+func (h *Handler) constructPatch(console, mac string, d *data.DHCP) string {
 	syslogHost := fmt.Sprintf("syslog_host=%s", h.Syslog)
 	grpcAuthority := fmt.Sprintf("grpc_authority=%s", h.TinkServerGRPCAddr)
 	tinkerbellTLS := fmt.Sprintf("tinkerbell_tls=%v", h.TinkServerTLS)
 	workerID := fmt.Sprintf("worker_id=%s", mac)
+	ipam := parseIPAM(d)
 
-	return strings.Join([]string{strings.Join(h.ExtraKernelParams, " "), console, syslogHost, grpcAuthority, tinkerbellTLS, workerID}, " ")
+	return strings.Join([]string{strings.Join(h.ExtraKernelParams, " "), console, syslogHost, grpcAuthority, tinkerbellTLS, workerID, ipam}, " ")
 }
 
 func getMAC(urlPath string) (net.HardwareAddr, error) {
@@ -269,18 +271,18 @@ func getMAC(urlPath string) (net.HardwareAddr, error) {
 	return hw, nil
 }
 
-func getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, error) {
+func getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, *data.DHCP, error) {
 	if br == nil {
-		return "", errors.New("backend is nil")
+		return "", nil, errors.New("backend is nil")
 	}
 
 	// TODO(jacobweinstock): Pass DHCP info to kernel cmdline parameters for static IP assignment.
-	_, n, err := br.GetByMac(ctx, mac)
+	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return n.Facility, nil
+	return n.Facility, d, nil
 }
 
 func randomPercentage(precision int64) float64 {
@@ -290,4 +292,63 @@ func randomPercentage(precision int64) float64 {
 	}
 
 	return float64(random.Int64()) / float64(precision)
+}
+
+func parseIPAM(d *data.DHCP) string {
+	// return format is ipam=<mac-address>:<vlan-id>:<ip-address>:<netmask>:<gateway>:<hostname>:<dns>:<search-domains>:<ntp>
+	ipam := make([]string, 9)
+	ipam[0] = func () string {
+		m := d.MACAddress.String()
+
+		return strings.ReplaceAll(m, ":", "-")
+	}()
+	ipam[1] = func() string {
+		if d.VLANID != "" {
+			return d.VLANID
+		}
+		return ""
+	}()
+	ipam[2] = func() string {
+		if d.IPAddress.Compare(netip.Addr{}) != 0 {
+			return d.IPAddress.String()
+		}
+		return ""
+	}()
+	ipam[3] = func() string {
+		if d.SubnetMask != nil {
+			return net.IP(d.SubnetMask).String()
+		}
+		return ""
+	}()
+	ipam[4] = func() string {
+		if d.DefaultGateway.Compare(netip.Addr{}) != 0 {
+			return d.DefaultGateway.String()
+		}
+		return ""
+	}()
+	ipam[5] = d.Hostname
+	ipam[6] = func() string {
+		var nameservers []string
+		for _, e := range d.NameServers {
+			nameservers = append(nameservers, e.String())
+		}
+		if len(nameservers) > 0 {
+			return strings.Join(nameservers, ",")
+		}
+
+		return ""
+	}()
+	ipam[8] = func() string {
+		var ntp []string
+		for _, e := range d.NTPServers {
+			ntp = append(ntp, e.String())
+		}
+		if len(ntp) > 0 {
+			return strings.Join(ntp, ",")
+		}
+
+		return ""
+	}()
+
+	return fmt.Sprintf("ipam=%s", strings.Join(ipam, ":"))
 }
