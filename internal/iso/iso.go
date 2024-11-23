@@ -351,6 +351,13 @@ func parseIPAM(d *data.DHCP) string {
 
 		return ""
 	}()
+	ipam[7] = func() string {
+		if len(d.DomainSearch) > 0 {
+			return strings.Join(d.DomainSearch, ",")
+		}
+
+		return ""
+	}()
 	ipam[8] = func() string {
 		var ntp []string
 		for _, e := range d.NTPServers {
