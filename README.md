@@ -149,9 +149,9 @@ FLAGS
   -tink-server                        [http] IP:Port for the Tink server
   -tink-server-tls                    [http] use TLS for Tink server (default "false")
   -trusted-proxies                    [http] comma separated list of trusted proxies in CIDR notation
-  -iso-enabled                        [iso] enable serving Hook as an iso (default "false")
-  -iso-magic-string                   [iso] the string pattern to match for in the source iso, if not set the default from HookOS is used
-  -iso-url                            [iso] the url for source iso before binary patching
+  -iso-enabled                        [iso] enable patching an OSIE ISO (default "false")
+  -iso-magic-string                   [iso] the string pattern to match for in the source ISO, defaults to the one defined in HookOS
+  -iso-static-ipam-enabled            [iso] enable static IPAM for HookOS (default "false")
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
   -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
   -syslog-addr                        [syslog] local IP to listen on for Syslog messages (default "172.17.0.3")
