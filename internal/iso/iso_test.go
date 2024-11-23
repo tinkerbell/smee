@@ -110,13 +110,13 @@ func TestPatching(t *testing.T) {
 	// patch the ISO file
 	// mount the ISO file and check if the magic string was patched
 
+	// If anything changes here the space padding will be different. Be sure to update it accordingly.
 	wantGrubCfg := `set timeout=0
 set gfxpayload=text
 menuentry 'LinuxKit ISO Image' {
-        linuxefi /kernel  facility=test console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1 syslog_host=127.0.0.1:514 grpc_authority=127.0.0.1:42113 tinkerbell_tls=false worker_id=de:ed:be:ef:fe:ed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   text
+        linuxefi /kernel  facility=test console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1  hw_addr=de:ed:be:ef:fe:ed syslog_host=127.0.0.1:514 grpc_authority=127.0.0.1:42113 tinkerbell_tls=false worker_id=de:ed:be:ef:fe:ed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        text
         initrdefi /initrd.img
-}
-`
+}`
 	// This expects that testdata/output.iso exists. Run the TestCreateISO test to create it.
 
 	// serve it with a http server
@@ -141,6 +141,8 @@ menuentry 'LinuxKit ISO Image' {
 		parsedURL:          parsedURL,
 		MagicString:        magicString,
 	}
+	// for debugging enable a logger
+	// h.Logger = logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
 
 	rurl := hs.URL + "/iso/de:ed:be:ef:fe:ed/output.iso"
 	purl, _ := url.Parse(rurl)
@@ -164,14 +166,14 @@ menuentry 'LinuxKit ISO Image' {
 		t.Fatal(err)
 	}
 
-	idx := bytes.Index(isoContents, []byte(wantGrubCfg))
+	idx := bytes.Index(isoContents, []byte(`set timeout=0`))
 	if idx == -1 {
-		t.Fatalf("could not find grub.cfg in the ISO")
+		t.Fatalf("could not find the expected grub.cfg contents in the ISO")
 	}
 	contents := isoContents[idx : idx+len(wantGrubCfg)]
 
 	if diff := cmp.Diff(wantGrubCfg, string(contents)); diff != "" {
-		t.Fatalf("unexpected grub.cfg file: %s", diff)
+		t.Fatalf("patched grub.cfg contents don't match expected: %v", diff)
 	}
 }
 

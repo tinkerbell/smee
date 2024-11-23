@@ -257,9 +257,16 @@ func (h *Handler) constructPatch(console, mac string, d *data.DHCP) string {
 	grpcAuthority := fmt.Sprintf("grpc_authority=%s", h.TinkServerGRPCAddr)
 	tinkerbellTLS := fmt.Sprintf("tinkerbell_tls=%v", h.TinkServerTLS)
 	workerID := fmt.Sprintf("worker_id=%s", mac)
+	vlanID := func() string {
+		if d != nil {
+			return fmt.Sprintf("vlan_id=%s", d.VLANID)
+		}
+		return ""
+	}()
+	hwAddr := fmt.Sprintf("hw_addr=%s", mac)
 	ipam := parseIPAM(d)
 
-	return strings.Join([]string{strings.Join(h.ExtraKernelParams, " "), console, syslogHost, grpcAuthority, tinkerbellTLS, workerID, ipam}, " ")
+	return strings.Join([]string{strings.Join(h.ExtraKernelParams, " "), console, vlanID, hwAddr, syslogHost, grpcAuthority, tinkerbellTLS, workerID, ipam}, " ")
 }
 
 func getMAC(urlPath string) (net.HardwareAddr, error) {
