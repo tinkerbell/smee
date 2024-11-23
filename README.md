@@ -152,6 +152,7 @@ FLAGS
   -iso-enabled                        [iso] enable patching an OSIE ISO (default "false")
   -iso-magic-string                   [iso] the string pattern to match for in the source ISO, defaults to the one defined in HookOS
   -iso-static-ipam-enabled            [iso] enable static IPAM for HookOS (default "false")
+  -iso-url                            [iso] an ISO source URL target for patching
   -otel-endpoint                      [otel] OpenTelemetry collector endpoint
   -otel-insecure                      [otel] OpenTelemetry collector insecure (default "true")
   -syslog-addr                        [syslog] local IP to listen on for Syslog messages (default "172.17.0.3")
