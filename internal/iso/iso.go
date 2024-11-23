@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/netip"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -34,21 +35,6 @@ type BackendReader interface {
 	GetByMac(context.Context, net.HardwareAddr) (*data.DHCP, *data.Netboot, error)
 }
 
-// HandlerFunc returns a reverse proxy HTTP handler function that performs ISO patching.
-func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
-	target, err := url.Parse(h.SourceISO)
-	if err != nil {
-		return nil, err
-	}
-	h.parsedURL = target
-	proxy := httputil.NewSingleHostReverseProxy(target)
-
-	proxy.Transport = h
-	proxy.FlushInterval = -1
-
-	return proxy.ServeHTTP, nil
-}
-
 // Handler is a struct that contains the necessary fields to patch an ISO file with
 // relevant information for the Tink worker.
 type Handler struct {
@@ -66,9 +52,25 @@ type Handler struct {
 	Syslog             string
 	TinkServerTLS      bool
 	TinkServerGRPCAddr string
+	StaticIPAMEnabled  bool
 	// parsedURL derives a url.URL from the SourceISO field.
 	// It needed for validation of SourceISO and easier modification.
 	parsedURL *url.URL
+}
+
+// HandlerFunc returns a reverse proxy HTTP handler function that performs ISO patching.
+func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
+	target, err := url.Parse(h.SourceISO)
+	if err != nil {
+		return nil, err
+	}
+	h.parsedURL = target
+	proxy := httputil.NewSingleHostReverseProxy(target)
+
+	proxy.Transport = h
+	proxy.FlushInterval = -1
+
+	return proxy.ServeHTTP, nil
 }
 
 // RoundTrip is a method on the Handler struct that implements the http.RoundTripper interface.
@@ -112,7 +114,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	f, err := getFacility(req.Context(), ha, h.Backend)
+	fac, dhcpData, err := h.getFacility(req.Context(), ha, h.Backend)
 	if err != nil {
 		log.Info("unable to get the hardware object", "error", err, "mac", ha)
 		if apierrors.IsNotFound(err) {
@@ -222,10 +224,10 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// historically the facility is used as a way to define consoles on a per Hardware basis.
 	var consoles string
 	switch {
-	case f != "" && strings.Contains(f, "console="):
-		consoles = fmt.Sprintf("facility=%s", f)
-	case f != "":
-		consoles = fmt.Sprintf("facility=%s %s", f, defaultConsoles)
+	case fac != "" && strings.Contains(fac, "console="):
+		consoles = fmt.Sprintf("facility=%s", fac)
+	case fac != "":
+		consoles = fmt.Sprintf("facility=%s %s", fac, defaultConsoles)
 	default:
 		consoles = defaultConsoles
 	}
@@ -240,7 +242,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 		dup := make([]byte, len(b))
 		copy(dup, b)
 		copy(dup[i:], magicStringPadding)
-		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String())))
+		copy(dup[i:], []byte(h.constructPatch(consoles, ha.String(), dhcpData)))
 		b = dup
 	}
 
@@ -250,13 +252,24 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func (h *Handler) constructPatch(console, mac string) string {
+func (h *Handler) constructPatch(console, mac string, d *data.DHCP) string {
 	syslogHost := fmt.Sprintf("syslog_host=%s", h.Syslog)
 	grpcAuthority := fmt.Sprintf("grpc_authority=%s", h.TinkServerGRPCAddr)
 	tinkerbellTLS := fmt.Sprintf("tinkerbell_tls=%v", h.TinkServerTLS)
 	workerID := fmt.Sprintf("worker_id=%s", mac)
+	vlanID := func() string {
+		if d != nil && d.VLANID != "" {
+			return fmt.Sprintf("vlan_id=%s", d.VLANID)
+		}
+		return ""
+	}()
+	hwAddr := fmt.Sprintf("hw_addr=%s", mac)
+	all := []string{strings.Join(h.ExtraKernelParams, " "), console, vlanID, hwAddr, syslogHost, grpcAuthority, tinkerbellTLS, workerID}
+	if h.StaticIPAMEnabled {
+		all = append(all, parseIPAM(d))
+	}
 
-	return strings.Join([]string{strings.Join(h.ExtraKernelParams, " "), console, syslogHost, grpcAuthority, tinkerbellTLS, workerID}, " ")
+	return strings.Join(all, " ")
 }
 
 func getMAC(urlPath string) (net.HardwareAddr, error) {
@@ -269,18 +282,17 @@ func getMAC(urlPath string) (net.HardwareAddr, error) {
 	return hw, nil
 }
 
-func getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, error) {
+func (h *Handler) getFacility(ctx context.Context, mac net.HardwareAddr, br BackendReader) (string, *data.DHCP, error) {
 	if br == nil {
-		return "", errors.New("backend is nil")
+		return "", nil, errors.New("backend is nil")
 	}
 
-	// TODO(jacobweinstock): Pass DHCP info to kernel cmdline parameters for static IP assignment.
-	_, n, err := br.GetByMac(ctx, mac)
+	d, n, err := br.GetByMac(ctx, mac)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return n.Facility, nil
+	return n.Facility, d, nil
 }
 
 func randomPercentage(precision int64) float64 {
@@ -290,4 +302,73 @@ func randomPercentage(precision int64) float64 {
 	}
 
 	return float64(random.Int64()) / float64(precision)
+}
+
+func parseIPAM(d *data.DHCP) string {
+	if d == nil {
+		return ""
+	}
+	// return format is ipam=<mac-address>:<vlan-id>:<ip-address>:<netmask>:<gateway>:<hostname>:<dns>:<search-domains>:<ntp>
+	ipam := make([]string, 9)
+	ipam[0] = func() string {
+		m := d.MACAddress.String()
+
+		return strings.ReplaceAll(m, ":", "-")
+	}()
+	ipam[1] = func() string {
+		if d.VLANID != "" {
+			return d.VLANID
+		}
+		return ""
+	}()
+	ipam[2] = func() string {
+		if d.IPAddress.Compare(netip.Addr{}) != 0 {
+			return d.IPAddress.String()
+		}
+		return ""
+	}()
+	ipam[3] = func() string {
+		if d.SubnetMask != nil {
+			return net.IP(d.SubnetMask).String()
+		}
+		return ""
+	}()
+	ipam[4] = func() string {
+		if d.DefaultGateway.Compare(netip.Addr{}) != 0 {
+			return d.DefaultGateway.String()
+		}
+		return ""
+	}()
+	ipam[5] = d.Hostname
+	ipam[6] = func() string {
+		var nameservers []string
+		for _, e := range d.NameServers {
+			nameservers = append(nameservers, e.String())
+		}
+		if len(nameservers) > 0 {
+			return strings.Join(nameservers, ",")
+		}
+
+		return ""
+	}()
+	ipam[7] = func() string {
+		if len(d.DomainSearch) > 0 {
+			return strings.Join(d.DomainSearch, ",")
+		}
+
+		return ""
+	}()
+	ipam[8] = func() string {
+		var ntp []string
+		for _, e := range d.NTPServers {
+			ntp = append(ntp, e.String())
+		}
+		if len(ntp) > 0 {
+			return strings.Join(ntp, ",")
+		}
+
+		return ""
+	}()
+
+	return fmt.Sprintf("ipam=%s", strings.Join(ipam, ":"))
 }

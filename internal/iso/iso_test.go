@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"net/url"
 	"os"
 	"testing"
@@ -110,13 +111,13 @@ func TestPatching(t *testing.T) {
 	// patch the ISO file
 	// mount the ISO file and check if the magic string was patched
 
+	// If anything changes here the space padding will be different. Be sure to update it accordingly.
 	wantGrubCfg := `set timeout=0
 set gfxpayload=text
 menuentry 'LinuxKit ISO Image' {
-        linuxefi /kernel  facility=test console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1 syslog_host=127.0.0.1:514 grpc_authority=127.0.0.1:42113 tinkerbell_tls=false worker_id=de:ed:be:ef:fe:ed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   text
+        linuxefi /kernel  facility=test console=ttyAMA0 console=ttyS0 console=tty0 console=tty1 console=ttyS1  hw_addr=de:ed:be:ef:fe:ed syslog_host=127.0.0.1:514 grpc_authority=127.0.0.1:42113 tinkerbell_tls=false worker_id=de:ed:be:ef:fe:ed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        text
         initrdefi /initrd.img
-}
-`
+}`
 	// This expects that testdata/output.iso exists. Run the TestCreateISO test to create it.
 
 	// serve it with a http server
@@ -141,6 +142,8 @@ menuentry 'LinuxKit ISO Image' {
 		parsedURL:          parsedURL,
 		MagicString:        magicString,
 	}
+	// for debugging enable a logger
+	// h.Logger = logr.FromSlogHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
 
 	rurl := hs.URL + "/iso/de:ed:be:ef:fe:ed/output.iso"
 	purl, _ := url.Parse(rurl)
@@ -164,14 +167,14 @@ menuentry 'LinuxKit ISO Image' {
 		t.Fatal(err)
 	}
 
-	idx := bytes.Index(isoContents, []byte(wantGrubCfg))
+	idx := bytes.Index(isoContents, []byte(`set timeout=0`))
 	if idx == -1 {
-		t.Fatalf("could not find grub.cfg in the ISO")
+		t.Fatalf("could not find the expected grub.cfg contents in the ISO")
 	}
 	contents := isoContents[idx : idx+len(wantGrubCfg)]
 
 	if diff := cmp.Diff(wantGrubCfg, string(contents)); diff != "" {
-		t.Fatalf("unexpected grub.cfg file: %s", diff)
+		t.Fatalf("patched grub.cfg contents don't match expected: %v", diff)
 	}
 }
 
@@ -191,4 +194,40 @@ func (m *mockBackend) GetByIP(context.Context, net.IP) (*data.DHCP, *data.Netboo
 		Facility: "test",
 	}
 	return d, n, nil
+}
+
+func TestParseIPAM(t *testing.T) {
+	tests := map[string]struct {
+		input *data.DHCP
+		want  string
+	}{
+		"empty": {},
+		"only MAC": {
+			input: &data.DHCP{MACAddress: net.HardwareAddr{0xde, 0xed, 0xbe, 0xef, 0xfe, 0xed}},
+			want:  "ipam=de-ed-be-ef-fe-ed::::::::",
+		},
+		"everything": {
+			input: &data.DHCP{
+				MACAddress:     net.HardwareAddr{0xde, 0xed, 0xbe, 0xef, 0xfe, 0xed},
+				IPAddress:      netip.AddrFrom4([4]byte{127, 0, 0, 1}),
+				SubnetMask:     net.IPv4Mask(255, 255, 255, 0),
+				DefaultGateway: netip.AddrFrom4([4]byte{127, 0, 0, 2}),
+				NameServers:    []net.IP{{1, 1, 1, 1}, {4, 4, 4, 4}},
+				Hostname:       "myhost",
+				NTPServers:     []net.IP{{129, 6, 15, 28}, {129, 6, 15, 29}},
+				DomainSearch:   []string{"example.com", "example.org"},
+				VLANID:         "400",
+			},
+			want: "ipam=de-ed-be-ef-fe-ed:400:127.0.0.1:255.255.255.0:127.0.0.2:myhost:1.1.1.1,4.4.4.4:example.com,example.org:129.6.15.28,129.6.15.29",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := parseIPAM(tt.input)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Fatalf("diff: %v", diff)
+			}
+		})
+	}
 }
