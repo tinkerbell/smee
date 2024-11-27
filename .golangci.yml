@@ -146,6 +146,11 @@ linters:
     - whitespace
 
 issues:
+  exclude-files:
+    - internal/iso/internal/reverseproxy.go
+    - internal/iso/internal/reverseproxy_test.go
+    - internal/iso/internal/acsii.go
+    - internal/iso/internal/acsii_test.go
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     - path: _test\.go

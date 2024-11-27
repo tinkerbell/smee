@@ -86,7 +86,7 @@ func (h *Handler) Copy(ctx context.Context, dst io.Writer, src io.Reader, buf []
 	var written int64
 	for {
 		nr, rerr := src.Read(buf)
-		if rerr != nil && rerr != io.EOF && rerr != context.Canceled {
+		if rerr != nil && rerr != io.EOF && rerr != context.Canceled { //nolint: errorlint // going to defer to the stdlib on this one.
 			h.Logger.Info("httputil: ReverseProxy read error during body copy: %v", rerr)
 		}
 		if nr > 0 {
