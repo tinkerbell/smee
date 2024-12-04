@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/packethost/xff"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -44,7 +43,7 @@ func (s *Config) ServeHTTP(ctx context.Context, addr string, handlers HandlerMap
 	// add X-Forwarded-For support if trusted proxies are configured
 	var xffHandler http.Handler
 	if len(s.TrustedProxies) > 0 {
-		xffmw, err := xff.New(xff.Options{
+		xffmw, err := newXFF(xffOptions{
 			AllowedSubnets: s.TrustedProxies,
 		})
 		if err != nil {
