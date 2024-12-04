@@ -15,6 +15,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
+	github.com/stretchr/testify v1.9.0
 	github.com/tinkerbell/ipxedust v0.0.0-20241108174245-aa0c0298057d
 	github.com/tinkerbell/tink v0.12.1
 	github.com/vishvananda/netlink v1.3.0
@@ -77,6 +78,7 @@ require (
 	github.com/pin/tftp/v3 v3.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
