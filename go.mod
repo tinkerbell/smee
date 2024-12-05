@@ -15,7 +15,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tinkerbell/ipxedust v0.0.0-20241108174245-aa0c0298057d
 	github.com/tinkerbell/tink v0.12.1
 	github.com/vishvananda/netlink v1.3.0
