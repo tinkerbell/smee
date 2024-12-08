@@ -1,7 +1,7 @@
 # run `make image` to build the binary + container
 # if you're using `make build` this Dockerfile will not find the binary
 # and you probably want `make smee-linux-amd64`
-FROM alpine:3.20
+FROM alpine:3.21
 
 ARG TARGETARCH
 ARG TARGETVARIANT
