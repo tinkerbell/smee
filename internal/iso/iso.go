@@ -65,7 +65,11 @@ func (h *Handler) HandlerFunc() (http.HandlerFunc, error) {
 	}
 	h.parsedURL = target
 
-	proxy := internal.NewSingleHostReverseProxy(target)
+	proxy := &internal.ReverseProxy{
+		Rewrite: func(r *internal.ProxyRequest) {
+			r.SetURL(target)
+		},
+	}
 
 	proxy.Transport = h
 	proxy.FlushInterval = -1
@@ -124,7 +128,7 @@ func (h *Handler) Copy(ctx context.Context, dst io.Writer, src io.Reader, buf []
 // This method is called by the internal.NewSingleHostReverseProxy to handle the incoming request.
 // The method is responsible for validating the incoming request and getting the source ISO.
 func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
-	log := h.Logger.WithValues("method", req.Method, "urlPath", req.URL.Path, "remoteAddr", req.RemoteAddr)
+	log := h.Logger.WithValues("method", req.Method, "inboundURI", req.RequestURI, "remoteAddr", req.RemoteAddr)
 	log.V(1).Info("starting the ISO patching HTTP handler")
 
 	if filepath.Ext(req.URL.Path) != ".iso" {
@@ -189,6 +193,7 @@ func (h *Handler) RoundTrip(req *http.Request) (*http.Response, error) {
 	// This function is more than a pass through proxy. The MAC address in the url path is required to do hardware lookups using the backend reader
 	// and is not used when making http calls to the target (h.SourceISO). All valid requests are passed through to the target.
 	req.URL.Path = h.parsedURL.Path
+	log = log.WithValues("outboundURL", req.URL.String())
 
 	// RoundTripper needs a Transport to execute a HTTP transaction
 	// For our use case the default transport will suffice.
