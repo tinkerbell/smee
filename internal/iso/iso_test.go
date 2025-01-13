@@ -68,7 +68,7 @@ menuentry 'LinuxKit ISO Image' {
 		t.Fatal(err)
 	}
 	var diskSize int64 = 51200 // 50Kb
-	mydisk, err := diskfs.Create("./testdata/output.iso", diskSize, diskfs.Raw, diskfs.SectorSizeDefault)
+	mydisk, err := diskfs.Create("./testdata/output.iso", diskSize, diskfs.SectorSizeDefault)
 	if err != nil {
 		t.Fatal(err)
 	}
