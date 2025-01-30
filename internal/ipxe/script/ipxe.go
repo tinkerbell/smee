@@ -287,7 +287,7 @@ func (h *Handler) defaultScript(span trace.Span, hw data) (string, error) {
 		Retries:               h.IPXEScriptRetries,
 		RetryDelay:            h.IPXEScriptRetryDelay,
 	}
-	if hw.OSIE.BaseURL != nil {
+	if hw.OSIE.BaseURL != nil && hw.OSIE.BaseURL.String() != "" {
 		auto.DownloadURL = hw.OSIE.BaseURL.String()
 	}
 	if hw.OSIE.Kernel != "" {
