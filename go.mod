@@ -1,7 +1,6 @@
 module github.com/tinkerbell/smee
 
 go 1.23
-
 toolchain go1.23.2
 
 require (
@@ -28,7 +27,7 @@ require (
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.29.0
 	google.golang.org/grpc v1.69.4
-	k8s.io/apimachinery v0.31.3
+	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.31.3
 	sigs.k8s.io/controller-runtime v0.19.4
 )
@@ -98,7 +97,7 @@ require (
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.6.0 // indirect
+	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
@@ -108,9 +107,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.31.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
-	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
-	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
+	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
+	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
