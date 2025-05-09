@@ -10,9 +10,9 @@ import (
 	"path"
 
 	"github.com/go-logr/logr"
+	"github.com/mvellasco/smee/internal/dhcp/handler"
+	"github.com/mvellasco/smee/internal/metric"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
-	"github.com/tinkerbell/smee/internal/metric"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

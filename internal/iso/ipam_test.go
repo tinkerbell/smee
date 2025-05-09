@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 )
 
 func TestParseIPAM(t *testing.T) {

@@ -23,10 +23,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/tinkerbell/smee/internal/dhcp"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
-	oteldhcp "github.com/tinkerbell/smee/internal/dhcp/otel"
+	"github.com/mvellasco/smee/internal/dhcp"
+	"github.com/mvellasco/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/handler"
+	oteldhcp "github.com/mvellasco/smee/internal/dhcp/otel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -34,7 +34,7 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
-const tracerName = "github.com/tinkerbell/smee/internal/dhcp/handler/proxy"
+const tracerName = "github.com/mvellasco/smee/internal/dhcp/handler/proxy"
 
 // Handler holds the configuration details for the running the DHCP server.
 type Handler struct {

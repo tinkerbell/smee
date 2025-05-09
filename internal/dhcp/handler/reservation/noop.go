@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 )
 
 // Handler is a noop backend.

@@ -1,6 +1,6 @@
 # Smee
 
-[![Build Status](https://github.com/tinkerbell/smee/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/smee/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
+[![Build Status](https://github.com/mvellasco/smee/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/mvellasco/smee/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 
 Smee is the network boot service in the [Tinkerbell stack](https://tinkerbell.org), formerly known as `Boots`. It is comprised of the following services.
 

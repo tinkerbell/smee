@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/tinkerbell/smee/internal/dhcp"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
+	"github.com/mvellasco/smee/internal/dhcp"
+	"github.com/mvellasco/smee/internal/dhcp/handler"
 )
 
 // Handler holds the configuration details for the running the DHCP server.

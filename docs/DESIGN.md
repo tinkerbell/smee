@@ -79,7 +79,7 @@ During a PXE boot request, an iPXE script is provided to a PXE-ing machine throu
 The contents of the auto.ipxe script is determined through the following steps:
 
 1. A hardware record is retrieved based on the PXE-ing machines mac address.
-2. The following are tried, in order, to determine the content of the iPXE script ([code ref](https://github.com/tinkerbell/smee/blob/b2f4d15f9b55806f4636003948ed95975e1d475e/job/ipxe.go#L71))
+2. The following are tried, in order, to determine the content of the iPXE script ([code ref](https://github.com/mvellasco/smee/blob/b2f4d15f9b55806f4636003948ed95975e1d475e/job/ipxe.go#L71))
    1. If the `metadata.instance.operating_system.slug` matches a registered Installer, the iPXE script from that Installer is returned
    2. If the `metadata.instance.operating_system.distro` matches a registered Installer, the iPXE script from that Installer
    3. If neither of the first 2 is matched, then the default (OSIE) iPXE script is used

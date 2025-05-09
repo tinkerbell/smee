@@ -8,7 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 	"golang.org/x/net/ipv4"
 )
 

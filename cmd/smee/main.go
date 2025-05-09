@@ -20,18 +20,18 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/tinkerbell/ipxedust"
-	"github.com/tinkerbell/ipxedust/ihttp"
-	"github.com/tinkerbell/smee/internal/dhcp/handler"
-	"github.com/tinkerbell/smee/internal/dhcp/handler/proxy"
-	"github.com/tinkerbell/smee/internal/dhcp/handler/reservation"
-	"github.com/tinkerbell/smee/internal/dhcp/server"
-	"github.com/tinkerbell/smee/internal/ipxe/http"
-	"github.com/tinkerbell/smee/internal/ipxe/script"
-	"github.com/tinkerbell/smee/internal/iso"
-	"github.com/tinkerbell/smee/internal/metric"
-	"github.com/tinkerbell/smee/internal/otel"
-	"github.com/tinkerbell/smee/internal/syslog"
+	"github.com/mvellasco/ipxedust"
+	"github.com/mvellasco/ipxedust/ihttp"
+	"github.com/mvellasco/smee/internal/dhcp/handler"
+	"github.com/mvellasco/smee/internal/dhcp/handler/proxy"
+	"github.com/mvellasco/smee/internal/dhcp/handler/reservation"
+	"github.com/mvellasco/smee/internal/dhcp/server"
+	"github.com/mvellasco/smee/internal/ipxe/http"
+	"github.com/mvellasco/smee/internal/ipxe/script"
+	"github.com/mvellasco/smee/internal/iso"
+	"github.com/mvellasco/smee/internal/metric"
+	"github.com/mvellasco/smee/internal/otel"
+	"github.com/mvellasco/smee/internal/syslog"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -191,7 +191,7 @@ func main() {
 	// tftp
 	if cfg.tftp.enabled {
 		tftpServer := &ipxedust.Server{
-			Log:                  log.WithValues("service", "github.com/tinkerbell/smee").WithName("github.com/tinkerbell/ipxedust"),
+			Log:                  log.WithValues("service", "github.com/mvellasco/smee").WithName("github.com/tinkerbell/ipxedust"),
 			HTTP:                 ipxedust.ServerSpec{Disabled: true}, // disabled because below we use the http handlerfunc instead.
 			EnableTFTPSinglePort: true,
 		}
@@ -221,7 +221,7 @@ func main() {
 	if cfg.ipxeHTTPBinary.enabled {
 		// serve ipxe binaries from the "/ipxe/" URI.
 		handlers["/ipxe/"] = ihttp.Handler{
-			Log:   log.WithValues("service", "github.com/tinkerbell/smee").WithName("github.com/tinkerbell/ipxedust"),
+			Log:   log.WithValues("service", "github.com/mvellasco/smee").WithName("github.com/tinkerbell/ipxedust"),
 			Patch: []byte(cfg.tftp.ipxeScriptPatch),
 		}.Handle
 	}

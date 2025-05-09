@@ -5,7 +5,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 )
 
 // BackendReader is the interface for getting data from a backend.

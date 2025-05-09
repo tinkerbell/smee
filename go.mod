@@ -1,4 +1,4 @@
-module github.com/tinkerbell/smee
+module github.com/mvellasco/smee
 
 go 1.23
 
@@ -13,10 +13,10 @@ require (
 	github.com/go-logr/stdr v1.2.2
 	github.com/google/go-cmp v0.6.0
 	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905
+	github.com/mvellasco/ipxedust v0.0.0-20250509234148-bb6e014e5fa9
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
-	github.com/tinkerbell/ipxedust v0.0.0-20250129162407-3c29a914f8be
 	github.com/tinkerbell/tink v0.12.2
 	github.com/vishvananda/netlink v1.3.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0

@@ -16,12 +16,12 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
 
-const tracerName = "github.com/tinkerbell/smee/dhcp"
+const tracerName = "github.com/mvellasco/smee/dhcp"
 
 // Errors used by the file watcher.
 var (

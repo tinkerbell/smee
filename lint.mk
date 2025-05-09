@@ -1,4 +1,4 @@
-# BEGIN: lint-install github.com/tinkerbell/smee
+# BEGIN: lint-install github.com/mvellasco/smee
 # http://github.com/tinkerbell/lint-install
 
 .PHONY: lint
@@ -42,4 +42,4 @@ _lint: $(LINTERS)
 .PHONY: fix $(FIXERS)
 fix: $(FIXERS)
 
-# END: lint-install github.com/tinkerbell/smee
+# END: lint-install github.com/mvellasco/smee

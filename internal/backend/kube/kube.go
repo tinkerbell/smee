@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/ccoveille/go-safecast"
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
-const tracerName = "github.com/tinkerbell/smee/dhcp"
+const tracerName = "github.com/mvellasco/smee/dhcp"
 
 // Backend is a backend implementation that uses the Tinkerbell CRDs to get DHCP data.
 type Backend struct {

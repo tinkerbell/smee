@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/tinkerbell/smee/internal/dhcp/data"
+	"github.com/mvellasco/smee/internal/dhcp/data"
 )
 
 var errAlways = errors.New("noop backend always returns an error")

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/smee/internal/metric"
+	"github.com/mvellasco/smee/internal/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
