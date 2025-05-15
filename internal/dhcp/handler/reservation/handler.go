@@ -137,11 +137,21 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 	}
 
 	dst := replyDestination(p.Peer, p.Pkt.GatewayIPAddr)
+	if dst != nil {
+		log.Info("DHCP response sent, check the peer.", "peer", p.Peer.String())
+		log.Info("DHCP response sent, but not really.", "cDestination", dst.String())
+	}
+
 	log = log.WithValues("ipAddress", reply.YourIPAddr.String(), "destination", dst.String())
 	cm := &ipv4.ControlMessage{}
+	if p.Pkt.MessageType() == dhcpv4.MessageTypeOffer {
+		cm.Dst = reply.ClientIPAddr
+	}
 	if p.Md != nil {
 		cm.IfIndex = p.Md.IfIndex
 	}
+	log.Info("check the control message.", "cSource", cm.Src.String())
+	log.Info("check the control message.", "cDestination", cm.Dst.String())
 
 	if _, err := conn.WriteTo(reply.ToBytes(), cm, dst); err != nil {
 		log.Error(err, "failed to send DHCP")
@@ -164,11 +174,7 @@ func (h *Handler) Handle(ctx context.Context, conn *ipv4.PacketConn, p data.Pack
 // the server sends any return messages to the 'DHCP server' port on
 // the BOOTP relay agent whose address appears in 'giaddr'.".
 func replyDestination(directPeer net.Addr, giaddr net.IP) net.Addr {
-	if !giaddr.IsUnspecified() && giaddr != nil {
-		return &net.UDPAddr{IP: giaddr, Port: dhcpv4.ServerPort}
-	}
-
-	return directPeer
+	return &net.UDPAddr{IP: giaddr, Port: dhcpv4.ServerPort}
 }
 
 // readBackend encapsulates the backend read and opentelemetry handling.

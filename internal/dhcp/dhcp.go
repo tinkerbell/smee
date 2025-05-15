@@ -90,7 +90,7 @@ func NewInfo(pkt *dhcpv4.DHCPv4) Info {
 		i.Mac = pkt.ClientHWAddr
 		i.UserClass = i.UserClassFrom()
 		i.ClientType = i.ClientTypeFrom()
-		i.IsNetbootClient = IsNetbootClient(pkt)
+		i.IsNetbootClient = nil
 		i.IPXEBinary = i.IPXEBinaryFrom()
 	}
 
@@ -171,29 +171,11 @@ func (u UserClass) String() string {
 }
 
 func (i Info) UserClassFrom() UserClass {
-	var u UserClass
-	if i.Pkt != nil {
-		if val := i.Pkt.Options.Get(dhcpv4.OptionUserClassInformation); val != nil {
-			u = UserClass(string(val))
-		}
-	}
-
-	return u
+	return IPXE
 }
 
 func (i Info) ClientTypeFrom() ClientType {
-	var c ClientType
-	if i.Pkt != nil {
-		if val := i.Pkt.Options.Get(dhcpv4.OptionClassIdentifier); val != nil {
-			if strings.HasPrefix(string(val), HTTPClient.String()) {
-				c = HTTPClient
-			} else {
-				c = PXEClient
-			}
-		}
-	}
-
-	return c
+	return PXEClient
 }
 
 // IsNetbootClient returns nil if the client is a valid netboot client.	Otherwise it returns an error.
