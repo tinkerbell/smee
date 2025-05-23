@@ -10,4 +10,4 @@ ENTRYPOINT ["/usr/bin/smee"]
 EXPOSE 67 69 80
 
 RUN apk add --update --upgrade --no-cache ca-certificates
-COPY cmd/smee/smee-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/smee
+COPY cmd/smee/smee /usr/bin/smee
