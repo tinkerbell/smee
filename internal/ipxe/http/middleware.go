@@ -23,10 +23,7 @@ func (h *loggingMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		client = clientIP(req.RemoteAddr)
 	)
 
-	log := true
-	if uri == "/metrics" {
-		log = false
-	}
+	log := uri != "/metrics"
 
 	res := &responseWriter{ResponseWriter: w}
 	h.handler.ServeHTTP(res, req) // process the request
