@@ -11,7 +11,7 @@ env:
   REGISTRY: quay.io
   IMAGE: quay.io/${{ github.repository }}
   CGO_ENABLED: 0
-  GO_VERSION: "1.23"
+  GO_VERSION: "1.24"
 
 jobs:
   validation:
