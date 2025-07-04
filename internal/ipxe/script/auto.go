@@ -2,7 +2,7 @@ package script
 
 import (
 	"bytes"
-	"html/template"
+	"text/template"
 )
 
 func GenerateTemplate(d any, script string) (string, error) {
