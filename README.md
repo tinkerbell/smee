@@ -1,3 +1,8 @@
+> [!IMPORTANT]  
+> Smee has been deprecated. All functionality has been moved to https://github.com/tinkerbell/tinkerbell.
+> For more details, see the roadmap issue [#41](https://github.com/tinkerbell/roadmap/issues/41).
+> This repository is scheduled for archive by the end of 2025.
+
 # Smee
 
 [![Build Status](https://github.com/tinkerbell/smee/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/smee/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
