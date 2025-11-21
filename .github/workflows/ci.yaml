@@ -24,7 +24,7 @@ jobs:
           echo "MAKEFLAGS=-j$(nproc)" | tee $GITHUB_ENV
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 5
 
